@@ -1,16 +1,13 @@
-# Learning Designer - interface de conception pédagogique
+# Application de conception pédagogique
 
 Le concepteur pédagogique (_learning designer_) est une application web monopage (_Single Page Application_) codée de manière conversationnelle avec l'IA générative.
-Vous pouvez créer des adaptations de l'application (merci de m'en tenir informé si possible).
 
-- Application web: [https://jourde.github.io/learning-designer/fr.html](https://jourde.github.io/learning-designer/fr.html)
-- Guide rapide : [https://github.com/jourde/learning-designer/blob/main/guide-fr.md](https://github.com/jourde/learning-designer/blob/main/guide-fr.md)
+- **Application web**: [https://jourde.github.io/learning-designer/fr.html](https://jourde.github.io/learning-designer/fr.html)
+- **Guide rapide** : [https://github.com/jourde/learning-designer/blob/main/guide-fr.md](https://github.com/jourde/learning-designer/blob/main/guide-fr.md)
 
---
-
-- Page web du projet : [https://jourde.github.io/learning-designer/](https://jourde.github.io/learning-designer/)
-- Dépôt GitHub du projet : [https://github.com/jourde/learning-designer](https://github.com/jourde/learning-designer)
+- **Page web du projet** : [https://jourde.github.io/learning-designer/](https://jourde.github.io/learning-designer/)
+- **Dépôt GitHub du projet** : [https://github.com/jourde/learning-designer](https://github.com/jourde/learning-designer). Vous pouvez créer des adaptations de l'application (merci de m'en tenir informé si possible).
 
 ---
 
-Autres artefacts de conception pédagogique : [https://github.com/jourde/artefacts](https://github.com/jourde/artefacts)
+**Autres artefacts de conception pédagogique** : [https://github.com/jourde/artefacts](https://github.com/jourde/artefacts)
