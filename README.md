@@ -1,7 +1,7 @@
 # Learning Designer - interface de conception pédagogique
 
 - Concepteur pédagogique : https://jourde.github.io/learning-designer/fr.html
-- Guide rapide : https://jourde.github.io/learning-designer/guide-fr.md - https://github.com/jourde/learning-designer/blob/main/guide-fr.md
+- Guide rapide : https://github.com/jourde/learning-designer/blob/main/guide-fr.md
 
 --
 
