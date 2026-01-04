@@ -6,7 +6,7 @@ Le concepteur pédagogique (_learning designer_) est une application web monopag
 
 --
 
-- **Guide rapide** : [https://github.com/jourde/learning-designer/blob/main/guide-fr.md](https://github.com/jourde/learning-designer/blob/main/guide-fr.md)
+- **Guide** : [https://github.com/jourde/learning-designer/wiki](https://github.com/jourde/learning-designer/wiki)
 
 - **Page web du projet** : [https://jourde.github.io/learning-designer/](https://jourde.github.io/learning-designer/)
 - **Dépôt GitHub du projet** : [https://github.com/jourde/learning-designer](https://github.com/jourde/learning-designer). Vous pouvez créer des adaptations de l'application (merci de m'en tenir informé si possible).
