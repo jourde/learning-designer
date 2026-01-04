@@ -1,6 +1,6 @@
 # Application de conception pédagogique
 
-Le concepteur pédagogique (_learning designer_) est une application web monopage (_Single Page Application_) codée de manière conversationnelle avec l'IA générative. Bien que globalement fonctionnelle, elle peut encore présenter des anomalies.
+Le concepteur pédagogique (_learning designer_) est une application web monopage (_Single Page Application_) codée de manière conversationnelle avec l'IA générative. Bien que globalement fonctionnel, l'outil reste expérimental et peut encore présenter des anomalies.
 
 - **Application web**: [https://jourde.github.io/learning-designer/fr.html](https://jourde.github.io/learning-designer/fr.html)
 
