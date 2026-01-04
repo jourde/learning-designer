@@ -11,6 +11,8 @@
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js">
 </script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
 <style>
    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -628,6 +630,12 @@ body.focus-mode .activity-group.focus-active { display: block; }
 <option data-i18n="opt_csv" value="csv">
            CSV
           </option>
+<option value="txt">
+           Texte (.txt)
+          </option>
+<option value="docx">
+           Word (.docx)
+          </option>
 <option data-i18n="opt_pdf" value="pdf">
            PDF
           </option>
@@ -1128,7 +1136,7 @@ body.focus-mode .activity-group.focus-active { display: block; }
      </span>
 </button>
 </div>
-<footer class="mt-8 mb-4 text-center text-[10px] text-slate-400 no-print">
+<footer class="mt-8 mb-4 text-center text-[11px] text-slate-400 no-print">
 <p>
      version 1.0 - François Jourde (2026) - CC BY SA, inspiré par le
      <a class="underline hover:text-slate-500" href="https://www.ucl.ac.uk/learning-designer/" target="_blank">
@@ -1267,12 +1275,12 @@ body.focus-mode .activity-group.focus-active { display: block; }
 </div>
 <div class="h-8 w-px bg-slate-100 mx-1">
 </div>
-<button class="text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-i18n-title="title_toggle_description" onclick="toggleDescription(this)" title="Afficher/Masquer la description">
+<button class="text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-i18n-title="title_toggle_description" data-action="toggle-module-description" title="Afficher/Masquer la description">
 <span class="material-icons-round text-lg">
         description
        </span>
 </button>
-<button class="text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-i18n-title="title_toggle_panel" onclick="toggleActivity(this)" title="Afficher/Masquer les paramètres">
+<button class="text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-i18n-title="title_toggle_panel" data-action="toggle-module" title="Afficher/Masquer les paramètres">
 <span class="material-icons-round text-lg rotate-icon">
         expand_more
        </span>
@@ -1282,7 +1290,7 @@ body.focus-mode .activity-group.focus-active { display: block; }
         content_copy
        </span>
 </button>
-<button aria-pressed="false" class="text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-i18n-title="title_focus_module" onclick="toggleFocusModule(this)" title="Mode focus" type="button">
+<button aria-pressed="false" class="text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-i18n-title="title_focus_module" data-action="focus-module" title="Mode focus" type="button">
 <span class="material-icons-round text-lg focus-toggle-icon">center_focus_strong</span>
 </button>
 <button class="text-slate-400 hover:text-red-500 p-1 transition-colors" data-action="delete-module" data-i18n-title="title_delete_activity" title="Supprimer ce module" type="button">
@@ -1300,7 +1308,7 @@ body.focus-mode .activity-group.focus-active { display: block; }
 </div>
 <div class="activity-moments-container ml-4 pl-4 space-y-3 min-h-[20px]"></div>
 <div class="mt-2 pt-1 flex justify-center gap-2 no-print border-t border-slate-100">
-<button class="text-sm font-semibold text-slate-500 hover:text-indigo-700 px-3 py-1 rounded transition-colors flex items-center gap-1 hover:bg-slate-50" data-i18n-title="title_add_step" onclick="addStepToActivity(this)" type="button">
+<button class="text-sm font-semibold text-slate-500 hover:text-indigo-700 px-3 py-1 rounded transition-colors flex items-center gap-1 hover:bg-slate-50" data-i18n-title="title_add_step" data-action="add-step" type="button">
 <span class="material-icons-round text-sm">
         add
        </span>
@@ -1308,7 +1316,7 @@ body.focus-mode .activity-group.focus-active { display: block; }
         Ajouter Activité
        </span>
 </button>
-<button class="text-sm font-semibold text-slate-500 hover:text-indigo-700 px-3 py-1 rounded transition-colors flex items-center gap-1 hover:bg-slate-50" onclick="addMomentToActivity(this)" title="Ajouter un moment" type="button">
+<button class="text-sm font-semibold text-slate-500 hover:text-indigo-700 px-3 py-1 rounded transition-colors flex items-center gap-1 hover:bg-slate-50" data-action="add-moment" title="Ajouter un moment" type="button">
 <span class="material-icons-round text-sm">add</span>
 <span>Ajouter moment</span>
 </button>
@@ -1347,11 +1355,11 @@ body.focus-mode .activity-group.focus-active { display: block; }
 </div>
 </div>
 </div>
-<button aria-expanded="false" class="no-print text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-i18n-title="title_toggle_description" onclick="toggleMomentDescription(this)" title="Afficher/Masquer la description" type="button"><span class="material-icons-round text-lg">description</span></button>
-<button aria-expanded="true" class="no-print text-slate-400 hover:text-slate-700 transition-colors" onclick="toggleMoment(this)" title="Replier / déplier ce moment" type="button">
+<button aria-expanded="false" class="no-print text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-i18n-title="title_toggle_description" data-action="toggle-moment-description" title="Afficher/Masquer la description" type="button"><span class="material-icons-round text-lg">description</span></button>
+<button aria-expanded="true" class="no-print text-slate-400 hover:text-slate-700 transition-colors" data-action="toggle-moment" title="Replier / déplier ce moment" type="button">
 <span class="material-icons-round text-lg rotate-icon-moment" style="transform: rotate(180deg);">expand_more</span>
 </button>
-<button class="no-print text-slate-400 hover:text-rose-600 transition-colors" onclick="trashMoment(this)" title="Supprimer ce moment" type="button">
+<button class="no-print text-slate-400 hover:text-rose-600 transition-colors" data-action="delete-moment" title="Supprimer ce moment" type="button">
 <span class="material-icons-round text-lg">delete_outline</span>
 </button>
 </div>
@@ -1419,7 +1427,7 @@ body.focus-mode .activity-group.focus-active { display: block; }
 </select>
 </div>
 <div class="flex items-center gap-0.5 no-print">
-<button class="text-slate-400 hover:text-indigo-500 p-0.5" data-i18n-title="title_toggle_panel" onclick="toggleStep(this)" title="Afficher/Masquer les paramètres">
+<button class="text-slate-400 hover:text-indigo-500 p-0.5" data-i18n-title="title_toggle_panel" data-action="toggle-step" title="Afficher/Masquer les paramètres">
 <span class="material-icons-round text-base rotate-icon">
         expand_more
        </span>
@@ -1557,7 +1565,7 @@ body.focus-mode .activity-group.focus-active { display: block; }
           Ce que les apprenants doivent faire
          </span>
 </label>
-<textarea class="step-input-tasks w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y leading-relaxed" data-i18n-placeholder="ph_tasks" placeholder="Décrivez les étapes, instructions et tâches..." rows="4"></textarea>
+<textarea class="step-input-tasks w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y leading-relaxed" data-i18n-placeholder="ph_tasks" placeholder="Décrivez les étapes, instructions et tâches..." rows="2"></textarea>
 </div>
 <div>
 <label class="compact-label flex items-center gap-1">
@@ -1576,6 +1584,62 @@ body.focus-mode .activity-group.focus-active { display: block; }
 </div>
 </template>
 <script>
+
+/* Global error handlers: prevent silent failures leading to inert UI. */
+(function () {
+  let notified = false;
+
+  function safeString(v) {
+    try {
+      if (v == null) return '';
+      if (typeof v === 'string') return v;
+      if (v instanceof Error) return v.message || String(v);
+      if (typeof v === 'object') return (v.message || v.reason || '') ? String(v.message || v.reason) : JSON.stringify(v);
+      return String(v);
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function notifyUser(title, detail) {
+    if (notified) return;
+    notified = true;
+
+    try {
+      const msg = [
+        title || 'Une erreur est survenue.',
+        detail ? ('\n\nDétail : ' + detail) : '',
+        '\n\nEssayez de recharger la page. Si le problème persiste, ouvrez la console (F12) pour copier les erreurs.'
+      ].join('');
+      // Minimal user feedback without altering the interface layout.
+      alert(msg);
+    } catch (_) {
+      // noop
+    }
+  }
+
+  window.addEventListener('error', function (event) {
+    try {
+      const err = event && event.error ? event.error : null;
+      const detail = err && err.stack ? err.stack : safeString(event && event.message);
+      console.error('[GlobalError]', event);
+      notifyUser('Erreur JavaScript détectée.', detail);
+    } catch (_) {
+      notifyUser('Erreur JavaScript détectée.');
+    }
+  });
+
+  window.addEventListener('unhandledrejection', function (event) {
+    try {
+      const reason = event ? event.reason : null;
+      const detail = reason && reason.stack ? reason.stack : safeString(reason);
+      console.error('[UnhandledRejection]', event);
+      notifyUser('Promesse rejetée sans gestion.', detail);
+    } catch (_) {
+      notifyUser('Promesse rejetée sans gestion.');
+    }
+  });
+})();
 
    const root = document.getElementById('activities-root');
         const emptyState = document.getElementById('empty-state');
@@ -1664,6 +1728,37 @@ body.focus-mode .activity-group.focus-active { display: block; }
                     safeAddOutcome();
                     break;
 
+                // Delegated handlers for dynamic (template) controls (replaces inline onclick)
+                case 'toggle-module-description':
+                    toggleDescription(btn);
+                    break;
+                case 'toggle-module':
+                    toggleActivity(btn);
+                    break;
+                case 'focus-module':
+                    toggleFocusModule(btn);
+                    break;
+                case 'add-step':
+                    addStepToActivity(btn);
+                    break;
+                case 'add-moment':
+                    addMomentToActivity(btn);
+                    break;
+
+                case 'toggle-moment-description':
+                    toggleMomentDescription(btn);
+                    break;
+                case 'toggle-moment':
+                    toggleMoment(btn);
+                    break;
+                case 'delete-moment':
+                    trashMoment(btn);
+                    break;
+
+                case 'toggle-step':
+                    toggleStep(btn);
+                    break;
+
                 default:
                     break;
             }
@@ -1719,9 +1814,73 @@ body.focus-mode .activity-group.focus-active { display: block; }
         .replace(/'/g, '&#39;');
 }
 
+function sanitizeTooltipHtml(unsafeHtml) {
+    // Allow a minimal, controlled subset of tags/attributes for tooltips.
+    // This prevents XSS even if a future change forgets to escape dynamic values.
+    const allowedTags = new Set(['STRONG', 'BR', 'SPAN']);
+    const allowedAttrs = new Set(['class']);
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(String(unsafeHtml ?? ''), 'text/html');
+
+    const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_ELEMENT, null);
+    const toRemove = [];
+    while (walker.nextNode()) {
+        const el = walker.currentNode;
+
+        if (!allowedTags.has(el.tagName)) {
+            toRemove.push(el);
+            continue;
+        }
+
+        // Remove disallowed attributes
+        [...el.attributes].forEach(attr => {
+            const name = attr.name.toLowerCase();
+            if (!allowedAttrs.has(name) || name.startsWith('on')) {
+                el.removeAttribute(attr.name);
+            }
+        });
+    }
+
+    // Remove disallowed elements (replace by their text to avoid losing meaning)
+    toRemove.forEach(el => {
+        const text = doc.createTextNode(el.textContent || '');
+        el.replaceWith(text);
+    });
+
+    return doc.body.innerHTML;
+}
+
+
+function sanitizeBasicHtml(unsafeHtml) {
+    // Generic sanitiser for controlled internal UI strings (e.g., i18n labels).
+    // Removes all attributes and keeps only simple formatting tags.
+    const allowedTags = new Set(['BR', 'STRONG', 'B', 'EM', 'I', 'U', 'SPAN']);
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(String(unsafeHtml ?? ''), 'text/html');
+
+    const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_ELEMENT, null);
+    const toRemove = [];
+    while (walker.nextNode()) {
+        const el = walker.currentNode;
+        if (!allowedTags.has(el.tagName)) {
+            toRemove.push(el);
+            continue;
+        }
+        // Remove all attributes (incl. style, href, on*, etc.)
+        [...el.attributes].forEach(attr => el.removeAttribute(attr.name));
+    }
+
+    toRemove.forEach(el => {
+        const textNode = doc.createTextNode(el.textContent || '');
+        el.replaceWith(textNode);
+    });
+
+    return doc.body.innerHTML;
+}
+
 function showTooltip(e, content, isHtml = false) {
     if (isHtml) {
-        tooltipEl.innerHTML = content;
+        tooltipEl.innerHTML = sanitizeTooltipHtml(content);
     } else {
         tooltipEl.textContent = content;
     }
@@ -2465,7 +2624,7 @@ function initSortableSteps(container) {
             const focusTitle = t.title_focus_module || 'Mode focus';
             const exitTitle = t.title_exit_focus || 'Quitter le mode focus';
 
-            document.querySelectorAll('button[onclick="toggleFocusModule(this)"]').forEach(btn => {
+            document.querySelectorAll('button[data-action="focus-module"]').forEach(btn => {
                 const icon = btn.querySelector('.focus-toggle-icon');
                 const moduleEl = btn.closest('.activity-group');
                 const active = document.body.classList.contains('focus-mode') && moduleEl && moduleEl.classList.contains('focus-active');
@@ -2611,7 +2770,11 @@ function initSortableSteps(container) {
             
             const dragHandle = document.createElement('div');
             dragHandle.className = "drag-handle-outcome drag-handle text-slate-300 hover:text-slate-500 cursor-grab mt-1 sm:mt-0";
-            dragHandle.innerHTML = '<span class="material-icons-round text-base">drag_indicator</span>';
+            // Safer than innerHTML: build icon node
+            const dhIcon = document.createElement('span');
+            dhIcon.className = "material-icons-round text-base";
+            dhIcon.textContent = "drag_indicator";
+            dragHandle.appendChild(dhIcon);
 
             
             const levelSelect = document.createElement('select');
@@ -2630,7 +2793,11 @@ function initSortableSteps(container) {
             const btn = document.createElement('button');
             btn.onclick = function() { this.closest('li').remove(); checkOutcomesEmpty(); };
             btn.className = "text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto";
-            btn.innerHTML = '<span class="material-icons-round text-sm">close</span>';
+            // Safer than innerHTML: build icon node
+            const closeIcon = document.createElement('span');
+            closeIcon.className = "material-icons-round text-sm";
+            closeIcon.textContent = "close";
+            btn.appendChild(closeIcon);
 
             const contentContainer = document.createElement('div');
             contentContainer.className = "flex flex-col sm:flex-row gap-1 flex-1 items-start sm:items-center w-full";
@@ -2684,6 +2851,8 @@ function initSortableSteps(container) {
 
             const exportProject = {
                 version: "1.8",
+                schemaVersion: 2,
+                exportedAt: new Date().toISOString(),
                 parametres: {
                     nom: document.getElementById('param-name').value,
                     theme: (document.getElementById('param-topic') ? document.getElementById('param-topic').value : ''),
@@ -2775,7 +2944,12 @@ function initSortableSteps(container) {
         }
 
 function saveProject() {
-            const exportProject = buildExportProjectData();
+            let exportProject = buildExportProjectData();
+            const __normSave = normaliseAndRepairProject(exportProject);
+            if (__normSave && __normSave.ok) {
+                if (__normSave.warnings && __normSave.warnings.length) console.warn('Save normalisation warnings:', __normSave.warnings);
+                exportProject = __normSave.data;
+            }
 
             const blob = new Blob([JSON.stringify(exportProject, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -2802,12 +2976,437 @@ function saveProject() {
             document.getElementById('load-file-input').click();
         }
 
+
+
+// -------------------------------
+// Schema versioning & migrations
+// -------------------------------
+const CURRENT_SCHEMA_VERSION = 2;
+
+function detectSchemaVersion(p) {
+    if (!p || typeof p !== 'object') return 0;
+    if (typeof p.schemaVersion === 'number' && Number.isFinite(p.schemaVersion)) return p.schemaVersion;
+    if (typeof p.schemaVersion === 'string') {
+        const n = parseInt(p.schemaVersion, 10);
+        if (Number.isFinite(n)) return n;
+    }
+    // Legacy exports used "version" (app version) and/or FR "parametres" without a schemaVersion.
+    return 1;
+}
+
+function mapLegacyGroupMode(value) {
+    if (value == null) return value;
+    const s = String(value).trim().toLowerCase();
+    if (!s) return value;
+
+    // Canonical values
+    if (s === 'class' || s === 'groups' || s === 'individual') return s;
+
+    // Common FR labels / variants
+    if (s.includes('classe') || s.includes('entier') || s.includes('groupe entier')) return 'class';
+    if (s.includes('sous') || (s.includes('groupe') && !s.includes('entier'))) return 'groups';
+    if (s.includes('individ')) return 'individual';
+
+    // Common EN labels
+    if (s.includes('whole') && s.includes('class')) return 'class';
+    if (s.includes('sub') && s.includes('group')) return 'groups';
+
+    return value;
+}
+
+function migrateProjectToCurrentSchema(project) {
+    // Returns { project, migrated:boolean, from:number, to:number }
+    const fromV = detectSchemaVersion(project);
+    let p = project;
+
+    if (!p || typeof p !== 'object') {
+        return { project, migrated: false, from: fromV, to: CURRENT_SCHEMA_VERSION };
+    }
+
+    // Already current (or newer): just normalise the marker.
+    if (fromV >= CURRENT_SCHEMA_VERSION) {
+        if (p.schemaVersion !== CURRENT_SCHEMA_VERSION) {
+            try { p.schemaVersion = CURRENT_SCHEMA_VERSION; } catch (_) {}
+        }
+        return { project: p, migrated: false, from: fromV, to: CURRENT_SCHEMA_VERSION };
+    }
+
+    // Clone shallowly to avoid mutating the original payload object reference (safer for debugging).
+    p = { ...p };
+
+    // v1 -> v2: add schemaVersion and unify keyParams where possible.
+    if (fromV <= 1) {
+        // Promote FR "parametres" to canonical "keyParams" (without removing parametres to keep backward compatibility)
+        if (!p.keyParams && p.parametres && typeof p.parametres === 'object') {
+            const pr = p.parametres;
+            const outcomes = Array.isArray(pr.resultats) ? pr.resultats.map(o => ({
+                text: o?.texte ?? o?.text ?? '',
+                level: o?.niveau ?? o?.level ?? '',
+                sub: o?.sousNiveau ?? o?.sub ?? ''
+            })) : [];
+            p.keyParams = {
+                name: pr.nom ?? '',
+                topic: pr.theme ?? '',
+                authors: pr.auteurs ?? '',
+                level: pr.niveau ?? 'unspecified',
+                targetAudience: pr.publicCible ?? '',
+                prerequisites: pr.prerequis ?? '',
+                mode: pr.modalite ?? '',
+                cohortSize: pr.tailleCohorte ?? 30,
+                learningTimeVal: pr.dureeApprentissageValeur ?? '',
+                learningTimeUnit: pr.dureeApprentissageUnite ?? 'mins',
+                designedTimeVal: pr.dureeConcueValeur ?? '',
+                // designedTimeUnit intentionally synced with learning unit in UI
+                aims: pr.objectifs ?? '',
+                outcomesText: pr.resultatsTexte ?? '',
+                description: pr.description ?? '',
+                outcomes
+            };
+        }
+
+        // Map legacy grouping values inside steps (both FR + EN keys)
+        const visitSteps = (container) => {
+            if (!container || typeof container !== 'object') return;
+            const steps = Array.isArray(container.steps) ? container.steps
+                : (Array.isArray(container.activites) ? container.activites
+                    : (Array.isArray(container.activities) ? container.activities : null));
+            if (!steps) return;
+            steps.forEach(st => {
+                if (!st || typeof st !== 'object') return;
+                if (st.groupMode != null) st.groupMode = mapLegacyGroupMode(st.groupMode);
+                if (st.regroupement != null) st.regroupement = mapLegacyGroupMode(st.regroupement);
+            });
+        };
+
+        const modules = Array.isArray(p.activities) ? p.activities
+            : (Array.isArray(p.modules) ? p.modules : null);
+
+        if (modules) {
+            modules.forEach(mod => {
+                if (!mod || typeof mod !== 'object') return;
+                // Steps directly under module
+                visitSteps(mod);
+                // Steps under moments
+                const moments = Array.isArray(mod.moments) ? mod.moments : null;
+                if (moments) moments.forEach(m => visitSteps(m));
+            });
+        }
+    }
+
+    p.schemaVersion = CURRENT_SCHEMA_VERSION;
+    if (!p.exportedAt) p.exportedAt = new Date().toISOString();
+
+    return { project: p, migrated: true, from: fromV, to: CURRENT_SCHEMA_VERSION };
+}
+
+        function validateAndNormaliseProjectPayload(payload) {
+            // Returns { ok, data, warnings[] }
+            const warnings = [];
+            if (!payload || typeof payload !== 'object') {
+                return { ok: false, data: null, warnings: ['invalid_payload'] };
+            }
+
+            // Unwrap common wrappers (legacy / exported shapes)
+            let p = payload.project || payload.data || payload.conception || payload.learningDesign || payload;
+
+            if (!p || typeof p !== 'object') {
+                return { ok: false, data: null, warnings: ['invalid_project_root'] };
+            }
+
+            // Migrate legacy payloads to the current schema (non-breaking: keeps legacy keys where present)
+            const __mig = migrateProjectToCurrentSchema(p);
+            if (__mig && __mig.project) {
+                if (__mig.migrated) warnings.push('migrated_schema_' + __mig.from + '_to_' + __mig.to);
+                p = __mig.project;
+            }
+
+            // Determine where activities/modules live
+            const rawModules = Array.isArray(p.activities) ? p.activities
+                : (Array.isArray(p.modules) ? p.modules
+                    : (Array.isArray(p) ? p : []));
+
+            // Helper coercions
+            const asStr = (v) => (v == null ? '' : String(v));
+            const asNumStr = (v) => {
+                if (v == null || v === '') return '';
+                const n = Number(v);
+                return Number.isFinite(n) ? String(n) : '';
+            };
+
+            // Units: keep as-is (string of seconds or key) and let existing mapUnitToSecs handle later.
+            const normStep = (s) => ({
+                title: asStr(s?.title ?? s?.titre ?? ''),
+                type: asStr(s?.type ?? ''),
+                duration: asNumStr(s?.duration ?? s?.duree ?? ''),
+                unit: asStr(s?.unit ?? s?.unite ?? ''),
+                groupMode: asStr(s?.groupMode ?? s?.regroupement ?? 'class'),
+                groupCount: asNumStr(s?.groupCount ?? s?.nombreGroupes ?? ''),
+                groupSize: asNumStr(s?.groupSize ?? s?.tailleGroupe ?? ''),
+                trainer: asStr(s?.trainer ?? s?.formateur ?? ''),
+                place: asStr(s?.place ?? s?.lieu ?? ''),
+                time: asStr(s?.time ?? s?.temps ?? ''),
+                objective: asStr(s?.objective ?? s?.objectifActivite ?? ''),
+                tasks: asStr(s?.tasks ?? s?.aFaire ?? ''),
+                notes: asStr(s?.notes ?? '')
+            });
+
+            const defaultMomentUnit = (document.getElementById('param-learning-unit')?.value || 'mins');
+            const normMoment = (m) => ({
+                title: asStr(m?.title ?? m?.titre ?? ''),
+                description: asStr(m?.description ?? ''),
+                targetTime: asNumStr(m?.targetTime ?? m?.dureeCible ?? ''),
+                targetUnit: asStr(m?.targetUnit ?? m?.uniteDureeCible ?? defaultMomentUnit),
+                steps: Array.isArray(m?.steps) ? m.steps.map(normStep)
+                    : (Array.isArray(m?.activites) ? m.activites.map(normStep) : [])
+            });
+
+            const normModule = (a) => ({
+                title: asStr(a?.title ?? a?.titre ?? ''),
+                description: asStr(a?.description ?? ''),
+                targetTime: asNumStr(a?.targetTime ?? a?.dureeCible ?? ''),
+                targetUnit: asStr(a?.targetUnit ?? a?.uniteDureeCible ?? '60'),
+                moments: Array.isArray(a?.moments) ? a.moments.map(normMoment) : [],
+                steps: Array.isArray(a?.steps) ? a.steps.map(normStep)
+                    : (Array.isArray(a?.activites) ? a.activites.map(normStep) : [])
+            });
+
+            const normalised = { ...p };
+            normalised.activities = rawModules.map(normModule);
+
+            // Ensure key params shape exists (loadProjectFromObject handles both, but we keep consistent)
+            if (!normalised.keyParams && !normalised.parametres) {
+                normalised.keyParams = normalised.keyParams || {};
+            }
+
+            // If no modules, keep empty array to allow default module creation downstream
+            if (!Array.isArray(normalised.activities)) normalised.activities = [];
+
+            // Basic sanity: if any module has neither moments nor steps, keep as-is; renderer will create defaults
+            return { ok: true, data: normalised, warnings };
+        }
+
+// ---------------------------------------
+// Normalisation & validation (auto-repair)
+// ---------------------------------------
+function _genId(prefix="id") {
+    // Prefer crypto for uniqueness; fallback to timestamp+random
+    try {
+        if (window.crypto && crypto.randomUUID) return `${prefix}_${crypto.randomUUID()}`;
+    } catch (e) {}
+    return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+}
+function _asText(v) {
+    if (v == null) return "";
+    return String(v);
+}
+function _trimText(v, maxLen) {
+    let s = _asText(v).replace(/\r\n/g, "\n");
+    // Normalise “undefined” / “null” artefacts that may appear in legacy exports
+    if (s === "undefined" || s === "null") s = "";
+    s = s.trim();
+    if (typeof maxLen === "number" && maxLen > 0 && s.length > maxLen) s = s.slice(0, maxLen);
+    return s;
+}
+function _asFiniteNumber(v, fallback=0) {
+    const n = (typeof v === "number") ? v : Number(String(v).replace(",", "."));
+    return Number.isFinite(n) ? n : fallback;
+}
+function _clampInt(v, min=0, max=Number.MAX_SAFE_INTEGER, fallback=0) {
+    const n = Math.round(_asFiniteNumber(v, fallback));
+    return Math.min(max, Math.max(min, n));
+}
+function _normaliseUnit(u, fallback="mins") {
+    const s = _trimText(u).toLowerCase();
+    if (["secs","sec","s","seconds","second"].includes(s)) return "secs";
+    if (["mins","min","m","minutes","minute"].includes(s)) return "mins";
+    if (["hrs","hr","h","hours","hour"].includes(s)) return "hrs";
+    return fallback;
+}
+function normaliseAndRepairProject(project) {
+    const warnings = [];
+    if (!project || typeof project !== "object") {
+        return { ok: false, warnings: ["Project is not an object."], data: { parametres: {}, activities: [] } };
+    }
+
+    // Support wrapper shapes but keep the internal structure
+    project = project.project || project.data || project.conception || project.learningDesign || project;
+
+    // Ensure param blocks exist (keep both if already present)
+    if (!project.parametres || typeof project.parametres !== "object") project.parametres = {};
+    if (!project.keyParams || typeof project.keyParams !== "object") project.keyParams = project.keyParams || {};
+
+    const p = project.parametres;
+
+    // Core text fields
+    p.titre = _trimText(p.titre, 200);
+    p.description = _trimText(p.description, 5000);
+    p.objectifs = _trimText(p.objectifs, 5000);
+    p.resultatsTexte = _trimText(p.resultatsTexte, 10000);
+
+    // Outcomes list (keep shape)
+    if (!Array.isArray(p.resultats)) p.resultats = [];
+    p.resultats = p.resultats
+        .filter(x => x && typeof x === "object")
+        .map(x => ({
+            id: x.id || _genId("outcome"),
+            texte: _trimText(x.texte ?? x.text, 800),
+            niveau: _trimText(x.niveau ?? x.level, 60),
+            sousNiveau: _trimText(x.sousNiveau ?? x.sub, 60)
+        }))
+        .filter(x => x.texte.length > 0);
+
+    // Durations & units at project level
+    p.dureeApprentissageUnite = _normaliseUnit(p.dureeApprentissageUnite, "mins");
+    p.dureeConcueUnite = _normaliseUnit(p.dureeConcueUnite ?? p.dureeApprentissageUnite, p.dureeApprentissageUnite);
+
+    // Keep original string fields, but ensure they are sane numeric strings
+    const lt = _trimText(p.dureeApprentissageValeur, 20);
+    const dt = _trimText(p.dureeConcueValeur, 20);
+    if (lt && !Number.isFinite(Number(lt.replace(",", ".")))) {
+        warnings.push("Invalid learning time value; cleared.");
+        p.dureeApprentissageValeur = "";
+    } else {
+        p.dureeApprentissageValeur = lt;
+    }
+    if (dt && !Number.isFinite(Number(dt.replace(",", ".")))) {
+        warnings.push("Invalid designed time value; cleared.");
+        p.dureeConcueValeur = "";
+    } else {
+        p.dureeConcueValeur = dt;
+    }
+
+    // Activities (modules)
+    if (!Array.isArray(project.activities)) project.activities = Array.isArray(project.modules) ? project.modules : [];
+    if (!Array.isArray(project.activities)) project.activities = [];
+
+    const seenIds = new Set();
+
+    const ensureUniqueId = (obj, prefix) => {
+        if (!obj || typeof obj !== "object") return;
+        if (!obj.id) obj.id = _genId(prefix);
+        while (seenIds.has(obj.id)) obj.id = _genId(prefix);
+        seenIds.add(obj.id);
+    };
+
+    project.activities = project.activities
+        .filter(mod => mod && typeof mod === "object")
+        .map((mod, mi) => {
+            ensureUniqueId(mod, "module");
+            mod.title = _trimText(mod.title ?? mod.titre ?? `Module ${mi+1}`, 200);
+
+            // Module target time (keep string if UI expects string)
+            mod.targetTime = _trimText(mod.targetTime ?? mod.tempsCible ?? "", 20);
+            mod.targetUnit = _normaliseUnit(mod.targetUnit ?? mod.uniteCible ?? p.dureeApprentissageUnite, p.dureeApprentissageUnite);
+
+            // Moments
+            if (!Array.isArray(mod.moments)) mod.moments = Array.isArray(mod.moments) ? mod.moments : [];
+            if (!Array.isArray(mod.moments)) mod.moments = [];
+
+            mod.moments = mod.moments
+                .filter(m => m && typeof m === "object")
+                .map((m, mj) => {
+                    ensureUniqueId(m, "moment");
+                    m.title = _trimText(m.title ?? m.titre ?? `Moment ${mj+1}`, 200);
+                    m.type = _trimText(m.type ?? "", 40);
+
+                    // Moment duration in seconds (canonical)
+                    if (m.targetTimeSec == null) {
+                        // Legacy might have targetTime + unit; best-effort convert
+                        const n = _asFiniteNumber(m.targetTime ?? m.tempsCible ?? "", NaN);
+                        if (Number.isFinite(n)) {
+                            const unit = _normaliseUnit(m.targetUnit ?? m.uniteCible ?? mod.targetUnit ?? p.dureeApprentissageUnite, "mins");
+                            const sec = (unit === "secs") ? n : (unit === "hrs" ? n*3600 : n*60);
+                            m.targetTimeSec = _clampInt(sec, 0, 24*3600*365, 0);
+                        } else {
+                            m.targetTimeSec = 0;
+                        }
+                    } else {
+                        m.targetTimeSec = _clampInt(m.targetTimeSec, 0, 24*3600*365, 0);
+                    }
+
+                    // Steps / activities inside moment
+                    if (!Array.isArray(m.steps)) {
+                        m.steps = Array.isArray(m.activites) ? m.activites : (Array.isArray(m.activities) ? m.activities : []);
+                    }
+                    if (!Array.isArray(m.steps)) m.steps = [];
+
+                    m.steps = m.steps
+                        .filter(s => s && typeof s === "object")
+                        .map((s, si) => {
+                            ensureUniqueId(s, "step");
+                            s.title = _trimText(s.title ?? s.titre ?? `Activité ${si+1}`, 200);
+                            s.type = _trimText(s.type ?? "", 50);
+
+                            // Grouping (canonical)
+                            if (s.groupMode != null) s.groupMode = mapLegacyGroupMode(s.groupMode);
+                            if (s.regroupement != null) s.regroupement = mapLegacyGroupMode(s.regroupement);
+                            s.groupMode = _trimText(s.groupMode ?? s.regroupement ?? "class", 20) || "class";
+
+                            // Numeric fields
+                            s.groupCount = _trimText(s.groupCount ?? s.nombreGroupes ?? "", 20);
+                            s.groupSize = _trimText(s.groupSize ?? s.tailleGroupe ?? "", 20);
+
+                            // Text fields
+                            s.objective = _trimText(s.objective ?? s.objectifActivite ?? "", 5000);
+                            s.tasks = _trimText(s.tasks ?? s.aFaire ?? "", 8000);
+                            s.notes = _trimText(s.notes ?? "", 8000);
+                            s.trainer = _trimText(s.trainer ?? s.formateur ?? "", 200);
+                            s.place = _trimText(s.place ?? s.lieu ?? "", 200);
+                            s.time = _trimText(s.time ?? s.temps ?? "", 50);
+
+                            return s;
+                        });
+
+                    return m;
+                });
+
+            return mod;
+        });
+
+    // Mirror a few key params into keyParams for compatibility, without overwriting non-empty values there
+    const kp = project.keyParams;
+    const mirror = (k, v) => {
+        if (kp[k] == null || String(kp[k]).trim() === "") kp[k] = v;
+    };
+    mirror("title", p.titre);
+    mirror("description", p.description);
+    mirror("aims", p.objectifs);
+    mirror("outcomesText", p.resultatsTexte);
+    mirror("learningTimeUnit", p.dureeApprentissageUnite);
+    mirror("designedTimeUnit", p.dureeConcueUnite);
+    mirror("learningTimeVal", p.dureeApprentissageValeur);
+    mirror("designedTimeVal", p.dureeConcueValeur);
+
+    return { ok: true, warnings, data: project };
+}
+
+
+
+
         
         function loadProjectFromObject(project) {
             // Support multiple saved-file shapes (legacy / FR / wrapper objects)
             if (project && typeof project === 'object') {
                 project = project.project || project.data || project.conception || project.learningDesign || project;
+            const __checked = validateAndNormaliseProjectPayload(project);
+            if (!__checked.ok) {
+                alert("Erreur : impossible de charger ce fichier de sauvegarde. Vérifiez qu’il s’agit bien d’un fichier JSON exporté par cet outil.");
+                return;
             }
+            if (__checked.warnings && __checked.warnings.length) {
+                console.warn('Project validation warnings:', __checked.warnings);
+            }
+            project = __checked.data;
+            
+            // Auto-repair / deep normalisation (IDs, durations, empty fields)
+            const __norm2 = normaliseAndRepairProject(project);
+            if (__norm2 && __norm2.ok) {
+                if (__norm2.warnings && __norm2.warnings.length) console.warn('Normalisation warnings:', __norm2.warnings);
+                project = __norm2.data;
+            } else {
+                console.warn('Normalisation failed; continuing with validated payload.');
+            }
+}
             const rootEl = document.getElementById('activities-root') || root;
             if (rootEl) rootEl.innerHTML = '';
 
@@ -3016,7 +3615,7 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
         function applyTranslations() {
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
-                if (translations[currentLang][key]) el.innerHTML = translations[currentLang][key];
+                if (translations[currentLang][key]) el.innerHTML = sanitizeBasicHtml(translations[currentLang][key]);
             });
             document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
                 const key = el.getAttribute('data-i18n-placeholder');
@@ -3677,13 +4276,43 @@ function formatTimelineDuration(secs) {
         }
 
 // Debounced wrapper for heavy timeline/canvas recomputation (used by input events)
+// Micro-optimisation: adapt debounce delay to the type of field being edited to avoid rebuilding heavy timelines while typing titles/long text.
 let __updateStatsDebounceTimer = null;
+let __lastUpdateStatsTriggerKind = 'default'; // 'timing' | 'title' | 'default'
+
+function __classifyUpdateStatsTriggerTarget(el) {
+  if (!el) return 'default';
+  const t = (el.tagName || '').toLowerCase();
+  const cls = (el.classList || { contains: () => false });
+
+  // Timing / duration drivers (need quick feedback)
+  if (cls.contains('duration-input') || cls.contains('activity-target-time') || cls.contains('moment-target-time')) return 'timing';
+  if (el.id === 'param-learning-val' || el.id === 'global-class-size') return 'timing';
+
+  // Title edits do not affect totals materially but currently trigger updateStats; delay more to reduce needless rebuilds
+  if (cls.contains('activity-title')) return 'title';
+
+  // Default
+  if (t === 'select' || t === 'input') return 'default';
+  return 'default';
+}
+
+// Track last user edit kind (capture phase to run before inline handlers)
+document.addEventListener('input', (e) => {
+  try { __lastUpdateStatsTriggerKind = __classifyUpdateStatsTriggerTarget(e.target); } catch (_) {}
+}, true);
+
 function updateStatsDebounced() {
   if (__updateStatsDebounceTimer) clearTimeout(__updateStatsDebounceTimer);
+
+  // Adaptive delays: keep duration feedback responsive, but avoid heavy recomputation while typing titles.
+  const kind = __lastUpdateStatsTriggerKind || 'default';
+  const delay = (kind === 'timing') ? 200 : (kind === 'title') ? 800 : 300;
+
   __updateStatsDebounceTimer = setTimeout(() => {
     __updateStatsDebounceTimer = null;
     updateStats();
-  }, 300);
+  }, delay);
 }
 
 function updateStats() {
@@ -4009,7 +4638,7 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
                     const iconsEl = document.createElement('div');
                     iconsEl.className = 'timeline-alert-icons';
                     if (plannedSecs > 0 && designedSecs !== plannedSecs) {
-                        iconsEl.innerText = (designedSecs < plannedSecs) ? 'Trop court !' : 'Trop long !';
+                        iconsEl.style.display = 'none';
                     } else {
                         iconsEl.style.display = 'none';
                     }
@@ -4198,183 +4827,534 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
             updateFocusButtons();
         }
         
+        const EXPORT_ERROR_MSG = {
+            fr: "Une erreur est survenue lors de l’export. Consultez la console pour le détail.",
+            en: "An error occurred during export. Please check the console for details."
+        };
+
+        function runExport(fn) {
+            try {
+                fn();
+            } catch (err) {
+                console.error(err);
+                alert(EXPORT_ERROR_MSG[currentLang] || EXPORT_ERROR_MSG.fr);
+            }
+        }
+
         function handleExport(select) {
             const value = select.value;
             select.value = ""; // Reset dropdown
-            
+
             if (value === 'markdown') {
-                exportMarkdown();
+                runExport(exportMarkdown);
             } else if (value === 'pdf') {
                 window.print();
             } else if (value === 'richtext') {
-                exportRichText();
+                runExport(exportRichText);
             } else if (value === 'rtf') {
-                exportRTF();
+                runExport(exportRTF);
             } else if (value === 'csv') {
-                exportCSV();
+                runExport(exportCSV);
+            } else if (value === 'txt') {
+                runExport(exportTXT);
+            } else if (value === 'docx') {
+                runExport(exportDOCX);
             }
         }
-        
 
+function buildExportModel() {
+    // Centralised export model derived from the same source as project save (single point of truth).
+    const t = translations[currentLang] || translations.fr;
+    const project = buildExportProjectData();
 
-        function exportCSV() {
-            // CSV export: modules, moments and activities (activity cards) only.
-            // Includes module/moment descriptions and all activity dropdowns + text fields (objectif/tâches/notes).
-            const t = translations[currentLang] || translations.fr;
+    const asStr = (v) => (v == null ? '' : String(v));
+    const asNum = (v) => {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+    };
 
-            const lines = [];
-            const header = [
-                'Module #',
-                'Module titre',
-                'Module description',
-                'Module durée cible',
-                'Moment #',
-                'Moment titre',
-                'Moment description',
-                'Moment durée cible',
-                'Activité #',
-                'Activité titre',
-                'Objectif',
-                'Tâches',
-                'Notes',
-                "Type d'apprentissage",
-                'Regroupement',
-                'Taille groupe',
-                'Détails regroupement',
-                'Lieu',
-                'Temps',
-                'Présence formateur',
-                'Durée (min)'
-            ];
-            lines.push(header);
+    const unitLabelFromSecs = (secs) => {
+        // For XLSX/TXT exports we use the visible labels from the UI options when possible.
+        const map = {
+            60: t.unit_mins || 'min',
+            3600: t.unit_hours || 'Heures',
+            86400: t.unit_days || 'Jours',
+            604800: t.unit_weeks || 'Semaines',
+            2592000: t.unit_months || 'Mois'
+        };
+        const n = Number(secs);
+        return map[n] || asStr(secs);
+    };
 
-            const esc = (v) => {
-                const s = (v === null || v === undefined) ? '' : String(v);
-                const needs = /[",\n\r]/.test(s);
-                const q = s.replace(/"/g, '""');
-                return needs ? `"${q}"` : q;
-            };
+    const fmtTarget = (val, unitSecsOrKey) => {
+        const v = asStr(val).trim();
+        if (!v) return '';
+        const unitLabel = unitLabelFromSecs(unitSecsOrKey);
+        return `${v} ${unitLabel}`.trim();
+    };
 
-            const fmtTarget = (timeEl, unitEl) => {
-                const v = (timeEl?.value || '').toString().trim();
-                const u = unitEl?.selectedOptions?.[0]?.innerText || '';
-                if (!v) return '';
-                return `${v} ${u}`.trim();
-            };
+    const safeTypeLabel = (typeKey) => {
+        const key = `type_${typeKey}`;
+        return (t && t[key]) ? t[key] : asStr(typeKey);
+    };
 
-            const getSelectedText = (selectEl) => {
-                const opt = selectEl && selectEl.selectedOptions ? selectEl.selectedOptions[0] : null;
-                return opt ? (opt.innerText || opt.textContent || '').trim() : '';
-            };
+    const safeOptLabel = (prefix, key, fallback) => {
+        const k = `${prefix}_${key}`;
+        return (t && t[k]) ? t[k] : (fallback || asStr(key));
+    };
 
-            const getGroupingText = (stepEl) => {
-                const modeEl = stepEl.querySelector('.step-group-mode');
-                const modeTxt = getSelectedText(modeEl);
-                const modeVal = modeEl ? modeEl.value : '';
-                const sizeVal = (stepEl.querySelector('.step-group-size')?.value || '').toString().trim();
-                const detailsVal = (stepEl.querySelector('.step-group-details')?.value || '').toString().trim();
-                let txt = modeTxt;
-                if (modeVal === 'groups' && sizeVal) txt = `${modeTxt} (${sizeVal})`;
-                if (detailsVal) txt = txt ? `${txt} — ${detailsVal}` : detailsVal;
-                return { txt, sizeVal, detailsVal };
-            };
+    const modules = (project.modules || []).map((m) => {
+        const moments = (m.moments || []).map((mo) => ({
+            title: asStr(mo.titre),
+            description: asStr(mo.description),
+            target: fmtTarget(mo.dureeCible, mo.uniteDureeCible),
+            targetRaw: { value: asStr(mo.dureeCible), unit: asStr(mo.uniteDureeCible) },
+            activities: (mo.activites || []).map((a) => ({
+                title: asStr(a.titre),
+                objective: asStr(a.objectifActivite),
+                tasks: asStr(a.aFaire),
+                notes: asStr(a.notes),
+                typeKey: asStr(a.type),
+                typeLabel: safeTypeLabel(asStr(a.type)),
+                groupingKey: asStr(a.regroupement),
+                groupingLabel: safeOptLabel('opt', (a.regroupement === 'class' ? 'whole_class' : a.regroupement === 'groups' ? 'groups' : a.regroupement === 'individual' ? 'individual' : a.regroupement), asStr(a.regroupement)),
+                groupCount: asStr(a.nombreGroupes),
+                groupSize: asStr(a.tailleGroupe),
+                trainerKey: asStr(a.formateur),
+                placeKey: asStr(a.lieu),
+                timeKey: asStr(a.temps),
+                trainerLabel: safeOptLabel('opt', asStr(a.formateur), asStr(a.formateur)),
+                placeLabel: safeOptLabel('opt', asStr(a.lieu), asStr(a.lieu)),
+                timeLabel: safeOptLabel('opt', asStr(a.temps), asStr(a.temps)),
+                durationValue: asStr(a.duree),
+                durationUnitSecs: asStr(a.unite),
+                durationLabel: `${asStr(a.duree)} ${unitLabelFromSecs(a.unite)}`.trim(),
+                durationMinutes: Math.round((asNum(a.duree) * asNum(a.unite) / 60) * 100) / 100
+            }))
+        }));
 
-            const getStepMinutes = (stepEl) => {
-                const v = parseFloat(stepEl.querySelector('.duration-input')?.value || 0);
-                const unitSecs = parseFloat(stepEl.querySelector('.duration-unit')?.value || 60);
-                const secs = (Number.isFinite(v) ? v : 0) * (Number.isFinite(unitSecs) ? unitSecs : 60);
-                return Math.round((secs / 60) * 100) / 100;
-            };
+        return {
+            title: asStr(m.titre),
+            description: asStr(m.description),
+            target: fmtTarget(m.dureeCible, m.uniteDureeCible),
+            targetRaw: { value: asStr(m.dureeCible), unit: asStr(m.uniteDureeCible) },
+            moments
+        };
+    });
 
-            let moduleIdx = 0;
-            document.querySelectorAll('.activity-group').forEach((moduleEl) => {
-                moduleIdx += 1;
-                const moduleTitle = (moduleEl.querySelector('.activity-title')?.value || '').trim();
-                const moduleDesc = (moduleEl.querySelector('.activity-description')?.value || '').trim();
-                const moduleTarget = fmtTarget(moduleEl.querySelector('.activity-target-time'), moduleEl.querySelector('.activity-target-unit'));
+    const meta = {
+        courseName: asStr(project.parametres?.nom),
+        topic: asStr(project.parametres?.theme),
+        authors: asStr(project.parametres?.auteurs),
+        level: asStr(project.parametres?.niveau),
+        targetAudience: asStr(project.parametres?.publicCible),
+        prerequisites: asStr(project.parametres?.prerequis),
+        mode: asStr(project.parametres?.modalite),
+        cohortSize: asStr(project.parametres?.tailleCohorte),
+        learningTime: `${asStr(project.parametres?.dureeApprentissageValeur)} ${asStr(project.parametres?.dureeApprentissageUnite)}`.trim(),
+        designedTime: `${asStr(project.parametres?.dureeConcueValeur)} ${asStr(project.parametres?.dureeConcueUnite)}`.trim(),
+        aims: asStr(project.parametres?.objectifs),
+        outcomesText: asStr(project.parametres?.resultatsTexte),
+        description: asStr(project.parametres?.description),
+        generatedOn: new Date().toISOString().slice(0, 10)
+    };
 
-                const moments = moduleEl.querySelectorAll('.moment-group');
-                if (moments && moments.length) {
-                    let momentIdx = 0;
-                    moments.forEach((momentEl) => {
-                        momentIdx += 1;
-                        const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
-                        const momentDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
-                        const momentTarget = fmtTarget(momentEl.querySelector('.moment-target-time'), momentEl.querySelector('.moment-target-unit'));
+    return { meta, modules };
+}
 
-                        const steps = momentEl.querySelectorAll('.step-card');
-                        let activityIdx = 0;
+function buildTabularExportRows(model) {
+    const headers = [
+        "Module #",
+        "Module title",
+        "Module description",
+        "Module target duration",
+        "Moment #",
+        "Moment title",
+        "Moment description",
+        "Moment target duration",
+        "Activity #",
+        "Activity title",
+        "Objective",
+        "Learner tasks",
+        "Notes",
+        "Learning type",
+        "Grouping",
+        "Group size",
+        "Group details",
+        "Place",
+        "Time",
+        "Trainer",
+        "Duration (minutes)"
+    ];
 
-                        if (steps && steps.length) {
-                            steps.forEach((stepEl) => {
-                                activityIdx += 1;
-                                const stepTitle = (stepEl.querySelector('.step-input-title')?.value || '').trim();
-                                const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
-                                const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
-                                const notes = (stepEl.querySelector('.step-input-notes')?.value || '').trim();
+    const rows = [headers];
 
-                                const typeTxt = getSelectedText(stepEl.querySelector('.learning-type-select'));
-                                const placeTxt = getSelectedText(stepEl.querySelector('.place-select'));
-                                const timeTxt = getSelectedText(stepEl.querySelector('.time-select'));
-                                const trainerTxt = getSelectedText(stepEl.querySelector('.trainer-select'));
+    const safe = (v) => (v == null ? '' : String(v));
 
-                                const grouping = getGroupingText(stepEl);
-                                const mins = getStepMinutes(stepEl);
+    model.modules.forEach((mod, mi) => {
+        const moduleIdx = mi + 1;
 
-                                lines.push([
-                                    moduleIdx,
-                                    moduleTitle,
-                                    moduleDesc,
-                                    moduleTarget,
-                                    momentIdx,
-                                    momentTitle,
-                                    momentDesc,
-                                    momentTarget,
-                                    activityIdx,
-                                    stepTitle,
-                                    objective,
-                                    tasks,
-                                    notes,
-                                    typeTxt,
-                                    grouping.txt,
-                                    grouping.sizeVal,
-                                    grouping.detailsVal,
-                                    placeTxt,
-                                    timeTxt,
-                                    trainerTxt,
-                                    mins
-                                ]);
-                            });
-                        } else {
-                            // moment with no activities
-                            lines.push([
-                                moduleIdx, moduleTitle, moduleDesc, moduleTarget,
-                                momentIdx, momentTitle, momentDesc, momentTarget,
-                                '', '', '', '', '', '', '', '', '', '', '', '', ''
-                            ]);
-                        }
+        if (mod.moments && mod.moments.length) {
+            mod.moments.forEach((mom, mj) => {
+                const momentIdx = mj + 1;
+
+                if (mom.activities && mom.activities.length) {
+                    mom.activities.forEach((act, ai) => {
+                        rows.push([
+                            moduleIdx,
+                            safe(mod.title),
+                            safe(mod.description),
+                            safe(mod.target),
+                            momentIdx,
+                            safe(mom.title),
+                            safe(mom.description),
+                            safe(mom.target),
+                            ai + 1,
+                            safe(act.title),
+                            safe(act.objective),
+                            safe(act.tasks),
+                            safe(act.notes),
+                            safe(act.typeLabel),
+                            safe(act.groupingLabel),
+                            safe(act.groupSize),
+                            safe(act.groupCount),
+                            safe(act.placeLabel),
+                            safe(act.timeLabel),
+                            safe(act.trainerLabel),
+                            safe(act.durationMinutes)
+                        ]);
                     });
                 } else {
-                    // module with no moments
-                    lines.push([moduleIdx, moduleTitle, moduleDesc, moduleTarget, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+                    rows.push([moduleIdx, safe(mod.title), safe(mod.description), safe(mod.target), momentIdx, safe(mom.title), safe(mom.description), safe(mom.target), '', '', '', '', '', '', '', '', '', '', '', '', '']);
                 }
             });
+        } else {
+            rows.push([moduleIdx, safe(mod.title), safe(mod.description), safe(mod.target), '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+        }
+    });
 
-            const csv = lines.map((row) => row.map(esc).join(',')).join('\r\n');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `learning-design_${new Date().toISOString().slice(0,10)}.csv`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 500);
+    return rows;
+}
+
+
+
+
+function exportTXT() {
+    // Text export (.txt): tab-separated, derived from the same model as the Excel export.
+    const model = buildExportModel();
+    const rows = buildTabularExportRows(model);
+
+    const sanitise = (s) => (s ?? '').toString().replace(/\r\n|\r|\n/g, '\\n').replace(/\t/g, '    ');
+    const txt = rows.map(r => r.map(sanitise).join('\t')).join('\r\n');
+
+    const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `learning-design_${new Date().toISOString().slice(0,10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 500);
+}
+
+function exportDOCX() {
+    if (!window.docx || !window.docx.Document) {
+        alert((currentLang === 'en') ? 'Word export library is not available.' : 'La bibliothèque d’export Word n’est pas disponible.');
+        return;
+    }
+
+    const model = buildExportModel();
+    const { Document, Packer, Paragraph, HeadingLevel, TextRun } = window.docx;
+
+    const safe = (s) => (s ?? '').toString().trim();
+    const lines = (s) => safe(s).split(/\r\n|\r|\n/).filter(Boolean);
+
+    const children = [];
+    children.push(new Paragraph({
+        text: `Export (Word) — ${model.meta.generatedOn}`,
+        heading: HeadingLevel.TITLE
+    }));
+
+    const addMetaLine = (label, value) => {
+        const v = safe(value);
+        if (!v) return;
+        children.push(new Paragraph({
+            children: [new TextRun({ text: `${label} : `, bold: true }), new TextRun(v)]
+        }));
+    };
+
+    addMetaLine('Nom de la formation', model.meta.courseName);
+    addMetaLine('Auteurs', model.meta.authors);
+    addMetaLine('Thème', model.meta.topic);
+    addMetaLine('Niveau', model.meta.level);
+    addMetaLine('Modalité', model.meta.mode);
+    addMetaLine('Taille cohorte', model.meta.cohortSize);
+    if (model.meta.learningTime) addMetaLine('Temps apprentissage', model.meta.learningTime);
+    if (model.meta.designedTime) addMetaLine('Temps conçu', model.meta.designedTime);
+
+    if (safe(model.meta.description)) {
+        children.push(new Paragraph({ text: '' }));
+        children.push(new Paragraph({ text: 'Description', heading: HeadingLevel.HEADING_1 }));
+        lines(model.meta.description).forEach(l => children.push(new Paragraph({ text: l })));
+    }
+
+    if (safe(model.meta.targetAudience)) {
+        children.push(new Paragraph({ text: '' }));
+        children.push(new Paragraph({ text: 'Public cible', heading: HeadingLevel.HEADING_1 }));
+        lines(model.meta.targetAudience).forEach(l => children.push(new Paragraph({ text: l })));
+    }
+
+    if (safe(model.meta.prerequisites)) {
+        children.push(new Paragraph({ text: '' }));
+        children.push(new Paragraph({ text: 'Prérequis', heading: HeadingLevel.HEADING_1 }));
+        lines(model.meta.prerequisites).forEach(l => children.push(new Paragraph({ text: l })));
+    }
+
+    if (safe(model.meta.aims)) {
+        children.push(new Paragraph({ text: '' }));
+        children.push(new Paragraph({ text: 'Objectifs', heading: HeadingLevel.HEADING_1 }));
+        lines(model.meta.aims).forEach(l => children.push(new Paragraph({ text: l })));
+    }
+
+    if (safe(model.meta.outcomesText)) {
+        children.push(new Paragraph({ text: '' }));
+        children.push(new Paragraph({ text: 'Résultats attendus', heading: HeadingLevel.HEADING_1 }));
+        lines(model.meta.outcomesText).forEach(l => children.push(new Paragraph({ text: l })));
+    }
+
+    children.push(new Paragraph({ text: '' }));
+    children.push(new Paragraph({ text: 'Structure pédagogique', heading: HeadingLevel.HEADING_1 }));
+
+    model.modules.forEach((mod, mi) => {
+        const moduleIdx = mi + 1;
+        const modTitle = safe(mod.title) || `Module ${moduleIdx}`;
+        children.push(new Paragraph({ text: `Module ${moduleIdx} : ${modTitle}`, heading: HeadingLevel.HEADING_2 }));
+        if (safe(mod.target)) {
+            children.push(new Paragraph({ children: [new TextRun({ text: 'Durée cible : ', bold: true }), new TextRun(safe(mod.target))] }));
+        }
+        if (safe(mod.description)) {
+            lines(mod.description).forEach(l => children.push(new Paragraph({ text: l })));
         }
 
+        (mod.moments || []).forEach((mom, mj) => {
+            const momentIdx = mj + 1;
+            const momTitle = safe(mom.title) || `Moment ${momentIdx}`;
+            children.push(new Paragraph({ text: `Moment ${moduleIdx}.${momentIdx} : ${momTitle}`, heading: HeadingLevel.HEADING_3 }));
+            if (safe(mom.target)) {
+                children.push(new Paragraph({ children: [new TextRun({ text: 'Durée cible : ', bold: true }), new TextRun(safe(mom.target))] }));
+            }
+            if (safe(mom.description)) {
+                lines(mom.description).forEach(l => children.push(new Paragraph({ text: l })));
+            }
 
+            (mom.activities || []).forEach((act, ai) => {
+                const actIdx = ai + 1;
+                const actTitle = safe(act.title) || `Activité ${actIdx}`;
+                children.push(new Paragraph({ text: `Activité ${moduleIdx}.${momentIdx}.${actIdx} : ${actTitle}`, heading: HeadingLevel.HEADING_4 }));
 
-        function exportRichText() {
+                const metaParts = [];
+                if (safe(act.typeLabel)) metaParts.push(`Type : ${safe(act.typeLabel)}`);
+                if (safe(act.groupingLabel)) metaParts.push(`Regroupement : ${safe(act.groupingLabel)}${safe(act.groupSize) ? ` (${safe(act.groupSize)})` : ''}`);
+                const modality = [safe(act.trainerLabel), safe(act.placeLabel), safe(act.timeLabel)].filter(Boolean).join(', ');
+                if (modality) metaParts.push(`Modalité : ${modality}`);
+                if (act.durationMinutes) metaParts.push(`Durée (min) : ${act.durationMinutes}`);
+
+                if (metaParts.length) {
+                    children.push(new Paragraph({ text: metaParts.join(' | ') }));
+                }
+
+                if (safe(act.objective)) {
+                    children.push(new Paragraph({ children: [new TextRun({ text: 'Objectif : ', bold: true }), new TextRun(safe(act.objective))] }));
+                }
+                if (safe(act.tasks)) {
+                    children.push(new Paragraph({ children: [new TextRun({ text: 'Ce que les apprenants doivent faire : ', bold: true }), new TextRun(safe(act.tasks))] }));
+                }
+                if (safe(act.notes)) {
+                    children.push(new Paragraph({ children: [new TextRun({ text: 'Notes : ', bold: true }), new TextRun(safe(act.notes))] }));
+                }
+                children.push(new Paragraph({ text: '' }));
+            });
+        });
+
+        children.push(new Paragraph({ text: '' }));
+    });
+
+    const doc = new Document({ sections: [{ properties: {}, children }] });
+
+    Packer.toBlob(doc).then(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `learning-design_${new Date().toISOString().slice(0,10)}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 500);
+    });
+}
+
+function __deprecated__exportCSV_1() {
+    if (!window.XLSX) {
+        alert((currentLang === 'en') ? 'Excel export library is not available.' : 'La bibliothèque d’export Excel n’est pas disponible.');
+        return;
+    }
+    // Excel export (.xlsx): modules, moments and activities (activity cards) only.
+    // Includes module/moment descriptions and all activity dropdowns + text fields (objectif/tâches/notes).
+    const rows = [];
+    const header = [
+        'Module #',
+        'Module titre',
+        'Module description',
+        'Module durée cible',
+        'Moment #',
+        'Moment titre',
+        'Moment description',
+        'Moment durée cible',
+        'Activité #',
+        'Activité titre',
+        'Objectif',
+        'Tâches',
+        'Notes',
+        "Type d'apprentissage",
+        'Regroupement',
+        'Taille groupe',
+        'Détails regroupement',
+        'Lieu',
+        'Temps',
+        'Présence formateur',
+        'Durée (min)'
+    ];
+    rows.push(header);
+
+    const fmtTarget = (timeEl, unitEl) => {
+        const v = (timeEl?.value || '').toString().trim();
+        const u = unitEl?.selectedOptions?.[0]?.innerText || '';
+        if (!v) return '';
+        return `${v} ${u}`.trim();
+    };
+
+    const getSelectedText = (selectEl) => {
+        const opt = selectEl && selectEl.selectedOptions ? selectEl.selectedOptions[0] : null;
+        return opt ? (opt.innerText || opt.textContent || '').trim() : '';
+    };
+
+    const getGroupingText = (stepEl) => {
+        const modeEl = stepEl.querySelector('.step-group-mode');
+        const modeTxt = getSelectedText(modeEl);
+        const modeVal = modeEl ? modeEl.value : '';
+        const sizeVal = (stepEl.querySelector('.step-group-size')?.value || '').toString().trim();
+        const detailsVal = (stepEl.querySelector('.step-group-details')?.value || '').toString().trim();
+        let txt = modeTxt;
+        if (modeVal === 'groups' && sizeVal) txt = `${modeTxt} (${sizeVal})`;
+        if (detailsVal) txt = txt ? `${txt} — ${detailsVal}` : detailsVal;
+        return { txt, sizeVal, detailsVal };
+    };
+
+    const getStepMinutes = (stepEl) => {
+        const v = parseFloat(stepEl.querySelector('.duration-input')?.value || 0);
+        const unitSecs = parseFloat(stepEl.querySelector('.duration-unit')?.value || 60);
+        const secs = (Number.isFinite(v) ? v : 0) * (Number.isFinite(unitSecs) ? unitSecs : 60);
+        return Math.round((secs / 60) * 100) / 100;
+    };
+
+    let moduleIdx = 0;
+    document.querySelectorAll('.activity-group').forEach((moduleEl) => {
+        moduleIdx += 1;
+        const moduleTitle = (moduleEl.querySelector('.activity-title')?.value || '').trim();
+        const moduleDesc = (moduleEl.querySelector('.activity-description')?.value || '').trim();
+        const moduleTarget = fmtTarget(moduleEl.querySelector('.activity-target-time'), moduleEl.querySelector('.activity-target-unit'));
+
+        const moments = moduleEl.querySelectorAll('.moment-group');
+        if (moments && moments.length) {
+            let momentIdx = 0;
+            moments.forEach((momentEl) => {
+                momentIdx += 1;
+                const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
+                const momentDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
+                const momentTarget = fmtTarget(momentEl.querySelector('.moment-target-time'), momentEl.querySelector('.moment-target-unit'));
+
+                const steps = momentEl.querySelectorAll('.step-card');
+                let activityIdx = 0;
+
+                if (steps && steps.length) {
+                    steps.forEach((stepEl) => {
+                        activityIdx += 1;
+                        const stepTitle = (stepEl.querySelector('.step-input-title')?.value || '').trim();
+                        const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
+                        const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
+                        const notes = (stepEl.querySelector('.step-input-notes')?.value || '').trim();
+
+                        const typeTxt = getSelectedText(stepEl.querySelector('.learning-type-select'));
+                        const placeTxt = getSelectedText(stepEl.querySelector('.place-select'));
+                        const timeTxt = getSelectedText(stepEl.querySelector('.time-select'));
+                        const trainerTxt = getSelectedText(stepEl.querySelector('.trainer-select'));
+
+                        const grouping = getGroupingText(stepEl);
+                        const mins = getStepMinutes(stepEl);
+
+                        rows.push([
+                            moduleIdx,
+                            moduleTitle,
+                            moduleDesc,
+                            moduleTarget,
+                            momentIdx,
+                            momentTitle,
+                            momentDesc,
+                            momentTarget,
+                            activityIdx,
+                            stepTitle,
+                            objective,
+                            tasks,
+                            notes,
+                            typeTxt,
+                            grouping.txt,
+                            grouping.sizeVal,
+                            grouping.detailsVal,
+                            placeTxt,
+                            timeTxt,
+                            trainerTxt,
+                            mins
+                        ]);
+                    });
+                } else {
+                    // moment with no activities
+                    rows.push([
+                        moduleIdx, moduleTitle, moduleDesc, moduleTarget,
+                        momentIdx, momentTitle, momentDesc, momentTarget,
+                        '', '', '', '', '', '', '', '', '', '', '', '', ''
+                    ]);
+                }
+            });
+        } else {
+            // module with no moments
+            rows.push([moduleIdx, moduleTitle, moduleDesc, moduleTarget, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+        }
+    });
+
+    if (typeof XLSX === 'undefined' || !XLSX.utils) {
+        alert("La librairie Excel (XLSX) n'est pas disponible. Vérifiez votre connexion ou le chargement des scripts.");
+        return;
+    }
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, 'Export');
+
+    const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `learning-design_${new Date().toISOString().slice(0,10)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 500);
+}
+
+function __deprecated__exportRichText_1() {
              const t = translations[currentLang];
             const totals = getTotals();
             const totalDuration = fmtTotalDuration(totals.totalSecs, t);
@@ -4590,164 +5570,173 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             URL.revokeObjectURL(url);
         }
 
-        function exportCSV() {
-            // CSV export: modules, moments and activities (activity cards) only.
-            // Includes module/moment descriptions and all activity dropdowns + text fields (objectif/tâches/notes).
-            const t = translations[currentLang] || translations.fr;
+function __deprecated__exportCSV_2() {
+    if (!window.XLSX) {
+        alert((currentLang === 'en') ? 'Excel export library is not available.' : 'La bibliothèque d’export Excel n’est pas disponible.');
+        return;
+    }
+    // Excel export (.xlsx): modules, moments and activities (activity cards) only.
+    // Includes module/moment descriptions and all activity dropdowns + text fields (objectif/tâches/notes).
+    const rows = [];
+    const header = [
+        'Module #',
+        'Module titre',
+        'Module description',
+        'Module durée cible',
+        'Moment #',
+        'Moment titre',
+        'Moment description',
+        'Moment durée cible',
+        'Activité #',
+        'Activité titre',
+        'Objectif',
+        'Tâches',
+        'Notes',
+        "Type d'apprentissage",
+        'Regroupement',
+        'Taille groupe',
+        'Détails regroupement',
+        'Lieu',
+        'Temps',
+        'Présence formateur',
+        'Durée (min)'
+    ];
+    rows.push(header);
 
-            const lines = [];
-            const header = [
-                'Module #',
-                'Module titre',
-                'Module description',
-                'Module durée cible',
-                'Moment #',
-                'Moment titre',
-                'Moment description',
-                'Moment durée cible',
-                'Activité #',
-                'Activité titre',
-                'Objectif',
-                'Tâches',
-                'Notes',
-                "Type d'apprentissage",
-                'Regroupement',
-                'Taille groupe',
-                'Détails regroupement',
-                'Lieu',
-                'Temps',
-                'Présence formateur',
-                'Durée (min)'
-            ];
-            lines.push(header);
+    const fmtTarget = (timeEl, unitEl) => {
+        const v = (timeEl?.value || '').toString().trim();
+        const u = unitEl?.selectedOptions?.[0]?.innerText || '';
+        if (!v) return '';
+        return `${v} ${u}`.trim();
+    };
 
-            const esc = (v) => {
-                const s = (v === null || v === undefined) ? '' : String(v);
-                const needs = /[",\n\r]/.test(s);
-                const q = s.replace(/"/g, '""');
-                return needs ? `"${q}"` : q;
-            };
+    const getSelectedText = (selectEl) => {
+        const opt = selectEl && selectEl.selectedOptions ? selectEl.selectedOptions[0] : null;
+        return opt ? (opt.innerText || opt.textContent || '').trim() : '';
+    };
 
-            const fmtTarget = (timeEl, unitEl) => {
-                const v = (timeEl?.value || '').toString().trim();
-                const u = unitEl?.selectedOptions?.[0]?.innerText || '';
-                if (!v) return '';
-                return `${v} ${u}`.trim();
-            };
+    const getGroupingText = (stepEl) => {
+        const modeEl = stepEl.querySelector('.step-group-mode');
+        const modeTxt = getSelectedText(modeEl);
+        const modeVal = modeEl ? modeEl.value : '';
+        const sizeVal = (stepEl.querySelector('.step-group-size')?.value || '').toString().trim();
+        const detailsVal = (stepEl.querySelector('.step-group-details')?.value || '').toString().trim();
+        let txt = modeTxt;
+        if (modeVal === 'groups' && sizeVal) txt = `${modeTxt} (${sizeVal})`;
+        if (detailsVal) txt = txt ? `${txt} — ${detailsVal}` : detailsVal;
+        return { txt, sizeVal, detailsVal };
+    };
 
-            const getSelectedText = (selectEl) => {
-                const opt = selectEl && selectEl.selectedOptions ? selectEl.selectedOptions[0] : null;
-                return opt ? (opt.innerText || opt.textContent || '').trim() : '';
-            };
+    const getStepMinutes = (stepEl) => {
+        const v = parseFloat(stepEl.querySelector('.duration-input')?.value || 0);
+        const unitSecs = parseFloat(stepEl.querySelector('.duration-unit')?.value || 60);
+        const secs = (Number.isFinite(v) ? v : 0) * (Number.isFinite(unitSecs) ? unitSecs : 60);
+        return Math.round((secs / 60) * 100) / 100;
+    };
 
-            const getGroupingText = (stepEl) => {
-                const modeEl = stepEl.querySelector('.step-group-mode');
-                const modeTxt = getSelectedText(modeEl);
-                const modeVal = modeEl ? modeEl.value : '';
-                const sizeVal = (stepEl.querySelector('.step-group-size')?.value || '').toString().trim();
-                const detailsVal = (stepEl.querySelector('.step-group-details')?.value || '').toString().trim();
-                let txt = modeTxt;
-                if (modeVal === 'groups' && sizeVal) txt = `${modeTxt} (${sizeVal})`;
-                if (detailsVal) txt = txt ? `${txt} — ${detailsVal}` : detailsVal;
-                return { txt, sizeVal, detailsVal };
-            };
+    let moduleIdx = 0;
+    document.querySelectorAll('.activity-group').forEach((moduleEl) => {
+        moduleIdx += 1;
+        const moduleTitle = (moduleEl.querySelector('.activity-title')?.value || '').trim();
+        const moduleDesc = (moduleEl.querySelector('.activity-description')?.value || '').trim();
+        const moduleTarget = fmtTarget(moduleEl.querySelector('.activity-target-time'), moduleEl.querySelector('.activity-target-unit'));
 
-            const getStepMinutes = (stepEl) => {
-                const v = parseFloat(stepEl.querySelector('.duration-input')?.value || 0);
-                const unitSecs = parseFloat(stepEl.querySelector('.duration-unit')?.value || 60);
-                const secs = (Number.isFinite(v) ? v : 0) * (Number.isFinite(unitSecs) ? unitSecs : 60);
-                return Math.round((secs / 60) * 100) / 100;
-            };
+        const moments = moduleEl.querySelectorAll('.moment-group');
+        if (moments && moments.length) {
+            let momentIdx = 0;
+            moments.forEach((momentEl) => {
+                momentIdx += 1;
+                const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
+                const momentDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
+                const momentTarget = fmtTarget(momentEl.querySelector('.moment-target-time'), momentEl.querySelector('.moment-target-unit'));
 
-            let moduleIdx = 0;
-            document.querySelectorAll('.activity-group').forEach((moduleEl) => {
-                moduleIdx += 1;
-                const moduleTitle = (moduleEl.querySelector('.activity-title')?.value || '').trim();
-                const moduleDesc = (moduleEl.querySelector('.activity-description')?.value || '').trim();
-                const moduleTarget = fmtTarget(moduleEl.querySelector('.activity-target-time'), moduleEl.querySelector('.activity-target-unit'));
+                const steps = momentEl.querySelectorAll('.step-card');
+                let activityIdx = 0;
 
-                const moments = moduleEl.querySelectorAll('.moment-group');
-                if (moments && moments.length) {
-                    let momentIdx = 0;
-                    moments.forEach((momentEl) => {
-                        momentIdx += 1;
-                        const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
-                        const momentDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
-                        const momentTarget = fmtTarget(momentEl.querySelector('.moment-target-time'), momentEl.querySelector('.moment-target-unit'));
+                if (steps && steps.length) {
+                    steps.forEach((stepEl) => {
+                        activityIdx += 1;
+                        const stepTitle = (stepEl.querySelector('.step-input-title')?.value || '').trim();
+                        const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
+                        const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
+                        const notes = (stepEl.querySelector('.step-input-notes')?.value || '').trim();
 
-                        const steps = momentEl.querySelectorAll('.step-card');
-                        let activityIdx = 0;
+                        const typeTxt = getSelectedText(stepEl.querySelector('.learning-type-select'));
+                        const placeTxt = getSelectedText(stepEl.querySelector('.place-select'));
+                        const timeTxt = getSelectedText(stepEl.querySelector('.time-select'));
+                        const trainerTxt = getSelectedText(stepEl.querySelector('.trainer-select'));
 
-                        if (steps && steps.length) {
-                            steps.forEach((stepEl) => {
-                                activityIdx += 1;
-                                const stepTitle = (stepEl.querySelector('.step-input-title')?.value || '').trim();
-                                const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
-                                const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
-                                const notes = (stepEl.querySelector('.step-input-notes')?.value || '').trim();
+                        const grouping = getGroupingText(stepEl);
+                        const mins = getStepMinutes(stepEl);
 
-                                const typeTxt = getSelectedText(stepEl.querySelector('.learning-type-select'));
-                                const placeTxt = getSelectedText(stepEl.querySelector('.place-select'));
-                                const timeTxt = getSelectedText(stepEl.querySelector('.time-select'));
-                                const trainerTxt = getSelectedText(stepEl.querySelector('.trainer-select'));
-
-                                const grouping = getGroupingText(stepEl);
-                                const mins = getStepMinutes(stepEl);
-
-                                lines.push([
-                                    moduleIdx,
-                                    moduleTitle,
-                                    moduleDesc,
-                                    moduleTarget,
-                                    momentIdx,
-                                    momentTitle,
-                                    momentDesc,
-                                    momentTarget,
-                                    activityIdx,
-                                    stepTitle,
-                                    objective,
-                                    tasks,
-                                    notes,
-                                    typeTxt,
-                                    grouping.txt,
-                                    grouping.sizeVal,
-                                    grouping.detailsVal,
-                                    placeTxt,
-                                    timeTxt,
-                                    trainerTxt,
-                                    mins
-                                ]);
-                            });
-                        } else {
-                            // moment with no activities
-                            lines.push([
-                                moduleIdx, moduleTitle, moduleDesc, moduleTarget,
-                                momentIdx, momentTitle, momentDesc, momentTarget,
-                                '', '', '', '', '', '', '', '', '', '', '', '', ''
-                            ]);
-                        }
+                        rows.push([
+                            moduleIdx,
+                            moduleTitle,
+                            moduleDesc,
+                            moduleTarget,
+                            momentIdx,
+                            momentTitle,
+                            momentDesc,
+                            momentTarget,
+                            activityIdx,
+                            stepTitle,
+                            objective,
+                            tasks,
+                            notes,
+                            typeTxt,
+                            grouping.txt,
+                            grouping.sizeVal,
+                            grouping.detailsVal,
+                            placeTxt,
+                            timeTxt,
+                            trainerTxt,
+                            mins
+                        ]);
                     });
                 } else {
-                    // module with no moments
-                    lines.push([moduleIdx, moduleTitle, moduleDesc, moduleTarget, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+                    // moment with no activities
+                    rows.push([
+                        moduleIdx, moduleTitle, moduleDesc, moduleTarget,
+                        momentIdx, momentTitle, momentDesc, momentTarget,
+                        '', '', '', '', '', '', '', '', '', '', '', '', ''
+                    ]);
                 }
             });
-
-            const csv = lines.map((row) => row.map(esc).join(',')).join('\r\n');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `learning-design_${new Date().toISOString().slice(0,10)}.csv`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 500);
+        } else {
+            // module with no moments
+            rows.push([moduleIdx, moduleTitle, moduleDesc, moduleTarget, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
         }
+    });
+
+    if (typeof XLSX === 'undefined' || !XLSX.utils) {
+        alert("La librairie Excel (XLSX) n'est pas disponible. Vérifiez votre connexion ou le chargement des scripts.");
+        return;
+    }
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, 'Export');
+
+    const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `learning-design_${new Date().toISOString().slice(0,10)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 500);
+}
+
+
+            
 
 
 
-        function exportRichText() {
+
+        function __deprecated__exportRichText_2() {
              const t = translations[currentLang];
             const totals = getTotals();
             const totalDuration = fmtTotalDuration(totals.totalSecs, t);
@@ -4959,7 +5948,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             URL.revokeObjectURL(url);
         }
 
-        function exportRTF() {
+        function __deprecated__exportRTF_1() {
             const t = translations[currentLang] || translations.fr;
             const totals = getTotals();
 
@@ -5080,164 +6069,173 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             downloadText(rtf, 'application/rtf;charset=utf-8', `learning-design_${new Date().toISOString().slice(0,10)}.rtf`);
         }
 
-function exportCSV() {
-            // CSV export: modules, moments and activities (activity cards) only.
-            // Includes module/moment descriptions and all activity dropdowns + text fields (objectif/tâches/notes).
-            const t = translations[currentLang] || translations.fr;
+function __deprecated__exportCSV_3() {
+    if (!window.XLSX) {
+        alert((currentLang === 'en') ? 'Excel export library is not available.' : 'La bibliothèque d’export Excel n’est pas disponible.');
+        return;
+    }
+    // Excel export (.xlsx): modules, moments and activities (activity cards) only.
+    // Includes module/moment descriptions and all activity dropdowns + text fields (objectif/tâches/notes).
+    const rows = [];
+    const header = [
+        'Module #',
+        'Module titre',
+        'Module description',
+        'Module durée cible',
+        'Moment #',
+        'Moment titre',
+        'Moment description',
+        'Moment durée cible',
+        'Activité #',
+        'Activité titre',
+        'Objectif',
+        'Tâches',
+        'Notes',
+        "Type d'apprentissage",
+        'Regroupement',
+        'Taille groupe',
+        'Détails regroupement',
+        'Lieu',
+        'Temps',
+        'Présence formateur',
+        'Durée (min)'
+    ];
+    rows.push(header);
 
-            const lines = [];
-            const header = [
-                'Module #',
-                'Module titre',
-                'Module description',
-                'Module durée cible',
-                'Moment #',
-                'Moment titre',
-                'Moment description',
-                'Moment durée cible',
-                'Activité #',
-                'Activité titre',
-                'Objectif',
-                'Tâches',
-                'Notes',
-                "Type d'apprentissage",
-                'Regroupement',
-                'Taille groupe',
-                'Détails regroupement',
-                'Lieu',
-                'Temps',
-                'Présence formateur',
-                'Durée (min)'
-            ];
-            lines.push(header);
+    const fmtTarget = (timeEl, unitEl) => {
+        const v = (timeEl?.value || '').toString().trim();
+        const u = unitEl?.selectedOptions?.[0]?.innerText || '';
+        if (!v) return '';
+        return `${v} ${u}`.trim();
+    };
 
-            const esc = (v) => {
-                const s = (v === null || v === undefined) ? '' : String(v);
-                const needs = /[",\n\r]/.test(s);
-                const q = s.replace(/"/g, '""');
-                return needs ? `"${q}"` : q;
-            };
+    const getSelectedText = (selectEl) => {
+        const opt = selectEl && selectEl.selectedOptions ? selectEl.selectedOptions[0] : null;
+        return opt ? (opt.innerText || opt.textContent || '').trim() : '';
+    };
 
-            const fmtTarget = (timeEl, unitEl) => {
-                const v = (timeEl?.value || '').toString().trim();
-                const u = unitEl?.selectedOptions?.[0]?.innerText || '';
-                if (!v) return '';
-                return `${v} ${u}`.trim();
-            };
+    const getGroupingText = (stepEl) => {
+        const modeEl = stepEl.querySelector('.step-group-mode');
+        const modeTxt = getSelectedText(modeEl);
+        const modeVal = modeEl ? modeEl.value : '';
+        const sizeVal = (stepEl.querySelector('.step-group-size')?.value || '').toString().trim();
+        const detailsVal = (stepEl.querySelector('.step-group-details')?.value || '').toString().trim();
+        let txt = modeTxt;
+        if (modeVal === 'groups' && sizeVal) txt = `${modeTxt} (${sizeVal})`;
+        if (detailsVal) txt = txt ? `${txt} — ${detailsVal}` : detailsVal;
+        return { txt, sizeVal, detailsVal };
+    };
 
-            const getSelectedText = (selectEl) => {
-                const opt = selectEl && selectEl.selectedOptions ? selectEl.selectedOptions[0] : null;
-                return opt ? (opt.innerText || opt.textContent || '').trim() : '';
-            };
+    const getStepMinutes = (stepEl) => {
+        const v = parseFloat(stepEl.querySelector('.duration-input')?.value || 0);
+        const unitSecs = parseFloat(stepEl.querySelector('.duration-unit')?.value || 60);
+        const secs = (Number.isFinite(v) ? v : 0) * (Number.isFinite(unitSecs) ? unitSecs : 60);
+        return Math.round((secs / 60) * 100) / 100;
+    };
 
-            const getGroupingText = (stepEl) => {
-                const modeEl = stepEl.querySelector('.step-group-mode');
-                const modeTxt = getSelectedText(modeEl);
-                const modeVal = modeEl ? modeEl.value : '';
-                const sizeVal = (stepEl.querySelector('.step-group-size')?.value || '').toString().trim();
-                const detailsVal = (stepEl.querySelector('.step-group-details')?.value || '').toString().trim();
-                let txt = modeTxt;
-                if (modeVal === 'groups' && sizeVal) txt = `${modeTxt} (${sizeVal})`;
-                if (detailsVal) txt = txt ? `${txt} — ${detailsVal}` : detailsVal;
-                return { txt, sizeVal, detailsVal };
-            };
+    let moduleIdx = 0;
+    document.querySelectorAll('.activity-group').forEach((moduleEl) => {
+        moduleIdx += 1;
+        const moduleTitle = (moduleEl.querySelector('.activity-title')?.value || '').trim();
+        const moduleDesc = (moduleEl.querySelector('.activity-description')?.value || '').trim();
+        const moduleTarget = fmtTarget(moduleEl.querySelector('.activity-target-time'), moduleEl.querySelector('.activity-target-unit'));
 
-            const getStepMinutes = (stepEl) => {
-                const v = parseFloat(stepEl.querySelector('.duration-input')?.value || 0);
-                const unitSecs = parseFloat(stepEl.querySelector('.duration-unit')?.value || 60);
-                const secs = (Number.isFinite(v) ? v : 0) * (Number.isFinite(unitSecs) ? unitSecs : 60);
-                return Math.round((secs / 60) * 100) / 100;
-            };
+        const moments = moduleEl.querySelectorAll('.moment-group');
+        if (moments && moments.length) {
+            let momentIdx = 0;
+            moments.forEach((momentEl) => {
+                momentIdx += 1;
+                const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
+                const momentDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
+                const momentTarget = fmtTarget(momentEl.querySelector('.moment-target-time'), momentEl.querySelector('.moment-target-unit'));
 
-            let moduleIdx = 0;
-            document.querySelectorAll('.activity-group').forEach((moduleEl) => {
-                moduleIdx += 1;
-                const moduleTitle = (moduleEl.querySelector('.activity-title')?.value || '').trim();
-                const moduleDesc = (moduleEl.querySelector('.activity-description')?.value || '').trim();
-                const moduleTarget = fmtTarget(moduleEl.querySelector('.activity-target-time'), moduleEl.querySelector('.activity-target-unit'));
+                const steps = momentEl.querySelectorAll('.step-card');
+                let activityIdx = 0;
 
-                const moments = moduleEl.querySelectorAll('.moment-group');
-                if (moments && moments.length) {
-                    let momentIdx = 0;
-                    moments.forEach((momentEl) => {
-                        momentIdx += 1;
-                        const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
-                        const momentDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
-                        const momentTarget = fmtTarget(momentEl.querySelector('.moment-target-time'), momentEl.querySelector('.moment-target-unit'));
+                if (steps && steps.length) {
+                    steps.forEach((stepEl) => {
+                        activityIdx += 1;
+                        const stepTitle = (stepEl.querySelector('.step-input-title')?.value || '').trim();
+                        const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
+                        const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
+                        const notes = (stepEl.querySelector('.step-input-notes')?.value || '').trim();
 
-                        const steps = momentEl.querySelectorAll('.step-card');
-                        let activityIdx = 0;
+                        const typeTxt = getSelectedText(stepEl.querySelector('.learning-type-select'));
+                        const placeTxt = getSelectedText(stepEl.querySelector('.place-select'));
+                        const timeTxt = getSelectedText(stepEl.querySelector('.time-select'));
+                        const trainerTxt = getSelectedText(stepEl.querySelector('.trainer-select'));
 
-                        if (steps && steps.length) {
-                            steps.forEach((stepEl) => {
-                                activityIdx += 1;
-                                const stepTitle = (stepEl.querySelector('.step-input-title')?.value || '').trim();
-                                const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
-                                const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
-                                const notes = (stepEl.querySelector('.step-input-notes')?.value || '').trim();
+                        const grouping = getGroupingText(stepEl);
+                        const mins = getStepMinutes(stepEl);
 
-                                const typeTxt = getSelectedText(stepEl.querySelector('.learning-type-select'));
-                                const placeTxt = getSelectedText(stepEl.querySelector('.place-select'));
-                                const timeTxt = getSelectedText(stepEl.querySelector('.time-select'));
-                                const trainerTxt = getSelectedText(stepEl.querySelector('.trainer-select'));
-
-                                const grouping = getGroupingText(stepEl);
-                                const mins = getStepMinutes(stepEl);
-
-                                lines.push([
-                                    moduleIdx,
-                                    moduleTitle,
-                                    moduleDesc,
-                                    moduleTarget,
-                                    momentIdx,
-                                    momentTitle,
-                                    momentDesc,
-                                    momentTarget,
-                                    activityIdx,
-                                    stepTitle,
-                                    objective,
-                                    tasks,
-                                    notes,
-                                    typeTxt,
-                                    grouping.txt,
-                                    grouping.sizeVal,
-                                    grouping.detailsVal,
-                                    placeTxt,
-                                    timeTxt,
-                                    trainerTxt,
-                                    mins
-                                ]);
-                            });
-                        } else {
-                            // moment with no activities
-                            lines.push([
-                                moduleIdx, moduleTitle, moduleDesc, moduleTarget,
-                                momentIdx, momentTitle, momentDesc, momentTarget,
-                                '', '', '', '', '', '', '', '', '', '', '', '', ''
-                            ]);
-                        }
+                        rows.push([
+                            moduleIdx,
+                            moduleTitle,
+                            moduleDesc,
+                            moduleTarget,
+                            momentIdx,
+                            momentTitle,
+                            momentDesc,
+                            momentTarget,
+                            activityIdx,
+                            stepTitle,
+                            objective,
+                            tasks,
+                            notes,
+                            typeTxt,
+                            grouping.txt,
+                            grouping.sizeVal,
+                            grouping.detailsVal,
+                            placeTxt,
+                            timeTxt,
+                            trainerTxt,
+                            mins
+                        ]);
                     });
                 } else {
-                    // module with no moments
-                    lines.push([moduleIdx, moduleTitle, moduleDesc, moduleTarget, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+                    // moment with no activities
+                    rows.push([
+                        moduleIdx, moduleTitle, moduleDesc, moduleTarget,
+                        momentIdx, momentTitle, momentDesc, momentTarget,
+                        '', '', '', '', '', '', '', '', '', '', '', '', ''
+                    ]);
                 }
             });
-
-            const csv = lines.map((row) => row.map(esc).join(',')).join('\r\n');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `learning-design_${new Date().toISOString().slice(0,10)}.csv`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 500);
+        } else {
+            // module with no moments
+            rows.push([moduleIdx, moduleTitle, moduleDesc, moduleTarget, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
         }
+    });
+
+    if (typeof XLSX === 'undefined' || !XLSX.utils) {
+        alert("La librairie Excel (XLSX) n'est pas disponible. Vérifiez votre connexion ou le chargement des scripts.");
+        return;
+    }
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, 'Export');
+
+    const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `learning-design_${new Date().toISOString().slice(0,10)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 500);
+}
+
+
+            
 
 
 
-        function exportRichText() {
+
+        function __deprecated__exportRichText_3() {
              const t = translations[currentLang];
             const totals = getTotals();
             const totalDuration = fmtTotalDuration(totals.totalSecs, t);
@@ -5449,164 +6447,173 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             URL.revokeObjectURL(url);
         }
 
-        function exportCSV() {
-            // CSV export: modules, moments and activities (activity cards) only.
-            // Includes module/moment descriptions and all activity dropdowns + text fields (objectif/tâches/notes).
-            const t = translations[currentLang] || translations.fr;
+function __deprecated__exportCSV_4() {
+    if (!window.XLSX) {
+        alert((currentLang === 'en') ? 'Excel export library is not available.' : 'La bibliothèque d’export Excel n’est pas disponible.');
+        return;
+    }
+    // Excel export (.xlsx): modules, moments and activities (activity cards) only.
+    // Includes module/moment descriptions and all activity dropdowns + text fields (objectif/tâches/notes).
+    const rows = [];
+    const header = [
+        'Module #',
+        'Module titre',
+        'Module description',
+        'Module durée cible',
+        'Moment #',
+        'Moment titre',
+        'Moment description',
+        'Moment durée cible',
+        'Activité #',
+        'Activité titre',
+        'Objectif',
+        'Tâches',
+        'Notes',
+        "Type d'apprentissage",
+        'Regroupement',
+        'Taille groupe',
+        'Détails regroupement',
+        'Lieu',
+        'Temps',
+        'Présence formateur',
+        'Durée (min)'
+    ];
+    rows.push(header);
 
-            const lines = [];
-            const header = [
-                'Module #',
-                'Module titre',
-                'Module description',
-                'Module durée cible',
-                'Moment #',
-                'Moment titre',
-                'Moment description',
-                'Moment durée cible',
-                'Activité #',
-                'Activité titre',
-                'Objectif',
-                'Tâches',
-                'Notes',
-                "Type d'apprentissage",
-                'Regroupement',
-                'Taille groupe',
-                'Détails regroupement',
-                'Lieu',
-                'Temps',
-                'Présence formateur',
-                'Durée (min)'
-            ];
-            lines.push(header);
+    const fmtTarget = (timeEl, unitEl) => {
+        const v = (timeEl?.value || '').toString().trim();
+        const u = unitEl?.selectedOptions?.[0]?.innerText || '';
+        if (!v) return '';
+        return `${v} ${u}`.trim();
+    };
 
-            const esc = (v) => {
-                const s = (v === null || v === undefined) ? '' : String(v);
-                const needs = /[",\n\r]/.test(s);
-                const q = s.replace(/"/g, '""');
-                return needs ? `"${q}"` : q;
-            };
+    const getSelectedText = (selectEl) => {
+        const opt = selectEl && selectEl.selectedOptions ? selectEl.selectedOptions[0] : null;
+        return opt ? (opt.innerText || opt.textContent || '').trim() : '';
+    };
 
-            const fmtTarget = (timeEl, unitEl) => {
-                const v = (timeEl?.value || '').toString().trim();
-                const u = unitEl?.selectedOptions?.[0]?.innerText || '';
-                if (!v) return '';
-                return `${v} ${u}`.trim();
-            };
+    const getGroupingText = (stepEl) => {
+        const modeEl = stepEl.querySelector('.step-group-mode');
+        const modeTxt = getSelectedText(modeEl);
+        const modeVal = modeEl ? modeEl.value : '';
+        const sizeVal = (stepEl.querySelector('.step-group-size')?.value || '').toString().trim();
+        const detailsVal = (stepEl.querySelector('.step-group-details')?.value || '').toString().trim();
+        let txt = modeTxt;
+        if (modeVal === 'groups' && sizeVal) txt = `${modeTxt} (${sizeVal})`;
+        if (detailsVal) txt = txt ? `${txt} — ${detailsVal}` : detailsVal;
+        return { txt, sizeVal, detailsVal };
+    };
 
-            const getSelectedText = (selectEl) => {
-                const opt = selectEl && selectEl.selectedOptions ? selectEl.selectedOptions[0] : null;
-                return opt ? (opt.innerText || opt.textContent || '').trim() : '';
-            };
+    const getStepMinutes = (stepEl) => {
+        const v = parseFloat(stepEl.querySelector('.duration-input')?.value || 0);
+        const unitSecs = parseFloat(stepEl.querySelector('.duration-unit')?.value || 60);
+        const secs = (Number.isFinite(v) ? v : 0) * (Number.isFinite(unitSecs) ? unitSecs : 60);
+        return Math.round((secs / 60) * 100) / 100;
+    };
 
-            const getGroupingText = (stepEl) => {
-                const modeEl = stepEl.querySelector('.step-group-mode');
-                const modeTxt = getSelectedText(modeEl);
-                const modeVal = modeEl ? modeEl.value : '';
-                const sizeVal = (stepEl.querySelector('.step-group-size')?.value || '').toString().trim();
-                const detailsVal = (stepEl.querySelector('.step-group-details')?.value || '').toString().trim();
-                let txt = modeTxt;
-                if (modeVal === 'groups' && sizeVal) txt = `${modeTxt} (${sizeVal})`;
-                if (detailsVal) txt = txt ? `${txt} — ${detailsVal}` : detailsVal;
-                return { txt, sizeVal, detailsVal };
-            };
+    let moduleIdx = 0;
+    document.querySelectorAll('.activity-group').forEach((moduleEl) => {
+        moduleIdx += 1;
+        const moduleTitle = (moduleEl.querySelector('.activity-title')?.value || '').trim();
+        const moduleDesc = (moduleEl.querySelector('.activity-description')?.value || '').trim();
+        const moduleTarget = fmtTarget(moduleEl.querySelector('.activity-target-time'), moduleEl.querySelector('.activity-target-unit'));
 
-            const getStepMinutes = (stepEl) => {
-                const v = parseFloat(stepEl.querySelector('.duration-input')?.value || 0);
-                const unitSecs = parseFloat(stepEl.querySelector('.duration-unit')?.value || 60);
-                const secs = (Number.isFinite(v) ? v : 0) * (Number.isFinite(unitSecs) ? unitSecs : 60);
-                return Math.round((secs / 60) * 100) / 100;
-            };
+        const moments = moduleEl.querySelectorAll('.moment-group');
+        if (moments && moments.length) {
+            let momentIdx = 0;
+            moments.forEach((momentEl) => {
+                momentIdx += 1;
+                const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
+                const momentDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
+                const momentTarget = fmtTarget(momentEl.querySelector('.moment-target-time'), momentEl.querySelector('.moment-target-unit'));
 
-            let moduleIdx = 0;
-            document.querySelectorAll('.activity-group').forEach((moduleEl) => {
-                moduleIdx += 1;
-                const moduleTitle = (moduleEl.querySelector('.activity-title')?.value || '').trim();
-                const moduleDesc = (moduleEl.querySelector('.activity-description')?.value || '').trim();
-                const moduleTarget = fmtTarget(moduleEl.querySelector('.activity-target-time'), moduleEl.querySelector('.activity-target-unit'));
+                const steps = momentEl.querySelectorAll('.step-card');
+                let activityIdx = 0;
 
-                const moments = moduleEl.querySelectorAll('.moment-group');
-                if (moments && moments.length) {
-                    let momentIdx = 0;
-                    moments.forEach((momentEl) => {
-                        momentIdx += 1;
-                        const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
-                        const momentDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
-                        const momentTarget = fmtTarget(momentEl.querySelector('.moment-target-time'), momentEl.querySelector('.moment-target-unit'));
+                if (steps && steps.length) {
+                    steps.forEach((stepEl) => {
+                        activityIdx += 1;
+                        const stepTitle = (stepEl.querySelector('.step-input-title')?.value || '').trim();
+                        const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
+                        const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
+                        const notes = (stepEl.querySelector('.step-input-notes')?.value || '').trim();
 
-                        const steps = momentEl.querySelectorAll('.step-card');
-                        let activityIdx = 0;
+                        const typeTxt = getSelectedText(stepEl.querySelector('.learning-type-select'));
+                        const placeTxt = getSelectedText(stepEl.querySelector('.place-select'));
+                        const timeTxt = getSelectedText(stepEl.querySelector('.time-select'));
+                        const trainerTxt = getSelectedText(stepEl.querySelector('.trainer-select'));
 
-                        if (steps && steps.length) {
-                            steps.forEach((stepEl) => {
-                                activityIdx += 1;
-                                const stepTitle = (stepEl.querySelector('.step-input-title')?.value || '').trim();
-                                const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
-                                const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
-                                const notes = (stepEl.querySelector('.step-input-notes')?.value || '').trim();
+                        const grouping = getGroupingText(stepEl);
+                        const mins = getStepMinutes(stepEl);
 
-                                const typeTxt = getSelectedText(stepEl.querySelector('.learning-type-select'));
-                                const placeTxt = getSelectedText(stepEl.querySelector('.place-select'));
-                                const timeTxt = getSelectedText(stepEl.querySelector('.time-select'));
-                                const trainerTxt = getSelectedText(stepEl.querySelector('.trainer-select'));
-
-                                const grouping = getGroupingText(stepEl);
-                                const mins = getStepMinutes(stepEl);
-
-                                lines.push([
-                                    moduleIdx,
-                                    moduleTitle,
-                                    moduleDesc,
-                                    moduleTarget,
-                                    momentIdx,
-                                    momentTitle,
-                                    momentDesc,
-                                    momentTarget,
-                                    activityIdx,
-                                    stepTitle,
-                                    objective,
-                                    tasks,
-                                    notes,
-                                    typeTxt,
-                                    grouping.txt,
-                                    grouping.sizeVal,
-                                    grouping.detailsVal,
-                                    placeTxt,
-                                    timeTxt,
-                                    trainerTxt,
-                                    mins
-                                ]);
-                            });
-                        } else {
-                            // moment with no activities
-                            lines.push([
-                                moduleIdx, moduleTitle, moduleDesc, moduleTarget,
-                                momentIdx, momentTitle, momentDesc, momentTarget,
-                                '', '', '', '', '', '', '', '', '', '', '', '', ''
-                            ]);
-                        }
+                        rows.push([
+                            moduleIdx,
+                            moduleTitle,
+                            moduleDesc,
+                            moduleTarget,
+                            momentIdx,
+                            momentTitle,
+                            momentDesc,
+                            momentTarget,
+                            activityIdx,
+                            stepTitle,
+                            objective,
+                            tasks,
+                            notes,
+                            typeTxt,
+                            grouping.txt,
+                            grouping.sizeVal,
+                            grouping.detailsVal,
+                            placeTxt,
+                            timeTxt,
+                            trainerTxt,
+                            mins
+                        ]);
                     });
                 } else {
-                    // module with no moments
-                    lines.push([moduleIdx, moduleTitle, moduleDesc, moduleTarget, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+                    // moment with no activities
+                    rows.push([
+                        moduleIdx, moduleTitle, moduleDesc, moduleTarget,
+                        momentIdx, momentTitle, momentDesc, momentTarget,
+                        '', '', '', '', '', '', '', '', '', '', '', '', ''
+                    ]);
                 }
             });
-
-            const csv = lines.map((row) => row.map(esc).join(',')).join('\r\n');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `learning-design_${new Date().toISOString().slice(0,10)}.csv`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 500);
+        } else {
+            // module with no moments
+            rows.push([moduleIdx, moduleTitle, moduleDesc, moduleTarget, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
         }
+    });
+
+    if (typeof XLSX === 'undefined' || !XLSX.utils) {
+        alert("La librairie Excel (XLSX) n'est pas disponible. Vérifiez votre connexion ou le chargement des scripts.");
+        return;
+    }
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, 'Export');
+
+    const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `learning-design_${new Date().toISOString().slice(0,10)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 500);
+}
+
+
+            
 
 
 
-        function exportRichText() {
+
+        function __deprecated__exportRichText_4() {
              const t = translations[currentLang];
             const totals = getTotals();
             const totalDuration = fmtTotalDuration(totals.totalSecs, t);
@@ -5818,7 +6825,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             URL.revokeObjectURL(url);
         }
 
-        function exportRTF() {
+        function __deprecated__exportRTF_2() {
             const t = translations[currentLang];
             const totals = getTotals();
             const totalDuration = fmtTotalDuration(totals.totalSecs, t);
@@ -5938,7 +6945,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             URL.revokeObjectURL(url);
         }
 
-        function exportRichText() {
+        function __deprecated__exportRichText_5() {
              const t = translations[currentLang];
             const totals = getTotals();
             const totalDuration = fmtTotalDuration(totals.totalSecs, t);
@@ -6143,7 +7150,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             URL.revokeObjectURL(url);
         }
 
-        function exportRTF() {
+        function __deprecated__exportRTF_3() {
             const t = translations[currentLang];
             const totals = getTotals();
             const totalDuration = fmtTotalDuration(totals.totalSecs, t);
@@ -6263,7 +7270,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             URL.revokeObjectURL(url);
         }
 
-        function exportMarkdown() {
+        function __deprecated__exportMarkdown_1() {
             const t = translations[currentLang] || translations.fr;
             const totals = getTotals();
 
@@ -6386,7 +7393,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             downloadText(md, 'text/markdown;charset=utf-8', `learning-design_${new Date().toISOString().slice(0,10)}.md`);
         }
 
-function exportRichText() {
+function __deprecated__exportRichText_6() {
              const t = translations[currentLang];
             const totals = getTotals();
             const totalDuration = fmtTotalDuration(totals.totalSecs, t);
@@ -6598,164 +7605,32 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             URL.revokeObjectURL(url);
         }
 
-        function exportCSV() {
-            // CSV export: modules, moments and activities (activity cards) only.
-            // Includes module/moment descriptions and all activity dropdowns + text fields (objectif/tâches/notes).
-            const t = translations[currentLang] || translations.fr;
 
-            const lines = [];
-            const header = [
-                'Module #',
-                'Module titre',
-                'Module description',
-                'Module durée cible',
-                'Moment #',
-                'Moment titre',
-                'Moment description',
-                'Moment durée cible',
-                'Activité #',
-                'Activité titre',
-                'Objectif',
-                'Tâches',
-                'Notes',
-                "Type d'apprentissage",
-                'Regroupement',
-                'Taille groupe',
-                'Détails regroupement',
-                'Lieu',
-                'Temps',
-                'Présence formateur',
-                'Durée (min)'
-            ];
-            lines.push(header);
+function exportCSV() {
+    // Export to Excel (.xlsx) – keeps the existing "CSV" menu entry unchanged.
+    if (!window.XLSX) {
+        alert((currentLang === 'en') ? 'Excel export library is not available.' : 'La bibliothèque d’export Excel n’est pas disponible.');
+        return;
+    }
 
-            const esc = (v) => {
-                const s = (v === null || v === undefined) ? '' : String(v);
-                const needs = /[",\n\r]/.test(s);
-                const q = s.replace(/"/g, '""');
-                return needs ? `"${q}"` : q;
-            };
+    const model = buildExportModel();
+    const rows = buildTabularExportRows(model);
 
-            const fmtTarget = (timeEl, unitEl) => {
-                const v = (timeEl?.value || '').toString().trim();
-                const u = unitEl?.selectedOptions?.[0]?.innerText || '';
-                if (!v) return '';
-                return `${v} ${u}`.trim();
-            };
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Learning design');
 
-            const getSelectedText = (selectEl) => {
-                const opt = selectEl && selectEl.selectedOptions ? selectEl.selectedOptions[0] : null;
-                return opt ? (opt.innerText || opt.textContent || '').trim() : '';
-            };
+    const filename = `learning-design_${new Date().toISOString().slice(0,10)}.xlsx`;
+    XLSX.writeFile(wb, filename);
+}
 
-            const getGroupingText = (stepEl) => {
-                const modeEl = stepEl.querySelector('.step-group-mode');
-                const modeTxt = getSelectedText(modeEl);
-                const modeVal = modeEl ? modeEl.value : '';
-                const sizeVal = (stepEl.querySelector('.step-group-size')?.value || '').toString().trim();
-                const detailsVal = (stepEl.querySelector('.step-group-details')?.value || '').toString().trim();
-                let txt = modeTxt;
-                if (modeVal === 'groups' && sizeVal) txt = `${modeTxt} (${sizeVal})`;
-                if (detailsVal) txt = txt ? `${txt} — ${detailsVal}` : detailsVal;
-                return { txt, sizeVal, detailsVal };
-            };
 
-            const getStepMinutes = (stepEl) => {
-                const v = parseFloat(stepEl.querySelector('.duration-input')?.value || 0);
-                const unitSecs = parseFloat(stepEl.querySelector('.duration-unit')?.value || 60);
-                const secs = (Number.isFinite(v) ? v : 0) * (Number.isFinite(unitSecs) ? unitSecs : 60);
-                return Math.round((secs / 60) * 100) / 100;
-            };
-
-            let moduleIdx = 0;
-            document.querySelectorAll('.activity-group').forEach((moduleEl) => {
-                moduleIdx += 1;
-                const moduleTitle = (moduleEl.querySelector('.activity-title')?.value || '').trim();
-                const moduleDesc = (moduleEl.querySelector('.activity-description')?.value || '').trim();
-                const moduleTarget = fmtTarget(moduleEl.querySelector('.activity-target-time'), moduleEl.querySelector('.activity-target-unit'));
-
-                const moments = moduleEl.querySelectorAll('.moment-group');
-                if (moments && moments.length) {
-                    let momentIdx = 0;
-                    moments.forEach((momentEl) => {
-                        momentIdx += 1;
-                        const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
-                        const momentDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
-                        const momentTarget = fmtTarget(momentEl.querySelector('.moment-target-time'), momentEl.querySelector('.moment-target-unit'));
-
-                        const steps = momentEl.querySelectorAll('.step-card');
-                        let activityIdx = 0;
-
-                        if (steps && steps.length) {
-                            steps.forEach((stepEl) => {
-                                activityIdx += 1;
-                                const stepTitle = (stepEl.querySelector('.step-input-title')?.value || '').trim();
-                                const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
-                                const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
-                                const notes = (stepEl.querySelector('.step-input-notes')?.value || '').trim();
-
-                                const typeTxt = getSelectedText(stepEl.querySelector('.learning-type-select'));
-                                const placeTxt = getSelectedText(stepEl.querySelector('.place-select'));
-                                const timeTxt = getSelectedText(stepEl.querySelector('.time-select'));
-                                const trainerTxt = getSelectedText(stepEl.querySelector('.trainer-select'));
-
-                                const grouping = getGroupingText(stepEl);
-                                const mins = getStepMinutes(stepEl);
-
-                                lines.push([
-                                    moduleIdx,
-                                    moduleTitle,
-                                    moduleDesc,
-                                    moduleTarget,
-                                    momentIdx,
-                                    momentTitle,
-                                    momentDesc,
-                                    momentTarget,
-                                    activityIdx,
-                                    stepTitle,
-                                    objective,
-                                    tasks,
-                                    notes,
-                                    typeTxt,
-                                    grouping.txt,
-                                    grouping.sizeVal,
-                                    grouping.detailsVal,
-                                    placeTxt,
-                                    timeTxt,
-                                    trainerTxt,
-                                    mins
-                                ]);
-                            });
-                        } else {
-                            // moment with no activities
-                            lines.push([
-                                moduleIdx, moduleTitle, moduleDesc, moduleTarget,
-                                momentIdx, momentTitle, momentDesc, momentTarget,
-                                '', '', '', '', '', '', '', '', '', '', '', '', ''
-                            ]);
-                        }
-                    });
-                } else {
-                    // module with no moments
-                    lines.push([moduleIdx, moduleTitle, moduleDesc, moduleTarget, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
-                }
-            });
-
-            const csv = lines.map((row) => row.map(esc).join(',')).join('\r\n');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `learning-design_${new Date().toISOString().slice(0,10)}.csv`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 500);
-        }
+            
 
 
 
-        function exportRichText() {
+
+        function __deprecated__exportRichText_7() {
              const t = translations[currentLang];
             const totals = getTotals();
             const totalDuration = fmtTotalDuration(totals.totalSecs, t);
@@ -6967,7 +7842,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             URL.revokeObjectURL(url);
         }
 
-        function exportRTF() {
+        function __deprecated__exportRTF_4() {
             const t = translations[currentLang];
             const totals = getTotals();
             const totalDuration = fmtTotalDuration(totals.totalSecs, t);
@@ -7674,6 +8549,27 @@ const AUTOSAVE_KEY = 'ld_autosave_project_v1';
 let __autosaveTimer = null;
 let __autosaveSuspended = false;
 
+// Micro-optimisation: classify long text edits to reduce timer churn while typing in large textareas.
+function __isLongTextEditTarget(el) {
+    if (!el) return false;
+    const t = (el.tagName || '').toLowerCase();
+    if (t !== 'textarea') return false;
+    // Treat these as long-text fields (frequent keystrokes)
+    if (el.classList?.contains('step-input-objective')) return true;
+    if (el.classList?.contains('step-input-tasks')) return true;
+    if (el.classList?.contains('step-input-notes')) return true;
+    if (el.classList?.contains('moment-description')) return true;
+    if (el.classList?.contains('activity-description')) return true;
+    // Parameter long text fields
+    if (el.id === 'param-description' || el.id === 'param-aims' || el.id === 'param-outcomes-text' || el.id === 'param-prerequisites' || el.id === 'param-target-audience') return true;
+    return false;
+}
+
+let __lastInputTargetForTimers = null;
+document.addEventListener('input', (e) => { __lastInputTargetForTimers = e.target; }, true);
+document.addEventListener('change', (e) => { __lastInputTargetForTimers = e.target; }, true);
+
+
 function scheduleAutosave() {
     if (__autosaveSuspended) return;
     // Ignore changes during print, etc. Keep lightweight.
@@ -7689,7 +8585,7 @@ function scheduleAutosave() {
         } catch (e) {
             // If storage is unavailable/quota exceeded, fail silently (no UI change).
         }
-    }, 2000);
+    }, (__isLongTextEditTarget(__lastInputTargetForTimers) ? 2500 : 2000));
 }
 
 function hasAutosave() {
@@ -7793,7 +8689,7 @@ function scheduleHistoryCapture() {
     __historyDebounce = setTimeout(() => {
         __historyDebounce = null;
         historyCaptureNow();
-    }, 2000);
+    }, (__isLongTextEditTarget(__lastInputTargetForTimers) ? 2500 : 2000));
 }
 
 function applySnapshot(snapshotStr) {
@@ -8111,21 +9007,37 @@ function getHistogramBarMeta(kind, val) {
     if (canvasId === 'chart-learning-types') {
       const lg = document.getElementById('chart-learning-types-legend');
       if (lg) {
-        const legendItems = entries.map(([label, value], i) => {
+        // Build legend with DOM APIs (prevents HTML injection)
+        lg.textContent = '';
+        entries.forEach(([label, value], i) => {
           const pct = (value / total) * 100;
           const pctStr = (pct >= 9.95 || pct === 0) ? `${Math.round(pct)}%` : `${pct.toFixed(1)}%`;
           const safeLabel = (label || '—').toString();
-          return `
-            <div class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2 min-w-0">
-                <span class="inline-block w-3 h-3 rounded-sm border border-slate-200 flex-none" style="background:${cols[i]}"></span>
-                <span class="truncate">${safeLabel}</span>
-              </div>
-              <div class="text-slate-900 font-semibold tabular-nums flex-none">${pctStr}</div>
-            </div>
-          `;
-        }).join('');
-        lg.innerHTML = legendItems;
+
+          const row = document.createElement('div');
+          row.className = "flex items-center justify-between gap-2";
+
+          const left = document.createElement('div');
+          left.className = "flex items-center gap-2 min-w-0";
+
+          const swatch = document.createElement('span');
+          swatch.className = "inline-block w-3 h-3 rounded-sm border border-slate-200 flex-none";
+          swatch.style.background = cols[i];
+
+          const lab = document.createElement('span');
+          lab.className = "truncate";
+          lab.textContent = safeLabel;
+
+          const right = document.createElement('div');
+          right.className = "text-slate-900 font-semibold tabular-nums flex-none";
+          right.textContent = pctStr;
+
+          left.appendChild(swatch);
+          left.appendChild(lab);
+          row.appendChild(left);
+          row.appendChild(right);
+          lg.appendChild(row);
+        });
       }
     }
   }
