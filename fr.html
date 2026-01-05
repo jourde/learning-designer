@@ -4589,6 +4589,21 @@ function updateStatsDebounced() {
   }, delay);
 }
 
+
+function formatAdaptiveDurationFromSecs(totalSecs) {
+            const mins = totalSecs / 60;
+            if (!isFinite(mins) || mins <= 0) return { value: 0, unit: translations[currentLang].unit_mins };
+            if (mins < 60) return { value: Math.round(mins), unit: translations[currentLang].unit_mins };
+            const hours = mins / 60;
+            if (hours < 24) return { value: parseFloat(hours.toFixed(1)), unit: translations[currentLang].unit_hours };
+            const days = hours / 24;
+            if (days < 7) return { value: parseFloat(days.toFixed(1)), unit: translations[currentLang].unit_days };
+            const weeks = days / 7;
+            if (weeks < 4) return { value: parseFloat(weeks.toFixed(1)), unit: translations[currentLang].unit_weeks };
+            const months = days / 30;
+            return { value: parseFloat(months.toFixed(1)), unit: translations[currentLang].unit_months };
+        }
+
 function updateStats() {
             const totals = getTotals();
             let display = `0 ${translations[currentLang].unit_mins}`;
@@ -4632,7 +4647,10 @@ function updateStats() {
             
             designedInput.value = designedVal;
             const headerDesignedValEl = document.getElementById('header-designed-val');
-            if (headerDesignedValEl) headerDesignedValEl.innerText = designedVal;
+            const headerDesignedUnitEl2 = document.getElementById('header-designed-unit');
+            const adaptiveDesigned = formatAdaptiveDurationFromSecs(totals.totalSecs);
+            if (headerDesignedValEl) headerDesignedValEl.innerText = adaptiveDesigned.value;
+            if (headerDesignedUnitEl2) headerDesignedUnitEl2.innerText = adaptiveDesigned.unit;
             // Update designed time per moment (sum of contained activities), expressed in the moment unit
             document.querySelectorAll('.moment-group').forEach(momentEl => {
                 let secs = 0;
