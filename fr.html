@@ -702,6 +702,22 @@ body.focus-mode .activity-group.focus-active { display: block; }
 </div>
 </div>
 </div>
+<div class="flex flex-col relative gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-1">
+<span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider pl-1" data-i18n="label_designed_time">
+       Temps Conçu (Planifié)
+      </span>
+<div class="flex items-center bg-white border border-slate-200 rounded-md px-2 gap-1 shadow-sm h-[34px]">
+<span class="material-icons-round text-slate-600 text-lg">
+         schedule
+        </span>
+<span class="text-xs font-extrabold text-slate-800 tabular-nums" id="header-designed-val">
+         0
+        </span>
+<span class="text-xs font-bold text-slate-600" id="header-designed-unit">
+         min
+        </span>
+</div>
+</div>
 </div>
 </header>
 <div class="mb-3 bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
@@ -1285,6 +1301,9 @@ body.focus-mode .activity-group.focus-active { display: block; }
         expand_more
        </span>
 </button>
+<button class="text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-action="collapse-module-contents" title="Replier tous les moments et activités de ce module" type="button">
+<span class="material-icons-round text-lg">unfold_less</span>
+</button>
 <button class="text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-action="duplicate-module" data-i18n-title="title_duplicate_activity" title="Dupliquer ce module" type="button">
 <span class="material-icons-round text-lg">
         content_copy
@@ -1743,6 +1762,10 @@ body.focus-mode .activity-group.focus-active { display: block; }
                     break;
                 case 'add-moment':
                     addMomentToActivity(btn);
+                    break;
+
+                case 'collapse-module-contents':
+                    collapseModuleContents(btn);
                     break;
 
                 case 'toggle-moment-description':
@@ -2519,6 +2542,26 @@ function initSortableSteps(container) {
             if(headerBtnIcon) headerBtnIcon.innerText = iconText;
         }
 
+        // Force all modules to be collapsed (used after loading a saved file).
+        function collapseAllActivitiesForced() {
+            const bodies = document.querySelectorAll('.activity-body');
+            const icons = document.querySelectorAll('.activity-group .rotate-icon');
+            const mainBtnIcon = document.getElementById('icon-toggle-all-main');
+            const mainBtnText = document.getElementById('text-toggle-all-main');
+            const headerBtnIcon = document.getElementById('icon-toggle-all');
+
+            bodies.forEach(b => b.classList.add('collapsed'));
+            icons.forEach(icon => { icon.style.transform = 'rotate(0deg)'; });
+
+            // Set UI affordances to "expand all"
+            if (mainBtnIcon) mainBtnIcon.innerText = 'unfold_more';
+            if (headerBtnIcon) headerBtnIcon.innerText = 'unfold_more';
+            if (mainBtnText) {
+                mainBtnText.innerText = translations[currentLang]['btn_expand_all'];
+                mainBtnText.setAttribute('data-i18n', 'btn_expand_all');
+            }
+        }
+
         function toggleLearningTypes() {
             document.body.classList.toggle('hide-types');
             const icon = document.getElementById('icon-toggle-types');
@@ -2561,7 +2604,65 @@ function initSortableSteps(container) {
             }
         }
 
-        function toggleMomentDescription(btn) {
+        
+                function collapseModuleContents(btn) {
+                    const moduleGroup = btn.closest('.activity-group');
+                    if (!moduleGroup) return;
+        
+                    const momentBodies = Array.from(moduleGroup.querySelectorAll('.moment-body'));
+                    const stepBodies = Array.from(moduleGroup.querySelectorAll('.step-body'));
+        
+                    // Toggle behaviour: if all moments are collapsed, expand moments; otherwise collapse moments + steps.
+                    const allMomentsCollapsed = momentBodies.length ? momentBodies.every(b => b.classList.contains('collapsed')) : true;
+                    const shouldExpand = allMomentsCollapsed;
+        
+                    if (shouldExpand) {
+                        // Expand all moments (only)
+                        momentBodies.forEach((body) => {
+                            body.classList.remove('collapsed');
+                        });
+        
+                        const momentToggleButtons = moduleGroup.querySelectorAll('button[data-action="toggle-moment"]');
+                        momentToggleButtons.forEach((b) => {
+                            b.setAttribute('aria-expanded', 'true');
+                            const icon = b.querySelector('.rotate-icon-moment');
+                            if (icon) icon.style.transform = 'rotate(180deg)';
+                        });
+        
+                        const iconEl = btn.querySelector('.material-icons-round');
+                        if (iconEl) iconEl.innerText = 'unfold_less';
+                        btn.title = 'Replier tous les moments et activités de ce module';
+                    } else {
+                        // Collapse all moments
+                        momentBodies.forEach((body) => {
+                            body.classList.add('collapsed');
+                        });
+        
+                        const momentToggleButtons = moduleGroup.querySelectorAll('button[data-action="toggle-moment"]');
+                        momentToggleButtons.forEach((b) => {
+                            b.setAttribute('aria-expanded', 'false');
+                            const icon = b.querySelector('.rotate-icon-moment');
+                            if (icon) icon.style.transform = 'rotate(0deg)';
+                        });
+        
+                        // Collapse all steps
+                        stepBodies.forEach((body) => {
+                            body.classList.add('collapsed');
+                        });
+        
+                        const stepToggleButtons = moduleGroup.querySelectorAll('button[data-action="toggle-step"]');
+                        stepToggleButtons.forEach((b) => {
+                            const icon = b.querySelector('.rotate-icon');
+                            if (icon) icon.style.transform = 'rotate(0deg)';
+                        });
+        
+                        const iconEl = btn.querySelector('.material-icons-round');
+                        if (iconEl) iconEl.innerText = 'unfold_more';
+                        btn.title = 'Déplier tous les moments de ce module';
+                    }
+                }
+
+function toggleMomentDescription(btn) {
             const momentGroup = btn.closest('.moment-group');
             if (!momentGroup) return;
             const wrap = momentGroup.querySelector('.moment-description-wrap');
@@ -2971,10 +3072,24 @@ function saveProject() {
             a.click();
             URL.revokeObjectURL(url);
         }
-
-        function triggerFileLoad() {
+        window.triggerFileLoad = function triggerFileLoad() {
             document.getElementById('load-file-input').click();
         }
+
+        // Ensure the Load button remains functional even if inline handlers fail.
+        document.addEventListener('DOMContentLoaded', function () {
+            try {
+                const label = document.querySelector('[data-i18n="btn_load"]');
+                const buttonEl = label ? label.closest('button') : null;
+                if (buttonEl && !buttonEl.__loadBound) {
+                    buttonEl.addEventListener('click', window.triggerFileLoad);
+                    buttonEl.__loadBound = true;
+                }
+            } catch (e) {
+                console.error('[LoadButtonBindError]', e);
+            }
+        });
+
 
 
 
@@ -3099,7 +3214,107 @@ function migrateProjectToCurrentSchema(project) {
     return { project: p, migrated: true, from: fromV, to: CURRENT_SCHEMA_VERSION };
 }
 
-        function validateAndNormaliseProjectPayload(payload) {
+        
+/**
+ * Fallback import path (minimal):
+ * Rebuild a canonical project structure from heterogeneous exports (notably FR exports with `parametres` + `modules`).
+ * Keeps the UI unchanged; only affects import robustness.
+ */
+function forceCanonicalImport(payload) {
+    if (!payload || typeof payload !== "object") throw new Error("invalid_payload");
+    const p0 = payload.project || payload.data || payload.conception || payload.learningDesign || payload;
+
+    // Params
+    const pr = (p0 && typeof p0 === "object" && p0.parametres && typeof p0.parametres === "object") ? p0.parametres : {};
+    const keyParams = (p0 && typeof p0 === "object" && p0.keyParams && typeof p0.keyParams === "object") ? p0.keyParams : null;
+
+    const outFromFR = Array.isArray(pr.resultats) ? pr.resultats.map(o => ({
+        text: o?.texte ?? o?.text ?? "",
+        level: o?.niveau ?? o?.level ?? "",
+        sub: o?.sousNiveau ?? o?.sub ?? ""
+    })) : [];
+
+    const canonicalKeyParams = keyParams || {
+        name: pr.nom ?? "",
+        topic: pr.theme ?? "",
+        authors: pr.auteurs ?? "",
+        level: pr.niveau ?? "unspecified",
+        targetAudience: pr.publicCible ?? "",
+        prerequisites: pr.prerequis ?? "",
+        mode: pr.modalite ?? "",
+        cohortSize: pr.tailleCohorte ?? 30,
+        learningTimeVal: pr.dureeApprentissageValeur ?? "",
+        learningTimeUnit: pr.dureeApprentissageUnite ?? "mins",
+        designedTimeVal: pr.dureeConcueValeur ?? "",
+        aims: pr.objectifs ?? "",
+        outcomesText: pr.resultatsTexte ?? "",
+        description: pr.description ?? "",
+        outcomes: outFromFR
+    };
+
+    // Helpers
+    const asStr = (v) => (v == null ? "" : String(v));
+    const asNumStr = (v) => {
+        if (v == null || v === "") return "";
+        const n = Number(String(v).replace(",", "."));
+        return Number.isFinite(n) ? String(n) : "";
+    };
+    const normGroupMode = (v) => {
+        const m = mapLegacyGroupMode(v);
+        return (m === "class" || m === "groups" || m === "individual") ? m : "class";
+    };
+
+    const normStep = (s) => ({
+        title: asStr(s?.title ?? s?.titre ?? ""),
+        type: asStr(s?.type ?? "acquisition"),
+        duration: asNumStr(s?.duration ?? s?.duree ?? ""),
+        unit: asStr(s?.unit ?? s?.unite ?? ""),
+        groupMode: normGroupMode(s?.groupMode ?? s?.regroupement ?? "class"),
+        groupCount: asNumStr(s?.groupCount ?? s?.nombreGroupes ?? ""),
+        groupSize: asNumStr(s?.groupSize ?? s?.tailleGroupe ?? ""),
+        trainer: asStr(s?.trainer ?? s?.formateur ?? "present"),
+        place: asStr(s?.place ?? s?.lieu ?? "situ"),
+        time: asStr(s?.time ?? s?.temps ?? "sync"),
+        objective: asStr(s?.objective ?? s?.objectifActivite ?? ""),
+        tasks: asStr(s?.tasks ?? s?.aFaire ?? ""),
+        notes: asStr(s?.notes ?? "")
+    });
+
+    const defaultMomentUnit = (document.getElementById("param-learning-unit")?.value || canonicalKeyParams.learningTimeUnit || "mins");
+
+    const normMoment = (m) => ({
+        title: asStr(m?.title ?? m?.titre ?? ""),
+        description: asStr(m?.description ?? ""),
+        targetTime: asNumStr(m?.targetTime ?? m?.dureeCible ?? ""),
+        targetUnit: asStr(m?.targetUnit ?? m?.uniteDureeCible ?? defaultMomentUnit),
+        steps: Array.isArray(m?.steps) ? m.steps.map(normStep) : (Array.isArray(m?.activites) ? m.activites.map(normStep) : [])
+    });
+
+    const rawModules = Array.isArray(p0?.modules) ? p0.modules : (Array.isArray(p0?.activities) ? p0.activities : []);
+    const activities = rawModules.map(mod => {
+        const moments = Array.isArray(mod?.moments) ? mod.moments.map(normMoment) : [];
+        const hasMoments = moments.length > 0;
+        return {
+            title: asStr(mod?.title ?? mod?.titre ?? ""),
+            description: asStr(mod?.description ?? ""),
+            targetTime: asNumStr(mod?.targetTime ?? mod?.dureeCible ?? ""),
+            targetUnit: asStr(mod?.targetUnit ?? mod?.uniteDureeCible ?? "60"),
+            moments,
+            steps: hasMoments ? [] : (Array.isArray(mod?.steps) ? mod.steps.map(normStep) : (Array.isArray(mod?.activites) ? mod.activites.map(normStep) : []))
+        };
+    });
+
+    return {
+        schemaVersion: 2,
+        exportedAt: p0?.exportedAt ?? new Date().toISOString(),
+        keyParams: canonicalKeyParams,
+        // Keep parametres if present for backwards compatibility
+        parametres: (p0?.parametres && typeof p0.parametres === "object") ? p0.parametres : pr,
+        activities
+    };
+}
+
+function validateAndNormaliseProjectPayload(payload) {
             // Returns { ok, data, warnings[] }
             const warnings = [];
             if (!payload || typeof payload !== 'object') {
@@ -3160,15 +3375,20 @@ function migrateProjectToCurrentSchema(project) {
                     : (Array.isArray(m?.activites) ? m.activites.map(normStep) : [])
             });
 
-            const normModule = (a) => ({
-                title: asStr(a?.title ?? a?.titre ?? ''),
-                description: asStr(a?.description ?? ''),
-                targetTime: asNumStr(a?.targetTime ?? a?.dureeCible ?? ''),
-                targetUnit: asStr(a?.targetUnit ?? a?.uniteDureeCible ?? '60'),
-                moments: Array.isArray(a?.moments) ? a.moments.map(normMoment) : [],
-                steps: Array.isArray(a?.steps) ? a.steps.map(normStep)
-                    : (Array.isArray(a?.activites) ? a.activites.map(normStep) : [])
-            });
+            const normModule = (a) => {
+                const moments = Array.isArray(a?.moments) ? a.moments.map(normMoment) : [];
+                const hasMoments = Array.isArray(moments) && moments.length > 0;
+                return {
+                    title: asStr(a?.title ?? a?.titre ?? ''),
+                    description: asStr(a?.description ?? ''),
+                    targetTime: asNumStr(a?.targetTime ?? a?.dureeCible ?? ''),
+                    targetUnit: asStr(a?.targetUnit ?? a?.uniteDureeCible ?? '60'),
+                    moments,
+                    // Canonical choice: if moments exist, ignore module-level legacy 'activites/steps' to avoid duplicates.
+                    steps: hasMoments ? [] : (Array.isArray(a?.steps) ? a.steps.map(normStep)
+                        : (Array.isArray(a?.activites) ? a.activites.map(normStep) : []))
+                };
+            };
 
             const normalised = { ...p };
             normalised.activities = rawModules.map(normModule);
@@ -3216,10 +3436,18 @@ function _clampInt(v, min=0, max=Number.MAX_SAFE_INTEGER, fallback=0) {
     return Math.min(max, Math.max(min, n));
 }
 function _normaliseUnit(u, fallback="mins") {
-    const s = _trimText(u).toLowerCase();
-    if (["secs","sec","s","seconds","second"].includes(s)) return "secs";
-    if (["mins","min","m","minutes","minute"].includes(s)) return "mins";
-    if (["hrs","hr","h","hours","hour"].includes(s)) return "hrs";
+    const raw = _trimText(u);
+    if (!raw) return fallback;
+    const v = raw.toLowerCase();
+
+    // Preserve numeric units (e.g., "60", "3600") used by legacy exports.
+    if (!isNaN(parseFloat(v)) && isFinite(parseFloat(v))) return raw;
+
+    if (["mins","min","m","minutes","minute"].includes(v)) return "mins";
+    if (["hours","hour","h","heures","heure","hrs","hr"].includes(v)) return "hours";
+    if (["days","day","d","jours","jour"].includes(v)) return "days";
+    if (["weeks","week","w","semaines","semaine"].includes(v)) return "weeks";
+    if (["months","month","mois"].includes(v)) return "months";
     return fallback;
 }
 function normaliseAndRepairProject(project) {
@@ -3330,6 +3558,12 @@ function normaliseAndRepairProject(project) {
                     }
                     if (!Array.isArray(m.steps)) m.steps = [];
 
+                    // Canonical choice: if both legacy arrays exist, keep steps and drop alternates.
+                    if (Array.isArray(m.steps) && (Array.isArray(m.activites) || Array.isArray(m.activities))) {
+                        try { delete m.activites; } catch (_) {}
+                        try { delete m.activities; } catch (_) {}
+                    }
+
                     m.steps = m.steps
                         .filter(s => s && typeof s === "object")
                         .map((s, si) => {
@@ -3360,6 +3594,13 @@ function normaliseAndRepairProject(project) {
                     return m;
                 });
 
+            // Canonical choice: if moments exist, ignore module-level legacy 'activites/activities' to avoid duplicates.
+            if (Array.isArray(mod.moments) && mod.moments.length > 0) {
+                try { delete mod.activites; } catch (_) {}
+                try { delete mod.activities; } catch (_) {}
+                try { delete mod.steps; } catch (_) {}
+            }
+
             return mod;
         });
 
@@ -3388,70 +3629,94 @@ function normaliseAndRepairProject(project) {
             // Support multiple saved-file shapes (legacy / FR / wrapper objects)
             if (project && typeof project === 'object') {
                 project = project.project || project.data || project.conception || project.learningDesign || project;
-            const __checked = validateAndNormaliseProjectPayload(project);
-            if (!__checked.ok) {
-                alert("Erreur : impossible de charger ce fichier de sauvegarde. Vérifiez qu’il s’agit bien d’un fichier JSON exporté par cet outil.");
-                return;
             }
+
+            // Primary path: validate + normalise using current loader
+            let __checked = null;
+            try {
+                __checked = validateAndNormaliseProjectPayload(project);
+            } catch (e) {
+                console.error('Load validation error:', e);
+                __checked = { ok: false, data: null, warnings: ['validation_exception'] };
+            }
+
+            // Fallback path (minimal, schema-agnostic): rebuild a canonical structure from FR exports
+            if (!__checked || !__checked.ok) {
+                try {
+                    project = forceCanonicalImport(project);
+                    __checked = { ok: true, data: project, warnings: ['fallback_canonical_import'] };
+                } catch (e) {
+                    console.error('Fallback import error:', e);
+                    alert("Erreur : impossible de charger ce fichier de sauvegarde. Vérifiez qu’il s’agit bien d’un fichier JSON exporté par cet outil.");
+                    return;
+                }
+            }
+
             if (__checked.warnings && __checked.warnings.length) {
                 console.warn('Project validation warnings:', __checked.warnings);
             }
             project = __checked.data;
-            
+
             // Auto-repair / deep normalisation (IDs, durations, empty fields)
-            const __norm2 = normaliseAndRepairProject(project);
-            if (__norm2 && __norm2.ok) {
-                if (__norm2.warnings && __norm2.warnings.length) console.warn('Normalisation warnings:', __norm2.warnings);
-                project = __norm2.data;
-            } else {
-                console.warn('Normalisation failed; continuing with validated payload.');
+            try {
+                const __norm2 = normaliseAndRepairProject(project);
+                if (__norm2 && __norm2.ok) {
+                    if (__norm2.warnings && __norm2.warnings.length) console.warn('Normalisation warnings:', __norm2.warnings);
+                    project = __norm2.data;
+                } else {
+                    console.warn('Normalisation failed; continuing with validated payload.');
+                }
+            } catch (e) {
+                console.error('Normalisation exception; continuing with validated payload.', e);
             }
-}
             const rootEl = document.getElementById('activities-root') || root;
             if (rootEl) rootEl.innerHTML = '';
 
+            const __setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = (val ?? ''); };
+            const __setHtml = (id, htmlVal) => { const el = document.getElementById(id); if (el) el.innerHTML = htmlVal; };
+
             // Restore Key Params
             if (project.keyParams) {
-                document.getElementById('param-name').value = project.keyParams.name || "";
+                __setVal('param-name', project.keyParams.name || "");
                 { const __el=document.getElementById('param-topic'); if(__el){ __el.value = project.keyParams.topic || ""; } }
-                document.getElementById('param-authors').value = project.keyParams.authors || "";
-                document.getElementById('param-level').value = project.keyParams.level || 'unspecified';
-                document.getElementById('param-target-audience').value = project.keyParams.targetAudience || "";
-                document.getElementById('param-prerequisites').value = project.keyParams.prerequisites || "";
-                document.getElementById('param-mode').value = project.keyParams.mode || "";
-                document.getElementById('global-class-size').value = project.keyParams.cohortSize || 30;
-                document.getElementById('param-learning-val').value = project.keyParams.learningTimeVal || "";
-                document.getElementById('param-learning-unit').value = project.keyParams.learningTimeUnit || "mins";
-                document.getElementById('param-designed-val').value = project.keyParams.designedTimeVal || "";
+                __setVal('param-authors', project.keyParams.authors || "");
+                __setVal('param-level', project.keyParams.level || 'unspecified');
+                __setVal('param-target-audience', project.keyParams.targetAudience || "");
+                __setVal('param-prerequisites', project.keyParams.prerequisites || "");
+                __setVal('param-mode', project.keyParams.mode || "");
+                __setVal('global-class-size', project.keyParams.cohortSize || 30);
+                __setVal('param-learning-val', project.keyParams.learningTimeVal || "");
+                __setVal('param-learning-unit', project.keyParams.learningTimeUnit || "mins");
+                __setVal('param-designed-val', project.keyParams.designedTimeVal || "");
                 // Designed Time Unit is now synced with Learning Time Unit
-                document.getElementById('param-aims').value = project.keyParams.aims || "";
-                document.getElementById('param-outcomes-text').value = project.keyParams.outcomesText || "";
-                document.getElementById('param-description').value = project.keyParams.description || "";
+                __setVal('param-aims', project.keyParams.aims || "");
+                __setVal('param-outcomes-text', project.keyParams.outcomesText || "");
+                __setVal('param-description', project.keyParams.description || "");
 
                 // Restore Outcomes
-                document.getElementById('outcomes-list').innerHTML = '';
+                __setHtml('outcomes-list', '');
                 if (project.keyParams.outcomes && Array.isArray(project.keyParams.outcomes)) {
                     project.keyParams.outcomes.forEach(out => addOutcome(out));
                 }
                 checkOutcomesEmpty();
             } else if (project.parametres) {
-                document.getElementById('param-name').value = project.parametres.nom || "";
+                __setVal('param-name', project.parametres.nom || "");
                 { const __el=document.getElementById('param-topic'); if(__el){ __el.value = project.parametres.theme || ""; } }
-                document.getElementById('param-authors').value = project.parametres.auteurs || "";
-                document.getElementById('param-level').value = project.parametres.niveau || 'unspecified';
-                document.getElementById('param-target-audience').value = project.parametres.publicCible || "";
-                document.getElementById('param-prerequisites').value = project.parametres.prerequis || "";
-                document.getElementById('param-mode').value = project.parametres.modalite || "";
-                document.getElementById('global-class-size').value = project.parametres.tailleCohorte || 30;
-                document.getElementById('param-learning-val').value = project.parametres.dureeApprentissageValeur || "";
-                document.getElementById('param-learning-unit').value = project.parametres.dureeApprentissageUnite || "mins";
-                document.getElementById('param-designed-val').value = project.parametres.dureeConcueValeur || "";
-                document.getElementById('param-aims').value = project.parametres.objectifs || "";
-                document.getElementById('param-outcomes-text').value = project.parametres.resultatsTexte || "";
-                document.getElementById('param-description').value = project.parametres.description || "";
+                __setVal('param-authors', project.parametres.auteurs || "");
+                __setVal('param-level', project.parametres.niveau || 'unspecified');
+                __setVal('param-target-audience', project.parametres.publicCible || "");
+                __setVal('param-prerequisites', project.parametres.prerequis || "");
+                __setVal('param-mode', project.parametres.modalite || "");
+                __setVal('global-class-size', project.parametres.tailleCohorte || 30);
+                __setVal('param-learning-val', project.parametres.dureeApprentissageValeur || "");
+                __setVal('param-learning-unit', project.parametres.dureeApprentissageUnite || "mins");
+                __setVal('param-designed-val', project.parametres.dureeConcueValeur || "");
+                __setVal('param-aims', project.parametres.objectifs || "");
+                __setVal('param-outcomes-text', project.parametres.resultatsTexte || "");
+                __setVal('param-description', project.parametres.description || "");
 
                 // Restore Outcomes (FR export)
-                document.getElementById('outcomes-list').innerHTML = '';
+                __setHtml('outcomes-list', '');
                 if (project.parametres.resultats && Array.isArray(project.parametres.resultats)) {
                     project.parametres.resultats.forEach(out => addOutcome({
                         text: out.texte ?? out.text,
@@ -3461,7 +3726,7 @@ function normaliseAndRepairProject(project) {
                 }
                 checkOutcomesEmpty();
             } else if (project.cohortSize) {
-                document.getElementById('global-class-size').value = project.cohortSize;
+                __setVal('global-class-size', project.cohortSize);
             }
 
             applyTranslations();
@@ -3496,14 +3761,19 @@ function normaliseAndRepairProject(project) {
                 steps: Array.isArray(m?.steps) ? m.steps.map(normaliseStep) : (Array.isArray(m?.activites) ? m.activites.map(normaliseStep) : [])
             });
 
-            const normaliseActivity = (a) => ({
-                title: a?.title ?? a?.titre ?? "",
-                description: a?.description ?? "",
-                targetTime: a?.targetTime ?? a?.dureeCible ?? "",
-                targetUnit: a?.targetUnit ?? a?.uniteDureeCible ?? "60",
-                moments: Array.isArray(a?.moments) ? a.moments.map(normaliseMoment) : [],
-                steps: Array.isArray(a?.steps) ? a.steps.map(normaliseStep) : (Array.isArray(a?.activites) ? a.activites.map(normaliseStep) : [])
-            });
+            const normaliseActivity = (a) => {
+                const moments = Array.isArray(a?.moments) ? a.moments.map(normaliseMoment) : [];
+                const hasMoments = Array.isArray(moments) && moments.length > 0;
+                return {
+                    title: a?.title ?? a?.titre ?? "",
+                    description: a?.description ?? "",
+                    targetTime: a?.targetTime ?? a?.dureeCible ?? "",
+                    targetUnit: a?.targetUnit ?? a?.uniteDureeCible ?? "60",
+                    moments,
+                    // Canonical choice: if moments exist, ignore module-level legacy 'activites/steps' to avoid duplicates.
+                    steps: hasMoments ? [] : (Array.isArray(a?.steps) ? a.steps.map(normaliseStep) : (Array.isArray(a?.activites) ? a.activites.map(normaliseStep) : []))
+                };
+            };
 
             loadedActivitiesRaw.forEach(actData => {
                 addActivityFromData(normaliseActivity(actData));
@@ -3514,11 +3784,15 @@ function normaliseAndRepairProject(project) {
                 addActivity();
             }
 
+
+            // Default behaviour after loading: keep all modules collapsed.
+            collapseAllActivitiesForced();
+
             updateEmptyState();
             updateStats();
         }
 
-function loadProject(event) {
+window.loadProject = function loadProject(event) {
             const file = event.target.files[0];
             if (!file) return;
 
@@ -4337,6 +4611,9 @@ function updateStats() {
             // Sync UI text display
             document.getElementById('param-designed-unit-display').innerText = learningUnitText;
             
+            const headerDesignedUnitEl = document.getElementById('header-designed-unit');
+            if (headerDesignedUnitEl) headerDesignedUnitEl.innerText = learningUnitText;
+            
             // Update Header Target Time
             const targetVal = document.getElementById('param-learning-val').value || 0;
             const headerTargetTimeEl = document.getElementById('header-target-time');
@@ -4354,6 +4631,8 @@ function updateStats() {
             else designedVal = parseFloat(designedVal.toFixed(1)); 
             
             designedInput.value = designedVal;
+            const headerDesignedValEl = document.getElementById('header-designed-val');
+            if (headerDesignedValEl) headerDesignedValEl.innerText = designedVal;
             // Update designed time per moment (sum of contained activities), expressed in the moment unit
             document.querySelectorAll('.moment-group').forEach(momentEl => {
                 let secs = 0;
@@ -4477,7 +4756,7 @@ function updateStats() {
                             labelEl.className = 'px-1 truncate text-center border-r border-transparent last:border-0';
 
                             if (actWidthPct > 5) {
-                                labelEl.innerText = `${escapeHtml(activity.title)}`;
+                                labelEl.innerText = activity.title;
                                 labelEl.title = activity.title;
                             } else {
                                 labelEl.innerText = '.';
@@ -4555,7 +4834,7 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
                         labelEl.className = 'px-1 truncate text-center border-r border-transparent last:border-0';
 
                         if (actWidthPct > 5) {
-                            labelEl.innerText = `${escapeHtml(planned.title)}`;
+                            labelEl.innerText = planned.title;
                             labelEl.title = planned.title;
                         } else {
                             labelEl.innerText = '.';
