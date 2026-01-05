@@ -2952,17 +2952,17 @@ function toggleMomentDescription(btn) {
                 schemaVersion: 2,
                 exportedAt: new Date().toISOString(),
                 parametres: {
-                    nom: document.getElementById('param-name').value,
+                    nom: (document.getElementById('param-name')?.value),
                     theme: (document.getElementById('param-topic') ? document.getElementById('param-topic').value : ''),
-                    auteurs: document.getElementById('param-authors').value,
+                    auteurs: (document.getElementById('param-authors')?.value),
                     niveau: document.getElementById('param-level')?.value || 'unspecified',
                     publicCible: document.getElementById('param-target-audience')?.value || '',
                     prerequis: document.getElementById('param-prerequisites')?.value || '',
                     modalite: document.getElementById('param-mode').value,
-                    tailleCohorte: document.getElementById('global-class-size').value,
-                    dureeApprentissageValeur: document.getElementById('param-learning-val').value,
+                    tailleCohorte: (document.getElementById('global-class-size')?.value),
+                    dureeApprentissageValeur: (document.getElementById('param-learning-val')?.value),
                     dureeApprentissageUnite: document.getElementById('param-learning-unit').value,
-                    dureeConcueValeur: document.getElementById('param-designed-val').value,
+                    dureeConcueValeur: (document.getElementById('param-designed-val')?.value),
                     dureeConcueUnite: document.getElementById('param-learning-unit').value,
                     objectifs: document.getElementById('param-aims').value,
                     resultatsTexte: document.getElementById('param-outcomes-text')?.value || "",
@@ -3640,6 +3640,9 @@ function normaliseAndRepairProject(project) {
 
         
         function loadProjectFromObject(project) {
+            const __chartsSuspendFn = window.__setChartsSuspended;
+            if (typeof __chartsSuspendFn === 'function') __chartsSuspendFn(true);
+            try {
             // Support multiple saved-file shapes (legacy / FR / wrapper objects)
             if (project && typeof project === 'object') {
                 project = project.project || project.data || project.conception || project.learningDesign || project;
@@ -3792,6 +3795,10 @@ function normaliseAndRepairProject(project) {
 
             updateEmptyState();
             updateStats();
+        
+            } finally {
+                if (typeof __chartsSuspendFn === 'function') __chartsSuspendFn(false);
+            }
         }
 
 window.loadProject = function loadProject(event) {
@@ -3874,7 +3881,7 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
             stepEl.querySelector('.learning-type-select').value = data.type || "acquisition";
             stepEl.querySelector('.duration-input').value = data.duration || 0;
             stepEl.querySelector('.duration-unit').value = mapUnitToSecs(data.unit || getDefaultDurationUnitKey());
-            stepEl.querySelector('.step-group-mode').value = data.groupMode || "class";
+            stepEl.querySelector('.step-group-mode').value = (data.groupMode || data.regroupement || "class");
             stepEl.querySelector('.step-group-count').value = data.groupCount || 1;
             stepEl.querySelector('.step-group-size').value = data.groupSize || 30;
             stepEl.querySelector('.trainer-select').value = data.trainer || "present";
@@ -3883,7 +3890,7 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
             stepEl.querySelector('.step-input-objective').value = data.objective || "";
             stepEl.querySelector('.step-input-tasks').value = data.tasks || "";
             stepEl.querySelector('.step-input-notes').value = data.notes || "";
-            if (data.groupMode === 'groups') stepEl.querySelector('.step-group-details').classList.remove('hidden');
+            if ((data.groupMode || data.regroupement) === 'groups') stepEl.querySelector('.step-group-details').classList.remove('hidden');
             container.appendChild(clone);
             updateStepType(stepEl.querySelector('.learning-type-select'));
         }
@@ -4082,7 +4089,7 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
 
         function getTotals() {
             const activities = document.querySelectorAll('.activity-group');
-            const classSize = parseInt(document.getElementById('global-class-size').value) || 1;
+            const classSize = parseInt((document.getElementById('global-class-size')?.value)) || 1;
             const typeTime = { acquisition: 0, collaboration: 0, discussion: 0, investigation: 0, practice: 0, production: 0 };
             const timelineData = [];
             const detailedTimeline = [];
@@ -4634,7 +4641,7 @@ function updateStats() {
             if (headerDesignedUnitEl) headerDesignedUnitEl.innerText = learningUnitText;
             
             // Update Header Target Time
-            const targetVal = document.getElementById('param-learning-val').value || 0;
+            const targetVal = (document.getElementById('param-learning-val')?.value) || 0;
             const headerTargetTimeEl = document.getElementById('header-target-time');
             if (headerTargetTimeEl) headerTargetTimeEl.innerText = `${targetVal} ${learningUnitText}`;
 
@@ -5683,8 +5690,67 @@ function __deprecated__exportRichText_1() {
 
             const __legendHtml = (() => {
                 const el = document.getElementById('chart-learning-types-legend');
-                return el ? el.innerHTML : '';
+                return el ? __nl2br(el.textContent || '') : '';
             })();
+
+            // Text legends for histogram charts (avoid embedding legends as images)
+            const __escapeHtml = (s) => (s == null ? '' : String(s))
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+
+            function __getStepDurationSecsFromStep(stepCard) {
+                if (!stepCard) return 0;
+                const v = Math.max(0, parseFloat(stepCard.querySelector('.duration-input')?.value) || 0);
+                const u = Math.max(0, parseFloat(stepCard.querySelector('.duration-unit')?.value) || 0);
+                const secs = v * (u || 60);
+                return Number.isFinite(secs) ? secs : 0;
+            }
+
+            function __tallyHistogramLegend(selector) {
+                const first = document.querySelector(selector);
+                const options = first && first.options ? Array.from(first.options).filter(o => !o.disabled) : [];
+
+                const sums = new Map();
+                options.forEach((o) => {
+                    const lab = (o.textContent || '').trim();
+                    if (lab) sums.set(lab, 0);
+                });
+
+                document.querySelectorAll(selector).forEach((el) => {
+                    if (!el) return;
+                    const stepCard = el.closest('.step-card');
+                    const secs = __getStepDurationSecsFromStep(stepCard);
+                    if (secs <= 0) return;
+                    const opt = el.options ? el.options[el.selectedIndex] : null;
+                    const lab = opt ? (opt.textContent || '').trim() : '';
+                    if (!lab) return;
+                    if (!sums.has(lab)) sums.set(lab, 0);
+                    sums.set(lab, (sums.get(lab) || 0) + secs);
+                });
+
+                const total = Array.from(sums.values()).reduce((a, b) => a + (b || 0), 0);
+                if (!options.length && !sums.size) return '';
+
+                const orderedLabels = options.length ? options.map(o => (o.textContent || '').trim()).filter(Boolean) : Array.from(sums.keys());
+
+                const items = orderedLabels.map((lab) => {
+                    const secs = sums.get(lab) || 0;
+                    const pct = total > 0 ? Math.round((secs / total) * 100) : 0;
+                    return `<li>${__escapeHtml(lab)} <span style="color:#64748b;">(${pct}%)</span></li>`;
+                }).join('');
+
+                return `<div style="margin-top:6px; font-size:12px; color:#334155;"><ul style="margin:0; padding-left:18px;">${items}</ul></div>`;
+            }
+
+            const __histLegend = {
+                'chart-group-modes': __tallyHistogramLegend('.step-group-mode'),
+                'chart-place-modes': __tallyHistogramLegend('.place-select'),
+                'chart-time-modes': __tallyHistogramLegend('.time-select'),
+                'chart-trainer-presence': __tallyHistogramLegend('.trainer-select')
+            };
             // Restore panel styles (do not change the UI state)
             if (__chartsPanel && __chartsPanelPrev) {
                 __chartsPanel.style.display = __chartsPanelPrev.display;
@@ -5735,13 +5801,13 @@ function __deprecated__exportRichText_1() {
                 <h1>${t.rtf_title}</h1>
                 
                 <h2>Métadonnées</h2>
-                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${document.getElementById('param-name').value}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${document.getElementById('param-authors').value}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${document.getElementById('param-mode').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${document.getElementById('param-level').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${document.getElementById('global-class-size').value}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${document.getElementById('param-learning-val').value} ${document.getElementById('param-learning-unit').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${document.getElementById('param-designed-val').value} ${document.getElementById('param-learning-unit').selectedOptions[0]?.innerText || ''}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
                 <h2>Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
@@ -5752,18 +5818,22 @@ function __deprecated__exportRichText_1() {
                     ${(__charts['chart-group-modes'] ? `<div style="margin-bottom:16px;">
                         <h3 style="margin: 10px 0 6px 0;">Modes de groupes</h3>
                         <img alt="Modes de groupes" src="${__charts['chart-group-modes']}" style="max-width:100%; height:auto; border:1px solid #e2e8f0; border-radius:8px; background:#fff; padding:8px;"/>
+                        ${(__histLegend['chart-group-modes'] || ``)}
                     </div>` : ``)}
                     ${(__charts['chart-place-modes'] ? `<div style="margin-bottom:16px;">
                         <h3 style="margin: 10px 0 6px 0;">Modes de lieu</h3>
                         <img alt="Modes de lieu" src="${__charts['chart-place-modes']}" style="max-width:100%; height:auto; border:1px solid #e2e8f0; border-radius:8px; background:#fff; padding:8px;"/>
+                        ${(__histLegend['chart-place-modes'] || ``)}
                     </div>` : ``)}
                     ${(__charts['chart-time-modes'] ? `<div style="margin-bottom:16px;">
                         <h3 style="margin: 10px 0 6px 0;">Modes de temps</h3>
                         <img alt="Modes de temps" src="${__charts['chart-time-modes']}" style="max-width:100%; height:auto; border:1px solid #e2e8f0; border-radius:8px; background:#fff; padding:8px;"/>
+                        ${(__histLegend['chart-time-modes'] || ``)}
                     </div>` : ``)}
                     ${(__charts['chart-trainer-presence'] ? `<div style="margin-bottom:16px;">
                         <h3 style="margin: 10px 0 6px 0;">Présence du formateur</h3>
                         <img alt="Présence du formateur" src="${__charts['chart-trainer-presence']}" style="max-width:100%; height:auto; border:1px solid #e2e8f0; border-radius:8px; background:#fff; padding:8px;"/>
+                        ${(__histLegend['chart-trainer-presence'] || ``)}
                     </div>` : ``)}
                 </div>
 
@@ -5795,34 +5865,34 @@ function __deprecated__exportRichText_1() {
 
                 <h2>Informations clés</h2>
                 <h3>${t.label_description}</h3>
-                <p>${document.getElementById('param-description').value.replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-description')?.value)}</p>
 
                 <h3>${t.label_target_audience}</h3>
-                <p>${(document.getElementById('param-target-audience')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-target-audience')?.value || '')}</p>
 
                 <h3>${t.label_prerequisites}</h3>
-                <p>${(document.getElementById('param-prerequisites')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-prerequisites')?.value || '')}</p>
 
                 <h3>${t.label_aims}</h3>
-                <p>${document.getElementById('param-aims').value.replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
 
                 <h3>${t.label_outcomes_text}</h3>
-                <p>${(document.getElementById('param-outcomes-text')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-outcomes-text')?.value || '')}</p>
 
                 <h3>${t.label_outcomes}</h3>
                 <ul>`;
                 
 document.querySelectorAll('#outcomes-list li').forEach(li => {
-                const text = li.querySelector('.outcome-text').innerText;
-                const level = li.querySelector('.outcome-bloom-level').value;
-                const sub = li.querySelector('.outcome-bloom-sub').value;
+                const text = li.querySelector('.outcome-text')?.innerText || '';
+                const level = li.querySelector('.outcome-bloom-level')?.value || '';
+                const sub = li.querySelector('.outcome-bloom-sub')?.value || '';
                 let bloomText = "";
                 if(level) {
-                    bloomText += `<strong>[${t[`bloom_${level}`] || level.toUpperCase()}`;
-                    if(sub) bloomText += ` - ${t[`bloom_sub_${sub}`] || sub}`;
+                    bloomText += `<strong>[${__esc(t[`bloom_${level}`] || level.toUpperCase())}`;
+                    if(sub) bloomText += ` - ${__esc(t[`bloom_sub_${sub}`] || sub)}`;
                     bloomText += "]</strong> ";
                 }
-                html += `<li>${bloomText}${text}</li>`;
+                html += `<li>${bloomText}${__esc(text)}</li>`;
             });
 
             html += `</ul>
@@ -5883,13 +5953,13 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 modPrefix = modPrefix.replace(' sans titre', '');
 
                 html += `<div class="activity-block">
-                    <h3 style="color: #1e293b; font-size: 1.2em; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">${modPrefix} ${aIdx + 1}: ${moduleTitle}</h3>
-                    ${moduleDesc ? `<p><em>${moduleDesc}</em></p>` : ''}`;
+                    <h3 style="color: #1e293b; font-size: 1.2em; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">${modPrefix} ${aIdx + 1}: ${__esc(moduleTitle)}</h3>
+                    ${moduleDesc ? `<p><em>${__nl2br(moduleDesc)}</em></p>` : ''}`;
 
                 const moduleTgtVal = (activity.querySelector('.activity-target-time')?.value || '').trim();
                 const moduleTgtUnitTxt = activity.querySelector('.activity-target-unit')?.selectedOptions?.[0]?.innerText || '';
                 if (moduleTgtVal) {
-                    html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${moduleTgtVal} ${moduleTgtUnitTxt}</div>`;
+                    html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${__esc(moduleTgtVal)} ${__esc(moduleTgtUnitTxt)}</div>`;
                 }
 
 
@@ -5924,15 +5994,15 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const activityNumber = `${momentNumberPrefix}.${sIdx + 1}`;
 
                         html += `<div class="step-block type-${typeKey}">
-                            <h4>${activityNumber}. ${stepTitle} <span class="tag bg-${typeKey}" style="float: right;">${typeLabel}</span></h4>
+                            <h4>${activityNumber}. ${__esc(stepTitle)} <span class="tag bg-${typeKey}" style="float: right;">${__esc(typeLabel)}</span></h4>
                             <div style="font-size: 0.9em; color: #64748b; margin-bottom: 10px;">
                                 <strong>Durée :</strong> ${duration} | 
                                 <strong>Regroupement :</strong> ${groupInfo} | 
                                 <strong>Modalité :</strong> ${trainerText}, ${placeText}, ${timeText}
                             </div>
-                            ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${objective.replace(/\n/g, '<br>')}</div>` : ''}
-                            ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${tasks.replace(/\n/g, '<br>')}</div>` : ''}
-                            ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${notes.replace(/\n/g, '<br>')}</div>` : ''}
+                            ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${__nl2br(objective)}</div>` : ''}
+                            ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${__nl2br(tasks)}</div>` : ''}
+                            ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${__nl2br(notes)}</div>` : ''}
                         </div>`;
                     });
                 };
@@ -5954,12 +6024,12 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const momentSecs = calcMomentSecs(stepCards);
 
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
-                        html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${momentTitle}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
+                        html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${__esc(momentTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
                         const mTgtVal = (momentEl.querySelector('.moment-target-time')?.value || '').trim();
                         const mTgtUnitTxt = momentEl.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
                         const mDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
                         if (mTgtVal) {
-                            html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${mTgtVal} ${mTgtUnitTxt}</div>`;
+                            html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal)} ${__esc(mTgtUnitTxt)}</div>`;
                         }
 
                         if (mDesc) {
@@ -5976,7 +6046,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     const mTgtVal0 = (activity.querySelector('.moment-target-time')?.value || '').trim();
                     const mTgtUnitTxt0 = activity.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
                     if (mTgtVal0) {
-                        html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${mTgtVal0} ${mTgtUnitTxt0}</div>`;
+                        html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal0)} ${__esc(mTgtUnitTxt0)}</div>`;
                     }
                     renderSteps(stepCards, momentPrefix);
                 }
@@ -6209,13 +6279,13 @@ function __deprecated__exportCSV_2() {
                 <h1>${t.rtf_title}</h1>
                 
                 <h2>Métadonnées</h2>
-                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${document.getElementById('param-name').value}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${document.getElementById('param-authors').value}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${document.getElementById('param-mode').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${document.getElementById('param-level').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${document.getElementById('global-class-size').value}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${document.getElementById('param-learning-val').value} ${document.getElementById('param-learning-unit').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${document.getElementById('param-designed-val').value} ${document.getElementById('param-learning-unit').selectedOptions[0]?.innerText || ''}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
                 <h2>Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
@@ -6244,34 +6314,34 @@ function __deprecated__exportCSV_2() {
                 
                 <h2>Informations clés</h2>
                 <h3>${t.label_description}</h3>
-                <p>${document.getElementById('param-description').value.replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-description')?.value)}</p>
 
                 <h3>${t.label_target_audience}</h3>
-                <p>${(document.getElementById('param-target-audience')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-target-audience')?.value || '')}</p>
 
                 <h3>${t.label_prerequisites}</h3>
-                <p>${(document.getElementById('param-prerequisites')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-prerequisites')?.value || '')}</p>
 
                 <h3>${t.label_aims}</h3>
-                <p>${document.getElementById('param-aims').value.replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
 
                 <h3>${t.label_outcomes_text}</h3>
-                <p>${(document.getElementById('param-outcomes-text')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-outcomes-text')?.value || '')}</p>
 
                 <h3>${t.label_outcomes}</h3>
                 <ul>`;
                 
 document.querySelectorAll('#outcomes-list li').forEach(li => {
-                const text = li.querySelector('.outcome-text').innerText;
-                const level = li.querySelector('.outcome-bloom-level').value;
-                const sub = li.querySelector('.outcome-bloom-sub').value;
+                const text = li.querySelector('.outcome-text')?.innerText || '';
+                const level = li.querySelector('.outcome-bloom-level')?.value || '';
+                const sub = li.querySelector('.outcome-bloom-sub')?.value || '';
                 let bloomText = "";
                 if(level) {
-                    bloomText += `<strong>[${t[`bloom_${level}`] || level.toUpperCase()}`;
-                    if(sub) bloomText += ` - ${t[`bloom_sub_${sub}`] || sub}`;
+                    bloomText += `<strong>[${__esc(t[`bloom_${level}`] || level.toUpperCase())}`;
+                    if(sub) bloomText += ` - ${__esc(t[`bloom_sub_${sub}`] || sub)}`;
                     bloomText += "]</strong> ";
                 }
-                html += `<li>${bloomText}${text}</li>`;
+                html += `<li>${bloomText}${__esc(text)}</li>`;
             });
 
             html += `</ul>
@@ -6289,13 +6359,13 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 modPrefix = modPrefix.replace(' sans titre', '');
 
                 html += `<div class="activity-block">
-                    <h3 style="color: #1e293b; font-size: 1.2em; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">${modPrefix} ${aIdx + 1}: ${moduleTitle}</h3>
-                    ${moduleDesc ? `<p><em>${moduleDesc}</em></p>` : ''}`;
+                    <h3 style="color: #1e293b; font-size: 1.2em; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">${modPrefix} ${aIdx + 1}: ${__esc(moduleTitle)}</h3>
+                    ${moduleDesc ? `<p><em>${__nl2br(moduleDesc)}</em></p>` : ''}`;
 
                 const moduleTgtVal = (activity.querySelector('.activity-target-time')?.value || '').trim();
                 const moduleTgtUnitTxt = activity.querySelector('.activity-target-unit')?.selectedOptions?.[0]?.innerText || '';
                 if (moduleTgtVal) {
-                    html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${moduleTgtVal} ${moduleTgtUnitTxt}</div>`;
+                    html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${__esc(moduleTgtVal)} ${__esc(moduleTgtUnitTxt)}</div>`;
                 }
 
 
@@ -6330,15 +6400,15 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const activityNumber = `${momentNumberPrefix}.${sIdx + 1}`;
 
                         html += `<div class="step-block type-${typeKey}">
-                            <h4>${activityNumber}. ${stepTitle} <span class="tag bg-${typeKey}" style="float: right;">${typeLabel}</span></h4>
+                            <h4>${activityNumber}. ${__esc(stepTitle)} <span class="tag bg-${typeKey}" style="float: right;">${__esc(typeLabel)}</span></h4>
                             <div style="font-size: 0.9em; color: #64748b; margin-bottom: 10px;">
                                 <strong>Durée :</strong> ${duration} | 
                                 <strong>Regroupement :</strong> ${groupInfo} | 
                                 <strong>Modalité :</strong> ${trainerText}, ${placeText}, ${timeText}
                             </div>
-                            ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${objective.replace(/\n/g, '<br>')}</div>` : ''}
-                            ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${tasks.replace(/\n/g, '<br>')}</div>` : ''}
-                            ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${notes.replace(/\n/g, '<br>')}</div>` : ''}
+                            ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${__nl2br(objective)}</div>` : ''}
+                            ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${__nl2br(tasks)}</div>` : ''}
+                            ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${__nl2br(notes)}</div>` : ''}
                         </div>`;
                     });
                 };
@@ -6360,12 +6430,12 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const momentSecs = calcMomentSecs(stepCards);
 
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
-                        html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${momentTitle}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
+                        html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${__esc(momentTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
                         const mTgtVal = (momentEl.querySelector('.moment-target-time')?.value || '').trim();
                         const mTgtUnitTxt = momentEl.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
                         const mDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
                         if (mTgtVal) {
-                            html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${mTgtVal} ${mTgtUnitTxt}</div>`;
+                            html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal)} ${__esc(mTgtUnitTxt)}</div>`;
                         }
 
                         if (mDesc) {
@@ -6382,7 +6452,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     const mTgtVal0 = (activity.querySelector('.moment-target-time')?.value || '').trim();
                     const mTgtUnitTxt0 = activity.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
                     if (mTgtVal0) {
-                        html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${mTgtVal0} ${mTgtUnitTxt0}</div>`;
+                        html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal0)} ${__esc(mTgtUnitTxt0)}</div>`;
                     }
                     renderSteps(stepCards, momentPrefix);
                 }
@@ -6732,13 +6802,13 @@ function __deprecated__exportCSV_3() {
                 <h1>${t.rtf_title}</h1>
                 
                 <h2>Métadonnées</h2>
-                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${document.getElementById('param-name').value}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${document.getElementById('param-authors').value}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${document.getElementById('param-mode').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${document.getElementById('param-level').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${document.getElementById('global-class-size').value}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${document.getElementById('param-learning-val').value} ${document.getElementById('param-learning-unit').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${document.getElementById('param-designed-val').value} ${document.getElementById('param-learning-unit').selectedOptions[0]?.innerText || ''}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
                 <h2>Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
@@ -6767,34 +6837,34 @@ function __deprecated__exportCSV_3() {
                 
                 <h2>Informations clés</h2>
                 <h3>${t.label_description}</h3>
-                <p>${document.getElementById('param-description').value.replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-description')?.value)}</p>
 
                 <h3>${t.label_target_audience}</h3>
-                <p>${(document.getElementById('param-target-audience')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-target-audience')?.value || '')}</p>
 
                 <h3>${t.label_prerequisites}</h3>
-                <p>${(document.getElementById('param-prerequisites')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-prerequisites')?.value || '')}</p>
 
                 <h3>${t.label_aims}</h3>
-                <p>${document.getElementById('param-aims').value.replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
 
                 <h3>${t.label_outcomes_text}</h3>
-                <p>${(document.getElementById('param-outcomes-text')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-outcomes-text')?.value || '')}</p>
 
                 <h3>${t.label_outcomes}</h3>
                 <ul>`;
                 
 document.querySelectorAll('#outcomes-list li').forEach(li => {
-                const text = li.querySelector('.outcome-text').innerText;
-                const level = li.querySelector('.outcome-bloom-level').value;
-                const sub = li.querySelector('.outcome-bloom-sub').value;
+                const text = li.querySelector('.outcome-text')?.innerText || '';
+                const level = li.querySelector('.outcome-bloom-level')?.value || '';
+                const sub = li.querySelector('.outcome-bloom-sub')?.value || '';
                 let bloomText = "";
                 if(level) {
-                    bloomText += `<strong>[${t[`bloom_${level}`] || level.toUpperCase()}`;
-                    if(sub) bloomText += ` - ${t[`bloom_sub_${sub}`] || sub}`;
+                    bloomText += `<strong>[${__esc(t[`bloom_${level}`] || level.toUpperCase())}`;
+                    if(sub) bloomText += ` - ${__esc(t[`bloom_sub_${sub}`] || sub)}`;
                     bloomText += "]</strong> ";
                 }
-                html += `<li>${bloomText}${text}</li>`;
+                html += `<li>${bloomText}${__esc(text)}</li>`;
             });
 
             html += `</ul>
@@ -6812,13 +6882,13 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 modPrefix = modPrefix.replace(' sans titre', '');
 
                 html += `<div class="activity-block">
-                    <h3 style="color: #1e293b; font-size: 1.2em; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">${modPrefix} ${aIdx + 1}: ${moduleTitle}</h3>
-                    ${moduleDesc ? `<p><em>${moduleDesc}</em></p>` : ''}`;
+                    <h3 style="color: #1e293b; font-size: 1.2em; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">${modPrefix} ${aIdx + 1}: ${__esc(moduleTitle)}</h3>
+                    ${moduleDesc ? `<p><em>${__nl2br(moduleDesc)}</em></p>` : ''}`;
 
                 const moduleTgtVal = (activity.querySelector('.activity-target-time')?.value || '').trim();
                 const moduleTgtUnitTxt = activity.querySelector('.activity-target-unit')?.selectedOptions?.[0]?.innerText || '';
                 if (moduleTgtVal) {
-                    html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${moduleTgtVal} ${moduleTgtUnitTxt}</div>`;
+                    html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${__esc(moduleTgtVal)} ${__esc(moduleTgtUnitTxt)}</div>`;
                 }
 
 
@@ -6853,15 +6923,15 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const activityNumber = `${momentNumberPrefix}.${sIdx + 1}`;
 
                         html += `<div class="step-block type-${typeKey}">
-                            <h4>${activityNumber}. ${stepTitle} <span class="tag bg-${typeKey}" style="float: right;">${typeLabel}</span></h4>
+                            <h4>${activityNumber}. ${__esc(stepTitle)} <span class="tag bg-${typeKey}" style="float: right;">${__esc(typeLabel)}</span></h4>
                             <div style="font-size: 0.9em; color: #64748b; margin-bottom: 10px;">
                                 <strong>Durée :</strong> ${duration} | 
                                 <strong>Regroupement :</strong> ${groupInfo} | 
                                 <strong>Modalité :</strong> ${trainerText}, ${placeText}, ${timeText}
                             </div>
-                            ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${objective.replace(/\n/g, '<br>')}</div>` : ''}
-                            ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${tasks.replace(/\n/g, '<br>')}</div>` : ''}
-                            ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${notes.replace(/\n/g, '<br>')}</div>` : ''}
+                            ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${__nl2br(objective)}</div>` : ''}
+                            ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${__nl2br(tasks)}</div>` : ''}
+                            ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${__nl2br(notes)}</div>` : ''}
                         </div>`;
                     });
                 };
@@ -6883,12 +6953,12 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const momentSecs = calcMomentSecs(stepCards);
 
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
-                        html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${momentTitle}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
+                        html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${__esc(momentTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
                         const mTgtVal = (momentEl.querySelector('.moment-target-time')?.value || '').trim();
                         const mTgtUnitTxt = momentEl.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
                         const mDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
                         if (mTgtVal) {
-                            html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${mTgtVal} ${mTgtUnitTxt}</div>`;
+                            html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal)} ${__esc(mTgtUnitTxt)}</div>`;
                         }
 
                         if (mDesc) {
@@ -6905,7 +6975,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     const mTgtVal0 = (activity.querySelector('.moment-target-time')?.value || '').trim();
                     const mTgtUnitTxt0 = activity.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
                     if (mTgtVal0) {
-                        html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${mTgtVal0} ${mTgtUnitTxt0}</div>`;
+                        html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal0)} ${__esc(mTgtUnitTxt0)}</div>`;
                     }
                     renderSteps(stepCards, momentPrefix);
                 }
@@ -7134,13 +7204,13 @@ function __deprecated__exportCSV_4() {
                 <h1>${t.rtf_title}</h1>
                 
                 <h2>Métadonnées</h2>
-                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${document.getElementById('param-name').value}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${document.getElementById('param-authors').value}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${document.getElementById('param-mode').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${document.getElementById('param-level').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${document.getElementById('global-class-size').value}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${document.getElementById('param-learning-val').value} ${document.getElementById('param-learning-unit').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${document.getElementById('param-designed-val').value} ${document.getElementById('param-learning-unit').selectedOptions[0]?.innerText || ''}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
                 <h2>Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
@@ -7169,34 +7239,34 @@ function __deprecated__exportCSV_4() {
                 
                 <h2>Informations clés</h2>
                 <h3>${t.label_description}</h3>
-                <p>${document.getElementById('param-description').value.replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-description')?.value)}</p>
 
                 <h3>${t.label_target_audience}</h3>
-                <p>${(document.getElementById('param-target-audience')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-target-audience')?.value || '')}</p>
 
                 <h3>${t.label_prerequisites}</h3>
-                <p>${(document.getElementById('param-prerequisites')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-prerequisites')?.value || '')}</p>
 
                 <h3>${t.label_aims}</h3>
-                <p>${document.getElementById('param-aims').value.replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
 
                 <h3>${t.label_outcomes_text}</h3>
-                <p>${(document.getElementById('param-outcomes-text')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-outcomes-text')?.value || '')}</p>
 
                 <h3>${t.label_outcomes}</h3>
                 <ul>`;
                 
 document.querySelectorAll('#outcomes-list li').forEach(li => {
-                const text = li.querySelector('.outcome-text').innerText;
-                const level = li.querySelector('.outcome-bloom-level').value;
-                const sub = li.querySelector('.outcome-bloom-sub').value;
+                const text = li.querySelector('.outcome-text')?.innerText || '';
+                const level = li.querySelector('.outcome-bloom-level')?.value || '';
+                const sub = li.querySelector('.outcome-bloom-sub')?.value || '';
                 let bloomText = "";
                 if(level) {
-                    bloomText += `<strong>[${t[`bloom_${level}`] || level.toUpperCase()}`;
-                    if(sub) bloomText += ` - ${t[`bloom_sub_${sub}`] || sub}`;
+                    bloomText += `<strong>[${__esc(t[`bloom_${level}`] || level.toUpperCase())}`;
+                    if(sub) bloomText += ` - ${__esc(t[`bloom_sub_${sub}`] || sub)}`;
                     bloomText += "]</strong> ";
                 }
-                html += `<li>${bloomText}${text}</li>`;
+                html += `<li>${bloomText}${__esc(text)}</li>`;
             });
 
             html += `</ul>
@@ -7214,13 +7284,13 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 modPrefix = modPrefix.replace(' sans titre', '');
 
                 html += `<div class="activity-block">
-                    <h3 style="color: #1e293b; font-size: 1.2em; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">${modPrefix} ${aIdx + 1}: ${moduleTitle}</h3>
-                    ${moduleDesc ? `<p><em>${moduleDesc}</em></p>` : ''}`;
+                    <h3 style="color: #1e293b; font-size: 1.2em; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">${modPrefix} ${aIdx + 1}: ${__esc(moduleTitle)}</h3>
+                    ${moduleDesc ? `<p><em>${__nl2br(moduleDesc)}</em></p>` : ''}`;
 
                 const moduleTgtVal = (activity.querySelector('.activity-target-time')?.value || '').trim();
                 const moduleTgtUnitTxt = activity.querySelector('.activity-target-unit')?.selectedOptions?.[0]?.innerText || '';
                 if (moduleTgtVal) {
-                    html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${moduleTgtVal} ${moduleTgtUnitTxt}</div>`;
+                    html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${__esc(moduleTgtVal)} ${__esc(moduleTgtUnitTxt)}</div>`;
                 }
 
 
@@ -7255,15 +7325,15 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const activityNumber = `${momentNumberPrefix}.${sIdx + 1}`;
 
                         html += `<div class="step-block type-${typeKey}">
-                            <h4>${activityNumber}. ${stepTitle} <span class="tag bg-${typeKey}" style="float: right;">${typeLabel}</span></h4>
+                            <h4>${activityNumber}. ${__esc(stepTitle)} <span class="tag bg-${typeKey}" style="float: right;">${__esc(typeLabel)}</span></h4>
                             <div style="font-size: 0.9em; color: #64748b; margin-bottom: 10px;">
                                 <strong>Durée :</strong> ${duration} | 
                                 <strong>Regroupement :</strong> ${groupInfo} | 
                                 <strong>Modalité :</strong> ${trainerText}, ${placeText}, ${timeText}
                             </div>
-                            ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${objective.replace(/\n/g, '<br>')}</div>` : ''}
-                            ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${tasks.replace(/\n/g, '<br>')}</div>` : ''}
-                            ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${notes.replace(/\n/g, '<br>')}</div>` : ''}
+                            ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${__nl2br(objective)}</div>` : ''}
+                            ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${__nl2br(tasks)}</div>` : ''}
+                            ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${__nl2br(notes)}</div>` : ''}
                         </div>`;
                     });
                 };
@@ -7285,12 +7355,12 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const momentSecs = calcMomentSecs(stepCards);
 
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
-                        html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${momentTitle}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
+                        html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${__esc(momentTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
                         const mTgtVal = (momentEl.querySelector('.moment-target-time')?.value || '').trim();
                         const mTgtUnitTxt = momentEl.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
                         const mDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
                         if (mTgtVal) {
-                            html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${mTgtVal} ${mTgtUnitTxt}</div>`;
+                            html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal)} ${__esc(mTgtUnitTxt)}</div>`;
                         }
 
                         if (mDesc) {
@@ -7307,7 +7377,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     const mTgtVal0 = (activity.querySelector('.moment-target-time')?.value || '').trim();
                     const mTgtUnitTxt0 = activity.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
                     if (mTgtVal0) {
-                        html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${mTgtVal0} ${mTgtUnitTxt0}</div>`;
+                        html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal0)} ${__esc(mTgtUnitTxt0)}</div>`;
                     }
                     renderSteps(stepCards, momentPrefix);
                 }
@@ -7490,13 +7560,13 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 <h1>${t.rtf_title}</h1>
                 
                 <h2>Métadonnées</h2>
-                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${document.getElementById('param-name').value}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${document.getElementById('param-authors').value}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${document.getElementById('param-mode').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${document.getElementById('param-level').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${document.getElementById('global-class-size').value}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${document.getElementById('param-learning-val').value} ${document.getElementById('param-learning-unit').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${document.getElementById('param-designed-val').value} ${document.getElementById('param-learning-unit').selectedOptions[0]?.innerText || ''}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
                 <h2>Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
@@ -7525,34 +7595,34 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 
                 <h2>Informations clés</h2>
                 <h3>${t.label_description}</h3>
-                <p>${document.getElementById('param-description').value.replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-description')?.value)}</p>
 
                 <h3>${t.label_target_audience}</h3>
-                <p>${(document.getElementById('param-target-audience')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-target-audience')?.value || '')}</p>
 
                 <h3>${t.label_prerequisites}</h3>
-                <p>${(document.getElementById('param-prerequisites')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-prerequisites')?.value || '')}</p>
 
                 <h3>${t.label_aims}</h3>
-                <p>${document.getElementById('param-aims').value.replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
 
                 <h3>${t.label_outcomes_text}</h3>
-                <p>${(document.getElementById('param-outcomes-text')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-outcomes-text')?.value || '')}</p>
 
                 <h3>${t.label_outcomes}</h3>
                 <ul>`;
                 
 document.querySelectorAll('#outcomes-list li').forEach(li => {
-                const text = li.querySelector('.outcome-text').innerText;
-                const level = li.querySelector('.outcome-bloom-level').value;
-                const sub = li.querySelector('.outcome-bloom-sub').value;
+                const text = li.querySelector('.outcome-text')?.innerText || '';
+                const level = li.querySelector('.outcome-bloom-level')?.value || '';
+                const sub = li.querySelector('.outcome-bloom-sub')?.value || '';
                 let bloomText = "";
                 if(level) {
-                    bloomText += `<strong>[${t[`bloom_${level}`] || level.toUpperCase()}`;
-                    if(sub) bloomText += ` - ${t[`bloom_sub_${sub}`] || sub}`;
+                    bloomText += `<strong>[${__esc(t[`bloom_${level}`] || level.toUpperCase())}`;
+                    if(sub) bloomText += ` - ${__esc(t[`bloom_sub_${sub}`] || sub)}`;
                     bloomText += "]</strong> ";
                 }
-                html += `<li>${bloomText}${text}</li>`;
+                html += `<li>${bloomText}${__esc(text)}</li>`;
             });
 
             html += `</ul>
@@ -7570,13 +7640,13 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 modPrefix = modPrefix.replace(' sans titre', '');
 
                 html += `<div class="activity-block">
-                    <h3 style="color: #1e293b; font-size: 1.2em; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">${modPrefix} ${aIdx + 1}: ${moduleTitle}</h3>
-                    ${moduleDesc ? `<p><em>${moduleDesc}</em></p>` : ''}`;
+                    <h3 style="color: #1e293b; font-size: 1.2em; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">${modPrefix} ${aIdx + 1}: ${__esc(moduleTitle)}</h3>
+                    ${moduleDesc ? `<p><em>${__nl2br(moduleDesc)}</em></p>` : ''}`;
 
                 const moduleTgtVal = (activity.querySelector('.activity-target-time')?.value || '').trim();
                 const moduleTgtUnitTxt = activity.querySelector('.activity-target-unit')?.selectedOptions?.[0]?.innerText || '';
                 if (moduleTgtVal) {
-                    html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${moduleTgtVal} ${moduleTgtUnitTxt}</div>`;
+                    html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${__esc(moduleTgtVal)} ${__esc(moduleTgtUnitTxt)}</div>`;
                 }
 
 
@@ -7604,15 +7674,15 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const activityNumber = `${momentNumberPrefix}.${sIdx + 1}`;
 
                         html += `<div class="step-block type-${typeKey}">
-                            <h4>${activityNumber}. ${stepTitle} <span class="tag bg-${typeKey}" style="float: right;">${typeLabel}</span></h4>
+                            <h4>${activityNumber}. ${__esc(stepTitle)} <span class="tag bg-${typeKey}" style="float: right;">${__esc(typeLabel)}</span></h4>
                             <div style="font-size: 0.9em; color: #64748b; margin-bottom: 10px;">
                                 <strong>Durée :</strong> ${duration} | 
                                 <strong>Regroupement :</strong> ${groupInfo} | 
                                 <strong>Modalité :</strong> ${trainerText}, ${placeText}, ${timeText}
                             </div>
-                            ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${objective.replace(/\n/g, '<br>')}</div>` : ''}
-                            ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${tasks.replace(/\n/g, '<br>')}</div>` : ''}
-                            ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${notes.replace(/\n/g, '<br>')}</div>` : ''}
+                            ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${__nl2br(objective)}</div>` : ''}
+                            ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${__nl2br(tasks)}</div>` : ''}
+                            ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${__nl2br(notes)}</div>` : ''}
                         </div>`;
                     });
                 };
@@ -7634,12 +7704,12 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const momentSecs = calcMomentSecs(stepCards);
 
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
-                        html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${momentTitle}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
+                        html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${__esc(momentTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
                         const mTgtVal = (momentEl.querySelector('.moment-target-time')?.value || '').trim();
                         const mTgtUnitTxt = momentEl.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
                         const mDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
                         if (mTgtVal) {
-                            html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${mTgtVal} ${mTgtUnitTxt}</div>`;
+                            html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal)} ${__esc(mTgtUnitTxt)}</div>`;
                         }
 
                         if (mDesc) {
@@ -7656,7 +7726,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     const mTgtVal0 = (activity.querySelector('.moment-target-time')?.value || '').trim();
                     const mTgtUnitTxt0 = activity.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
                     if (mTgtVal0) {
-                        html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${mTgtVal0} ${mTgtUnitTxt0}</div>`;
+                        html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal0)} ${__esc(mTgtUnitTxt0)}</div>`;
                     }
                     renderSteps(stepCards, momentPrefix);
                 }
@@ -7962,13 +8032,13 @@ function __deprecated__exportRichText_6() {
                 <h1>${t.rtf_title}</h1>
                 
                 <h2>Métadonnées</h2>
-                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${document.getElementById('param-name').value}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${document.getElementById('param-authors').value}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${document.getElementById('param-mode').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${document.getElementById('param-level').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${document.getElementById('global-class-size').value}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${document.getElementById('param-learning-val').value} ${document.getElementById('param-learning-unit').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${document.getElementById('param-designed-val').value} ${document.getElementById('param-learning-unit').selectedOptions[0]?.innerText || ''}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
                 <h2>Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
@@ -7997,34 +8067,34 @@ function __deprecated__exportRichText_6() {
                 
                 <h2>Informations clés</h2>
                 <h3>${t.label_description}</h3>
-                <p>${document.getElementById('param-description').value.replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-description')?.value)}</p>
 
                 <h3>${t.label_target_audience}</h3>
-                <p>${(document.getElementById('param-target-audience')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-target-audience')?.value || '')}</p>
 
                 <h3>${t.label_prerequisites}</h3>
-                <p>${(document.getElementById('param-prerequisites')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-prerequisites')?.value || '')}</p>
 
                 <h3>${t.label_aims}</h3>
-                <p>${document.getElementById('param-aims').value.replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
 
                 <h3>${t.label_outcomes_text}</h3>
-                <p>${(document.getElementById('param-outcomes-text')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-outcomes-text')?.value || '')}</p>
 
                 <h3>${t.label_outcomes}</h3>
                 <ul>`;
                 
 document.querySelectorAll('#outcomes-list li').forEach(li => {
-                const text = li.querySelector('.outcome-text').innerText;
-                const level = li.querySelector('.outcome-bloom-level').value;
-                const sub = li.querySelector('.outcome-bloom-sub').value;
+                const text = li.querySelector('.outcome-text')?.innerText || '';
+                const level = li.querySelector('.outcome-bloom-level')?.value || '';
+                const sub = li.querySelector('.outcome-bloom-sub')?.value || '';
                 let bloomText = "";
                 if(level) {
-                    bloomText += `<strong>[${t[`bloom_${level}`] || level.toUpperCase()}`;
-                    if(sub) bloomText += ` - ${t[`bloom_sub_${sub}`] || sub}`;
+                    bloomText += `<strong>[${__esc(t[`bloom_${level}`] || level.toUpperCase())}`;
+                    if(sub) bloomText += ` - ${__esc(t[`bloom_sub_${sub}`] || sub)}`;
                     bloomText += "]</strong> ";
                 }
-                html += `<li>${bloomText}${text}</li>`;
+                html += `<li>${bloomText}${__esc(text)}</li>`;
             });
 
             html += `</ul>
@@ -8042,13 +8112,13 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 modPrefix = modPrefix.replace(' sans titre', '');
 
                 html += `<div class="activity-block">
-                    <h3 style="color: #1e293b; font-size: 1.2em; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">${modPrefix} ${aIdx + 1}: ${moduleTitle}</h3>
-                    ${moduleDesc ? `<p><em>${moduleDesc}</em></p>` : ''}`;
+                    <h3 style="color: #1e293b; font-size: 1.2em; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">${modPrefix} ${aIdx + 1}: ${__esc(moduleTitle)}</h3>
+                    ${moduleDesc ? `<p><em>${__nl2br(moduleDesc)}</em></p>` : ''}`;
 
                 const moduleTgtVal = (activity.querySelector('.activity-target-time')?.value || '').trim();
                 const moduleTgtUnitTxt = activity.querySelector('.activity-target-unit')?.selectedOptions?.[0]?.innerText || '';
                 if (moduleTgtVal) {
-                    html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${moduleTgtVal} ${moduleTgtUnitTxt}</div>`;
+                    html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${__esc(moduleTgtVal)} ${__esc(moduleTgtUnitTxt)}</div>`;
                 }
 
 
@@ -8083,15 +8153,15 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const activityNumber = `${momentNumberPrefix}.${sIdx + 1}`;
 
                         html += `<div class="step-block type-${typeKey}">
-                            <h4>${activityNumber}. ${stepTitle} <span class="tag bg-${typeKey}" style="float: right;">${typeLabel}</span></h4>
+                            <h4>${activityNumber}. ${__esc(stepTitle)} <span class="tag bg-${typeKey}" style="float: right;">${__esc(typeLabel)}</span></h4>
                             <div style="font-size: 0.9em; color: #64748b; margin-bottom: 10px;">
                                 <strong>Durée :</strong> ${duration} | 
                                 <strong>Regroupement :</strong> ${groupInfo} | 
                                 <strong>Modalité :</strong> ${trainerText}, ${placeText}, ${timeText}
                             </div>
-                            ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${objective.replace(/\n/g, '<br>')}</div>` : ''}
-                            ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${tasks.replace(/\n/g, '<br>')}</div>` : ''}
-                            ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${notes.replace(/\n/g, '<br>')}</div>` : ''}
+                            ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${__nl2br(objective)}</div>` : ''}
+                            ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${__nl2br(tasks)}</div>` : ''}
+                            ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${__nl2br(notes)}</div>` : ''}
                         </div>`;
                     });
                 };
@@ -8113,12 +8183,12 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const momentSecs = calcMomentSecs(stepCards);
 
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
-                        html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${momentTitle}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
+                        html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${__esc(momentTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
                         const mTgtVal = (momentEl.querySelector('.moment-target-time')?.value || '').trim();
                         const mTgtUnitTxt = momentEl.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
                         const mDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
                         if (mTgtVal) {
-                            html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${mTgtVal} ${mTgtUnitTxt}</div>`;
+                            html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal)} ${__esc(mTgtUnitTxt)}</div>`;
                         }
 
                         if (mDesc) {
@@ -8135,7 +8205,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     const mTgtVal0 = (activity.querySelector('.moment-target-time')?.value || '').trim();
                     const mTgtUnitTxt0 = activity.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
                     if (mTgtVal0) {
-                        html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${mTgtVal0} ${mTgtUnitTxt0}</div>`;
+                        html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal0)} ${__esc(mTgtUnitTxt0)}</div>`;
                     }
                     renderSteps(stepCards, momentPrefix);
                 }
@@ -8223,13 +8293,13 @@ function exportCSV() {
                 <h1>${t.rtf_title}</h1>
                 
                 <h2>Métadonnées</h2>
-                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${document.getElementById('param-name').value}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${document.getElementById('param-authors').value}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${document.getElementById('param-mode').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${document.getElementById('param-level').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${document.getElementById('global-class-size').value}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${document.getElementById('param-learning-val').value} ${document.getElementById('param-learning-unit').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${document.getElementById('param-designed-val').value} ${document.getElementById('param-learning-unit').selectedOptions[0]?.innerText || ''}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
                 <h2>Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
@@ -8258,34 +8328,34 @@ function exportCSV() {
                 
                 <h2>Informations clés</h2>
                 <h3>${t.label_description}</h3>
-                <p>${document.getElementById('param-description').value.replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-description')?.value)}</p>
 
                 <h3>${t.label_target_audience}</h3>
-                <p>${(document.getElementById('param-target-audience')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-target-audience')?.value || '')}</p>
 
                 <h3>${t.label_prerequisites}</h3>
-                <p>${(document.getElementById('param-prerequisites')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-prerequisites')?.value || '')}</p>
 
                 <h3>${t.label_aims}</h3>
-                <p>${document.getElementById('param-aims').value.replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
 
                 <h3>${t.label_outcomes_text}</h3>
-                <p>${(document.getElementById('param-outcomes-text')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-outcomes-text')?.value || '')}</p>
 
                 <h3>${t.label_outcomes}</h3>
                 <ul>`;
                 
 document.querySelectorAll('#outcomes-list li').forEach(li => {
-                const text = li.querySelector('.outcome-text').innerText;
-                const level = li.querySelector('.outcome-bloom-level').value;
-                const sub = li.querySelector('.outcome-bloom-sub').value;
+                const text = li.querySelector('.outcome-text')?.innerText || '';
+                const level = li.querySelector('.outcome-bloom-level')?.value || '';
+                const sub = li.querySelector('.outcome-bloom-sub')?.value || '';
                 let bloomText = "";
                 if(level) {
-                    bloomText += `<strong>[${t[`bloom_${level}`] || level.toUpperCase()}`;
-                    if(sub) bloomText += ` - ${t[`bloom_sub_${sub}`] || sub}`;
+                    bloomText += `<strong>[${__esc(t[`bloom_${level}`] || level.toUpperCase())}`;
+                    if(sub) bloomText += ` - ${__esc(t[`bloom_sub_${sub}`] || sub)}`;
                     bloomText += "]</strong> ";
                 }
-                html += `<li>${bloomText}${text}</li>`;
+                html += `<li>${bloomText}${__esc(text)}</li>`;
             });
 
             html += `</ul>
@@ -8303,13 +8373,13 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 modPrefix = modPrefix.replace(' sans titre', '');
 
                 html += `<div class="activity-block">
-                    <h3 style="color: #1e293b; font-size: 1.2em; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">${modPrefix} ${aIdx + 1}: ${moduleTitle}</h3>
-                    ${moduleDesc ? `<p><em>${moduleDesc}</em></p>` : ''}`;
+                    <h3 style="color: #1e293b; font-size: 1.2em; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">${modPrefix} ${aIdx + 1}: ${__esc(moduleTitle)}</h3>
+                    ${moduleDesc ? `<p><em>${__nl2br(moduleDesc)}</em></p>` : ''}`;
 
                 const moduleTgtVal = (activity.querySelector('.activity-target-time')?.value || '').trim();
                 const moduleTgtUnitTxt = activity.querySelector('.activity-target-unit')?.selectedOptions?.[0]?.innerText || '';
                 if (moduleTgtVal) {
-                    html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${moduleTgtVal} ${moduleTgtUnitTxt}</div>`;
+                    html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${__esc(moduleTgtVal)} ${__esc(moduleTgtUnitTxt)}</div>`;
                 }
 
 
@@ -8344,15 +8414,15 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const activityNumber = `${momentNumberPrefix}.${sIdx + 1}`;
 
                         html += `<div class="step-block type-${typeKey}">
-                            <h4>${activityNumber}. ${stepTitle} <span class="tag bg-${typeKey}" style="float: right;">${typeLabel}</span></h4>
+                            <h4>${activityNumber}. ${__esc(stepTitle)} <span class="tag bg-${typeKey}" style="float: right;">${__esc(typeLabel)}</span></h4>
                             <div style="font-size: 0.9em; color: #64748b; margin-bottom: 10px;">
                                 <strong>Durée :</strong> ${duration} | 
                                 <strong>Regroupement :</strong> ${groupInfo} | 
                                 <strong>Modalité :</strong> ${trainerText}, ${placeText}, ${timeText}
                             </div>
-                            ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${objective.replace(/\n/g, '<br>')}</div>` : ''}
-                            ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${tasks.replace(/\n/g, '<br>')}</div>` : ''}
-                            ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${notes.replace(/\n/g, '<br>')}</div>` : ''}
+                            ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${__nl2br(objective)}</div>` : ''}
+                            ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${__nl2br(tasks)}</div>` : ''}
+                            ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${__nl2br(notes)}</div>` : ''}
                         </div>`;
                     });
                 };
@@ -8374,12 +8444,12 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const momentSecs = calcMomentSecs(stepCards);
 
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
-                        html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${momentTitle}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
+                        html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${__esc(momentTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
                         const mTgtVal = (momentEl.querySelector('.moment-target-time')?.value || '').trim();
                         const mTgtUnitTxt = momentEl.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
                         const mDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
                         if (mTgtVal) {
-                            html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${mTgtVal} ${mTgtUnitTxt}</div>`;
+                            html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal)} ${__esc(mTgtUnitTxt)}</div>`;
                         }
 
                         if (mDesc) {
@@ -8396,7 +8466,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     const mTgtVal0 = (activity.querySelector('.moment-target-time')?.value || '').trim();
                     const mTgtUnitTxt0 = activity.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
                     if (mTgtVal0) {
-                        html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${mTgtVal0} ${mTgtUnitTxt0}</div>`;
+                        html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal0)} ${__esc(mTgtUnitTxt0)}</div>`;
                     }
                     renderSteps(stepCards, momentPrefix);
                 }
@@ -8542,7 +8612,11 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const totalDuration = fmtTotalDuration(totals.totalSecs, t);
             
 
-            // Ensure charts have a measurable width even if the panel is collapsed (display:none)
+                        const __esc = (v) => escapeHtml(String(v ?? ''));
+            const __nl2br = (v) => __esc(v).replace(/\n/g, '<br>');
+            const __selTxt = (el) => __esc((el && el.selectedOptions && el.selectedOptions[0]) ? el.selectedOptions[0].innerText : '');
+
+// Ensure charts have a measurable width even if the panel is collapsed (display:none)
             const __chartsPanel = document.getElementById('charts-panel');
             const __chartsPanelPrev = __chartsPanel ? {
                 display: __chartsPanel.style.display,
@@ -8586,7 +8660,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
 
             const __legendHtml = (() => {
                 const el = document.getElementById('chart-learning-types-legend');
-                return el ? el.innerHTML : '';
+                return el ? __nl2br(el.textContent || '') : '';
             })();
             // Restore panel styles (do not change the UI state)
             if (__chartsPanel && __chartsPanelPrev) {
@@ -8637,13 +8711,13 @@ let html = `
                 <h1>${t.rtf_title}</h1>
                 
                 <h2>Métadonnées</h2>
-                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${document.getElementById('param-name').value}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${document.getElementById('param-authors').value}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${document.getElementById('param-mode').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${document.getElementById('param-level').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${document.getElementById('global-class-size').value}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${document.getElementById('param-learning-val').value} ${document.getElementById('param-learning-unit').selectedOptions[0]?.innerText || ''}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${document.getElementById('param-designed-val').value} ${document.getElementById('param-learning-unit').selectedOptions[0]?.innerText || ''}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
                 <h2>Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
@@ -8672,34 +8746,34 @@ let html = `
                 
                 <h2>Informations clés</h2>
                 <h3>${t.label_description}</h3>
-                <p>${document.getElementById('param-description').value.replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-description')?.value)}</p>
 
                 <h3>${t.label_target_audience}</h3>
-                <p>${(document.getElementById('param-target-audience')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-target-audience')?.value || '')}</p>
 
                 <h3>${t.label_prerequisites}</h3>
-                <p>${(document.getElementById('param-prerequisites')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-prerequisites')?.value || '')}</p>
 
                 <h3>${t.label_aims}</h3>
-                <p>${document.getElementById('param-aims').value.replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
 
                 <h3>${t.label_outcomes_text}</h3>
-                <p>${(document.getElementById('param-outcomes-text')?.value || '').replace(/\n/g, '<br>')}</p>
+                <p>${__nl2br(document.getElementById('param-outcomes-text')?.value || '')}</p>
 
                 <h3>${t.label_outcomes}</h3>
                 <ul>`;
                 
 document.querySelectorAll('#outcomes-list li').forEach(li => {
-                const text = li.querySelector('.outcome-text').innerText;
-                const level = li.querySelector('.outcome-bloom-level').value;
-                const sub = li.querySelector('.outcome-bloom-sub').value;
+                const text = li.querySelector('.outcome-text')?.innerText || '';
+                const level = li.querySelector('.outcome-bloom-level')?.value || '';
+                const sub = li.querySelector('.outcome-bloom-sub')?.value || '';
                 let bloomText = "";
                 if(level) {
-                    bloomText += `<strong>[${t[`bloom_${level}`] || level.toUpperCase()}`;
-                    if(sub) bloomText += ` - ${t[`bloom_sub_${sub}`] || sub}`;
+                    bloomText += `<strong>[${__esc(t[`bloom_${level}`] || level.toUpperCase())}`;
+                    if(sub) bloomText += ` - ${__esc(t[`bloom_sub_${sub}`] || sub)}`;
                     bloomText += "]</strong> ";
                 }
-                html += `<li>${bloomText}${text}</li>`;
+                html += `<li>${bloomText}${__esc(text)}</li>`;
             });
 
             html += `</ul>
@@ -8717,13 +8791,13 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 modPrefix = modPrefix.replace(' sans titre', '');
 
                 html += `<div class="activity-block">
-                    <h3 style="color: #1e293b; font-size: 1.2em; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">${modPrefix} ${aIdx + 1}: ${moduleTitle}</h3>
-                    ${moduleDesc ? `<p><em>${moduleDesc}</em></p>` : ''}`;
+                    <h3 style="color: #1e293b; font-size: 1.2em; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">${modPrefix} ${aIdx + 1}: ${__esc(moduleTitle)}</h3>
+                    ${moduleDesc ? `<p><em>${__nl2br(moduleDesc)}</em></p>` : ''}`;
 
                 const moduleTgtVal = (activity.querySelector('.activity-target-time')?.value || '').trim();
                 const moduleTgtUnitTxt = activity.querySelector('.activity-target-unit')?.selectedOptions?.[0]?.innerText || '';
                 if (moduleTgtVal) {
-                    html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${moduleTgtVal} ${moduleTgtUnitTxt}</div>`;
+                    html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${__esc(moduleTgtVal)} ${__esc(moduleTgtUnitTxt)}</div>`;
                 }
 
 
@@ -8751,15 +8825,15 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const activityNumber = `${momentNumberPrefix}.${sIdx + 1}`;
 
                         html += `<div class="step-block type-${typeKey}">
-                            <h4>${activityNumber}. ${stepTitle} <span class="tag bg-${typeKey}" style="float: right;">${typeLabel}</span></h4>
+                            <h4>${activityNumber}. ${__esc(stepTitle)} <span class="tag bg-${typeKey}" style="float: right;">${__esc(typeLabel)}</span></h4>
                             <div style="font-size: 0.9em; color: #64748b; margin-bottom: 10px;">
                                 <strong>Durée :</strong> ${duration} | 
                                 <strong>Regroupement :</strong> ${groupInfo} | 
                                 <strong>Modalité :</strong> ${trainerText}, ${placeText}, ${timeText}
                             </div>
-                            ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${objective.replace(/\n/g, '<br>')}</div>` : ''}
-                            ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${tasks.replace(/\n/g, '<br>')}</div>` : ''}
-                            ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${notes.replace(/\n/g, '<br>')}</div>` : ''}
+                            ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${__nl2br(objective)}</div>` : ''}
+                            ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${__nl2br(tasks)}</div>` : ''}
+                            ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${__nl2br(notes)}</div>` : ''}
                         </div>`;
                     });
                 };
@@ -8781,12 +8855,12 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const momentSecs = calcMomentSecs(stepCards);
 
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
-                        html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${momentTitle}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
+                        html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${__esc(momentTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
                         const mTgtVal = (momentEl.querySelector('.moment-target-time')?.value || '').trim();
                         const mTgtUnitTxt = momentEl.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
                         const mDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
                         if (mTgtVal) {
-                            html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${mTgtVal} ${mTgtUnitTxt}</div>`;
+                            html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal)} ${__esc(mTgtUnitTxt)}</div>`;
                         }
 
                         if (mDesc) {
@@ -8803,7 +8877,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     const mTgtVal0 = (activity.querySelector('.moment-target-time')?.value || '').trim();
                     const mTgtUnitTxt0 = activity.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
                     if (mTgtVal0) {
-                        html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${mTgtVal0} ${mTgtUnitTxt0}</div>`;
+                        html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal0)} ${__esc(mTgtUnitTxt0)}</div>`;
                     }
                     renderSteps(stepCards, momentPrefix);
                 }
@@ -9004,14 +9078,14 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const t = translations[currentLang];
             let md = `# ${t.md_title}\n\n`;
             md += `## métadonnées\n`;
-            md += `- **${t.label_course_name}:** ${document.getElementById('param-name').value}\n`;
-            md += `- **${t.label_authors}:** ${document.getElementById('param-authors').value}\n`;
-            md += `- **${t.label_mode}:** ${document.getElementById('param-mode').selectedOptions[0]?.innerText || ''}\n`;
-            md += `- **${t.label_level}:** ${document.getElementById('param-level').selectedOptions[0]?.innerText || ''}\n`;
-            md += `- **${t.label_class_size}:** ${document.getElementById('global-class-size').value}\n`;
+            md += `- **${t.label_course_name}:** ${__esc(document.getElementById('param-name')?.value)}\n`;
+            md += `- **${t.label_authors}:** ${__esc(document.getElementById('param-authors')?.value)}\n`;
+            md += `- **${t.label_mode}:** ${__selTxt(document.getElementById('param-mode'))}\n`;
+            md += `- **${t.label_level}:** ${__selTxt(document.getElementById('param-level'))}\n`;
+            md += `- **${t.label_class_size}:** ${__esc(document.getElementById('global-class-size')?.value)}\n`;
             md += `- **${t.label_total_time}:** ${fmtTotalDuration(data.totalSecs, t)}\n`;
-            md += `- **${t.label_learning_time}:** ${document.getElementById('param-learning-val').value} ${document.getElementById('param-learning-unit').selectedOptions[0]?.innerText || ''}\n`;
-            md += `- **${t.label_designed_time}:** ${document.getElementById('param-designed-val').value} ${document.getElementById('param-learning-unit').selectedOptions[0]?.innerText || ''}\n`; 
+            md += `- **${t.label_learning_time}:** ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}\n`;
+            md += `- **${t.label_designed_time}:** ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}\n`; 
 md += `- **Horodatage d'export :** ${new Date().toISOString()}\n\n`;
             
             md += `## informations_clés\n`;
@@ -9021,14 +9095,14 @@ md += `- **Horodatage d'export :** ${new Date().toISOString()}\n\n`;
             md += `### ${t.label_outcomes_text}\n${document.getElementById('param-outcomes-text')?.value || ''}\n\n`;
             md += `### ${t.label_outcomes}\n`;
             document.querySelectorAll('#outcomes-list li').forEach(li => {
-                const text = li.querySelector('.outcome-text').innerText;
-                const level = li.querySelector('.outcome-bloom-level').value;
-                const sub = li.querySelector('.outcome-bloom-sub').value;
+                const text = li.querySelector('.outcome-text')?.innerText || '';
+                const level = li.querySelector('.outcome-bloom-level')?.value || '';
+                const sub = li.querySelector('.outcome-bloom-sub')?.value || '';
                 
                 let bloomText = "";
                 if(level) {
                     bloomText += "[" + (t[`bloom_${level}`] || level.toUpperCase());
-                    if(sub) bloomText += ` - ${t[`bloom_sub_${sub}`] || sub}`;
+                    if(sub) bloomText += ` - ${__esc(t[`bloom_sub_${sub}`] || sub)}`;
                     bloomText += "] ";
                 }
                 
@@ -9120,14 +9194,14 @@ ${notes}
                         const momentSecs = calcMomentSecs(stepCards);
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
 
-                        md += `#### MOMENT ${momentPrefix}${momentTitle ? ` : ${momentTitle}` : ''}
+                        md += `#### MOMENT ${momentPrefix}${momentTitle ? ` : ${__esc(momentTitle)}` : ''}
 `;
                         md += `- **Durée conçue :** ${formatTimelineDuration(momentSecs)}
 `;
 
                         const mTgtVal = (momentEl.querySelector('.moment-target-time')?.value || '').trim();
                         const mTgtUnitTxt = momentEl.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
-                        if (mTgtVal) md += `- **Durée cible :** ${mTgtVal} ${mTgtUnitTxt}
+                        if (mTgtVal) md += `- **Durée cible :** ${__esc(mTgtVal)} ${__esc(mTgtUnitTxt)}
 `;
                         const mDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
                         if (mDesc) md += `- **Description :**\n${mDesc}\n`;
@@ -9510,6 +9584,33 @@ function tallyDuration(selector) {
 }
 function tallyDurationMeta(selector, kind) {
   const sums = new Map();
+
+  // Ensure "Regroupement" histogram always shows the 3 expected bars, even if a category is unused.
+  if ((kind || '').toLowerCase() === 'group') {
+    const first = document.querySelector('.step-group-mode');
+    const getLabelForValue = (v, fallback) => {
+      try {
+        if (first && first.options) {
+          const opt = Array.from(first.options).find(o => (o.value || '').toString() === v);
+          const txt = opt ? (opt.textContent || '').trim() : '';
+          if (txt) return txt;
+        }
+      } catch (_) {}
+      return fallback;
+    };
+
+    const presets = [
+      { val: 'class', label: getLabelForValue('class', 'Groupe entier') },
+      { val: 'groups', label: getLabelForValue('groups', 'Sous-groupe') },
+      { val: 'individual', label: getLabelForValue('individual', 'Individuel') }
+    ];
+
+    presets.forEach((p) => {
+      const meta = getHistogramBarMeta('group', p.val);
+      sums.set(p.label, { secs: 0, color: meta.color, pattern: meta.pattern });
+    });
+  }
+
   document.querySelectorAll(selector).forEach((el) => {
     if (!el) return;
     const val = (el.value ?? '').toString().trim();
@@ -9703,7 +9804,7 @@ function getHistogramBarMeta(kind, val) {
   if (!c) return;
   const ctx = c.getContext('2d');
   const w = (c.width = c.clientWidth || c.width);
-  const h = (c.height = c.getAttribute('height') ? parseInt(c.getAttribute('height'), 10) : (c.clientHeight || 180));
+  let h = (c.height = c.getAttribute('height') ? parseInt(c.getAttribute('height'), 10) : (c.clientHeight || 180));
   clearCanvas(ctx, w, h);
 
   const entries = (rows || []).slice().sort((a, b) => (b.secs || 0) - (a.secs || 0));
@@ -9712,6 +9813,13 @@ function getHistogramBarMeta(kind, val) {
     ctx.font = '11px system-ui, -apple-system, Segoe UI, Roboto, Arial';
     ctx.fillText('Aucune donnée', 10, 20);
     return;
+  }
+
+  // Ensure the canvas is tall enough to display all bars (e.g., 3 rows for Regroupement)
+  const __minH = (10 + 8) + (entries.length * 22) + 10;
+  if (h < __minH) {
+    h = (c.height = __minH);
+    clearCanvas(ctx, w, h);
   }
 
   const pad = 10;
@@ -9855,27 +9963,41 @@ function updateCharts() {
     drawBars('chart-trainer-presence', tallyDurationMeta('.trainer-select', 'trainer'));
   }
 
+  // Throttled scheduling (avoid chart recompute storms on large DOM mutations / imports)
+  let __chartsSuspended = false;
+  let __chartsRaf = null;
+  function requestUpdateCharts() {
+    if (__chartsSuspended) return;
+    if (__chartsRaf) return;
+    __chartsRaf = requestAnimationFrame(() => {
+      __chartsRaf = null;
+      if (__chartsSuspended) return;
+      updateCharts();
+    });
+  }
+  window.__setChartsSuspended = function(v){
+    __chartsSuspended = !!v;
+    if (!__chartsSuspended) requestUpdateCharts();
+  };
+
   // Update on value changes (delegated, minimal footprint)
   document.addEventListener('change', (e) => {
     const t = e.target;
     if (!t) return;
     if (t.matches('.learning-type-select, .step-group-mode, .place-select, .time-select, .trainer-select')) {
-      updateCharts();
+      requestUpdateCharts();
     }
   }, true);
 
   // Update on DOM changes (activities added/removed)
   if (rootEl && window.MutationObserver) {
-    const mo = new MutationObserver(() => updateCharts());
+    const mo = new MutationObserver(() => requestUpdateCharts());
     mo.observe(rootEl, { childList: true, subtree: true });
   }
 
   // Initial render (after current call stack so layout has widths)
-  setTimeout(updateCharts, 0);
+  setTimeout(requestUpdateCharts, 0);
 })();
-
-
-
 // ------------------------------
 // Namespaces (organisation layer)
 // ------------------------------
