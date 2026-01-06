@@ -10455,107 +10455,115 @@ function updateCharts() {
     };
     reader.readAsText(file);
   }
+function insertModule(payload, position, refIndex) {
+  if (typeof addActivityFromData !== 'function') throw new Error("Fonction d'ajout de module introuvable.");
+  addActivityFromData(payload);
+  const newEl = root?.lastElementChild;
+  if (!newEl) return;
 
-  function insertModule(payload, position, afterIndex) {
-    if (typeof addActivityFromData !== 'function') throw new Error("Fonction d’ajout de module introuvable.");
-    addActivityFromData(payload);
-    const newEl = root?.lastElementChild;
-    if (!newEl) return;
+  const modules = listModules();
+  const targetIndex = (() => {
+    if (position === 'start') return 0;
+    if (position === 'end') return modules.length - 1; // already end
+    if (position === 'before') return Math.max(refIndex ?? 0, 0);
+    if (position === 'after') return Math.min((refIndex ?? 0) + 1, modules.length - 1);
+    return modules.length - 1;
+  })();
 
-    const modules = listModules();
-    const targetIndex = (() => {
-      if (position === 'start') return 0;
-      if (position === 'end') return modules.length - 1; // already end
-      if (position === 'after') return Math.min((afterIndex ?? 0) + 1, modules.length - 1);
-      return modules.length - 1;
-    })();
+  // If already at end and target is end, nothing to do
+  if (position === 'end') return;
 
-    // If already at end and target is end, nothing to do
-    if (position === 'end') return;
-
-    const ref = root.children[targetIndex];
-    if (ref && ref !== newEl) root.insertBefore(newEl, ref);
+  const ref = root.children[targetIndex];
+  if (ref && ref !== newEl) root.insertBefore(newEl, ref);
+}
+function insertMoment(payload, moduleIndex, position, refMomentIndex) {
+  const modules = listModules();
+  const modEl = modules[moduleIndex];
+  if (!modEl) throw new Error("Module cible introuvable.");
+  const momentsRoot = modEl.querySelector('.activity-moments-container');
+  if (!momentsRoot) throw new Error("Conteneur de moments introuvable.");
+  if (!window.momentTemplate) {
+    // momentTemplate is a const in the outer scope, but in some builds it is not global; fallback to DOM lookup
   }
+  const tpl = document.getElementById('moment-template');
+  if (!tpl) throw new Error("Template de moment introuvable.");
+  const clone = tpl.content.cloneNode(true);
+  const momentEl = clone.querySelector('.moment-group') || clone.firstElementChild;
+  // Fill fields
+  momentEl.querySelector('.moment-title').value = payload.title || "";
+  momentEl.querySelector('.moment-description').value = payload.description || "";
+  momentEl.querySelector('.moment-target-time').value = payload.targetTime || "";
+  const unitSel = momentEl.querySelector('.moment-target-unit');
+  if (unitSel) unitSel.value = payload.targetUnit || (typeof getDefaultDurationUnitSecs === 'function' ? getDefaultDurationUnitSecs() : "60");
 
-  function insertMoment(payload, moduleIndex, position, afterMomentIndex) {
-    const modules = listModules();
-    const modEl = modules[moduleIndex];
-    if (!modEl) throw new Error("Module cible introuvable.");
-    const momentsRoot = modEl.querySelector('.activity-moments-container');
-    if (!momentsRoot) throw new Error("Conteneur de moments introuvable.");
-    if (!window.momentTemplate) {
-      // momentTemplate is a const in the outer scope, but in some builds it is not global; fallback to DOM lookup
+  const stepsContainer = momentEl.querySelector('.activity-steps-container');
+  if (stepsContainer) {
+    stepsContainer.innerHTML = '';
+    if (Array.isArray(payload.steps)) {
+      payload.steps.forEach(s => {
+        if (typeof addStepToContainerFromData === 'function') addStepToContainerFromData(stepsContainer, s);
+      });
     }
-    const tpl = document.getElementById('moment-template');
-    if (!tpl) throw new Error("Template de moment introuvable.");
-    const clone = tpl.content.cloneNode(true);
-    const momentEl = clone.querySelector('.moment-group') || clone.firstElementChild;
-    // Fill fields
-    momentEl.querySelector('.moment-title').value = payload.title || "";
-    momentEl.querySelector('.moment-description').value = payload.description || "";
-    momentEl.querySelector('.moment-target-time').value = payload.targetTime || "";
-    const unitSel = momentEl.querySelector('.moment-target-unit');
-    if (unitSel) unitSel.value = payload.targetUnit || (typeof getDefaultDurationUnitSecs === 'function' ? getDefaultDurationUnitSecs() : "60");
-
-    const stepsContainer = momentEl.querySelector('.activity-steps-container');
-    if (stepsContainer) {
-      stepsContainer.innerHTML = '';
-      if (Array.isArray(payload.steps)) {
-        payload.steps.forEach(s => {
-          if (typeof addStepToContainerFromData === 'function') addStepToContainerFromData(stepsContainer, s);
-        });
-      }
-      if (typeof initSortableSteps === 'function') initSortableSteps(stepsContainer);
-    }
-
-    // Insert at right place
-    const existing = Array.from(momentsRoot.querySelectorAll('.moment-group'));
-    if (position === 'start') {
-      momentsRoot.insertBefore(momentEl, existing[0] || null);
-    } else if (position === 'after') {
-      const ref = existing[afterMomentIndex] || null;
-      if (ref && ref.nextSibling) momentsRoot.insertBefore(momentEl, ref.nextSibling);
-      else momentsRoot.appendChild(momentEl);
-    } else {
-      momentsRoot.appendChild(momentEl);
-    }
-
-    if (typeof updateMomentIndexes === 'function') updateMomentIndexes(modEl);
-  }
-
-  function insertActivity(payload, moduleIndex, momentIndex, position, afterStepIndex) {
-    const modules = listModules();
-    const modEl = modules[moduleIndex];
-    if (!modEl) throw new Error("Module cible introuvable.");
-    const momentEl = Array.from(modEl.querySelectorAll('.moment-group'))[momentIndex];
-    if (!momentEl) throw new Error("Moment cible introuvable.");
-    const stepsContainer = momentEl.querySelector('.activity-steps-container');
-    if (!stepsContainer) throw new Error("Conteneur d’activités introuvable.");
-
-    const tpl = document.getElementById('step-template');
-    if (!tpl) throw new Error("Template d’activité introuvable.");
-    const clone = tpl.content.cloneNode(true);
-    const stepEl = clone.querySelector('.step-card') || clone.firstElementChild;
-
-    stepEl.querySelector('.step-input-title').value = payload.title || "";
-    stepEl.querySelector('.learning-type-select').value = payload.type || "acquisition";
-    stepEl.querySelector('.duration-input').value = payload.duration || 0;
-    stepEl.querySelector('.duration-unit').value = payload.unit || (typeof getDefaultDurationUnitKey === 'function' ? getDefaultDurationUnitKey() : "60");
-
-    const existing = Array.from(stepsContainer.querySelectorAll('.step-card'));
-    if (position === 'start') {
-      stepsContainer.insertBefore(stepEl, existing[0] || null);
-    } else if (position === 'after') {
-      const ref = existing[afterStepIndex] || null;
-      if (ref && ref.nextSibling) stepsContainer.insertBefore(stepEl, ref.nextSibling);
-      else stepsContainer.appendChild(stepEl);
-    } else {
-      stepsContainer.appendChild(stepEl);
-    }
-
     if (typeof initSortableSteps === 'function') initSortableSteps(stepsContainer);
-    if (typeof updateMomentIndexes === 'function') updateMomentIndexes(modEl);
   }
+
+  // Insert at right place
+  const existing = Array.from(momentsRoot.querySelectorAll('.moment-group'));
+  if (position === 'start') {
+    momentsRoot.insertBefore(momentEl, existing[0] || null);
+  } else if (position === 'before') {
+    const ref = existing[refMomentIndex] || null;
+    if (ref) momentsRoot.insertBefore(momentEl, ref);
+    else momentsRoot.appendChild(momentEl);
+  } else if (position === 'after') {
+    const ref = existing[refMomentIndex] || null;
+    if (ref && ref.nextSibling) momentsRoot.insertBefore(momentEl, ref.nextSibling);
+    else momentsRoot.appendChild(momentEl);
+  } else {
+    momentsRoot.appendChild(momentEl);
+  }
+
+  if (typeof updateMomentIndexes === 'function') updateMomentIndexes(modEl);
+}
+function insertActivity(payload, moduleIndex, momentIndex, position, refStepIndex) {
+  const modules = listModules();
+  const modEl = modules[moduleIndex];
+  if (!modEl) throw new Error("Module cible introuvable.");
+  const momentEl = Array.from(modEl.querySelectorAll('.moment-group'))[momentIndex];
+  if (!momentEl) throw new Error("Moment cible introuvable.");
+  const stepsContainer = momentEl.querySelector('.activity-steps-container');
+  if (!stepsContainer) throw new Error("Conteneur d'activités introuvable.");
+
+  const tpl = document.getElementById('step-template');
+  if (!tpl) throw new Error("Template d'activité introuvable.");
+  const clone = tpl.content.cloneNode(true);
+  const stepEl = clone.querySelector('.step-card') || clone.firstElementChild;
+
+  stepEl.querySelector('.step-input-title').value = payload.title || "";
+  stepEl.querySelector('.learning-type-select').value = payload.type || "acquisition";
+  stepEl.querySelector('.duration-input').value = payload.duration || 0;
+  stepEl.querySelector('.duration-unit').value = payload.unit || (typeof getDefaultDurationUnitKey === 'function' ? getDefaultDurationUnitKey() : "60");
+
+  const existing = Array.from(stepsContainer.querySelectorAll('.step-card'));
+  if (position === 'start') {
+    stepsContainer.insertBefore(stepEl, existing[0] || null);
+  } else if (position === 'before') {
+    const ref = existing[refStepIndex] || null;
+    if (ref) stepsContainer.insertBefore(stepEl, ref);
+    else stepsContainer.appendChild(stepEl);
+  } else if (position === 'after') {
+    const ref = existing[refStepIndex] || null;
+    if (ref && ref.nextSibling) stepsContainer.insertBefore(stepEl, ref.nextSibling);
+    else stepsContainer.appendChild(stepEl);
+  } else {
+    stepsContainer.appendChild(stepEl);
+  }
+
+  if (typeof initSortableSteps === 'function') initSortableSteps(stepsContainer);
+  if (typeof updateMomentIndexes === 'function') updateMomentIndexes(modEl);
+}
+
+
 
   function doImport() {
     setError('template-import-error', '');
@@ -10596,45 +10604,50 @@ function updateCharts() {
   // Strictement limité aux IDs des boutons Modèles pour éviter toute interférence avec les autres actions.
 
   // Bind UI (direct, no interaction with the global router)
-  function bind() {
-    // Toolbar buttons
-    $('btn-template-export')?.addEventListener('click', openExport);
-    $('btn-template-import')?.addEventListener('click', openImport);
+function bind() {
+  // Toolbar buttons
+  $('btn-template-export')?.addEventListener('click', openExport);
+  $('btn-template-import')?.addEventListener('click', openImport);
+
+  // Export modal controls
+  $('template-export-close')?.addEventListener('click', closeExport);
+  $('template-export-cancel')?.addEventListener('click', closeExport);
+  $('template-export-do')?.addEventListener('click', exportTemplateNow);
+  $('template-export-type')?.addEventListener('change', populateExportItems);
+
+  // Import modal controls
+  $('template-import-close')?.addEventListener('click', closeImport);
+  $('template-import-cancel')?.addEventListener('click', closeImport);
+  $('template-import-do')?.addEventListener('click', doImport);
+  $('template-import-pick')?.addEventListener('click', () => $('template-file-input')?.click());
+
+  // File input
+  $('template-file-input')?.addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    readTemplateFile(f);
+    e.target.value = '';
+  });
+
+  // Hide "after/before" selectors when not needed
+  $('tpl-module-position')?.addEventListener('change', () => {
+    const val = $('tpl-module-position').value;
+    const needsRef = (val === 'after' || val === 'before');
+    $('tpl-module-after').disabled = !needsRef;
+  });
+  $('tpl-moment-position')?.addEventListener('change', () => {
+    const val = $('tpl-moment-position').value;
+    const needsRef = (val === 'after' || val === 'before');
+    $('tpl-moment-after').disabled = !needsRef;
+  });
+  $('tpl-act-position')?.addEventListener('change', () => {
+    const val = $('tpl-act-position').value;
+    const needsRef = (val === 'after' || val === 'before');
+    $('tpl-act-after').disabled = !needsRef;
+  });
+}
 
 
-// Export modal controls
-    $('template-export-close')?.addEventListener('click', closeExport);
-    $('template-export-cancel')?.addEventListener('click', closeExport);
-    $('template-export-do')?.addEventListener('click', exportTemplateNow);
-    $('template-export-type')?.addEventListener('change', populateExportItems);
 
-    // Import modal controls
-    $('template-import-close')?.addEventListener('click', closeImport);
-    $('template-import-cancel')?.addEventListener('click', closeImport);
-    $('template-import-do')?.addEventListener('click', doImport);
-    $('template-import-pick')?.addEventListener('click', () => $('template-file-input')?.click());
-
-    // File input
-    $('template-file-input')?.addEventListener('change', (e) => {
-      const f = e.target.files && e.target.files[0];
-      readTemplateFile(f);
-      e.target.value = '';
-    });
-
-    // Hide "after" selectors when not needed
-    $('tpl-module-position')?.addEventListener('change', () => {
-      const isAfter = $('tpl-module-position').value === 'after';
-      $('tpl-module-after').disabled = !isAfter;
-    });
-    $('tpl-moment-position')?.addEventListener('change', () => {
-      const isAfter = $('tpl-moment-position').value === 'after';
-      $('tpl-moment-after').disabled = !isAfter;
-    });
-    $('tpl-act-position')?.addEventListener('change', () => {
-      const isAfter = $('tpl-act-position').value === 'after';
-      $('tpl-act-after').disabled = !isAfter;
-    });
-  }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', bind, { once: true });
@@ -10717,6 +10730,7 @@ function updateCharts() {
 <select class="mt-1 w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm" id="tpl-module-position">
 <option value="start">Au début</option>
 <option value="end">À la fin</option>
+<option value="before">Avant…</option>
 <option value="after">Après…</option>
 </select>
 </div>
@@ -10738,6 +10752,7 @@ function updateCharts() {
 <select class="mt-1 w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm" id="tpl-moment-position">
 <option value="start">Au début</option>
 <option value="end">À la fin</option>
+<option value="before">Avant…</option>
 <option value="after">Après…</option>
 </select>
 </div>
@@ -10763,6 +10778,7 @@ function updateCharts() {
 <select class="mt-1 w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm" id="tpl-act-position">
 <option value="start">Au début</option>
 <option value="end">À la fin</option>
+<option value="before">Avant…</option>
 <option value="after">Après…</option>
 </select>
 </div>
@@ -10776,8 +10792,8 @@ function updateCharts() {
 <button class="px-3 py-1.5 rounded-md border border-slate-300 text-sm text-slate-700 hover:bg-slate-50" id="template-import-cancel" type="button">Annuler</button>
 <button class="px-3 py-1.5 rounded-md bg-indigo-600 text-white text-sm hover:bg-indigo-700" id="template-import-do" type="button">Importer</button>
 </div>
-<div class="hidden text-sm text-red-600" id="template-import-error"></div>
 </div>
+<div class="hidden text-sm text-red-600" id="template-import-error"></div>
 </div>
 </div>
 </div>
