@@ -839,16 +839,47 @@ body.focus-mode .activity-group.focus-active { display: block; }
 </div>
 <div class="md:col-span-2 lg:col-span-3">
 <label class="compact-label block" data-i18n="label_outcomes">
-        Résultats d'apprentissage (Bloom)
+        Résultats d'apprentissage selon une taxonomie
        </label>
+
+<!-- Zone de gestion de la taxonomie -->
+<div class="flex items-center gap-2 mb-2 flex-wrap no-print">
+  <button 
+    type="button" 
+    id="btn-load-taxonomy" 
+    class="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-slate-200 transition-colors flex items-center gap-1"
+    title="Charger une taxonomie personnalisée" id="btn-load-taxonomy">
+    <span class="material-icons-round text-sm">upload_file</span>
+    Charger taxonomie
+  </button>
+  <button 
+    type="button" 
+    id="btn-download-taxonomy-template" 
+    class="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-slate-200 transition-colors flex items-center gap-1"
+    title="Télécharger le modèle CSV">
+    <span class="material-icons-round text-sm">download</span>
+    Modèle CSV
+  </button>
+  <button 
+    type="button" 
+    id="btn-reset-taxonomy" 
+    class="text-[10px] bg-red-50 text-red-600 px-2 py-1 rounded hover:bg-red-100 transition-colors flex items-center gap-1"
+    title="Réinitialiser la taxonomie par défaut">
+    <span class="material-icons-round text-sm">restart_alt</span>
+    Réinitialiser
+  </button>
+  <span id="taxonomy-status" class="text-[10px] text-slate-400 italic"></span>
+</div>
+<input type="file" id="taxonomy-file-input" accept=".csv" class="hidden" />
+
 <div class="flex gap-1 mb-1 no-print flex-col sm:flex-row">
 <div class="flex gap-1">
 <select class="text-[10px] font-bold text-slate-600 border border-slate-200 rounded py-1 px-1 bg-white focus:ring-1 focus:ring-indigo-500 outline-none w-24" id="new-bloom-level">
 <option data-i18n="bloom_placeholder" disabled="" selected="" value="">
-           Bloom...
+           Catégorie...
           </option>
 </select>
-<select class="text-[10px] text-slate-600 border border-slate-200 rounded py-1 px-1 bg-white focus:ring-1 focus:ring-indigo-500 outline-none w-24 hidden" id="new-bloom-sub">
+<select class="text-[10px] text-slate-600 border border-slate-200 rounded py-1 px-1 bg-white focus:ring-1 focus:ring-indigo-500 outline-none w-24" id="new-bloom-sub">
 <option data-i18n="bloom_sub_placeholder" disabled="" selected="" value="">
            Sous-cat...
           </option>
@@ -1932,14 +1963,206 @@ function showTooltip(e, content, isHtml = false) {
         }
 
         
-        const BLOOM_TAXONOMY = {
-            remember: ["cite", "define", "describe", "identify", "label", "list", "match", "name", "outline", "quote", "recall", "report", "reproduce", "retrieve", "show", "state", "tabulate", "tell"],
-            understand: ["abstract", "arrange", "articulate", "associate", "categorize", "clarify", "classify", "compare", "compute", "conclude", "contrast", "defend", "diagram", "differentiate", "discuss", "distinguish", "estimate", "exemplify", "explain", "extend", "extrapolate", "generalize", "give examples of", "illustrate", "infer", "interpolate", "interpret", "match", "outline", "paraphrase", "predict", "rearrange", "reorder", "rephrase", "represent", "restate", "summarize", "transform", "translate"],
-            apply: ["apply", "calculate", "carry out", "classify", "complete", "compute", "demonstrate", "dramatize", "employ", "examine", "execute", "experiment", "generalize", "illustrate", "implement", "infer", "interpret", "manipulate", "modify", "operate", "organize", "outline", "predict", "solve", "transfer", "translate", "use"],
-            analyze: ["analyze", "arrange", "break down", "categorize", "classify", "compare", "connect", "contrast", "deconstruct", "detect", "diagram", "differentiate", "discriminate", "distinguish", "divide", "explain", "identify", "integrate", "inventory", "order", "organize", "relate", "separate", "structure"],
-            evaluate: ["appraise", "apprise", "argue", "assess", "compare", "conclude", "consider", "contrast", "convince", "criticize", "critique", "decide", "determine", "discriminate", "evaluate", "grade", "judge", "justify", "measure", "rank", "rate", "recommend", "review", "score", "select", "standardize", "support", "test", "validate"],
-            create: ["arrange", "assemble", "build", "collect", "combine", "compile", "compose", "constitute", "construct", "create", "design", "develop", "devise", "formulate", "generate", "hypothesize", "integrate", "invent", "make", "manage", "modify", "organize", "perform", "plan", "prepare", "produce", "propose", "rearrange", "reconstruct", "reorganize", "revise", "rewrite", "specify", "synthesize", "write"]
-        };
+        const DEFAULT_TAXONOMY = {};
+
+        // Taxonomie active (peut être remplacée par l'utilisateur via CSV)
+        let ACTIVE_TAXONOMY = {};
+        let ACTIVE_TAXONOMY_TRANSLATIONS = {}; // { key: label }
+
+        const TAXONOMY_STORAGE_KEY = 'custom_taxonomy_v1';
+        const TAXONOMY_TRANSLATIONS_KEY = 'custom_taxonomy_translations_v1';
+
+        function updateTaxonomyStatus(message) {
+            const el = document.getElementById('taxonomy-status');
+            if (el) el.textContent = message || '';
+        }
+
+        /**
+         * Sauvegarde la taxonomie dans le localStorage
+         */
+        function saveTaxonomyToStorage(taxonomy, translations) {
+            try {
+                localStorage.setItem(TAXONOMY_STORAGE_KEY, JSON.stringify(taxonomy));
+                localStorage.setItem(TAXONOMY_TRANSLATIONS_KEY, JSON.stringify(translations || {}));
+                return true;
+            } catch (e) {
+                console.error('Erreur lors de la sauvegarde de la taxonomie:', e);
+                return false;
+            }
+        }
+
+        function loadTaxonomyFromStorage() {
+            try {
+                const stored = localStorage.getItem(TAXONOMY_STORAGE_KEY);
+                const storedTr = localStorage.getItem(TAXONOMY_TRANSLATIONS_KEY);
+                if (!stored) {
+                    ACTIVE_TAXONOMY = JSON.parse(JSON.stringify(DEFAULT_TAXONOMY));
+                    ACTIVE_TAXONOMY_TRANSLATIONS = {};
+                    updateTaxonomyStatus('Aucune taxonomie chargée');
+                    return;
+                }
+                const tax = JSON.parse(stored);
+                const tr = storedTr ? JSON.parse(storedTr) : {};
+                if (tax && typeof tax === 'object' && Object.keys(tax).length) {
+                    ACTIVE_TAXONOMY = tax;
+                    ACTIVE_TAXONOMY_TRANSLATIONS = (tr && typeof tr === 'object') ? tr : {};
+                    updateTaxonomyStatus(`Taxonomie personnalisée (${Object.keys(tax).length} catégories)`);
+                } else {
+                    resetTaxonomy();
+                }
+            } catch (e) {
+                console.warn('Impossible de charger la taxonomie depuis le stockage:', e);
+                resetTaxonomy();
+            }
+        }
+
+        /**
+         * Parse le fichier CSV et extrait la taxonomie
+         * @param {string} csvContent - Contenu du fichier CSV
+         * @returns {Object} - { taxonomy, translations } ou null en cas d'erreur
+         */
+        function parseTaxonomyCSV(csvContent) {
+            const lines = String(csvContent || '').trim().split(/\r?\n/);
+
+            if (lines.length < 2) {
+                throw new Error('Le fichier CSV doit contenir au moins une ligne d\'en-tête et une ligne de données.');
+            }
+
+            // Vérifier l'en-tête
+            const header = lines[0].split(';').map(h => h.trim().toLowerCase());
+            const expectedHeaders = ['categorie', 'sous_categorie'];
+
+            if (!expectedHeaders.every((h, i) => header[i] === h)) {
+                throw new Error(`En-têtes invalides. Attendu: ${expectedHeaders.join(';')}`);
+            }
+
+            const taxonomy = {};
+            const translations = {};
+
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                const parts = line.split(';').map(p => p.trim());
+                if (parts.length < 2) {
+                    console.warn(`Ligne ${i + 1} ignorée: format invalide`);
+                    continue;
+                }
+
+                const [categorie, sousCategorie] = parts;
+
+                if (!categorie || !sousCategorie) continue;
+if (!taxonomy[categorie]) taxonomy[categorie] = [];
+                if (!taxonomy[categorie].includes(sousCategorie)) taxonomy[categorie].push(sousCategorie);
+
+                translations[categorie] = categorie;
+                translations[sousCategorie] = sousCategorie;
+            }
+
+            if (Object.keys(taxonomy).length === 0) {
+                throw new Error('Aucune donnée valide trouvée dans le fichier CSV.');
+            }
+
+            return { taxonomy, translations };
+        }
+
+        /**
+         * Applique une nouvelle taxonomie
+         */
+        function applyTaxonomy(taxonomy, translations) {
+            ACTIVE_TAXONOMY = taxonomy;
+            ACTIVE_TAXONOMY_TRANSLATIONS = translations || {};
+
+            saveTaxonomyToStorage(taxonomy, translations || {});
+            refreshAllTaxonomySelectors();
+            updateTaxonomyStatus(`Taxonomie appliquée (${Object.keys(taxonomy).length} catégories)`);
+        }
+
+        /**
+         * Réinitialise vers la taxonomie par défaut
+         */
+        function resetTaxonomy() {
+            ACTIVE_TAXONOMY = {};
+            ACTIVE_TAXONOMY_TRANSLATIONS = {};
+
+            try {
+                localStorage.removeItem(TAXONOMY_STORAGE_KEY);
+                localStorage.removeItem(TAXONOMY_TRANSLATIONS_KEY);
+            } catch (e) {}
+
+            refreshAllTaxonomySelectors();
+            updateTaxonomyStatus('Aucune taxonomie chargée');
+        }
+
+        /**
+         * Rafraîchit tous les sélecteurs de taxonomie dans l'interface
+         */
+        function refreshAllTaxonomySelectors() {
+            // Sélecteur principal d'ajout (catégorie + sous-catégorie)
+            const mainLevelSelect = document.getElementById('new-bloom-level');
+            const mainSubSelect = document.getElementById('new-bloom-sub');
+
+            if (mainLevelSelect) {
+                const currentLevel = mainLevelSelect.value || "";
+                const currentSub = mainSubSelect ? (mainSubSelect.value || "") : "";
+                renderBloomOptions(mainLevelSelect, currentLevel);
+                if (mainSubSelect) {
+                    renderBloomSubOptions(mainSubSelect, currentLevel, currentSub);
+                }
+            }
+
+            // Sélecteurs dans la liste des résultats existants
+            document.querySelectorAll('#outcomes-list .outcome-bloom-level').forEach(select => {
+                const currentValue = select.value || "";
+                renderBloomOptions(select, currentValue);
+
+                const subSelect = select.nextElementSibling;
+                if (subSelect && subSelect.classList.contains('outcome-bloom-sub')) {
+                    const currentSubValue = subSelect.value || "";
+                    renderBloomSubOptions(subSelect, currentValue, currentSubValue);
+                }
+            });
+        }
+
+
+        function handleTaxonomyFileImport(file) {
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const content = e.target.result;
+                    const parsed = parseTaxonomyCSV(content);
+
+                    const catCount = Object.keys(parsed.taxonomy).length;
+                    const subCount = Object.values(parsed.taxonomy).reduce((a, arr) => a + (Array.isArray(arr) ? arr.length : 0), 0);
+
+                    const ok = confirm(`Taxonomie détectée :\n- ${catCount} catégories\n- ${subCount} sous-catégories\n\nAppliquer cette taxonomie ?`);
+                    if (!ok) return;
+
+                    applyTaxonomy(parsed.taxonomy, parsed.translations);
+                } catch (err) {
+                    console.error(err);
+                    alert(`Erreur : ${err.message || err}`);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function downloadTaxonomyTemplate() {
+            const csv = `categorie;sous_categorie
+`;
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'modele_taxonomie.csv';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
+
 
         const translations = {
             fr: {
@@ -2053,7 +2276,7 @@ label_learning_time: "Temps d'Apprentissage (Cible)",
                 ph_aims: "Entrez les objectifs...",
                 label_outcomes_text: "Résultats d'apprentissage",
                 ph_outcomes_text: "Entrez les résultats d'apprentissage...",
-                label_outcomes: "Résultats d'apprentissage (Bloom)",
+                label_outcomes: "Résultats d'apprentissage selon une taxonomie",
                 ph_add_outcome: "Ajouter un résultat...",
                 text_no_outcomes: "Aucun résultat défini",
                 title_fold_all: "Tout replier / Tout déplier",
@@ -2085,7 +2308,7 @@ title_new_activity: "Ajouter un nouveau module",
                 footer_disclaimer: "Ce site n'utilise pas de cookies de suivi ou de session. Aucune donnée personnelle n'est traitée en ligne.",
                 footer_ai_disclaimer: "Cette application a été créée principalement à l'aide d'une IA générative ; le code peut contenir des erreurs.",
                 footer_github: "Code disponible sur <a href=\"https://github.com/jourde/artefacts\" target=\"_blank\" class=\"underline hover:text-slate-500\">https://github.com/jourde/artefacts</a>",
-                bloom_placeholder: "Bloom...",
+                bloom_placeholder: "Catégorie...",
                 bloom_sub_placeholder: "Sous-cat...",
                 bloom_remember: "Mémoriser",
                 bloom_understand: "Comprendre",
@@ -2798,38 +3021,71 @@ function toggleMomentDescription(btn) {
 
         
 
-        function renderBloomOptions(selectElement, selectedValue = "") {
-            const t = translations[currentLang];
-            let options = `<option value="" disabled ${!selectedValue ? 'selected' : ''}>${t.bloom_placeholder}</option>`;
-            
-            Object.keys(BLOOM_TAXONOMY).forEach(level => {
-                options += `<option value="${level}" ${selectedValue === level ? 'selected' : ''}>${t['bloom_' + level]}</option>`;
+        
+function renderBloomOptions(selectElement, selectedValue = "") {
+            const t = translations[currentLang] || translations.fr;
+            const placeholder = t.bloom_placeholder || 'Catégorie...';
+
+            const keys = Object.keys(ACTIVE_TAXONOMY || {});
+            let options = `<option value="" disabled ${!selectedValue ? 'selected' : ''}>${escapeHtml(placeholder)}</option>`;
+
+            keys.forEach(level => {
+                const label = ACTIVE_TAXONOMY_TRANSLATIONS[level] || t['bloom_' + level] || level;
+                options += `<option value="${escapeHtml(String(level))}" ${String(selectedValue) === String(level) ? 'selected' : ''}>${escapeHtml(String(label))}</option>`;
             });
+
             selectElement.innerHTML = options;
+
+            // Si aucune taxonomie n'est chargée, on désactive les sélecteurs
+            const noTaxonomy = keys.length === 0;
+            selectElement.disabled = noTaxonomy;
+            if (noTaxonomy) {
+                selectElement.classList.add('opacity-60', 'cursor-not-allowed');
+            } else {
+                selectElement.classList.remove('opacity-60', 'cursor-not-allowed');
+            }
         }
 
         function renderBloomSubOptions(subSelectElement, level, selectedValue = "") {
-            const t = translations[currentLang];
-            
-            if (!level || !BLOOM_TAXONOMY[level]) {
-                subSelectElement.innerHTML = `<option value="" disabled selected>${t.bloom_sub_placeholder}</option>`;
-                subSelectElement.classList.add('hidden');
+            const t = translations[currentLang] || translations.fr;
+            const placeholder = t.bloom_sub_placeholder || 'Sous-cat...';
+
+            // Toujours afficher le menu "Sous-catégorie" : s'il n'y a pas de catégorie sélectionnée
+            // ou si la taxonomie n'est pas chargée, on le désactive et on laisse uniquement le placeholder.
+            if (!level || !ACTIVE_TAXONOMY || !ACTIVE_TAXONOMY[level]) {
+                subSelectElement.classList.remove('hidden');
+                subSelectElement.innerHTML = `<option value="" disabled selected>${escapeHtml(placeholder)}</option>`;
+                subSelectElement.disabled = true;
+                subSelectElement.classList.add('opacity-60', 'cursor-not-allowed');
                 return;
             }
 
             subSelectElement.classList.remove('hidden');
-            let options = `<option value="" disabled ${!selectedValue ? 'selected' : ''}>${t.bloom_sub_placeholder}</option>`;
-            
-            BLOOM_TAXONOMY[level].forEach(sub => {
-                options += `<option value="${sub}" ${selectedValue === sub ? 'selected' : ''}>${t['bloom_sub_' + sub] || sub}</option>`;
+            subSelectElement.disabled = false;
+            subSelectElement.classList.remove('opacity-60', 'cursor-not-allowed');
+            let options = `<option value="" disabled ${!selectedValue ? 'selected' : ''}>${escapeHtml(placeholder)}</option>`;
+
+            (ACTIVE_TAXONOMY[level] || []).forEach(sub => {
+                const label = ACTIVE_TAXONOMY_TRANSLATIONS[sub] || t['bloom_sub_' + sub] || sub;
+                options += `<option value="${escapeHtml(String(sub))}" ${selectedValue === sub ? 'selected' : ''}>${escapeHtml(String(label))}</option>`;
             });
+
             subSelectElement.innerHTML = options;
         }
 
-        function updateOutcomeBloom(levelSelect) {
+function updateOutcomeBloom(levelSelect) {
             const subSelect = levelSelect.nextElementSibling;
             renderBloomSubOptions(subSelect, levelSelect.value);
         }
+
+        // Mise à jour automatique du menu "Sous-catégorie" dans l'en-tête lors du changement de catégorie
+        document.addEventListener('change', (e) => {
+            const target = e && e.target;
+            if (!target) return;
+            if (target.id === 'new-bloom-level') {
+                try { updateOutcomeBloom(target); } catch (err) {}
+            }
+        });
 
         
         function addOutcome(data = null) {
@@ -6522,7 +6778,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             rtf += `{\\b ${esc(t.label_objectives || 'Objectifs')}}\\par\n${esc(document.getElementById('param-aims')?.value || '')}\\par\n\\par\n`;
             rtf += `{\\b ${esc(t.label_outcomes_text || "Résultats d'apprentissage")}}\\par\n${esc(document.getElementById('param-outcomes-text')?.value || '')}\\par\n\\par\n`;
 
-            rtf += `{\\b ${esc(t.label_outcomes || "Résultats d'apprentissage (Bloom)")}}\\par\n`;
+            rtf += `{\\b ${esc(t.label_outcomes || "Résultats d'apprentissage")}}\\par\n`;
             document.querySelectorAll('#outcomes-list li').forEach((li) => {
                 const level = (li.querySelector('select')?.value || '').trim();
                 const txt = (li.querySelector('input')?.value || '').trim();
@@ -7918,7 +8174,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             md += `### ${t.label_outcomes_text || "Résultats d'apprentissage"}\n${val('param-outcomes-text')}\n\n`;
 
             // Bloom outcomes (list)
-            md += `### ${t.label_outcomes || "Résultats d'apprentissage (Bloom)"}\n`;
+            md += `### ${t.label_outcomes || "Résultats d'apprentissage"}\n`;
             document.querySelectorAll('#outcomes-list li').forEach((li) => {
                 const level = (li.querySelector('select')?.value || '').trim();
                 const txt = (li.querySelector('input')?.value || '').trim();
@@ -9515,7 +9771,40 @@ function initHistory() {
 
 window.onload = () => {
             applyTranslations();
-            renderBloomOptions(document.getElementById('new-bloom-level'));
+            // Taxonomy: load any user-defined taxonomy before rendering selectors
+            // Taxonomie: interface agnostique. Aucune taxonomie n'est chargée automatiquement.
+            resetTaxonomy();
+            refreshAllTaxonomySelectors();
+            updateTaxonomyStatus('Aucune taxonomie chargée');
+
+            // Taxonomy UI bindings
+            try {
+                const btnLoad = document.getElementById('btn-load-taxonomy');
+                const fileInput = document.getElementById('taxonomy-file-input');
+                const btnTpl = document.getElementById('btn-download-taxonomy-template');
+                const btnReset = document.getElementById('btn-reset-taxonomy');
+
+                if (btnLoad && fileInput) {
+                    btnLoad.addEventListener('click', () => fileInput.click());
+                }
+                if (fileInput) {
+                    fileInput.addEventListener('change', (e) => {
+                        const f = e.target.files && e.target.files[0];
+                        if (f) handleTaxonomyFileImport(f);
+                        try { e.target.value = ''; } catch (_) {}
+                    });
+                }
+                if (btnTpl) btnTpl.addEventListener('click', downloadTaxonomyTemplate);
+                if (btnReset) {
+                    btnReset.addEventListener('click', () => {
+                        if (confirm("Supprimer la taxonomie chargée ?\n\nLes résultats d’apprentissage déjà saisis seront conservés, mais leurs catégories/sous-catégories pourront ne plus correspondre.")) {
+                            resetTaxonomy();
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error('[TaxonomyInitError]', e);
+            }
 
             initTimelineZoomControls();
 
