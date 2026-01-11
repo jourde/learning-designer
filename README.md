@@ -16,3 +16,9 @@ Le concepteur pédagogique (_learning designer_) est une application web monopag
 ---
 
 **Auteur** : François Jourde - [https://github.com/jourde](https://github.com/jourde)
+
+# Développements envisagés
+## Taxonomies des résultas d'apprentissage
+- Chargement de multiples taxonomies.
+- Utilisation des taxonomies aux différents niveaux de la conception d'apprentissage (module, moment, activité)
+- ...
