@@ -1279,7 +1279,7 @@ body.focus-mode .activity-group.focus-active { display: block; }
   </button>
   <div class="panel-content w-full flex flex-col gap-1 mt-1 p-1 rounded-lg border border-slate-200 bg-slate-50" id="competences-charts-panel" style="display: none;">
 <!-- Statistiques de competences (Pack 2) -->
-<div class="mt-2 grid grid-cols-1 lg:grid-cols-3 gap-2" id="competences-analysis-grid">
+<div class="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-2" id="competences-analysis-grid">
   <!-- Couverture + non couvertes -->
   <div class="bg-white rounded-xl border border-slate-200 p-2">
     <div class="flex items-center justify-between">
@@ -1311,31 +1311,54 @@ body.focus-mode .activity-group.focus-active { display: block; }
     </details>
   </div>
 
-  <!-- Top competences -->
+  <!-- Top competences (barres) -->
   <div class="bg-white rounded-xl border border-slate-200 p-2">
     <div class="flex items-center justify-between">
       <div class="text-xs font-bold text-slate-600">Top compétences</div>
       <div class="text-[11px] text-slate-500">(nb d’activités)</div>
     </div>
+
     <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
       <div class="border border-slate-200 rounded-lg overflow-hidden">
         <div class="px-2 py-1 bg-slate-50 text-[10px] text-slate-500 font-bold uppercase">Du sujet</div>
-        <table class="w-full text-[11px]"><tbody id="comp-top-sujet"></tbody></table>
+        <div class="p-1.5">
+          <canvas id="chart-comp-top-sujet" height="220" class="w-full"></canvas>
+          <details class="mt-2">
+            <summary class="text-[11px] cursor-pointer select-none text-slate-500">Détails (table)</summary>
+            <div class="mt-1 border border-slate-200 rounded-lg overflow-hidden">
+              <table class="w-full text-[11px]"><tbody id="comp-top-sujet"></tbody></table>
+            </div>
+          </details>
+        </div>
       </div>
       <div class="border border-slate-200 rounded-lg overflow-hidden">
         <div class="px-2 py-1 bg-slate-50 text-[10px] text-slate-500 font-bold uppercase">Transversales</div>
-        <table class="w-full text-[11px]"><tbody id="comp-top-trans"></tbody></table>
+        <div class="p-1.5">
+          <canvas id="chart-comp-top-trans" height="220" class="w-full"></canvas>
+          <details class="mt-2">
+            <summary class="text-[11px] cursor-pointer select-none text-slate-500">Détails (table)</summary>
+            <div class="mt-1 border border-slate-200 rounded-lg overflow-hidden">
+              <table class="w-full text-[11px]"><tbody id="comp-top-trans"></tbody></table>
+            </div>
+          </details>
+        </div>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Repartition par module -->
-  <div class="bg-white rounded-xl border border-slate-200 p-2">
-    <div class="flex items-center justify-between">
-      <div class="text-xs font-bold text-slate-600">Répartition par module</div>
-      <div class="text-[11px] text-slate-500">Sélections (Sujet/Transv.)</div>
-    </div>
-    <div class="mt-2 border border-slate-200 rounded-lg overflow-hidden">
+<!-- Répartition par module (barres empilées) -->
+<div class="mt-2 bg-white rounded-xl border border-slate-200 p-2" id="competences-by-module-card">
+  <div class="flex items-center justify-between">
+    <div class="text-xs font-bold text-slate-600">Répartition par module</div>
+    <div class="text-[11px] text-slate-500">Sélections (Sujet/Transv.)</div>
+  </div>
+  <div class="mt-2">
+    <canvas id="chart-comp-by-module" height="220" class="w-full"></canvas>
+  </div>
+  <details class="mt-2">
+    <summary class="text-[11px] cursor-pointer select-none text-slate-500">Détails (table)</summary>
+    <div class="mt-1 border border-slate-200 rounded-lg overflow-hidden">
       <table class="w-full text-[11px]">
         <thead class="bg-slate-50">
           <tr>
@@ -1348,8 +1371,9 @@ body.focus-mode .activity-group.focus-active { display: block; }
         <tbody id="comp-by-module"></tbody>
       </table>
     </div>
-  </div>
+  </details>
 </div>
+
   </div>
 </div>
 <div id="view-designer" class="max-w-7xl mx-auto w-full">
@@ -12163,6 +12187,269 @@ function getHistogramBarMeta(kind, val) {
 
 
 
+
+// Draw horizontal bars with absolute counts (not %). Used for competence Top lists.
+function drawCountBars(canvasId, rows, style) {
+  const c = document.getElementById(canvasId);
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const w = (c.width = (c.clientWidth || c.width || 300));
+  let h = (c.height = c.getAttribute('height') ? parseInt(c.getAttribute('height'), 10) : (c.clientHeight || 200));
+  clearCanvas(ctx, w, h);
+
+  const entries = (rows || []).slice();
+  if (!entries.length) {
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '11px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.fillText('Aucune sélection', 10, 20);
+    return;
+  }
+
+  const __minH = (10 + 8) + (entries.length * 22) + 10;
+  if (h < __minH) {
+    h = (c.height = __minH);
+    clearCanvas(ctx, w, h);
+  }
+
+  const pad = 10;
+  const rowH = 22;
+  const top = pad + 8;
+
+  ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.textBaseline = 'middle';
+
+  const maxV = Math.max(1, ...entries.map(e => Number(e.value) || 0));
+
+  // Measure label widths
+  let maxLabelPx = 0;
+  entries.forEach((e) => { maxLabelPx = Math.max(maxLabelPx, ctx.measureText(e.label || '').width); });
+
+  // Right column for absolute values
+  const valueExample = String(maxV);
+  const valueW = ctx.measureText(valueExample).width;
+  const valueX = w - pad - valueW;
+
+  const labelW = Math.min(Math.max(110, maxLabelPx + 16), Math.min(260, w * 0.48));
+  const barX = pad + labelW + 10;
+  const barW = Math.max(30, (valueX - 10) - barX);
+
+  const subjectColor = '#64748b';   // slate-500
+  const transColor = '#94a3b8';     // slate-400
+  const isTrans = (style && style.kind === 'trans') || /\btrans\b/i.test(canvasId);
+  const fillColor = isTrans ? transColor : subjectColor;
+  const fillPattern = isTrans ? 'stripes' : '';
+
+  function fitText(text, maxWidth) {
+    const s = (text || '').toString();
+    if (ctx.measureText(s).width <= maxWidth) return s;
+    let lo = 0, hi = s.length;
+    while (lo < hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      const t = s.slice(0, mid) + '…';
+      if (ctx.measureText(t).width <= maxWidth) lo = mid + 1;
+      else hi = mid;
+    }
+    const cut = Math.max(1, lo - 1);
+    return s.slice(0, cut) + '…';
+  }
+
+  function roundRectPath(x, y, ww, hh, r) {
+    const rr = Math.max(0, Math.min(r, hh / 2, ww / 2));
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + ww, y, x + ww, y + hh, rr);
+    ctx.arcTo(x + ww, y + hh, x, y + hh, rr);
+    ctx.arcTo(x, y + hh, x, y, rr);
+    ctx.arcTo(x, y, x + ww, y, rr);
+    ctx.closePath();
+  }
+
+  function drawTrack(x, y, ww, hh) {
+    ctx.save();
+    roundRectPath(x, y, ww, hh, 7);
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fill();
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawFill(x, y, ww, hh, color, pattern) {
+    if (ww <= 0.5) return;
+    ctx.save();
+    roundRectPath(x, y, ww, hh, 7);
+    ctx.clip();
+    ctx.fillStyle = color || '#64748b';
+    ctx.fillRect(x, y, ww, hh);
+    if (pattern === 'stripes') {
+      ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+      ctx.lineWidth = 2;
+      const step = 8;
+      for (let i = -hh; i < ww + hh; i += step) {
+        ctx.beginPath();
+        ctx.moveTo(x + i, y + hh);
+        ctx.lineTo(x + i + hh, y);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  entries.forEach((e, i) => {
+    const yMid = top + i * rowH + rowH / 2;
+    const trackH = 12;
+    const trackY = yMid - trackH / 2;
+
+    ctx.fillStyle = '#334155';
+    ctx.fillText(fitText(e.label || '', labelW - 8), pad, yMid);
+
+    drawTrack(barX, trackY, barW, trackH);
+
+    const v = Math.max(0, Number(e.value) || 0);
+    const bw = Math.round(barW * (v / maxV));
+    drawFill(barX, trackY, bw, trackH, fillColor, fillPattern);
+
+    ctx.fillStyle = '#0f172a';
+    ctx.fillText(String(v), valueX, yMid);
+  });
+}
+
+// Draw stacked bars by module (Sujet + Transversales). Used for competence distribution.
+function drawStackedModuleBars(canvasId, rows) {
+  const c = document.getElementById(canvasId);
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const w = (c.width = (c.clientWidth || c.width || 420));
+  // Respect the available vertical space while preserving drawing proportions:
+  // - We set the internal canvas size to match the rendered size (no CSS scaling distortions)
+  // - We shrink/grow the height based on the number of modules, so the chart integrates better.
+  const baseH = c.getAttribute('height') ? parseInt(c.getAttribute('height'), 10) : (c.clientHeight || 240);
+  let h = (c.height = baseH);
+  clearCanvas(ctx, w, h);
+
+  const entries = (rows || []).slice();
+  if (!entries.length) {
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '11px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.fillText('Aucun module', 10, 20);
+    return;
+  }
+
+  const __minH = (10 + 8) + (entries.length * 22) + 10;
+  // Target height: enough for all rows, but avoid a large empty canvas when there are few modules.
+  // Keep a small minimum so the chart remains legible.
+  const __targetH = Math.max(120, __minH);
+  if (h !== __targetH) {
+    h = (c.height = __targetH);
+    clearCanvas(ctx, w, h);
+  }
+
+  const pad = 10;
+  const rowH = 22;
+  const top = pad + 8;
+
+  ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.textBaseline = 'middle';
+
+  // Measure label widths
+  let maxLabelPx = 0;
+  entries.forEach((e) => { maxLabelPx = Math.max(maxLabelPx, ctx.measureText(e.label || '').width); });
+
+  const valueExample = '999/999 100%';
+  const valueW = ctx.measureText(valueExample).width;
+  const valueX = w - pad - valueW;
+
+  const labelW = Math.min(Math.max(130, maxLabelPx + 16), Math.min(300, w * 0.48));
+  const barX = pad + labelW + 10;
+  const barW = Math.max(60, (valueX - 10) - barX);
+
+  const sujetColor = '#64748b';
+  const transColor = '#94a3b8';
+
+  function fitText(text, maxWidth) {
+    const s = (text || '').toString();
+    if (ctx.measureText(s).width <= maxWidth) return s;
+    let lo = 0, hi = s.length;
+    while (lo < hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      const t = s.slice(0, mid) + '…';
+      if (ctx.measureText(t).width <= maxWidth) lo = mid + 1;
+      else hi = mid;
+    }
+    const cut = Math.max(1, lo - 1);
+    return s.slice(0, cut) + '…';
+  }
+
+  function roundRectPath(x, y, ww, hh, r) {
+    const rr = Math.max(0, Math.min(r, hh / 2, ww / 2));
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + ww, y, x + ww, y + hh, rr);
+    ctx.arcTo(x + ww, y + hh, x, y + hh, rr);
+    ctx.arcTo(x, y + hh, x, y, rr);
+    ctx.arcTo(x, y, x + ww, y, rr);
+    ctx.closePath();
+  }
+
+  function drawTrack(x, y, ww, hh) {
+    ctx.save();
+    roundRectPath(x, y, ww, hh, 7);
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fill();
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawFill(x, y, ww, hh, color, pattern) {
+    if (ww <= 0.5) return;
+    ctx.save();
+    roundRectPath(x, y, ww, hh, 7);
+    ctx.clip();
+    ctx.fillStyle = color || '#64748b';
+    ctx.fillRect(x, y, ww, hh);
+    if (pattern === 'stripes') {
+      ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+      ctx.lineWidth = 2;
+      const step = 8;
+      for (let i = -hh; i < ww + hh; i += step) {
+        ctx.beginPath();
+        ctx.moveTo(x + i, y + hh);
+        ctx.lineTo(x + i + hh, y);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  entries.forEach((e, i) => {
+    const yMid = top + i * rowH + rowH / 2;
+    const trackH = 12;
+    const trackY = yMid - trackH / 2;
+
+    ctx.fillStyle = '#334155';
+    ctx.fillText(fitText(e.label || '', labelW - 8), pad, yMid);
+
+    drawTrack(barX, trackY, barW, trackH);
+
+    const s = Math.max(0, Number(e.sujet) || 0);
+    const t = Math.max(0, Number(e.trans) || 0);
+    const denom = s + t;
+    const bwS = denom ? Math.round(barW * (s / denom)) : 0;
+    const bwT = denom ? Math.round(barW * (t / denom)) : 0;
+
+    // Sujet (plein), puis Transversal (rayé) à la suite
+    drawFill(barX, trackY, bwS, trackH, sujetColor, '');
+    drawFill(barX + bwS, trackY, bwT, trackH, transColor, 'stripes');
+
+    const pctSujet = denom ? Math.round((s / denom) * 100) : 0;
+    ctx.fillStyle = '#0f172a';
+    ctx.fillText(`${s}/${t} ${pctSujet}%`, valueX, yMid);
+  });
+}
+
 function __escapeHtmlLite(s) {
   if (s == null) return '';
   return String(s)
@@ -12278,7 +12565,28 @@ function updateCompetenceStats() {
     renderTop('comp-top-sujet', freqSujet, sujetById);
     renderTop('comp-top-trans', freqTrans, transById);
 
+    // Visual charts (compact option): Top lists as bar charts
+    try {
+      const topSujetRows = Array.from(freqSujet.entries())
+        .filter(([id, n]) => id && (n || 0) > 0)
+        .sort((a, b) => (b[1] - a[1]) || String(a[0]).localeCompare(String(b[0])))
+        .slice(0, 10)
+        .map(([id, n]) => ({ label: (sujetById.get(String(id)) || `[Inconnue] ${id}`), value: n }));
+
+      const topTransRows = Array.from(freqTrans.entries())
+        .filter(([id, n]) => id && (n || 0) > 0)
+        .sort((a, b) => (b[1] - a[1]) || String(a[0]).localeCompare(String(b[0])))
+        .slice(0, 10)
+        .map(([id, n]) => ({ label: (transById.get(String(id)) || `[Inconnue] ${id}`), value: n }));
+
+      drawCountBars('chart-comp-top-sujet', topSujetRows, { kind: 'sujet' });
+      drawCountBars('chart-comp-top-trans', topTransRows, { kind: 'trans' });
+    } catch (_) {}
+
+
     const tbody = document.getElementById('comp-by-module');
+    const __moduleRowsForChart = [];
+
     if (tbody) {
       const modules = Array.from(document.querySelectorAll('#activities-root .activity-group'));
       tbody.innerHTML = '';
@@ -12286,6 +12594,7 @@ function updateCompetenceStats() {
         const tr = document.createElement('tr');
         tr.innerHTML = `<td class="px-2 py-1 text-slate-400 italic" colspan="4">Aucun module</td>`;
         tbody.appendChild(tr);
+        try { drawStackedModuleBars('chart-comp-by-module', []); } catch (_) {}
       } else {
         modules.forEach((mod, i) => {
           const title = (mod.querySelector('.activity-title')?.value || '').trim() || `Module ${i + 1}`;
@@ -12296,6 +12605,7 @@ function updateCompetenceStats() {
             totalS += Array.from(step.querySelector('.step-competences-select')?.selectedOptions || []).map(o => o.value).filter(Boolean).length;
             totalT += Array.from(step.querySelector('.step-competences-transversales-select')?.selectedOptions || []).map(o => o.value).filter(Boolean).length;
           });
+          __moduleRowsForChart.push({ label: title, sujet: totalS, trans: totalT });
           const denom = totalS + totalT;
           const pctSujet = denom ? Math.round((totalS / denom) * 100) : 0;
           const tr = document.createElement('tr');
@@ -12307,6 +12617,11 @@ function updateCompetenceStats() {
           `;
           tbody.appendChild(tr);
         });
+        // Keep the latest dataset available for responsive redraws (e.g., width slider / window resize)
+        window.__compByModuleRows = __moduleRowsForChart;
+        // Visual chart (compact option): stacked distribution by module
+        try { drawStackedModuleBars('chart-comp-by-module', __moduleRowsForChart); } catch (_) {}
+
       }
     }
   } catch (err) {
@@ -12364,6 +12679,27 @@ function updateCharts() {
       const mo2 = new MutationObserver(() => requestUpdateCharts());
       if (c1) mo2.observe(c1, { childList: true, subtree: true });
       if (c2) mo2.observe(c2, { childList: true, subtree: true });
+    }
+  } catch (_) {}
+
+  // Keep the "Répartition par module" chart crisp and proportionally correct when its container width changes
+  // (e.g., window resize or the global width slider). This avoids CSS stretching of an already-drawn canvas.
+  try {
+    const byModCard = document.getElementById('competences-by-module-card');
+    if (byModCard && window.ResizeObserver) {
+      let __roRaf = null;
+      const ro = new ResizeObserver(() => {
+        if (__roRaf) return;
+        __roRaf = requestAnimationFrame(() => {
+          __roRaf = null;
+          try { drawStackedModuleBars('chart-comp-by-module', window.__compByModuleRows || []); } catch (_) {}
+        });
+      });
+      ro.observe(byModCard);
+    } else if (byModCard) {
+      window.addEventListener('resize', () => {
+        try { drawStackedModuleBars('chart-comp-by-module', window.__compByModuleRows || []); } catch (_) {}
+      }, { passive: true });
     }
   } catch (_) {}
 
