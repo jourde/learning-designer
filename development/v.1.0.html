@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>
-   Concepteur Pédagogique - Learning Designer
+   Concepteur Pédagogique - Learning Designer - v. 1.0
   </title>
 <script src="https://cdn.tailwindcss.com">
 </script>
@@ -626,6 +626,28 @@ details[data-readonly="true"] .module-target-competences-transv-checkboxes,
 details[data-readonly="true"] .module-aims-checkboxes,
 details[data-readonly="true"] .module-outcomes-checkboxes{ opacity: 0.95; }
 details[data-readonly="true"] label{ cursor: default; }
+
+/* Analysis charts as tabs */
+.analysis-tabbar{display:flex;flex-wrap:wrap;gap:6px;}
+.analysis-tab-btn{font-size:11px;font-weight:700;line-height:1; padding:8px 10px; border-radius:9999px; border:1px solid rgb(226 232 240); background:rgb(248 250 252); color:rgb(51 65 85); transition:background .15s,color .15s,border-color .15s;}
+.analysis-tab-btn:hover{background:rgb(241 245 249);}
+.analysis-tab-btn.is-active{background:rgb(226 232 240);border-color:rgb(203 213 225);color:rgb(30 41 59);}
+.analysis-tab-pane{display:none;}
+.analysis-tab-pane.is-active{display:block;}
+/* Analysis tabs as collapsible block (collapsed by default) */
+#analysis-tabs-wrap > summary::-webkit-details-marker{display:none;}
+#analysis-tabs-wrap > summary{list-style:none;}
+#analysis-tabs-wrap .analysis-chevron{transition:transform .15s;}
+#analysis-tabs-wrap[open] .analysis-chevron{transform:rotate(180deg);}
+#analysis-tabs-wrap > summary::-webkit-details-marker{display:none;}
+#analysis-tabs-wrap > summary{list-style:none;}
+#analysis-tabs-wrap > summary .analysis-chevron{transition:transform .15s ease;}
+#analysis-tabs-wrap[open] > summary .analysis-chevron{transform:rotate(180deg);}
+
+/* Ensure analysis chart panels are visible even though they reuse .panel-content (which is collapsed by default elsewhere) */
+#analysis-tabs-wrap .panel-content{max-height:none !important;opacity:1 !important;overflow:visible !important;transition:none !important;}
+#analysis-tabs-wrap .panel-content.open{max-height:none !important;opacity:1 !important;}
+
 </style>
 <script>
 /* Modèles: stubs globaux disponibles dès le chargement (évite les clics "inerte" avant l'initialisation).
@@ -1050,7 +1072,6 @@ details[data-readonly="true"] label{ cursor: default; }
 </select>
 <span class="material-icons-round pointer-events-none text-slate-500 text-base absolute right-1 top-1/2 -translate-y-1/2">expand_more</span>
 </div>
-
 </div>
 </div>
 <div class="flex flex-col relative gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
@@ -1477,24 +1498,24 @@ details[data-readonly="true"] label{ cursor: default; }
 <div class="flex justify-end">
 <span class="text-slate-400 text-[10px] italic" data-i18n="status_calculating" id="stats-update-info"></span>
 </div>
-<div id="timeline-scale-controls" class="bg-transparent rounded-xl border border-transparent p-1 flex items-center justify-start gap-2 flex-wrap">
-  <div class="flex items-center gap-1">
-    <span aria-hidden="true" class="material-icons-round text-slate-500 text-sm">zoom_in</span>
-    <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Échelle temporelle</span>
-  </div>
-  <div class="flex items-center gap-1">
-    <button class="px-1.5 py-0.5 rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-center" id="timeline-zoom-out" title="Zoom arrière" type="button">
-      <span class="material-icons-round text-slate-600 text-sm">remove</span>
-    </button>
-    <input class="w-32 md:w-44" id="timeline-zoom-range" max="3" min="0.5" step="0.1" type="range" value="1"/>
-    <span class="text-[11px] font-bold text-slate-600 w-10 text-right tabular-nums" id="timeline-zoom-value">100%</span>
-    <button class="px-1.5 py-0.5 rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-center" id="timeline-zoom-in" title="Zoom avant" type="button">
-      <span class="material-icons-round text-slate-600 text-sm">add</span>
-    </button>
-    <button class="px-1.5 py-0.5 rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-center" id="timeline-zoom-reset" title="Réinitialiser" type="button">
-      <span class="material-icons-round text-slate-600 text-sm">restart_alt</span>
-    </button>
-  </div>
+<div class="bg-transparent rounded-xl border border-transparent p-1 flex items-center justify-start gap-2 flex-wrap" id="timeline-scale-controls">
+<div class="flex items-center gap-1">
+<span aria-hidden="true" class="material-icons-round text-slate-500 text-sm">zoom_in</span>
+<span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Échelle temporelle</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="px-1.5 py-0.5 rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-center" id="timeline-zoom-out" title="Zoom arrière" type="button">
+<span class="material-icons-round text-slate-600 text-sm">remove</span>
+</button>
+<input class="w-32 md:w-44" id="timeline-zoom-range" max="3" min="0.5" step="0.1" type="range" value="1"/>
+<span class="text-[11px] font-bold text-slate-600 w-10 text-right tabular-nums" id="timeline-zoom-value">100%</span>
+<button class="px-1.5 py-0.5 rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-center" id="timeline-zoom-in" title="Zoom avant" type="button">
+<span class="material-icons-round text-slate-600 text-sm">add</span>
+</button>
+<button class="px-1.5 py-0.5 rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-center" id="timeline-zoom-reset" title="Réinitialiser" type="button">
+<span class="material-icons-round text-slate-600 text-sm">restart_alt</span>
+</button>
+</div>
 </div>
 <div class="timeline-track bg-white rounded-xl border border-slate-200 p-1.5 flex flex-col gap-1">
 <div class="flex items-center justify-between gap-2 flex-wrap">
@@ -1640,69 +1661,19 @@ details[data-readonly="true"] label{ cursor: default; }
 <div aria-label="Défilement horizontal des visualisations" class="timeline-hscroll no-print" id="timeline-hscroll" role="scrollbar"><div id="timeline-hscroll-inner"></div><div aria-hidden="true" id="timeline-hscroll-thumb"></div></div></div>
 </div>
 </div>
-<div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden w-full flex flex-col justify-center max-w-7xl mx-auto"><button class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors no-print h-[32px] rounded-lg border border-slate-200" onclick="togglePanel('charts-panel')" title="title_toggle_panel">
-<div class="flex items-center gap-1.5">
-<span class="material-icons-round text-slate-500 text-sm">pie_chart</span>
-<span class="font-bold text-slate-700 uppercase text-xs tracking-wide" data-i18n="panel_analysis_charts">Graphiques d'analyse des modalités</span>
-</div>
-<span class="material-icons-round text-slate-400 rotate-icon text-sm" id="charts-panel-icon">expand_more</span>
-</button>
-<div class="panel-content w-full flex flex-col gap-1 mt-1 p-1 rounded-lg border border-slate-200 bg-slate-50" id="charts-panel" style="display: none;">
-<div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-<div class="bg-white rounded-xl border border-slate-200 p-2">
-<div class="flex items-center justify-between">
-<div class="text-xs font-bold text-slate-600" data-i18n="chart_learning_types">Types d'apprentissage</div>
-<div class="text-[11px] text-slate-500" data-i18n="chart_percent_duration">(% de durée)</div>
-</div>
-<div class="mt-2 flex gap-2 items-stretch">
-<div class="w-1/2">
-<canvas class="w-full" height="300" id="chart-learning-types"></canvas>
-</div>
-<div class="w-1/2 h-[300px] flex flex-col justify-center gap-1 text-[11px] leading-tight text-slate-700" id="chart-learning-types-legend"></div>
-</div>
-</div>
-<div class="grid grid-cols-1 gap-2">
-<div class="bg-white rounded-xl border border-slate-200 p-1.5">
-<div class="flex items-center justify-between">
-<div class="text-xs font-bold text-slate-600" data-i18n="chart_group_modes">Modes de groupes</div>
-<div class="text-[11px] text-slate-500" data-i18n="chart_percent_duration">(% de durée)</div>
-</div>
-<canvas height="80" id="chart-group-modes"></canvas>
-</div>
-<div class="bg-white rounded-xl border border-slate-200 p-1.5">
-<div class="flex items-center justify-between">
-<div class="text-xs font-bold text-slate-600" data-i18n="chart_place_modes">Modes de lieu</div>
-<div class="text-[11px] text-slate-500">(% de durée)</div>
-</div>
-<canvas height="80" id="chart-place-modes"></canvas>
-</div>
-<div class="bg-white rounded-xl border border-slate-200 p-1.5">
-<div class="flex items-center justify-between">
-<div class="text-xs font-bold text-slate-600" data-i18n="chart_time_modes">Modes de temps</div>
-<div class="text-[11px] text-slate-500">(% de durée)</div>
-</div>
-<canvas height="80" id="chart-time-modes"></canvas>
-</div>
-<div class="bg-white rounded-xl border border-slate-200 p-1.5">
-<div class="flex items-center justify-between">
-<div class="text-xs font-bold text-slate-600" data-i18n="chart_trainer_presence">Présence du formateur</div>
-<div class="text-[11px] text-slate-500">(% de durée)</div>
-</div>
-<canvas height="80" id="chart-trainer-presence"></canvas>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden w-full flex flex-col justify-center max-w-7xl mx-auto mt-2">
-<button class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors no-print h-[32px] rounded-lg border border-slate-200" onclick="togglePanel('competences-charts-panel')" title="title_toggle_panel">
-<div class="flex items-center gap-1.5">
+<details class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden w-full flex flex-col justify-center max-w-7xl mx-auto mt-2" id="analysis-tabs-wrap" open><summary class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 border-b border-slate-200 cursor-pointer select-none"><div class="flex items-center gap-1.5">
 <span class="material-icons-round text-slate-500 text-sm">insights</span>
-<span class="font-bold text-slate-700 uppercase text-xs tracking-wide">Graphiques d'analyse des compétences</span>
+<span class="font-bold text-slate-700 uppercase text-xs tracking-wide">Graphiques d'analyse</span>
+</div><span class="material-icons-round text-slate-500 text-sm analysis-chevron">expand_more</span></summary><div class="w-full"><div class="px-3 pt-2">
+<div aria-label="Graphiques d'analyse" class="analysis-tabbar" role="tablist">
+<button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="modalites" id="analysis-tab-modalites" role="tab" type="button">Modalités</button>
+<button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="competences" id="analysis-tab-competences" role="tab" type="button">Compétences</button>
+<button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="aims" id="analysis-tab-aims" role="tab" type="button">Objectifs</button>
+<button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="outcomes" id="analysis-tab-outcomes" role="tab" type="button">Résultats</button>
 </div>
-<span class="material-icons-round text-slate-400 rotate-icon text-sm" id="competences-charts-panel-icon">expand_more</span>
-</button>
-<div class="panel-content w-full flex flex-col gap-1 mt-1 p-1 rounded-lg border border-slate-200 bg-slate-50" id="competences-charts-panel" style="display: none;">
+</div><div class="p-2 pt-1" id="analysis-tabs-content">
+<div class="analysis-tab-pane" data-analysis-pane="competences" id="analysis-pane-competences">
+<div class="panel-content w-full flex flex-col gap-1 mt-1 p-1 rounded-lg border border-slate-200 bg-slate-50" id="competences-charts-panel">
 <!-- Statistiques de competences (Pack 2) -->
 <div class="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-2" id="competences-analysis-grid">
 <!-- Couverture + non couvertes -->
@@ -1811,6 +1782,187 @@ details[data-readonly="true"] label{ cursor: default; }
 </div>
 </div>
 </div>
+<div class="analysis-tab-pane" data-analysis-pane="aims" id="analysis-pane-aims">
+<div class="panel-content w-full flex flex-col gap-1 mt-1 p-1 rounded-lg border border-slate-200 bg-slate-50" id="aims-charts-panel">
+<div class="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-2" id="aims-analysis-grid">
+<!-- Couverture + non mobilisés -->
+<div class="bg-white rounded-xl border border-slate-200 p-2">
+<div class="flex items-center justify-between">
+<div class="text-xs font-bold text-slate-600">Objectifs d'apprentissage</div>
+<div class="text-[11px] text-slate-500">Couverture</div>
+</div>
+<div class="mt-2 space-y-1 text-[11px] text-slate-700">
+<div class="flex items-center justify-between gap-2"><span class="font-semibold">Sélectionnés dans les activités</span><span class="font-mono" id="aim-coverage">0/0 (0%)</span></div>
+</div>
+<details class="mt-2 border border-slate-200 rounded-lg bg-slate-50" id="aim-unused-details">
+<summary class="text-[11px] cursor-pointer select-none px-2 py-1.5 flex items-center gap-1">
+<span class="material-icons-round text-[14px] text-slate-400">rule</span>
+<span class="font-semibold text-slate-600">Objectifs non mobilisés</span>
+<span class="ml-auto text-slate-400" id="aim-unused-count">0</span>
+</summary>
+<div class="px-2 pb-2 pt-1">
+<ul class="text-[11px] text-slate-700 list-disc ml-4 space-y-0.5" id="aim-unused"></ul>
+</div>
+</details>
+</div>
+<!-- Top objectifs -->
+<div class="bg-white rounded-xl border border-slate-200 p-2">
+<div class="flex items-center justify-between">
+<div class="text-xs font-bold text-slate-600">Top objectifs</div>
+<div class="text-[11px] text-slate-500">(nb d’activités)</div>
+</div>
+<div class="mt-2">
+<div class="w-full" id="chart-aim-top-html"></div>
+<details class="mt-2">
+<summary class="text-[11px] cursor-pointer select-none text-slate-500">Détails (table)</summary>
+<div class="mt-1 border border-slate-200 rounded-lg overflow-hidden">
+<table class="w-full text-[11px]"><tbody id="aim-top-table"></tbody></table>
+</div>
+</details>
+</div>
+</div>
+</div>
+<div class="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-2">
+<!-- Répartition par catégorie -->
+<div class="bg-white rounded-xl border border-slate-200 p-2" id="aims-by-category-card">
+<div class="flex items-center justify-between">
+<div class="text-xs font-bold text-slate-600">Répartition par catégorie</div>
+<div class="text-[11px] text-slate-500">(nb d’objectifs sélectionnés)</div>
+</div>
+<div class="mt-2">
+<div class="w-full" id="chart-aim-by-category-html"></div>
+</div>
+</div>
+<!-- Répartition par module -->
+<div class="bg-white rounded-xl border border-slate-200 p-2" id="aims-by-module-card">
+<div class="flex items-center justify-between">
+<div class="text-xs font-bold text-slate-600">Répartition par module</div>
+<div class="text-[11px] text-slate-500">(nb d’objectifs sélectionnés)</div>
+</div>
+<div class="mt-2">
+<div class="w-full" id="chart-aim-by-module-html"></div>
+</div>
+</div>
+</div>
+<div class="mt-1 text-[11px] text-slate-500">Ces graphiques analysent les objectifs sélectionnés dans les activités. La liste de référence provient de « Informations et paramètres → 3. Objectifs et résultats ».</div>
+</div>
+</div>
+<div class="analysis-tab-pane" data-analysis-pane="outcomes" id="analysis-pane-outcomes">
+<div class="panel-content w-full flex flex-col gap-1 mt-1 p-1 rounded-lg border border-slate-200 bg-slate-50" id="outcomes-charts-panel">
+<div class="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-2" id="outcomes-analysis-grid">
+<!-- Couverture + non mobilisés -->
+<div class="bg-white rounded-xl border border-slate-200 p-2">
+<div class="flex items-center justify-between">
+<div class="text-xs font-bold text-slate-600">Résultats d'apprentissage</div>
+<div class="text-[11px] text-slate-500">Couverture</div>
+</div>
+<div class="mt-2 space-y-1 text-[11px] text-slate-700">
+<div class="flex items-center justify-between gap-2"><span class="font-semibold">Sélectionnés dans les activités</span><span class="font-mono" id="out-coverage">0/0 (0%)</span></div>
+</div>
+<details class="mt-2 border border-slate-200 rounded-lg bg-slate-50" id="out-unused-details">
+<summary class="text-[11px] cursor-pointer select-none px-2 py-1.5 flex items-center gap-1">
+<span class="material-icons-round text-[14px] text-slate-400">rule</span>
+<span class="font-semibold text-slate-600">Résultats non mobilisés</span>
+<span class="ml-auto text-slate-400" id="out-unused-count">0</span>
+</summary>
+<div class="px-2 pb-2 pt-1">
+<ul class="text-[11px] text-slate-700 list-disc ml-4 space-y-0.5" id="out-unused"></ul>
+</div>
+</details>
+</div>
+<!-- Top résultats -->
+<div class="bg-white rounded-xl border border-slate-200 p-2">
+<div class="flex items-center justify-between">
+<div class="text-xs font-bold text-slate-600">Top résultats</div>
+<div class="text-[11px] text-slate-500">(nb d’activités)</div>
+</div>
+<div class="mt-2">
+<div class="w-full" id="chart-out-top-html"></div>
+<details class="mt-2">
+<summary class="text-[11px] cursor-pointer select-none text-slate-500">Détails (table)</summary>
+<div class="mt-1 border border-slate-200 rounded-lg overflow-hidden">
+<table class="w-full text-[11px]"><tbody id="out-top-table"></tbody></table>
+</div>
+</details>
+</div>
+</div>
+</div>
+<div class="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-2">
+<!-- Répartition par catégorie -->
+<div class="bg-white rounded-xl border border-slate-200 p-2" id="outcomes-by-category-card">
+<div class="flex items-center justify-between">
+<div class="text-xs font-bold text-slate-600">Répartition par catégorie</div>
+<div class="text-[11px] text-slate-500">(nb de résultats sélectionnés)</div>
+</div>
+<div class="mt-2">
+<div class="w-full" id="chart-out-by-category-html"></div>
+</div>
+</div>
+<!-- Répartition par module -->
+<div class="bg-white rounded-xl border border-slate-200 p-2" id="outcomes-by-module-card">
+<div class="flex items-center justify-between">
+<div class="text-xs font-bold text-slate-600">Répartition par module</div>
+<div class="text-[11px] text-slate-500">(nb de résultats sélectionnés)</div>
+</div>
+<div class="mt-2">
+<div class="w-full" id="chart-out-by-module-html"></div>
+</div>
+</div>
+</div>
+<div class="mt-1 text-[11px] text-slate-500">Ces graphiques analysent les résultats sélectionnés dans les activités. La liste de référence provient de « Informations et paramètres → 3. Objectifs et résultats ».</div>
+</div>
+</div>
+<div class="analysis-tab-pane" data-analysis-pane="modalites" id="analysis-pane-modalites">
+<div class="panel-content w-full flex flex-col gap-1 mt-1 p-1 rounded-lg border border-slate-200 bg-slate-50" id="modalites-charts-panel">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+<div class="bg-white rounded-xl border border-slate-200 p-2">
+<div class="flex items-center justify-between">
+<div class="text-xs font-bold text-slate-600" data-i18n="chart_learning_types">Types d'apprentissage</div>
+<div class="text-[11px] text-slate-500" data-i18n="chart_percent_duration">(% de durée)</div>
+</div>
+<div class="mt-2 flex gap-2 items-stretch">
+<div class="w-1/2">
+<canvas class="w-full" height="300" id="chart-learning-types"></canvas>
+</div>
+<div class="w-1/2 h-[300px] flex flex-col justify-center gap-1 text-[11px] leading-tight text-slate-700" id="chart-learning-types-legend"></div>
+</div>
+</div>
+<div class="grid grid-cols-1 gap-2">
+<div class="bg-white rounded-xl border border-slate-200 p-1.5">
+<div class="flex items-center justify-between">
+<div class="text-xs font-bold text-slate-600" data-i18n="chart_group_modes">Modes de groupes</div>
+<div class="text-[11px] text-slate-500" data-i18n="chart_percent_duration">(% de durée)</div>
+</div>
+<canvas height="80" id="chart-group-modes"></canvas>
+</div>
+<div class="bg-white rounded-xl border border-slate-200 p-1.5">
+<div class="flex items-center justify-between">
+<div class="text-xs font-bold text-slate-600" data-i18n="chart_place_modes">Modes de lieu</div>
+<div class="text-[11px] text-slate-500">(% de durée)</div>
+</div>
+<canvas height="80" id="chart-place-modes"></canvas>
+</div>
+<div class="bg-white rounded-xl border border-slate-200 p-1.5">
+<div class="flex items-center justify-between">
+<div class="text-xs font-bold text-slate-600" data-i18n="chart_time_modes">Modes de temps</div>
+<div class="text-[11px] text-slate-500">(% de durée)</div>
+</div>
+<canvas height="80" id="chart-time-modes"></canvas>
+</div>
+<div class="bg-white rounded-xl border border-slate-200 p-1.5">
+<div class="flex items-center justify-between">
+<div class="text-xs font-bold text-slate-600" data-i18n="chart_trainer_presence">Présence du formateur</div>
+<div class="text-[11px] text-slate-500">(% de durée)</div>
+</div>
+<canvas height="80" id="chart-trainer-presence"></canvas>
+</div>
+</div>
+</div>
+<div class="mt-1 text-[11px] text-slate-500">Ces graphiques analysent les modalités des activités (types d’apprentissage, regroupement, lieu, temps, présence du formateur) en pondérant par la durée.</div>
+</div>
+</div>
+</div>
+</div></div></details>
 <div class="max-w-7xl mx-auto w-full" id="view-designer">
 <div class="flex justify-end mb-2 no-print">
 <button class="text-slate-500 hover:text-indigo-600 text-xs font-medium flex items-center gap-1 transition-colors px-2 py-1 rounded hover:bg-slate-100" id="btn-toggle-all-main" onclick="toggleAllActivities()">
@@ -2016,7 +2168,6 @@ details[data-readonly="true"] label{ cursor: default; }
 </button>
 <div class="h-8 w-px bg-slate-100 mx-1">
 </div>
-
 <button class="text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-action="toggle-module" data-i18n-title="title_toggle_panel" title="Afficher/Masquer le détail du module">
 <span class="material-icons-round text-lg rotate-icon">
         expand_more
@@ -2072,22 +2223,22 @@ details[data-readonly="true"] label{ cursor: default; }
 </summary>
 <div class="px-2 pb-2 pt-1">
 <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-  <div>
-    <div class="text-[10px] text-slate-500 font-bold uppercase mb-1">Compétences du sujet</div>
-    <div class="module-target-competences-sujet-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[180px] overflow-auto text-[11px] space-y-1"></div>
-    <select class="module-target-competences-sujet-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple></select>
-  </div>
-  <div>
-    <div class="text-[10px] text-slate-500 font-bold uppercase mb-1">Compétences transversales</div>
-    <div class="module-target-competences-transv-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[180px] overflow-auto text-[11px] space-y-1"></div>
-    <select class="module-target-competences-transv-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple></select>
-  </div>
+<div>
+<div class="text-[10px] text-slate-500 font-bold uppercase mb-1">Compétences du sujet</div>
+<div class="module-target-competences-sujet-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[180px] overflow-auto text-[11px] space-y-1"></div>
+<select class="module-target-competences-sujet-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>
+</div>
+<div>
+<div class="text-[10px] text-slate-500 font-bold uppercase mb-1">Compétences transversales</div>
+<div class="module-target-competences-transv-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[180px] overflow-auto text-[11px] space-y-1"></div>
+<select class="module-target-competences-transv-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>
+</div>
 </div>
 <p class="text-[11px] text-slate-400 mt-1">Lecture seule : reflète les compétences sélectionnées dans les activités du module.</p>
 <div class="mt-2 flex items-center justify-between gap-2 no-print">
-  <div class="text-[10px] text-slate-400 italic">Si une compétence manque, ajoutez-la manuellement.</div>
-  <button class="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-100 transition-colors flex items-center gap-1" data-action="add-module-competence-manual" title="Ajouter une compétence dans les paramètres" type="button">
-    <span class="material-icons-round text-[14px]">add</span>
+<div class="text-[10px] text-slate-400 italic">Si une compétence manque, ajoutez-la manuellement.</div>
+<button class="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-100 transition-colors flex items-center gap-1" data-action="add-module-competence-manual" title="Ajouter une compétence dans les paramètres" type="button">
+<span class="material-icons-round text-[14px]">add</span>
     Ajouter une compétence
   </button>
 </div>
@@ -2106,12 +2257,12 @@ details[data-readonly="true"] label{ cursor: default; }
 </summary>
 <div class="px-2 pb-2 pt-1">
 <div class="module-aims-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[180px] overflow-auto text-[11px] space-y-1"></div>
-<select class="module-aims-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple></select>
+<select class="module-aims-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>
 <p class="text-[11px] text-slate-400 mt-1">Lecture seule : reflète les objectifs sélectionnés dans les activités du module.</p>
 <div class="mt-2 flex items-center justify-between gap-2 no-print">
-  <div class="text-[10px] text-slate-400 italic">Si un objectif manque, ajoutez-le manuellement.</div>
-  <button class="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-100 transition-colors flex items-center gap-1" data-action="add-module-aim-manual" title="Ajouter un objectif dans les paramètres" type="button">
-    <span class="material-icons-round text-[14px]">add</span>
+<div class="text-[10px] text-slate-400 italic">Si un objectif manque, ajoutez-le manuellement.</div>
+<button class="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-100 transition-colors flex items-center gap-1" data-action="add-module-aim-manual" title="Ajouter un objectif dans les paramètres" type="button">
+<span class="material-icons-round text-[14px]">add</span>
     Ajouter un objectif
   </button>
 </div>
@@ -2131,12 +2282,12 @@ details[data-readonly="true"] label{ cursor: default; }
 </summary>
 <div class="px-2 pb-2 pt-1">
 <div class="module-outcomes-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[180px] overflow-auto text-[11px] space-y-1"></div>
-<select class="module-outcomes-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple></select>
+<select class="module-outcomes-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>
 <p class="text-[11px] text-slate-400 mt-1">Lecture seule : reflète les résultats sélectionnés dans les activités du module.</p>
 <div class="mt-2 flex items-center justify-between gap-2 no-print">
-  <div class="text-[10px] text-slate-400 italic">Si un résultat manque, ajoutez-le manuellement.</div>
-  <button class="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-100 transition-colors flex items-center gap-1" data-action="add-module-outcome-manual" title="Ajouter un résultat dans les paramètres" type="button">
-    <span class="material-icons-round text-[14px]">add</span>
+<div class="text-[10px] text-slate-400 italic">Si un résultat manque, ajoutez-le manuellement.</div>
+<button class="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-100 transition-colors flex items-center gap-1" data-action="add-module-outcome-manual" title="Ajouter un résultat dans les paramètres" type="button">
+<span class="material-icons-round text-[14px]">add</span>
     Ajouter un résultat
   </button>
 </div>
@@ -5514,6 +5665,47 @@ function initSortableSteps(container) {
                 }, 10);
             }
         }
+
+        // --- Added: Analysis charts tabs (competences / aims / outcomes) ---
+        function selectAnalysisTab(key) {
+            const wrap = document.getElementById('analysis-tabs-wrap');
+            if (!wrap) return;
+            const buttons = wrap.querySelectorAll('[data-analysis-tab]');
+            const panes = wrap.querySelectorAll('[data-analysis-pane]');
+
+            // Folded-by-default: if no key, nothing is selected and no pane is shown.
+            if (!key) {
+                buttons.forEach(b => {
+                    b.classList.remove('is-active');
+                    b.setAttribute('aria-selected', 'false');
+                });
+                panes.forEach(p => p.classList.remove('is-active'));
+                return;
+            }
+
+            buttons.forEach(b => {
+                const active = b.getAttribute('data-analysis-tab') === key;
+                b.classList.toggle('is-active', active);
+                b.setAttribute('aria-selected', active ? 'true' : 'false');
+            });
+            panes.forEach(p => {
+                const active = p.getAttribute('data-analysis-pane') === key;
+                p.classList.toggle('is-active', active);
+            });
+            try { localStorage.setItem('analysis_tab', key); } catch (e) {}
+        }
+
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-analysis-tab]');
+            if (!btn) return;
+            selectAnalysisTab(btn.getAttribute('data-analysis-tab'));
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Show the tabs bar, but keep panes folded until the user clicks a tab.
+            selectAnalysisTab(null);
+        });
+
 
         function toggleTimelineDetails() {
             const content = document.getElementById('timeline-details');
@@ -11583,7 +11775,7 @@ function __deprecated__exportRichText_1() {
             const totalDuration = fmtTotalDuration(totals.totalSecs, t);
             
             // Ensure charts have a measurable width even if the panel is collapsed (display:none)
-            const __chartsPanel = document.getElementById('charts-panel');
+            const __chartsPanel = document.getElementById('analysis-pane-modalites');
             const __chartsPanelPrev = __chartsPanel ? {
                 display: __chartsPanel.style.display,
                 visibility: __chartsPanel.style.visibility,
@@ -14562,7 +14754,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const __selTxt = (el) => __esc((el && el.selectedOptions && el.selectedOptions[0]) ? el.selectedOptions[0].innerText : '');
 
 // Ensure charts have a measurable width even if the panel is collapsed (display:none)
-            const __chartsPanel = document.getElementById('charts-panel');
+            const __chartsPanel = document.getElementById('analysis-pane-modalites');
             const __chartsPanelPrev = __chartsPanel ? {
                 display: __chartsPanel.style.display,
                 visibility: __chartsPanel.style.visibility,
@@ -17135,6 +17327,307 @@ function updateCompetenceStats() {
     console.error('updateCompetenceStats failed', err);
   }
 }
+
+
+function updateAimsStats() {
+  try {
+    const grid = document.getElementById('aims-analysis-grid');
+    if (!grid) return;
+
+    // Catalogue (from UI list with Catégorie/Sous-catégorie)
+    const items = (typeof getAimsItemsFromUI === 'function') ? (getAimsItemsFromUI() || []) : [];
+    const fmt = (typeof _formatCatSubItemLine === 'function') ? _formatCatSubItemLine : function(cat, sub, item){
+      const c = String(cat||'').trim();
+      const s = String(sub||'').trim();
+      const it = String(item||'').trim();
+      if (!it) return '';
+      if (!c && !s) return it;
+      if (c && !s) return `${c} — ${it}`;
+      if (!c && s) return `${s} — ${it}`;
+      return `${c} / ${s} — ${it}`;
+    };
+
+    const defined = (typeof getGlobalLearningAimsOptions === 'function') ? (getGlobalLearningAimsOptions() || []) : items.map(o => fmt(o.categorie, o.sousCategorie, o.item)).filter(Boolean);
+    const definedSet = new Set(defined.map(s => String(s||'').trim()).filter(Boolean));
+
+    const metaByLine = new Map();
+    items.forEach(o => {
+      const line = fmt(o.categorie, o.sousCategorie, o.item);
+      if (!line) return;
+      metaByLine.set(line, { cat: String(o.categorie||'').trim(), sub: String(o.sousCategorie||'').trim(), item: String(o.item||'').trim() });
+    });
+
+    // Scan activities (use hidden select selections)
+    const used = new Set();
+    const freq = new Map();
+
+    const steps = Array.from(document.querySelectorAll('.step-card'));
+    steps.forEach((step) => {
+      const sel = step.querySelector('.step-aims-select');
+      const ids = new Set(Array.from(sel?.selectedOptions || []).map(o => String(o.value||'').trim()).filter(Boolean));
+      ids.forEach(v => {
+        used.add(v);
+        freq.set(v, (freq.get(v) || 0) + 1);
+      });
+    });
+
+    // Coverage
+    const definedCount = definedSet.size;
+    const usedCount = Array.from(definedSet).filter(v => used.has(v)).length;
+    const pct = definedCount ? Math.round((usedCount / definedCount) * 100) : 0;
+    const covEl = document.getElementById('aim-coverage');
+    if (covEl) covEl.textContent = `${usedCount}/${definedCount} (${pct}%)`;
+
+    // Unused list
+    const ul = document.getElementById('aim-unused');
+    let unusedCount = 0;
+    if (ul) {
+      const unused = Array.from(definedSet).filter(v => !used.has(v));
+      unusedCount = unused.length;
+      ul.innerHTML = '';
+      if (!unused.length) {
+        const li = document.createElement('li');
+        li.className = 'text-slate-400 italic list-none ml-0';
+        li.textContent = 'Aucun';
+        ul.appendChild(li);
+      } else {
+        unused.slice(0, 30).forEach(v => {
+          const li = document.createElement('li');
+          li.textContent = v;
+          ul.appendChild(li);
+        });
+        if (unused.length > 30) {
+          const li = document.createElement('li');
+          li.className = 'text-slate-400 italic list-none ml-0';
+          li.textContent = `… +${unused.length - 30} autres`;
+          ul.appendChild(li);
+        }
+      }
+    }
+    const unusedCountEl = document.getElementById('aim-unused-count');
+    if (unusedCountEl) unusedCountEl.textContent = String(unusedCount);
+
+    // Top aims table + bars
+    const topRows = Array.from(freq.entries())
+      .filter(([k, n]) => k && (n || 0) > 0)
+      .sort((a, b) => (b[1] - a[1]) || String(a[0]).localeCompare(String(b[0])))
+      .slice(0, 10)
+      .map(([k, n]) => ({ label: k, value: n }));
+
+    try { renderCountBarsText('chart-aim-top-html', topRows, { kind: 'aims' }); } catch (_) {}
+
+    const tb = document.getElementById('aim-top-table');
+    if (tb) {
+      tb.innerHTML = '';
+      if (!topRows.length) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="px-2 py-1 text-slate-400 italic" colspan="2">Aucune sélection</td>`;
+        tb.appendChild(tr);
+      } else {
+        topRows.forEach(r => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td class="px-2 py-1 border-t border-slate-100">${__escapeHtmlLite(String(r.label||''))}</td><td class="px-2 py-1 border-t border-slate-100 text-right font-mono">${__escapeHtmlLite(String(r.value||0))}</td>`;
+          tb.appendChild(tr);
+        });
+      }
+    }
+
+    // By category (based on catalogue metadata)
+    function catForLine(line) {
+      const m = metaByLine.get(line);
+      if (m) return (m.cat || 'Sans catégorie');
+      // Fallback: try parse "Cat / Sub — Item" or "Cat — Item"
+      const s = String(line || '').trim();
+      if (!s) return 'Sans catégorie';
+      const parts = s.split('—');
+      if (parts.length < 2) return 'Sans catégorie';
+      const left = parts[0].trim();
+      if (!left) return 'Sans catégorie';
+      // If "Cat / Sub" keep Cat
+      return left.split('/')[0].trim() || 'Sans catégorie';
+    }
+
+    const catFreq = new Map();
+    used.forEach(line => {
+      const c = catForLine(line);
+      catFreq.set(c, (catFreq.get(c) || 0) + 1);
+    });
+
+    const catRows = Array.from(catFreq.entries())
+      .sort((a, b) => (b[1] - a[1]) || String(a[0]).localeCompare(String(b[0])))
+      .slice(0, 12)
+      .map(([label, value]) => ({ label, value }));
+    try { renderCountBarsText('chart-aim-by-category-html', catRows, { kind: 'aims' }); } catch (_) {}
+
+    // By module (count of selected aims across activities)
+    const moduleRows = [];
+    const modules = Array.from(document.querySelectorAll('#activities-root .activity-group'));
+    modules.forEach((mod, i) => {
+      const title = (mod.querySelector('.activity-title')?.value || '').trim() || `Module ${i + 1}`;
+      const steps = Array.from(mod.querySelectorAll('.step-card'));
+      let total = 0;
+      steps.forEach(step => {
+        total += Array.from(step.querySelector('.step-aims-select')?.selectedOptions || []).map(o => String(o.value||'').trim()).filter(Boolean).length;
+      });
+      moduleRows.push({ label: title, value: total });
+    });
+    // Sort by value descending for readability
+    moduleRows.sort((a, b) => (b.value - a.value) || String(a.label).localeCompare(String(b.label)));
+    try { renderCountBarsText('chart-aim-by-module-html', moduleRows.slice(0, 12), { kind: 'aims' }); } catch (_) {}
+
+  } catch (err) {
+    console.error('updateAimsStats failed', err);
+  }
+}
+
+function updateOutcomesStats() {
+  try {
+    const grid = document.getElementById('outcomes-analysis-grid');
+    if (!grid) return;
+
+    // Catalogue (from UI list with Catégorie/Sous-catégorie)
+    const items = (typeof getOutcomesTextItemsFromUI === 'function') ? (getOutcomesTextItemsFromUI() || []) : [];
+    const fmt = (typeof _formatCatSubItemLine === 'function') ? _formatCatSubItemLine : function(cat, sub, item){
+      const c = String(cat||'').trim();
+      const s = String(sub||'').trim();
+      const it = String(item||'').trim();
+      if (!it) return '';
+      if (!c && !s) return it;
+      if (c && !s) return `${c} — ${it}`;
+      if (!c && s) return `${s} — ${it}`;
+      return `${c} / ${s} — ${it}`;
+    };
+
+    const defined = (typeof getGlobalLearningOutcomesOptions === 'function') ? (getGlobalLearningOutcomesOptions() || []) : items.map(o => fmt(o.categorie, o.sousCategorie, o.item)).filter(Boolean);
+    const definedSet = new Set(defined.map(s => String(s||'').trim()).filter(Boolean));
+
+    const metaByLine = new Map();
+    items.forEach(o => {
+      const line = fmt(o.categorie, o.sousCategorie, o.item);
+      if (!line) return;
+      metaByLine.set(line, { cat: String(o.categorie||'').trim(), sub: String(o.sousCategorie||'').trim(), item: String(o.item||'').trim() });
+    });
+
+    // Scan activities
+    const used = new Set();
+    const freq = new Map();
+
+    const steps = Array.from(document.querySelectorAll('.step-card'));
+    steps.forEach((step) => {
+      const sel = step.querySelector('.step-outcomes-select');
+      const ids = new Set(Array.from(sel?.selectedOptions || []).map(o => String(o.value||'').trim()).filter(Boolean));
+      ids.forEach(v => {
+        used.add(v);
+        freq.set(v, (freq.get(v) || 0) + 1);
+      });
+    });
+
+    // Coverage
+    const definedCount = definedSet.size;
+    const usedCount = Array.from(definedSet).filter(v => used.has(v)).length;
+    const pct = definedCount ? Math.round((usedCount / definedCount) * 100) : 0;
+    const covEl = document.getElementById('out-coverage');
+    if (covEl) covEl.textContent = `${usedCount}/${definedCount} (${pct}%)`;
+
+    // Unused list
+    const ul = document.getElementById('out-unused');
+    let unusedCount = 0;
+    if (ul) {
+      const unused = Array.from(definedSet).filter(v => !used.has(v));
+      unusedCount = unused.length;
+      ul.innerHTML = '';
+      if (!unused.length) {
+        const li = document.createElement('li');
+        li.className = 'text-slate-400 italic list-none ml-0';
+        li.textContent = 'Aucun';
+        ul.appendChild(li);
+      } else {
+        unused.slice(0, 30).forEach(v => {
+          const li = document.createElement('li');
+          li.textContent = v;
+          ul.appendChild(li);
+        });
+        if (unused.length > 30) {
+          const li = document.createElement('li');
+          li.className = 'text-slate-400 italic list-none ml-0';
+          li.textContent = `… +${unused.length - 30} autres`;
+          ul.appendChild(li);
+        }
+      }
+    }
+    const unusedCountEl = document.getElementById('out-unused-count');
+    if (unusedCountEl) unusedCountEl.textContent = String(unusedCount);
+
+    // Top outcomes table + bars
+    const topRows = Array.from(freq.entries())
+      .filter(([k, n]) => k && (n || 0) > 0)
+      .sort((a, b) => (b[1] - a[1]) || String(a[0]).localeCompare(String(b[0])))
+      .slice(0, 10)
+      .map(([k, n]) => ({ label: k, value: n }));
+
+    try { renderCountBarsText('chart-out-top-html', topRows, { kind: 'outcomes' }); } catch (_) {}
+
+    const tb = document.getElementById('out-top-table');
+    if (tb) {
+      tb.innerHTML = '';
+      if (!topRows.length) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="px-2 py-1 text-slate-400 italic" colspan="2">Aucune sélection</td>`;
+        tb.appendChild(tr);
+      } else {
+        topRows.forEach(r => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td class="px-2 py-1 border-t border-slate-100">${__escapeHtmlLite(String(r.label||''))}</td><td class="px-2 py-1 border-t border-slate-100 text-right font-mono">${__escapeHtmlLite(String(r.value||0))}</td>`;
+          tb.appendChild(tr);
+        });
+      }
+    }
+
+    // By category
+    function catForLine(line) {
+      const m = metaByLine.get(line);
+      if (m) return (m.cat || 'Sans catégorie');
+      const s = String(line || '').trim();
+      if (!s) return 'Sans catégorie';
+      const parts = s.split('—');
+      if (parts.length < 2) return 'Sans catégorie';
+      const left = parts[0].trim();
+      if (!left) return 'Sans catégorie';
+      return left.split('/')[0].trim() || 'Sans catégorie';
+    }
+
+    const catFreq = new Map();
+    used.forEach(line => {
+      const c = catForLine(line);
+      catFreq.set(c, (catFreq.get(c) || 0) + 1);
+    });
+
+    const catRows = Array.from(catFreq.entries())
+      .sort((a, b) => (b[1] - a[1]) || String(a[0]).localeCompare(String(b[0])))
+      .slice(0, 12)
+      .map(([label, value]) => ({ label, value }));
+    try { renderCountBarsText('chart-out-by-category-html', catRows, { kind: 'outcomes' }); } catch (_) {}
+
+    // By module
+    const moduleRows = [];
+    const modules = Array.from(document.querySelectorAll('#activities-root .activity-group'));
+    modules.forEach((mod, i) => {
+      const title = (mod.querySelector('.activity-title')?.value || '').trim() || `Module ${i + 1}`;
+      const steps = Array.from(mod.querySelectorAll('.step-card'));
+      let total = 0;
+      steps.forEach(step => {
+        total += Array.from(step.querySelector('.step-outcomes-select')?.selectedOptions || []).map(o => String(o.value||'').trim()).filter(Boolean).length;
+      });
+      moduleRows.push({ label: title, value: total });
+    });
+    moduleRows.sort((a, b) => (b.value - a.value) || String(a.label).localeCompare(String(b.label)));
+    try { renderCountBarsText('chart-out-by-module-html', moduleRows.slice(0, 12), { kind: 'outcomes' }); } catch (_) {}
+
+  } catch (err) {
+    console.error('updateOutcomesStats failed', err);
+  }
+}
+
 function updateCharts() {
     drawPie('chart-learning-types', tallyDuration('.learning-type-select'));
     drawBars('chart-group-modes', tallyDurationMeta('.step-group-mode', 'group'));
@@ -17142,6 +17635,8 @@ function updateCharts() {
     drawBars('chart-time-modes', tallyDurationMeta('.time-select', 'time'));
     drawBars('chart-trainer-presence', tallyDurationMeta('.trainer-select', 'trainer'));
     updateCompetenceStats();
+    updateAimsStats();
+    updateOutcomesStats();
   }
 
   // Throttled scheduling (avoid chart recompute storms on large DOM mutations / imports)
@@ -17165,7 +17660,7 @@ function updateCharts() {
   document.addEventListener('change', (e) => {
     const t = e.target;
     if (!t) return;
-    if (t.matches('.learning-type-select, .step-group-mode, .place-select, .time-select, .trainer-select, .step-competences-select, .step-competences-transversales-select')) {
+    if (t.matches('.learning-type-select, .step-group-mode, .place-select, .time-select, .trainer-select, .step-competences-select, .step-competences-transversales-select, .step-aims-select, .step-outcomes-select')) {
       requestUpdateCharts();
     }
   }, true);
@@ -17188,6 +17683,18 @@ function updateCharts() {
       if (c2) mo2.observe(c2, { childList: true, subtree: true });
     }
   } catch (_) {}
+
+  // Also refresh charts when the aims/outcomes catalogues change
+  try {
+    const a1 = document.getElementById('aims-list');
+    const o1 = document.getElementById('outcomes-text-list');
+    if (window.MutationObserver) {
+      const mo3 = new MutationObserver(() => requestUpdateCharts());
+      if (a1) mo3.observe(a1, { childList: true, subtree: true });
+      if (o1) mo3.observe(o1, { childList: true, subtree: true });
+    }
+  } catch (_) {}
+
 
   // Keep the "Répartition par module" chart crisp and proportionally correct when its container width changes
   // (e.g., window resize or the global width slider). This avoids CSS stretching of an already-drawn canvas.
