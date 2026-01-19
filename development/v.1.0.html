@@ -279,7 +279,6 @@ input, select, textarea {
         }
 
 
-
         /* View: transparent block backgrounds (keep borders) */
         body.view-transparent :is(div, section, header, main, aside, article, details).bg-white {
           background-color: transparent !important;
@@ -564,7 +563,6 @@ body.focus-mode .activity-group { display: none; }
 body.focus-mode .activity-group.focus-active { display: block; }
 
 
-
         /* UI Theme (light/dark): applied via html.ui-dark. Minimal override layer. */
         html.ui-dark {
           color-scheme: dark;
@@ -733,202 +731,607 @@ details[data-readonly="true"] label{ cursor: default; }
   }, true);
 
 
-  // Rescue handler: ensures buttons with data-action remain functional even if a later init aborts.
-  // Capturing phase so it runs before bubbling handlers.
-  (function initDataActionRescue(){
-    function missing(name){
-      console.error('[ActionRescue] Missing handler:', name);
-      throw new Error('Missing handler: ' + name);
+  
+
+  // Unified diagnostics, action registry, and resilient event delegation (capture phase).
+  // Goals:
+  // - Avoid inert buttons by only intercepting recognised actions.
+  // - Provide a diagnostics panel (toggle via menu) and a unified error pipeline.
+  (function initDataActionRegistryAndDiagnostics(){
+    const DIAG = (function(){
+      const existing = window.__uiDiag;
+      if (existing && typeof existing === 'object') return existing;
+      return (window.__uiDiag = { enabled: false, actions: [], errors: [], max: 200, startedAt: Date.now() });
+    })();
+
+    function nowIso(){
+      try { return new Date().toISOString(); } catch(_) { return ''+Date.now(); }
     }
+
+    function pushRing(arr, item){
+      try {
+        arr.push(item);
+        const max = (DIAG && DIAG.max) ? DIAG.max : 200;
+        if (arr.length > max) arr.splice(0, arr.length - max);
+      } catch(_) {}
+    }
+
+    function qs(id){
+      try { return document.getElementById(id); } catch(_) { return null; }
+    }
+
+    function renderDiagnostics(){
+      const panel = qs('ui-debug-panel');
+      if (!panel) return;
+      if (DIAG.enabled) panel.classList.remove('hidden');
+      else panel.classList.add('hidden');
+
+      const aCount = qs('ui-debug-actions-count');
+      const eCount = qs('ui-debug-errors-count');
+      if (aCount) aCount.textContent = String(DIAG.actions.length);
+      if (eCount) eCount.textContent = String(DIAG.errors.length);
+
+      const aList = qs('ui-debug-actions');
+      const eList = qs('ui-debug-errors');
+      if (aList) {
+        aList.innerHTML = '';
+        const frag = document.createDocumentFragment();
+        for (const entry of DIAG.actions.slice().reverse().slice(0, 60)) {
+          const div = document.createElement('div');
+          div.className = 'py-0.5 border-b border-slate-100 last:border-0';
+          div.textContent = `[${entry.t}] ${entry.action}` + (entry.hint ? ` — ${entry.hint}` : '');
+          frag.appendChild(div);
+        }
+        aList.appendChild(frag);
+      }
+      if (eList) {
+        eList.innerHTML = '';
+        const frag = document.createDocumentFragment();
+        for (const entry of DIAG.errors.slice().reverse().slice(0, 60)) {
+          const div = document.createElement('div');
+          div.className = 'py-0.5 border-b border-slate-100 last:border-0 whitespace-pre-wrap';
+          const ctx = entry.context ? ` (${entry.context})` : '';
+          div.textContent = `[${entry.t}] ${entry.message}${ctx}`;
+          frag.appendChild(div);
+        }
+        eList.appendChild(frag);
+      }
+    }
+
+    function setDiagnosticsEnabled(enabled){
+      DIAG.enabled = !!enabled;
+      try { localStorage.setItem('ui_debug', DIAG.enabled ? '1' : '0'); } catch(_) {}
+      renderDiagnostics();
+    }
+
+    // Expose minimal API
+    window.__uiDiagSetEnabled = setDiagnosticsEnabled;
+    window.__uiDiagLogAction = function(action, hint){
+      pushRing(DIAG.actions, { t: nowIso(), action: String(action||''), hint: hint ? String(hint) : '' });
+      if (DIAG.enabled) renderDiagnostics();
+    };
+    window.__uiDiagLogError = function(message, context){
+      pushRing(DIAG.errors, { t: nowIso(), message: String(message||'Erreur'), context: context ? String(context) : '' });
+      if (DIAG.enabled) renderDiagnostics();
+    };
+
+
+    function buildDiagReport(){
+      const meta = {
+        generatedAt: nowIso(),
+        startedAt: (function(){ try { return new Date(DIAG.startedAt).toISOString(); } catch(_) { return String(DIAG.startedAt||''); } })(),
+        url: (function(){ try { return String(location && location.href || ''); } catch(_) { return ''; } })(),
+        userAgent: (function(){ try { return String(navigator && navigator.userAgent || ''); } catch(_) { return ''; } })(),
+        title: (function(){ try { return String(document && document.title || ''); } catch(_) { return ''; } })(),
+        versionHint: (function(){
+          try {
+            const t = (document && document.title) ? String(document.title) : '';
+            const m = t.match(/v\.?\s*([0-9]+\.[0-9]+(?:\.[0-9]+)?)/i);
+            return m ? m[1] : '';
+          } catch(_) { return ''; }
+        })(),
+        counts: { actions: DIAG.actions.length, errors: DIAG.errors.length }
+      };
+      return {
+        meta,
+        actions: DIAG.actions.slice(-DIAG.max),
+        errors: DIAG.errors.slice(-DIAG.max)
+      };
+    }
+
+    function formatDiagReportText(report){
+      try {
+        const m = report && report.meta ? report.meta : {};
+        const lines = [];
+        lines.push('=== Diagnostic UI Report ===');
+        lines.push('Generated: ' + (m.generatedAt || ''));
+        if (m.versionHint) lines.push('Version: ' + m.versionHint);
+        if (m.title) lines.push('Title: ' + m.title);
+        if (m.url) lines.push('URL: ' + m.url);
+        if (m.userAgent) lines.push('User-Agent: ' + m.userAgent);
+        lines.push('Counts: actions=' + ((m.counts && m.counts.actions) || 0) + ' errors=' + ((m.counts && m.counts.errors) || 0));
+        lines.push('');
+        lines.push('--- Last Actions (most recent first) ---');
+        for (const a of (report.actions || []).slice().reverse().slice(0, 80)) {
+          lines.push('[' + (a.t || '') + '] ' + (a.action || '') + (a.hint ? (' — ' + a.hint) : ''));
+        }
+        lines.push('');
+        lines.push('--- Last Errors (most recent first) ---');
+        for (const e of (report.errors || []).slice().reverse().slice(0, 80)) {
+          lines.push('[' + (e.t || '') + '] ' + (e.message || '') + (e.context ? (' (' + e.context + ')') : ''));
+        }
+        lines.push('');
+        lines.push('=== End ===');
+        return lines.join('\n');
+      } catch(_) {
+        return 'Diagnostic UI Report (formatting failed)';
+      }
+    }
+
+    function copyTextToClipboard(text){
+      try {
+        const s = String(text || '');
+        if (navigator && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+          return navigator.clipboard.writeText(s);
+        }
+      } catch(_) {}
+      // Fallback
+      return new Promise(function(resolve, reject){
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = String(text || '');
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          ta.style.top = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          const ok = document.execCommand && document.execCommand('copy');
+          document.body.removeChild(ta);
+          if (ok) resolve();
+          else reject(new Error('Copy failed'));
+        } catch (err) {
+          reject(err);
+        }
+      });
+    }
+
+    function downloadContent(filename, content, mime){
+      try {
+        const blob = new Blob([content], { type: mime || 'text/plain;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function(){
+          try { URL.revokeObjectURL(a.href); } catch(_) {}
+          try { document.body.removeChild(a); } catch(_) {}
+        }, 0);
+      } catch (err) {
+        try { window.reportError(err, { action: 'downloadContent' }); } catch(_) {}
+      }
+    }
+
+    function notifyDiag(message){
+      try {
+        if (typeof window.showAlert === 'function') {
+          window.showAlert('Diagnostic UI', message);
+          return;
+        }
+      } catch(_) {}
+      console.log('[Diagnostic UI]', message);
+    }
+
+    // Expose report builder for external usage
+    window.__uiDiagBuildReport = buildDiagReport;
+    window.__uiDiagFormatReportText = formatDiagReportText;
+
+    // Unified error reporting.
+    window.reportError = function(err, context){
+      try {
+        const msg = (err && (err.message || err.reason)) ? String(err.message || err.reason) : (typeof err === 'string' ? err : 'Erreur');
+        const ctx = context ? (typeof context === 'string' ? context : (context.action ? `action:${context.action}` : (context.type ? String(context.type) : ''))) : '';
+        console.error('[UIError]', { context, err });
+        try { window.__uiDiagLogError(msg, ctx); } catch(_) {}
+
+        // Show banner (best-effort)
+        const banner = qs('js-error-banner');
+        if (banner) {
+          try {
+            banner.style.display = 'block';
+            const t = banner.querySelector('[data-js-error-text]');
+            if (t) t.innerText = msg;
+          } catch(_) {}
+        } else {
+          // If DOM not ready yet, stash last error.
+          window.__pendingJsError = msg;
+        }
+      } catch(_) {}
+    };
+
+    // Attach global handlers once.
+    if (!window.__uiGlobalErrorHandlersInstalled) {
+      window.__uiGlobalErrorHandlersInstalled = true;
+      window.addEventListener('error', function(event){
+        try {
+          const err = event && event.error ? event.error : event;
+          window.reportError(err, { type: 'error', message: event && event.message, filename: event && event.filename, lineno: event && event.lineno, colno: event && event.colno });
+        } catch(_) {}
+      }, true);
+      window.addEventListener('unhandledrejection', function(event){
+        try {
+          const reason = event ? event.reason : event;
+          window.reportError(reason, { type: 'unhandledrejection' });
+        } catch(_) {}
+      }, true);
+
+      // Flush pending banner message once DOM exists.
+      document.addEventListener('DOMContentLoaded', function(){
+        try {
+          if (window.__pendingJsError) {
+            const banner = qs('js-error-banner');
+            if (banner) {
+              banner.style.display = 'block';
+              const t = banner.querySelector('[data-js-error-text]');
+              if (t) t.innerText = window.__pendingJsError;
+              window.__pendingJsError = null;
+            }
+          }
+          // restore diagnostics enabled state
+          try {
+            const flag = localStorage.getItem('ui_debug');
+            if (flag === '1') setDiagnosticsEnabled(true);
+          } catch(_) {}
+        } catch(_) {}
+      }, { once: true });
+    }
+
+    // Hover badge for elements with data-action* when diagnostics is enabled.
+    (function initHoverBadge(){
+      let lastLabel = '';
+      const hover = function(e){
+        try {
+          if (!DIAG.enabled) {
+            const el = qs('ui-debug-hover');
+            if (el) el.classList.add('hidden');
+            return;
+          }
+          const t = e.target && e.target.closest ? e.target.closest('[data-action],[data-action-change],[data-action-input]') : null;
+          const el = qs('ui-debug-hover');
+          if (!el) return;
+          if (!t) { el.classList.add('hidden'); return; }
+          const label = t.getAttribute('data-action') || t.getAttribute('data-action-change') || t.getAttribute('data-action-input') || '';
+          if (!label) { el.classList.add('hidden'); return; }
+          if (label !== lastLabel) {
+            el.textContent = label;
+            lastLabel = label;
+          }
+          el.style.left = (e.clientX + 12) + 'px';
+          el.style.top = (e.clientY + 12) + 'px';
+          el.classList.remove('hidden');
+        } catch(_) {}
+      };
+      document.addEventListener('mousemove', hover, true);
+      document.addEventListener('scroll', function(){
+        try { const el = qs('ui-debug-hover'); if (el) el.classList.add('hidden'); } catch(_) {}
+      }, true);
+    })();
+
+    function missing(action){
+      try {
+        window.__uiDiagLogAction(action, 'action inconnue');
+        console.warn('[ActionRegistry] Missing handler for:', action);
+      } catch(_) {}
+    }
+
     function call(name){
       const fn = window[name];
-      if (typeof fn !== 'function') return missing(name);
+      if (typeof fn !== 'function') throw new Error('Missing handler: ' + name);
       const args = Array.prototype.slice.call(arguments, 1);
       return fn.apply(window, args);
     }
 
-    const HANDLED_ACTIONS = new Set([
-      'duplicate-module', 'delete-module', 'duplicate-step', 'delete-step',
-      'add-outcome', 'add-aim-item', 'add-outcomes-text-item',
-      'add-competence', 'add-competence-transversal',
-      'open-aims-from-step', 'open-outcomes-from-step', 'back-to-aims-origin',
-      'remove-aim-item', 'remove-outcomes-text-item',
-      'focus-module', 'add-step', 'add-moment',
-      'collapse-module-contents', 'toggle-moment-description', 'toggle-moment', 'delete-moment',
-      'toggle-step', 'toggle-step-sections', 'toggle-module-description', 'toggle-module', 'toggle-module-subblocks',
-      'toggle-module-competences', 'select-module-aims', 'select-module-outcomes'
-    ]);
+    const ACTIONS = Object.freeze({
+      // Modules / steps / moments
+      'duplicate-module': ({btn}) => call('cloneModule', btn),
+      'delete-module': ({event, btn}) => call('trashModule', event, btn),
+      'duplicate-step': ({btn}) => call('cloneStep', btn),
+      'delete-step': ({btn}) => call('trashStep', btn),
+      'add-step': ({btn}) => call('addStepToActivity', btn),
+      'add-moment': ({btn}) => call('addMomentToActivity', btn),
+      'collapse-module-contents': ({btn}) => call('collapseModuleContents', btn),
+      'toggle-module-description': ({btn}) => call('toggleDescription', btn),
+      'toggle-module': ({btn}) => call('toggleActivity', btn),
+      'toggle-step': ({btn}) => call('toggleStep', btn),
+      'toggle-step-sections': ({btn}) => call('toggleStepSections', btn),
+      'toggle-moment-description': ({btn}) => call('toggleMomentDescription', btn),
+      'toggle-moment': ({btn}) => call('toggleMoment', btn),
+      'delete-moment': ({btn}) => call('trashMoment', btn),
+      'focus-module': ({btn}) => call('toggleFocusModule', btn),
+
+      // Key params helpers
+      'add-outcome': () => call('safeAddOutcome'),
+      'add-aim-item': () => call('safeAddAimItem'),
+      'add-outcomes-text-item': () => call('safeAddOutcomesTextItem'),
+      'add-competence': () => call('safeAddCompetence'),
+      'add-competence-transversal': () => call('safeAddCompetenceTransversal'),
+      'open-aims-from-step': ({btn}) => call('openAimsFromStep', btn),
+      'open-outcomes-from-step': ({btn}) => call('openOutcomesFromStep', btn),
+      'back-to-aims-origin': () => call('backToAimsOrigin'),
+      'remove-aim-item': ({btn}) => {
+        const li = btn.closest('li');
+        if (li) li.remove();
+        if (typeof window.syncAimsTextareaFromList === 'function') window.syncAimsTextareaFromList();
+      },
+      'remove-outcomes-text-item': ({btn}) => {
+        const li = btn.closest('li');
+        if (li) li.remove();
+        if (typeof window.syncOutcomesTextTextareaFromList === 'function') window.syncOutcomesTextTextareaFromList();
+      },
+
+      // Module subblocks / competences selectors
+      'toggle-module-subblocks': ({btn}) => {
+        const mod = btn.closest('.activity-group');
+        if (!mod) return;
+        const body = mod.querySelector('.activity-body');
+        if (body && body.classList.contains('collapsed')) {
+          body.classList.remove('collapsed');
+          const toggleBtn = mod.querySelector('button[data-action="toggle-module"]');
+          const icon = toggleBtn ? toggleBtn.querySelector('.rotate-icon') : null;
+          if (icon) icon.style.transform = 'rotate(180deg)';
+        }
+        const box = mod.querySelector('.module-subblocks');
+        if (box) {
+          const willOpen = box.classList.contains('hidden');
+          box.classList.toggle('hidden');
+          btn.setAttribute('aria-pressed', willOpen ? 'true' : 'false');
+        }
+      },
+      'toggle-module-competences': ({btn}) => {
+        const mod = btn.closest('.activity-group');
+        if (!mod) return;
+        const body = mod.querySelector('.activity-body');
+        if (body && body.classList.contains('collapsed')) {
+          body.classList.remove('collapsed');
+          const toggleBtn = mod.querySelector('button[data-action="toggle-module"]');
+          const icon = toggleBtn ? toggleBtn.querySelector('.rotate-icon') : null;
+          if (icon) icon.style.transform = 'rotate(180deg)';
+        }
+        const det = mod.querySelector('details.module-competence-summary');
+        if (det) {
+          det.open = !det.open;
+          btn.setAttribute('aria-pressed', det.open ? 'true' : 'false');
+        }
+      },
+      'select-module-aims': ({btn}) => {
+        const mod = btn.closest('.activity-group');
+        if (mod && typeof window.openModuleSelectionFor === 'function') window.openModuleSelectionFor(mod, 'aims');
+      },
+      'select-module-outcomes': ({btn}) => {
+        const mod = btn.closest('.activity-group');
+        if (mod && typeof window.openModuleSelectionFor === 'function') window.openModuleSelectionFor(mod, 'outcomes');
+      },
+      'add-module-competence-manual': ({btn}) => call('addModuleCompetenceManual', btn),
+      'add-module-aim-manual': ({btn}) => call('addModuleAimManual', btn),
+      'add-module-outcome-manual': ({btn}) => call('addModuleOutcomeManual', btn),
+
+      // Header / menus / global controls
+      'save-project': () => call('saveProject'),
+      'load-project': () => call('triggerFileLoad'),
+      'toggle-more-menu': ({event}) => call('toggleMoreMenu', event),
+      'open-template-export-modal': () => { call('openTemplateExportModal'); call('closeMoreMenu'); },
+      'open-template-import-modal': () => { call('openTemplateImportModal'); call('closeMoreMenu'); },
+      'trigger-language-pack-load': () => { call('triggerLanguagePackLoad'); call('closeMoreMenu'); },
+      'export-language-pack-template': () => { call('exportLanguagePackTemplate'); call('closeMoreMenu'); },
+      'open-i18n-audit': () => { call('openI18nAudit'); call('closeMoreMenu'); },
+      'toggle-all-activities': () => call('toggleAllActivities'),
+      'toggle-learning-types': () => call('toggleLearningTypes'),
+      'toggle-panel': ({btn}) => {
+        const pid = btn && btn.dataset ? btn.dataset.panel : null;
+        if (pid) call('togglePanel', pid);
+      },
+      'toggle-timeline-details': () => call('toggleTimelineDetails'),
+      'add-activity': () => call('addActivity'),
+      'hide-js-error-banner': () => {
+        const b = qs('js-error-banner');
+        if (b) b.style.display = 'none';
+      },
+      'close-i18n-audit': () => call('closeI18nAudit'),
+      'run-i18n-audit': () => call('runI18nAudit'),
+      'download-i18n-audit-report': () => call('downloadI18nAuditReport'),
+
+      // Diagnostics
+      'toggle-debug-ui': () => {
+        setDiagnosticsEnabled(!DIAG.enabled);
+        try { call('closeMoreMenu'); } catch(_) {}
+      },
+      'clear-debug-log': () => {
+        try { DIAG.actions.length = 0; DIAG.errors.length = 0; renderDiagnostics(); } catch(_) {}
+      },
+      'copy-debug-report': () => {
+        try {
+          const report = (typeof window.__uiDiagBuildReport === 'function') ? window.__uiDiagBuildReport() : null;
+          const text = (report && typeof window.__uiDiagFormatReportText === 'function') ? window.__uiDiagFormatReportText(report) : 'Diagnostic UI Report';
+          const p = copyTextToClipboard(text);
+          if (p && typeof p.then === 'function') {
+            p.then(function(){
+              try { notifyDiag('Rapport copié dans le presse-papiers.'); } catch(_) {}
+            }).catch(function(err){
+              try { window.reportError(err, { action: 'copy-debug-report' }); } catch(_) {}
+              try { notifyDiag('Copie impossible.'); } catch(_) {}
+            });
+          } else {
+            notifyDiag('Rapport copié dans le presse-papiers.');
+          }
+        } catch (err) {
+          try { window.reportError(err, { action: 'copy-debug-report' }); } catch(_) {}
+        }
+      },
+      'download-debug-report': () => {
+        try {
+          const report = (typeof window.__uiDiagBuildReport === 'function') ? window.__uiDiagBuildReport() : null;
+          const ts = (function(){
+            try { return nowIso().replace(/[:.]/g,'-'); } catch(_) { return ''+Date.now(); }
+          })();
+          const fname = 'diagnostic_report_' + ts + '.json';
+          const json = (function(){
+            try { return JSON.stringify(report || {}, null, 2); } catch(_) { return '{}'; }
+          })();
+          downloadContent(fname, json, 'application/json;charset=utf-8');
+          try { notifyDiag('Rapport téléchargé.'); } catch(_) {}
+        } catch (err) {
+          try { window.reportError(err, { action: 'download-debug-report' }); } catch(_) {}
+        }
+      }
+    });
+
+    const CHANGE_ACTIONS = Object.freeze({
+      'handle-export': ({el}) => call('handleExport', el),
+      'load-project-file': ({event}) => call('loadProject', event),
+      'handle-ui-language-change': ({el}) => call('handleUiLanguageChange', el),
+      'load-language-pack': ({event}) => call('loadLanguagePack', event),
+      'handle-view-style-change': ({el}) => call('handleViewStyleChange', el),
+      'handle-ui-theme-change': ({el}) => call('handleUiThemeChange', el),
+      'update-stats': () => call('updateStats'),
+      'update-step-type': ({el}) => call('updateStepType', el),
+      'toggle-group-mode': ({el}) => call('toggleGroupMode', el)
+    });
+
+    const INPUT_ACTIONS = Object.freeze({
+      'update-stats-debounced': () => call('updateStatsDebounced'),
+      'update-group-math': ({el}) => {
+        const mode = (el && el.dataset) ? (el.dataset.groupMath || el.dataset.arg || '') : '';
+        call('updateGroupMath', el, mode);
+      }
+    });
+
+    // Internal dispatch helper (also used for keyboard shortcuts)
+    function dispatchAction(action, ctx){
+      try {
+        const fn = ACTIONS[action];
+        if (typeof fn !== 'function') { try { missing(action); } catch(_) {} return; }
+        try { window.__uiDiagLogAction(action); } catch(_) {}
+        try {
+          const res = fn(Object.assign({ action: action }, ctx || {}));
+          if (res && typeof res.then === 'function') {
+            res.catch(function(err){ try { window.reportError(err, { action }); } catch(_) {} });
+          }
+        } catch (err) {
+          try { window.reportError(err, { action }); } catch(_) {}
+        }
+      } catch(_) {}
+    }
+
+    // Log unknown data-action without intercepting behaviour (helps diagnose inert buttons).
+    document.addEventListener('click', function(e){
+      try {
+        if (!DIAG.enabled) return;
+        const btn = e.target && e.target.closest ? e.target.closest('[data-action]') : null;
+        if (!btn) return;
+        const action = btn.dataset ? btn.dataset.action : null;
+        if (!action) return;
+        if (typeof ACTIONS[action] === 'function') return;
+        try { window.__uiDiagLogAction(action, 'action inconnue'); } catch(_) {}
+      } catch(_) {}
+    }, true);
+
+    // Keyboard shortcuts (Ctrl/Cmd + Alt):
+    // - D: toggle Diagnostic UI
+    // - C: copy report
+    // - S: download report
+    document.addEventListener('keydown', function(e){
+      try {
+        const isCmdCtrl = !!(e.ctrlKey || e.metaKey);
+        if (!isCmdCtrl || !e.altKey) return;
+        const k = String(e.key || '').toLowerCase();
+        if (k === 'd') { e.preventDefault(); dispatchAction('toggle-debug-ui', { event: e }); }
+        else if (k === 'c') { e.preventDefault(); dispatchAction('copy-debug-report', { event: e }); }
+        else if (k === 's') { e.preventDefault(); dispatchAction('download-debug-report', { event: e }); }
+      } catch(_) {}
+    }, true);
+
 
     document.addEventListener('click', function(e){
       const btn = e.target && e.target.closest ? e.target.closest('button[data-action]') : null;
       if (!btn) return;
       const action = btn.dataset ? btn.dataset.action : null;
       if (!action) return;
-
-      // Only intercept actions we explicitly handle here; otherwise let other listeners run.
-      if (!HANDLED_ACTIONS.has(action)) return;
-
-      // Handle here and stop propagation to prevent duplicate execution.
-      try { e.preventDefault(); e.stopPropagation(); } catch(_){}
+      const fn = ACTIONS[action];
+      if (typeof fn !== 'function') return; // do not block unknown actions
 
       try {
-        switch(action){
-          case 'duplicate-module':
-            call('cloneModule', btn);
-            break;
-          case 'delete-module':
-            call('trashModule', e, btn);
-            break;
-          case 'duplicate-step':
-            call('cloneStep', btn);
-            break;
-          case 'delete-step':
-            call('trashStep', btn);
-            break;
-          case 'add-outcome':
-            call('safeAddOutcome');
-            break;
-          case 'add-aim-item':
-            call('safeAddAimItem');
-            break;
-          case 'add-outcomes-text-item':
-            call('safeAddOutcomesTextItem');
-            break;
-          case 'add-competence':
-            call('safeAddCompetence');
-            break;
-          case 'add-competence-transversal':
-            call('safeAddCompetenceTransversal');
-            break;
-          case 'focus-module':
-            call('toggleFocusModule', btn);
-            break;
-          case 'add-step':
-            call('addStepToActivity', btn);
-            break;
-          case 'add-moment':
-            call('addMomentToActivity', btn);
-            break;
-          case 'collapse-module-contents':
-            call('collapseModuleContents', btn);
-            break;
-          case 'toggle-moment-description':
-            call('toggleMomentDescription', btn);
-            break;
-          case 'toggle-moment':
-            call('toggleMoment', btn);
-            break;
-          case 'delete-moment':
-            call('trashMoment', btn);
-            break;
-          case 'toggle-step':
-            call('toggleStep', btn);
-            break;
-          case 'toggle-step-sections':
-            call('toggleStepSections', btn);
-            break;
-          case 'toggle-module-description':
-            call('toggleDescription', btn);
-            break;
-          case 'toggle-module':
-            call('toggleActivity', btn);
-            break;
-          case 'toggle-module-subblocks':
-            (function(){
-              const mod = btn.closest('.activity-group');
-              if (!mod) return;
-              const body = mod.querySelector('.activity-body');
-              if (body && body.classList.contains('collapsed')) {
-                body.classList.remove('collapsed');
-                const toggleBtn = mod.querySelector('button[data-action="toggle-module"]');
-                const icon = toggleBtn ? toggleBtn.querySelector('.rotate-icon') : null;
-                if (icon) icon.style.transform = 'rotate(180deg)';
-              }
-              const box = mod.querySelector('.module-subblocks');
-              if (box) {
-                const willOpen = box.classList.contains('hidden');
-                box.classList.toggle('hidden');
-                btn.setAttribute('aria-pressed', willOpen ? 'true' : 'false');
-              }
-            })();
-            break;
-          case 'toggle-module-competences':
-            (function(){
-              const mod = btn.closest('.activity-group');
-              if (!mod) return;
-              const body = mod.querySelector('.activity-body');
-              if (body && body.classList.contains('collapsed')) {
-                body.classList.remove('collapsed');
-                const toggleBtn = mod.querySelector('button[data-action="toggle-module"]');
-                const icon = toggleBtn ? toggleBtn.querySelector('.rotate-icon') : null;
-                if (icon) icon.style.transform = 'rotate(180deg)';
-              }
-              const det = mod.querySelector('details.module-competence-summary');
-              if (det) {
-                det.open = !det.open;
-                btn.setAttribute('aria-pressed', det.open ? 'true' : 'false');
-              }
-            })();
-            break;
-          case 'select-module-aims':
-            (function(){
-              const mod = btn.closest('.activity-group');
-              if (mod && typeof window.openModuleSelectionFor === 'function') window.openModuleSelectionFor(mod, 'aims');
-            })();
-            break;
-          case 'select-module-outcomes':
-            (function(){
-              const mod = btn.closest('.activity-group');
-              if (mod && typeof window.openModuleSelectionFor === 'function') window.openModuleSelectionFor(mod, 'outcomes');
-            })();
-            break;
+        e.preventDefault();
+        e.stopPropagation();
+      } catch(_) {}
 
-          case 'select-module-competences':
-            (function(){
-              const mod = btn.closest('.activity-group');
-              if (!mod) return;
-              const det = mod.querySelector('details.module-competence-summary');
-              if (det && !det.open) det.open = true;
-              const picker = mod.querySelector('.module-competences-picker');
-              if (picker) picker.classList.toggle('hidden');
-              // Ensure options/checkboxes are up to date
-              try { if (typeof populateModuleTargetCompetencesSujetSelect === 'function') populateModuleTargetCompetencesSujetSelect(mod); } catch (_) {}
-              try { if (typeof populateModuleTargetCompetencesTransvSelect === 'function') populateModuleTargetCompetencesTransvSelect(mod); } catch (_) {}
-            })();
-            break;
-
-          case 'open-aims-from-step':
-            call('openAimsFromStep', btn);
-            break;
-          case 'open-outcomes-from-step':
-            call('openOutcomesFromStep', btn);
-            break;
-          case 'back-to-aims-origin':
-            call('backToAimsOrigin');
-            break;
-          case 'remove-aim-item':
-            (function(){
-              const li = btn.closest('li');
-              if (li) li.remove();
-              if (typeof window.syncAimsTextareaFromList === 'function') window.syncAimsTextareaFromList();
-            })();
-            break;
-          case 'remove-outcomes-text-item':
-            (function(){
-              const li = btn.closest('li');
-              if (li) li.remove();
-              if (typeof window.syncOutcomesTextTextareaFromList === 'function') window.syncOutcomesTextTextareaFromList();
-            })();
-            break;
-          default:
-            // Unknown action: no-op.
-            break;
-        }
+      try {
+        window.__uiDiagLogAction(action);
+        fn({ event: e, btn, action });
       } catch (err) {
-        console.error('[ActionRescue] dispatch failed for action:', action, err);
-        try { alert('Une erreur empêche l\'interface de répondre. Ouvrez la console (F12) pour le détail.'); } catch(_){}
+        try { window.reportError(err, { action }); } catch(_) {}
       }
     }, true);
+
+    document.addEventListener('change', function(e){
+      const el = e.target && e.target.closest ? e.target.closest('[data-action-change]') : null;
+      if (!el) return;
+      const action = el.dataset ? el.dataset.actionChange : null;
+      if (!action) return;
+      const fn = CHANGE_ACTIONS[action];
+      if (typeof fn !== 'function') return;
+
+      try {
+        e.stopPropagation();
+      } catch(_) {}
+
+      try {
+        window.__uiDiagLogAction('change:' + action);
+        fn({ event: e, el, action });
+      } catch (err) {
+        try { window.reportError(err, { action: 'change:' + action }); } catch(_) {}
+      }
+    }, true);
+
+    document.addEventListener('input', function(e){
+      const el = e.target && e.target.closest ? e.target.closest('[data-action-input]') : null;
+      if (!el) return;
+      const action = el.dataset ? el.dataset.actionInput : null;
+      if (!action) return;
+      const fn = INPUT_ACTIONS[action];
+      if (typeof fn !== 'function') return;
+
+      try {
+        e.stopPropagation();
+      } catch(_) {}
+
+      try {
+        window.__uiDiagLogAction('input:' + action);
+        fn({ event: e, el, action });
+      } catch (err) {
+        try { window.reportError(err, { action: 'input:' + action }); } catch(_) {}
+      }
+    }, true);
+
+
+    // Internal shortcuts routed through the same action registry (Ctrl+Alt+D/C/S).
+    document.addEventListener('keydown', function(e){
+      try {
+        const isCmdCtrl = !!(e.ctrlKey || e.metaKey);
+        if (!isCmdCtrl || !e.altKey) return;
+        const key = (e.key || '').toLowerCase();
+        if (key === 'd') { e.preventDefault(); try { const fn = ACTIONS['toggle-debug-ui']; if (typeof fn === 'function') fn({ event: e, action: 'toggle-debug-ui' }); } catch(err) { try { window.reportError(err, { action: 'toggle-debug-ui' }); } catch(_) {} } }
+        if (key === 'c') { e.preventDefault(); try { const fn = ACTIONS['copy-debug-report']; if (typeof fn === 'function') fn({ event: e, action: 'copy-debug-report' }); } catch(err) { try { window.reportError(err, { action: 'copy-debug-report' }); } catch(_) {} } }
+        if (key === 's') { e.preventDefault(); try { const fn = ACTIONS['download-debug-report']; if (typeof fn === 'function') fn({ event: e, action: 'download-debug-report' }); } catch(err) { try { window.reportError(err, { action: 'download-debug-report' }); } catch(_) {} } }
+      } catch(_) {}
+    }, true);
+
+    // Restore diagnostics state early
+    try {
+      const flag = localStorage.getItem('ui_debug');
+      if (flag === '1') setDiagnosticsEnabled(true);
+    } catch(_) {}
+
   })();
 
 
@@ -947,7 +1350,7 @@ details[data-readonly="true"] label{ cursor: default; }
        Projet
       </span>
 <div class="flex items-center bg-white border border-slate-200 rounded-md p-0.5 gap-0.5 shadow-sm h-[30px]">
-<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors flex items-center gap-1.5" data-i18n-title="title_save_project" onclick="saveProject()">
+<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors flex items-center gap-1.5" data-i18n-title="title_save_project" data-action="save-project">
 <span class="material-icons-round text-lg">
          save
         </span>
@@ -955,7 +1358,7 @@ details[data-readonly="true"] label{ cursor: default; }
          Enregistrer
         </span>
 </button>
-<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors flex items-center gap-1.5" data-i18n-title="title_load_project" onclick="triggerFileLoad()">
+<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors flex items-center gap-1.5" data-i18n-title="title_load_project" data-action="load-project">
 <span class="material-icons-round text-lg">
          file_upload
         </span>
@@ -970,7 +1373,7 @@ details[data-readonly="true"] label{ cursor: default; }
 <span class="material-icons-round text-slate-600 absolute left-1.5 pointer-events-none text-lg z-10 group-hover:text-indigo-600 transition-colors">
           download
          </span>
-<select class="appearance-none bg-transparent hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 pl-7 pr-6 py-1 rounded transition-colors outline-none cursor-pointer text-xs font-medium h-[26px]" data-i18n-title="title_export_dropdown" onchange="handleExport(this)" style="width: 10rem; min-width: 0;">
+<select class="appearance-none bg-transparent hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 pl-7 pr-6 py-1 rounded transition-colors outline-none cursor-pointer text-xs font-medium h-[26px]" data-i18n-title="title_export_dropdown" data-action-change="handle-export" style="width: 10rem; min-width: 0;">
 <option data-i18n="btn_export_dropdown" disabled="" selected="" value="">
            Exporter...
           </option>
@@ -998,50 +1401,58 @@ details[data-readonly="true"] label{ cursor: default; }
          </span>
 </div>
 </div>
-<input accept=".json" class="hidden" id="load-file-input" onchange="loadProject(event)" type="file"/>
+<input accept=".json" class="hidden" id="load-file-input" data-action-change="load-project-file" type="file"/>
 </div>
 </div>
 <div class="flex flex-col relative gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
 <span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider pl-1">Plus</span>
 <div class="flex items-center bg-white border border-slate-200 rounded-md p-0.5 gap-0.5 shadow-sm h-[30px] min-w-max relative">
-<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors flex items-center gap-1.5" id="btn-more" onclick="toggleMoreMenu(event)" title="Plus d'actions" type="button">
+<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors flex items-center gap-1.5" id="btn-more" data-action="toggle-more-menu" title="Plus d'actions" type="button">
 <span class="material-icons-round text-lg">more_horiz</span>
 <span class="text-xs font-medium hidden md:inline">Plus…</span>
 </button>
 <div class="hidden absolute right-0 top-[34px] w-72 bg-white border border-slate-200 rounded-md shadow-lg z-50 p-1" id="more-menu">
 <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 py-1">Modèles</div>
-<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" onclick="openTemplateExportModal(); closeMoreMenu();" type="button">
+<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-action="open-template-export-modal" type="button">
 <span class="material-icons-round text-base text-slate-500">upload_file</span>
 <span class="text-sm">Exporter un modèle</span>
 </button>
-<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" onclick="openTemplateImportModal(); closeMoreMenu();" type="button">
+<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-action="open-template-import-modal" type="button">
 <span class="material-icons-round text-base text-slate-500">download_for_offline</span>
 <span class="text-sm">Importer un modèle</span>
 </button>
 <div class="my-1 border-t border-slate-200"></div>
 <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 py-1" data-i18n="grp_interface">Interface</div>
-<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" onclick="triggerLanguagePackLoad(); closeMoreMenu();" type="button">
+<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-action="trigger-language-pack-load" type="button">
 <span class="material-icons-round text-base text-slate-500">translate</span>
 <span class="text-sm" data-i18n="btn_load_language_pack">Charger langue</span>
 </button>
-<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-i18n-title="title_export_language_template" onclick="exportLanguagePackTemplate(); closeMoreMenu();" type="button">
+<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-i18n-title="title_export_language_template" data-action="export-language-pack-template" type="button">
 <span class="material-icons-round text-base text-slate-500">download</span>
 <span class="text-sm" data-i18n="btn_export_language_template">Exporter modèle</span>
 </button>
-<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-i18n-title="title_i18n_audit" onclick="openI18nAudit(); closeMoreMenu();" type="button">
+<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-i18n-title="title_i18n_audit" data-action="open-i18n-audit" type="button">
 <span class="material-icons-round text-base text-slate-500">fact_check</span>
 <span class="text-sm" data-i18n="btn_i18n_audit">Vérifier traductions</span>
 </button>
 <div class="px-2 pt-2 pb-1">
 <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1" data-i18n="title_ui_language_select">Choisir la langue de l’interface</div>
-<select class="w-full appearance-none bg-white border border-slate-200 text-slate-700 px-2 pr-8 py-1 rounded-md outline-none cursor-pointer text-sm" id="ui-lang-select" onchange="handleUiLanguageChange(this)">
+<select class="w-full appearance-none bg-white border border-slate-200 text-slate-700 px-2 pr-8 py-1 rounded-md outline-none cursor-pointer text-sm" id="ui-lang-select" data-action-change="handle-ui-language-change">
 <option data-i18n="opt_lang_fr" value="fr">Français</option>
 <option data-i18n="opt_lang_loaded" data-role="loaded-lang" disabled="" value="">Langue chargée</option>
 </select>
 </div>
+<div class="my-1 border-t border-slate-200"></div>
+<div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 py-1">Diagnostic</div>
+<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-action="toggle-debug-ui" type="button">
+<span class="material-icons-round text-base text-slate-500">bug_report</span>
+<span class="text-sm">Diagnostic UI</span>
+</button>
+
+
 </div>
 <input accept=".json" class="hidden" id="template-file-input" type="file"/>
-<input accept=".json,application/json" class="hidden" id="lang-pack-input" onchange="loadLanguagePack(event)" type="file"/>
+<input accept=".json,application/json" class="hidden" id="lang-pack-input" data-action-change="load-language-pack" type="file"/>
 </div>
 </div>
 <div class="flex flex-col relative gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
@@ -1049,7 +1460,7 @@ details[data-readonly="true"] label{ cursor: default; }
        Vue
       </span>
 <div class="flex items-center bg-white border border-slate-200 rounded-md p-0.5 gap-1 shadow-sm h-[30px]">
-<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded transition-colors flex items-center justify-center ml-0.5" data-i18n-title="title_fold_all" id="btn-toggle-all-header" onclick="toggleAllActivities()">
+<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded transition-colors flex items-center justify-center ml-0.5" data-i18n-title="title_fold_all" id="btn-toggle-all-header" data-action="toggle-all-activities">
 <span class="material-icons-round text-xl" id="icon-toggle-all">
          unfold_less
         </span>
@@ -1057,7 +1468,7 @@ details[data-readonly="true"] label{ cursor: default; }
 <div class="w-px h-5 bg-slate-200">
 </div>
 <div class="relative">
-<select class="appearance-none bg-white border border-slate-200 text-slate-700 pl-2 pr-7 h-[26px] rounded-md outline-none cursor-pointer text-[11px] font-extrabold tracking-wide" id="view-style-select" onchange="handleViewStyleChange(this)" title="Style d'affichage">
+<select class="appearance-none bg-white border border-slate-200 text-slate-700 pl-2 pr-7 h-[26px] rounded-md outline-none cursor-pointer text-[11px] font-extrabold tracking-wide" id="view-style-select" data-action-change="handle-view-style-change" title="Style d'affichage">
 <option value="std">STD</option>
 <option value="hc">HC</option>
 <option value="contrast">Contraste+</option>
@@ -1066,7 +1477,7 @@ details[data-readonly="true"] label{ cursor: default; }
 <span class="material-icons-round pointer-events-none text-slate-500 text-base absolute right-1 top-1/2 -translate-y-1/2">expand_more</span>
 </div>
 <div class="relative">
-<select class="appearance-none bg-white border border-slate-200 text-slate-700 pl-2 pr-7 h-[26px] rounded-md outline-none cursor-pointer text-[11px] font-extrabold tracking-wide" id="ui-theme-select" onchange="handleUiThemeChange(this)" title="Thème interface">
+<select class="appearance-none bg-white border border-slate-200 text-slate-700 pl-2 pr-7 h-[26px] rounded-md outline-none cursor-pointer text-[11px] font-extrabold tracking-wide" id="ui-theme-select" data-action-change="handle-ui-theme-change" title="Thème interface">
 <option value="light">Clair</option>
 <option value="dark">Sombre</option>
 </select>
@@ -1077,7 +1488,7 @@ details[data-readonly="true"] label{ cursor: default; }
 <div class="flex flex-col relative gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
 <span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider pl-1" data-i18n="grp_learning_types">Types</span>
 <div class="flex items-center bg-white border border-slate-200 rounded-md p-0.5 gap-1 shadow-sm h-[30px]">
-<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded transition-colors flex items-center gap-1 w-full justify-center" data-i18n-title="title_toggle_types" onclick="toggleLearningTypes()" type="button">
+<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded transition-colors flex items-center gap-1 w-full justify-center" data-i18n-title="title_toggle_types" data-action="toggle-learning-types" type="button">
 <span class="material-icons-round text-base" id="icon-toggle-types">visibility_off</span>
 <span class="text-xs font-bold" data-i18n="btn_toggle_types">Types d'appr.</span>
 </button>
@@ -1102,7 +1513,7 @@ details[data-readonly="true"] label{ cursor: default; }
 </div>
 </header>
 <div class="mb-3 bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-<button class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors no-print h-[32px] rounded-lg border border-slate-200 rounded-lg border border-slate-200" data-i18n-title="title_toggle_panel" onclick="togglePanel('key-params-panel')">
+<button class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors no-print h-[32px] rounded-lg border border-slate-200 rounded-lg border border-slate-200" data-i18n-title="title_toggle_panel" data-action="toggle-panel" data-panel="key-params-panel">
 <div class="flex items-center gap-1.5">
 <span class="material-icons-round text-slate-500 text-sm">
        tune
@@ -1145,8 +1556,8 @@ details[data-readonly="true"] label{ cursor: default; }
          Temps d'Apprentissage (Cible)
         </label>
 <div class="flex gap-1">
-<input class="w-2/3 px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" id="param-learning-val" min="0" oninput="updateStatsDebounced()" placeholder="0" type="number"/>
-<select class="w-1/3 px-1 py-1 text-xs border border-slate-200 rounded bg-slate-50 focus:ring-1 focus:ring-indigo-500 outline-none" id="param-learning-unit" onchange="updateStats()">
+<input class="w-2/3 px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" id="param-learning-val" min="0" data-action-input="update-stats-debounced" placeholder="0" type="number"/>
+<select class="w-1/3 px-1 py-1 text-xs border border-slate-200 rounded bg-slate-50 focus:ring-1 focus:ring-indigo-500 outline-none" id="param-learning-unit" data-action-change="update-stats">
 <option data-i18n="unit_mins" value="mins">
            min
           </option>
@@ -1234,7 +1645,7 @@ details[data-readonly="true"] label{ cursor: default; }
 <label class="compact-label block" data-i18n="label_class_size">
        Taille de la cohorte
       </label>
-<input class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none font-bold text-slate-800" id="global-class-size" min="1" oninput="updateStatsDebounced()" type="number" value="30"/>
+<input class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none font-bold text-slate-800" id="global-class-size" min="1" data-action-input="update-stats-debounced" type="number" value="30"/>
 </div>
 <div class="md:col-span-2 lg:col-span-3">
 <label class="compact-label block" data-i18n="label_prerequisites">Prérequis</label>
@@ -1481,7 +1892,7 @@ details[data-readonly="true"] label{ cursor: default; }
 </div>
 <div class="mb-3 no-print flex flex-col gap-3 max-w-7xl mx-auto w-full">
 <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col justify-center max-w-7xl mx-auto w-full" id="timelines-wrapper">
-<button class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors no-print h-[32px] rounded-lg border border-slate-200" data-i18n-title="title_toggle_panel" onclick="togglePanel('timeline-panel')">
+<button class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors no-print h-[32px] rounded-lg border border-slate-200" data-i18n-title="title_toggle_panel" data-action="toggle-panel" data-panel="timeline-panel">
 <div class="flex items-center gap-1.5">
 <span class="material-icons-round text-slate-500 text-sm">
         insights
@@ -1568,7 +1979,7 @@ details[data-readonly="true"] label{ cursor: default; }
 <div class="timeline-inner" id="timeline-steps-inner"></div>
 </div>
 </div>
-<button class="w-full px-2 py-1.5 flex items-center justify-between bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors" onclick="toggleTimelineDetails()" type="button">
+<button class="w-full px-2 py-1.5 flex items-center justify-between bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors" data-action="toggle-timeline-details" type="button">
 <div class="flex items-center gap-1.5">
 <span aria-hidden="true" class="material-icons-round text-slate-500 text-base">
          tune
@@ -1965,7 +2376,7 @@ details[data-readonly="true"] label{ cursor: default; }
 </div></div></details>
 <div class="max-w-7xl mx-auto w-full" id="view-designer">
 <div class="flex justify-end mb-2 no-print">
-<button class="text-slate-500 hover:text-indigo-600 text-xs font-medium flex items-center gap-1 transition-colors px-2 py-1 rounded hover:bg-slate-100" id="btn-toggle-all-main" onclick="toggleAllActivities()">
+<button class="text-slate-500 hover:text-indigo-600 text-xs font-medium flex items-center gap-1 transition-colors px-2 py-1 rounded hover:bg-slate-100" id="btn-toggle-all-main" data-action="toggle-all-activities">
 <span class="material-icons-round text-base" id="icon-toggle-all-main">
        unfold_less
       </span>
@@ -1983,7 +2394,7 @@ details[data-readonly="true"] label{ cursor: default; }
 <p class="mt-0.5 text-xs text-slate-500" data-i18n="empty_subtitle">
       Commencez par créer votre premier module.
      </p>
-<button class="mt-4 inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-xs font-medium rounded text-white bg-indigo-600 hover:bg-indigo-700" data-i18n-title="title_create_activity" onclick="addActivity()">
+<button class="mt-4 inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-xs font-medium rounded text-white bg-indigo-600 hover:bg-indigo-700" data-i18n-title="title_create_activity" data-action="add-activity">
 <span class="material-icons-round mr-1 text-sm">
        add
       </span>
@@ -1994,7 +2405,7 @@ details[data-readonly="true"] label{ cursor: default; }
 </div>
 </div>
 <div class="mt-6 mb-4 no-print flex justify-start max-w-7xl mx-auto w-full">
-<button class="bg-white border border-slate-300 hover:border-indigo-500 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded font-bold shadow-sm flex items-center gap-1.5 transition-all text-xs" data-i18n-title="title_new_activity" onclick="addActivity()">
+<button class="bg-white border border-slate-300 hover:border-indigo-500 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded font-bold shadow-sm flex items-center gap-1.5 transition-all text-xs" data-i18n-title="title_new_activity" data-action="add-activity">
 <span class="material-icons-round text-lg">
       add_circle
      </span>
@@ -2117,7 +2528,7 @@ details[data-readonly="true"] label{ cursor: default; }
        1
       </div>
 <div class="flex-1 w-full">
-<input class="activity-title text-base font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none w-full py-0.5 transition-colors" data-i18n-placeholder="ph_activity_title" oninput="updateStatsDebounced()" placeholder="Titre du module (ex: Module 1 : Introduction)" type="text"/>
+<input class="activity-title text-base font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none w-full py-0.5 transition-colors" data-i18n-placeholder="ph_activity_title" data-action-input="update-stats-debounced" placeholder="Titre du module (ex: Module 1 : Introduction)" type="text"/>
 <div class="flex items-center gap-2 mt-0.5 pr-1">
 <div class="activity-type-bar flex-1 h-1.5 bg-slate-100 border border-slate-200 rounded-full overflow-hidden flex">
 </div>
@@ -2131,8 +2542,8 @@ details[data-readonly="true"] label{ cursor: default; }
          Cible
         </span>
 <div class="flex items-center gap-1">
-<input class="activity-target-time w-12 px-1 py-0.5 text-xs text-right border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none h-[22px]" min="0" oninput="updateStatsDebounced()" placeholder="0" type="number"/>
-<select class="activity-target-unit w-20 px-0 py-0.5 text-[10px] border border-slate-200 rounded bg-slate-50 focus:ring-1 focus:ring-indigo-500 outline-none h-[22px]" onchange="updateStats()">
+<input class="activity-target-time w-12 px-1 py-0.5 text-xs text-right border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none h-[22px]" min="0" data-action-input="update-stats-debounced" placeholder="0" type="number"/>
+<select class="activity-target-unit w-20 px-0 py-0.5 text-[10px] border border-slate-200 rounded bg-slate-50 focus:ring-1 focus:ring-indigo-500 outline-none h-[22px]" data-action-change="update-stats">
 <option data-i18n="unit_mins" value="60">
            min
           </option>
@@ -2329,8 +2740,8 @@ details[data-readonly="true"] label{ cursor: default; }
 <div class="moment-target-wrap flex flex-col items-end">
 <span class="text-[9px] text-slate-400 uppercase font-bold tracking-wider leading-none mb-0.5" data-i18n="label_target">Cible</span>
 <div class="flex gap-1 items-center">
-<input class="moment-target-time w-12 px-1 py-0.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none h-[22px]" min="0" oninput="updateStatsDebounced()" placeholder="0" type="number"/>
-<select class="moment-target-unit w-20 px-1 py-0.5 text-xs border border-slate-200 rounded bg-slate-50 focus:ring-1 focus:ring-indigo-500 outline-none h-[22px]" onchange="updateStats()">
+<input class="moment-target-time w-12 px-1 py-0.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none h-[22px]" min="0" data-action-input="update-stats-debounced" placeholder="0" type="number"/>
+<select class="moment-target-unit w-20 px-1 py-0.5 text-xs border border-slate-200 rounded bg-slate-50 focus:ring-1 focus:ring-indigo-500 outline-none h-[22px]" data-action-change="update-stats">
 <option data-i18n="unit_mins" value="60">min</option>
 <option data-i18n="unit_hours" value="3600">Heures</option>
 <option data-i18n="unit_days" value="86400">Jours</option>
@@ -2375,8 +2786,8 @@ details[data-readonly="true"] label{ cursor: default; }
 <input class="step-input-title w-full px-1 py-0.5 text-sm font-semibold text-slate-800 border-none bg-transparent focus:ring-0 outline-none" data-i18n-placeholder="ph_step_title" placeholder="Titre de l'activité..." type="text"/>
 </div>
 <div class="flex items-center gap-1">
-<input class="duration-input w-16 px-2 py-0.5 text-xs font-semibold border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none h-[22px] text-right text-slate-600" min="0" oninput="updateStatsDebounced()" placeholder="0" type="number"/>
-<select class="duration-unit w-24 px-2 py-0.5 text-xs border border-slate-200 rounded bg-slate-50 focus:ring-1 focus:ring-indigo-500 outline-none h-[22px]" onchange="updateStats()">
+<input class="duration-input w-16 px-2 py-0.5 text-xs font-semibold border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none h-[22px] text-right text-slate-600" min="0" data-action-input="update-stats-debounced" placeholder="0" type="number"/>
+<select class="duration-unit w-24 px-2 py-0.5 text-xs border border-slate-200 rounded bg-slate-50 focus:ring-1 focus:ring-indigo-500 outline-none h-[22px]" data-action-change="update-stats">
 <option data-i18n="unit_mins" value="60">
         min
        </option>
@@ -2392,7 +2803,7 @@ details[data-readonly="true"] label{ cursor: default; }
 </select>
 </div>
 <div class="w-24 learning-type-container">
-<select class="learning-type-select w-full px-2 py-0.5 text-xs font-semibold border rounded focus:ring-1 focus:ring-indigo-500 outline-none transition-all select-acquisition h-[22px]" onchange="updateStepType(this)">
+<select class="learning-type-select w-full px-2 py-0.5 text-xs font-semibold border rounded focus:ring-1 focus:ring-indigo-500 outline-none transition-all select-acquisition h-[22px]" data-action-change="update-step-type">
 <option data-i18n="type_none" value="none">
         Aucun
        </option>
@@ -2450,7 +2861,7 @@ details[data-readonly="true"] label{ cursor: default; }
          </span>
 </label>
 <div class="space-y-1">
-<select class="step-group-mode w-full px-2 py-0.5 text-xs rounded border border-slate-200 bg-white outline-none h-[24px]" onchange="toggleGroupMode(this)">
+<select class="step-group-mode w-full px-2 py-0.5 text-xs rounded border border-slate-200 bg-white outline-none h-[24px]" data-action-change="toggle-group-mode">
 <option data-i18n="opt_whole_class" value="class">
            Groupe entier
           </option>
@@ -2463,13 +2874,13 @@ details[data-readonly="true"] label{ cursor: default; }
 </select>
 <div class="step-group-details hidden flex gap-1">
 <div class="relative flex-1">
-<input class="step-group-count w-full px-2 py-0.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none h-[24px]" data-i18n-placeholder="ph_nb_groups" min="1" oninput="updateGroupMath(this, 'count')" placeholder="Nb groupes" type="number"/>
+<input class="step-group-count w-full px-2 py-0.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none h-[24px]" data-i18n-placeholder="ph_nb_groups" min="1" data-action-input="update-group-math" data-group-math="count" placeholder="Nb groupes" type="number"/>
 <span class="absolute right-1 top-1/2 -translate-y-1/2 text-[8px] text-slate-400 pointer-events-none pr-1" data-i18n="label_short_groups">
             Grps
            </span>
 </div>
 <div class="relative flex-1">
-<input class="step-group-size w-full px-2 py-0.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none h-[24px]" data-i18n-placeholder="ph_per_group" min="1" oninput="updateGroupMath(this, 'size')" placeholder="Par groupe" type="number"/>
+<input class="step-group-size w-full px-2 py-0.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none h-[24px]" data-i18n-placeholder="ph_per_group" min="1" data-action-input="update-group-math" data-group-math="size" placeholder="Par groupe" type="number"/>
 <span class="absolute right-1 top-1/2 -translate-y-1/2 text-[8px] text-slate-400 pointer-events-none pr-1" data-i18n="label_short_pers">
             Pers
            </span>
@@ -2487,7 +2898,7 @@ details[data-readonly="true"] label{ cursor: default; }
            Formateur
           </span>
 </span>
-<select class="trainer-select w-full px-1 py-0.5 text-[10px] rounded border border-slate-200 bg-white outline-none h-[22px]" onchange="updateStats()">
+<select class="trainer-select w-full px-1 py-0.5 text-[10px] rounded border border-slate-200 bg-white outline-none h-[22px]" data-action-change="update-stats">
 <option data-i18n="opt_present" value="present">
            Présent
           </option>
@@ -2505,7 +2916,7 @@ details[data-readonly="true"] label{ cursor: default; }
            Lieu
           </span>
 </span>
-<select class="place-select w-full px-1 py-0.5 text-[10px] rounded border border-slate-200 bg-white outline-none h-[22px]" onchange="updateStats()">
+<select class="place-select w-full px-1 py-0.5 text-[10px] rounded border border-slate-200 bg-white outline-none h-[22px]" data-action-change="update-stats">
 <option data-i18n="opt_insitu" value="situ">
            Présentiel (sur site)
           </option>
@@ -2526,7 +2937,7 @@ details[data-readonly="true"] label{ cursor: default; }
            Temps
           </span>
 </span>
-<select class="time-select w-full px-1 py-0.5 text-[10px] rounded border border-slate-200 bg-white outline-none h-[22px]" onchange="updateStats()">
+<select class="time-select w-full px-1 py-0.5 text-[10px] rounded border border-slate-200 bg-white outline-none h-[22px]" data-action-change="update-stats">
 <option data-i18n="opt_sync" value="sync">
            Synchrone
           </option>
@@ -2665,63 +3076,8 @@ details[data-readonly="true"] label{ cursor: default; }
 </template>
 <script>
 
-/* Global error handlers: prevent silent failures leading to inert UI. */
-(function () {
-  let notified = false;
 
-  function safeString(v) {
-    try {
-      if (v == null) return '';
-      if (typeof v === 'string') return v;
-      if (v instanceof Error) return v.message || String(v);
-      if (typeof v === 'object') return (v.message || v.reason || '') ? String(v.message || v.reason) : JSON.stringify(v);
-      return String(v);
-    } catch (_) {
-      return '';
-    }
-  }
-
-  function notifyUser(title, detail) {
-    if (notified) return;
-    notified = true;
-
-    try {
-      const msg = [
-        title || 'Une erreur est survenue.',
-        detail ? ('\n\nDétail : ' + detail) : '',
-        '\n\nEssayez de recharger la page. Si le problème persiste, ouvrez la console (F12) pour copier les erreurs.'
-      ].join('');
-      // Minimal user feedback without altering the interface layout.
-      alert(msg);
-    } catch (_) {
-      // noop
-    }
-  }
-
-  window.addEventListener('error', function (event) {
-    try {
-      const err = event && event.error ? event.error : null;
-      const detail = err && err.stack ? err.stack : safeString(event && event.message);
-      console.error('[GlobalError]', event);
-      notifyUser('Erreur JavaScript détectée.', detail);
-    } catch (_) {
-      notifyUser('Erreur JavaScript détectée.');
-    }
-  });
-
-  window.addEventListener('unhandledrejection', function (event) {
-    try {
-      const reason = event ? event.reason : null;
-      const detail = reason && reason.stack ? reason.stack : safeString(reason);
-      console.error('[UnhandledRejection]', event);
-      notifyUser('Promesse rejetée sans gestion.', detail);
-    } catch (_) {
-      notifyUser('Promesse rejetée sans gestion.');
-    }
-  });
-})();
-
-   const root = document.getElementById('activities-root');
+const root = document.getElementById('activities-root');
         const emptyState = document.getElementById('empty-state');
         const activityTemplate = document.getElementById('activity-template');
         const momentTemplate = document.getElementById('moment-template');
@@ -2781,171 +3137,8 @@ details[data-readonly="true"] label{ cursor: default; }
             });
         })();
         
-        document.addEventListener('click', (e) => {
-            const btn = e.target.closest('button[data-action]');
-            if (!btn) return;
+        
 
-            const action = btn.dataset.action;
-            if (!action) return;
-
-            
-            e.preventDefault();
-            e.stopPropagation();
-
-            switch (action) {
-                case 'duplicate-module':
-                    cloneModule(btn);
-                    break;
-                case 'delete-module':
-                    trashModule(e, btn);
-                    break;
-                case 'duplicate-step':
-                    cloneStep(btn);
-                    break;
-                case 'delete-step':
-                    trashStep(btn);
-                    break;
-                case 'add-outcome':
-                    safeAddOutcome();
-                    break;
-
-                case 'add-aim-item':
-                    safeAddAimItem();
-                    break;
-
-                case 'open-aims-from-step':
-                    try { openAimsFromStep(btn); } catch (e) { console.error('open-aims-from-step failed', e); }
-                    break;
-                case 'open-outcomes-from-step':
-                    try { openOutcomesFromStep(btn); } catch (e) { console.error('open-outcomes-from-step failed', e); }
-                    break;
-                case 'back-to-aims-origin':
-                    try { backToAimsOrigin(); } catch (e) { console.error('back-to-aims-origin failed', e); }
-                    break;
-                case 'remove-aim-item':
-                    try { const li = btn.closest('li'); if (li) li.remove(); syncAimsTextareaFromList(); } catch (e) { console.error('remove-aim-item failed', e); }
-                    break;
-                case 'add-outcomes-text-item':
-                    safeAddOutcomesTextItem();
-                    break;
-                case 'remove-outcomes-text-item':
-                    try { const li = btn.closest('li'); if (li) li.remove(); syncOutcomesTextTextareaFromList(); } catch (e) { console.error('remove-outcomes-text-item failed', e); }
-                    break;
-
-                
-                case 'add-competence':
-                    safeAddCompetence();
-                    break;
-                case 'add-competence-transversal':
-                    safeAddCompetenceTransversal();
-                    break;
-// Delegated handlers for dynamic (template) controls (replaces inline onclick)
-                case 'toggle-module-description':
-                    toggleDescription(btn);
-                    break;
-                case 'toggle-module':
-                    toggleActivity(btn);
-                    break;
-                case 'toggle-module-subblocks':
-                    try {
-                        const mod = btn.closest('.activity-group');
-                        if (!mod) break;
-                        // Ensure module body is visible (avoid perceived inert button)
-                        const body = mod.querySelector('.activity-body');
-                        if (body && body.classList.contains('collapsed')) {
-                            body.classList.remove('collapsed');
-                            const toggleBtn = mod.querySelector('button[data-action="toggle-module"]');
-                            const icon = toggleBtn ? toggleBtn.querySelector('.rotate-icon') : null;
-                            if (icon) icon.style.transform = 'rotate(180deg)';
-                        }
-                        const box = mod.querySelector('.module-subblocks');
-                        if (box) {
-                            const willOpen = box.classList.contains('hidden');
-                            box.classList.toggle('hidden');
-                            btn.setAttribute('aria-pressed', willOpen ? 'true' : 'false');
-                        }
-                    } catch (err) {
-                        console.error('toggle-module-subblocks failed', err);
-                    }
-                    break;
-                case 'toggle-module-competences':
-                    try {
-                        const mod = btn.closest('.activity-group');
-                        if (!mod) break;
-                        // Ensure module body is visible (otherwise the user perceives the button as inert)
-                        const body = mod.querySelector('.activity-body');
-                        if (body && body.classList.contains('collapsed')) {
-                            body.classList.remove('collapsed');
-                            // Keep the chevron state consistent if present
-                            const toggleBtn = mod.querySelector('button[data-action="toggle-module"]');
-                            const icon = toggleBtn ? toggleBtn.querySelector('.rotate-icon') : null;
-                            if (icon) icon.style.transform = 'rotate(180deg)';
-                        }
-                        const det = mod.querySelector('details.module-competence-summary');
-                        if (det) {
-                            det.open = !det.open;
-                            btn.setAttribute('aria-pressed', det.open ? 'true' : 'false');
-                        }
-                    } catch (err) {
-                        console.error('toggle-module-competences failed', err);
-                    }
-                    break;
-
-                case 'focus-module':
-                    toggleFocusModule(btn);
-                    break;
-                case 'add-step':
-                    addStepToActivity(btn);
-                    break;
-                case 'add-moment':
-                    addMomentToActivity(btn);
-                    break;
-
-                case 'collapse-module-contents':
-                    collapseModuleContents(btn);
-                    break;
-
-                case 'toggle-moment-description':
-                    toggleMomentDescription(btn);
-                    break;
-                case 'toggle-moment':
-                    toggleMoment(btn);
-                    break;
-                case 'delete-moment':
-                    trashMoment(btn);
-                    break;
-
-                case 'toggle-step':
-                    toggleStep(btn);
-                    break;
-                case 'select-module-aims':
-                    try {
-                        const mod = btn.closest('.activity-group');
-                        if (mod) window.openModuleSelectionFor(mod, 'aims');
-                    } catch (e) { console.error('select-module-aims failed', e); }
-                    break;
-
-                case 'select-module-outcomes':
-                    try {
-                        const mod = btn.closest('.activity-group');
-                        if (mod) window.openModuleSelectionFor(mod, 'outcomes');
-                    } catch (e) { console.error('select-module-outcomes failed', e); }
-                    break;
-                case 'add-module-competence-manual':
-                    try { addModuleCompetenceManual(btn); } catch (e) { console.error('add-module-competence-manual failed', e); }
-                    break;
-                case 'add-module-aim-manual':
-                    try { addModuleAimManual(btn); } catch (e) { console.error('add-module-aim-manual failed', e); }
-                    break;
-                case 'add-module-outcome-manual':
-                    try { addModuleOutcomeManual(btn); } catch (e) { console.error('add-module-outcome-manual failed', e); }
-                    break;
-
-
-                default:
-                    break;
-                }
-        });
 
         
         function showJsErrorBanner(message) {
@@ -2953,20 +3146,14 @@ details[data-readonly="true"] label{ cursor: default; }
             if (!el) return;
             el.style.display = 'block';
             el.querySelector('[data-js-error-text]').innerText = message;
+            try { if (window.__uiDiagLogError) window.__uiDiagLogError(String(message || 'Erreur'), 'banner'); } catch (_) {}
         }
 
-        window.addEventListener('error', (e) => {
-            try {
-                showJsErrorBanner((e && e.message) ? e.message : 'Erreur JavaScript');
-            } catch (_) {}
-        });
+        
 
-        window.addEventListener('unhandledrejection', (e) => {
-            try {
-                const msg = (e && e.reason && (e.reason.message || String(e.reason))) ? (e.reason.message || String(e.reason)) : 'Promesse rejetée';
-                showJsErrorBanner(msg);
-            } catch (_) {}
-        });
+
+        
+
 
         function safeAddOutcome() {
             const input = document.getElementById('new-outcome-input');
@@ -4600,9 +4787,13 @@ if (!taxonomy[categorie]) taxonomy[categorie] = [];
                     applyTaxonomy(parsed.taxonomy, parsed.translations);
                 } catch (err) {
                     console.error(err);
-                    alert(`Erreur : ${err.message || err}`);
+                    showAlert('Erreur', String((err && err.message) ? err.message : err));
                 }
             };
+            reader.onerror = function () {
+                showAlert('Erreur', 'Lecture du fichier impossible.');
+            };
+
             reader.readAsText(file);
         }
 
@@ -4850,8 +5041,6 @@ if (!taxonomy[categorie]) taxonomy[categorie] = [];
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         }
-
-
 
 
         const translations = {
@@ -5390,7 +5579,7 @@ title_new_activity: "Ajouter un nouveau module",
             const langCode = parsed.lang || codeFromFile || 'xx';
 
             if (!parsed.dict || typeof parsed.dict !== 'object') {
-                alert("Erreur : pack de langue invalide (dictionnaire introuvable).");
+                showAlert('Erreur', "Pack de langue invalide (dictionnaire introuvable).");
                 return;
             }
 
@@ -6426,7 +6615,6 @@ function updateOutcomeBloom(levelSelect) {
         }
 
 
-
         function checkCompetencesEmpty() {
             const list = document.getElementById('competences-list');
             const emptyText = document.getElementById('no-competences-text');
@@ -6452,7 +6640,6 @@ function updateOutcomeBloom(levelSelect) {
             });
             return competences;
         }
-
 
 
         
@@ -6582,7 +6769,6 @@ function updateOutcomeBloom(levelSelect) {
             checkCompetencesTransversalesEmpty();
             notifyCompetencesUpdated();
         }
-
 
 
         function checkCompetencesTransversalesEmpty() {
@@ -7613,7 +7799,6 @@ function refreshAllModuleAimsOptions() {
         window.openOutcomesFromStep = openOutcomesFromStep;
 
 
-
         // --- Module-level targeted competences (manual selection) ----------
         function getSelectedModuleTargetCompetencesSujetIds(moduleEl) {
             if (!moduleEl) return [];
@@ -7874,8 +8059,6 @@ function refreshAllModuleAimsOptions() {
                 try { updateModuleCompetenceSummary(modEl); } catch (e) { console.error('Module competence summary failed', e); }
             });
         }
-
-
 
 
         
@@ -8314,7 +8497,7 @@ function saveProject() {
         // Interface language pack (i18n)
         // -------------------------------
 
-        window.triggerLanguagePackLoad = function triggerLanguagePackLoad() {
+        window.triggerLanguagePackLoad = window.triggerLanguagePackLoad || function triggerLanguagePackLoad() {
             if (window.__langPackDialogLock) return;
             window.__langPackDialogLock = true;
 
@@ -8330,7 +8513,7 @@ function saveProject() {
             setTimeout(() => { window.__langPackDialogLock = false; }, 1200);
         };
 
-        window.loadLanguagePack = function loadLanguagePack(event) {
+        window.loadLanguagePack = window.loadLanguagePack || function loadLanguagePack(event) {
             try {
                 const file = event?.target?.files?.[0];
                 if (!file) return;
@@ -8342,11 +8525,16 @@ function saveProject() {
                         handleLanguagePackObject(json, file?.name || '');
                     } catch (err) {
                         console.error(err);
-                        alert("Erreur : impossible de charger ce pack de langue. Vérifiez qu’il s’agit bien d’un fichier JSON valide.");
+                        showAlert('Erreur', "Impossible de charger ce pack de langue. Vérifiez qu’il s’agit bien d’un fichier JSON valide.");
                     } finally {
                         try { event.target.value = ''; } catch (_) {}
                     }
                 };
+                reader.onerror = function () {
+                    try { showAlert('Erreur', 'Lecture du fichier impossible.'); } catch (_) {}
+                    try { event.target.value = ''; } catch (_) {}
+                };
+
                 reader.readAsText(file);
             } finally {
                 window.__langPackDialogLock = false;
@@ -8361,8 +8549,6 @@ function saveProject() {
                 console.error('[UiLanguageChangeError]', e);
             }
         }
-
-
 
 
 function collectI18nKeys() {
@@ -8418,7 +8604,7 @@ function exportLanguagePackTemplate() {
         URL.revokeObjectURL(url);
     } catch (e) {
         console.error('[ExportLanguageTemplateError]', e);
-        alert("Erreur : impossible d’exporter le modèle de pack de langue.");
+        showAlert('Erreur', "Impossible d’exporter le modèle de pack de langue.");
     }
 }
 window.exportLanguagePackTemplate = exportLanguagePackTemplate;
@@ -8530,7 +8716,7 @@ window.exportLanguagePackTemplate = exportLanguagePackTemplate;
             setPre('i18n-audit-uncovered', report.uncoveredStaticTextSample && report.uncoveredStaticTextSample.length ? report.uncoveredStaticTextSample.join('\n') : '—');
         } catch (e) {
             console.error('[I18nAuditError]', e);
-            alert("Erreur : impossible d’exécuter la vérification i18n.");
+            showAlert('Erreur', "Impossible d’exécuter la vérification i18n.");
         }
     };
 
@@ -8562,7 +8748,7 @@ window.exportLanguagePackTemplate = exportLanguagePackTemplate;
             URL.revokeObjectURL(url);
         } catch (e) {
             console.error('[I18nAuditDownloadError]', e);
-            alert("Erreur : impossible de télécharger le rapport i18n.");
+            showAlert('Erreur', "Impossible de télécharger le rapport i18n.");
         }
     };
 
@@ -9164,8 +9350,6 @@ function normaliseAndRepairProject(project) {
 }
 
 
-
-
         
         function loadProjectFromObject(project) {
                         // Keep a reference for recovery tooling (used only when an import fails)
@@ -9517,7 +9701,7 @@ function _i18nStr(key, fallback = "") {
             const btnRecover = document.getElementById("import-error-recover");
 // Fallback if modal is unavailable (should not happen)
             if (!modal || !body) {
-                alert(_i18nStr("import_error_cause_generic", "Import impossible."));
+                showAlert('Erreur', _i18nStr("import_error_cause_generic", "Import impossible."));
                 return;
             }
 
@@ -9750,7 +9934,7 @@ function generateRecoveryMarkdown(rawProject) {
 function downloadLastImportRecoveryText() {
     const obj = window.__lastImportParsedObject;
     if (!obj) {
-        alert(_i18nStr("import_recovery_unavailable", "Aucune donnée exploitable pour la récupération."));
+        showAlert('Erreur', _i18nStr("import_recovery_unavailable", "Aucune donnée exploitable pour la récupération."));
         return;
     }
     try {
@@ -9760,14 +9944,14 @@ function downloadLastImportRecoveryText() {
         _downloadTextFile(name, md, 'text/markdown;charset=utf-8');
     } catch (e) {
         console.error("Recovery export failed:", e);
-        alert(_i18nStr("import_recovery_failed", "La récupération a échoué."));
+        showAlert('Erreur', _i18nStr("import_recovery_failed", "La récupération a échoué."));
     }
 }
 
 async function copyLastImportRecoveryText() {
     const obj = window.__lastImportParsedObject;
     if (!obj) {
-        alert(_i18nStr("import_recovery_unavailable", "Aucune donnée exploitable pour la récupération."));
+        showAlert('Erreur', _i18nStr("import_recovery_unavailable", "Aucune donnée exploitable pour la récupération."));
         return;
     }
     const btn = document.getElementById("import-error-copy-recovery");
@@ -9790,7 +9974,7 @@ async function copyLastImportRecoveryText() {
         }
     } catch (e) {
         console.error("Recovery copy failed:", e);
-        alert(_i18nStr("import_error_copy_failed", "Impossible de copier."));
+        showAlert('Erreur', _i18nStr("import_error_copy_failed", "Impossible de copier."));
     }
 }
 
@@ -9846,7 +10030,7 @@ async function copyLastImportRecoveryText() {
                 }
             } catch (e) {
                 console.error("Copy diagnostic failed:", e);
-                alert(_i18nStr("import_error_copy_failed", "Impossible de copier le diagnostic dans le presse-papiers."));
+                showAlert('Erreur', _i18nStr("import_error_copy_failed", "Impossible de copier le diagnostic dans le presse-papiers."));
                 if (btnCopy) btnCopy.disabled = false;
             }
         }
@@ -11244,7 +11428,7 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
                 fn();
             } catch (err) {
                 console.error(err);
-                alert(EXPORT_ERROR_MSG[currentLang] || EXPORT_ERROR_MSG.fr);
+                showAlert('Erreur', EXPORT_ERROR_MSG[currentLang] || EXPORT_ERROR_MSG.fr);
             }
         }
 
@@ -11463,11 +11647,9 @@ function buildTabularExportRows(model) {
 }
 
 
-
-
 function exportDOCX() {
     if (!window.docx || !window.docx.Document) {
-        alert((currentLang === 'en') ? 'Word export library is not available.' : 'La bibliothèque d’export Word n’est pas disponible.');
+        showAlert('Erreur', (currentLang === 'en') ? 'Word export library is not available.' : 'La bibliothèque d’export Word n’est pas disponible.');
         return;
     }
 
@@ -11609,7 +11791,7 @@ function exportDOCX() {
 
 function __deprecated__exportCSV_1() {
     if (!window.XLSX) {
-        alert((currentLang === 'en') ? 'Excel export library is not available.' : 'La bibliothèque d’export Excel n’est pas disponible.');
+        showAlert('Erreur', (currentLang === 'en') ? 'Excel export library is not available.' : 'La bibliothèque d’export Excel n’est pas disponible.');
         return;
     }
     // Excel export (.xlsx): modules, moments and activities (activity cards) only.
@@ -11748,7 +11930,7 @@ function __deprecated__exportCSV_1() {
     });
 
     if (typeof XLSX === 'undefined' || !XLSX.utils) {
-        alert("La librairie Excel (XLSX) n'est pas disponible. Vérifiez votre connexion ou le chargement des scripts.");
+        showAlert('Erreur', "La librairie Excel (XLSX) n'est pas disponible. Vérifiez votre connexion ou le chargement des scripts.");
         return;
     }
 
@@ -12209,7 +12391,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
 
 function __deprecated__exportCSV_2() {
     if (!window.XLSX) {
-        alert((currentLang === 'en') ? 'Excel export library is not available.' : 'La bibliothèque d’export Excel n’est pas disponible.');
+        showAlert('Erreur', (currentLang === 'en') ? 'Excel export library is not available.' : 'La bibliothèque d’export Excel n’est pas disponible.');
         return;
     }
     // Excel export (.xlsx): modules, moments and activities (activity cards) only.
@@ -12346,7 +12528,7 @@ function __deprecated__exportCSV_2() {
     });
 
     if (typeof XLSX === 'undefined' || !XLSX.utils) {
-        alert("La librairie Excel (XLSX) n'est pas disponible. Vérifiez votre connexion ou le chargement des scripts.");
+        showAlert('Erreur', "La librairie Excel (XLSX) n'est pas disponible. Vérifiez votre connexion ou le chargement des scripts.");
         return;
     }
 
@@ -12369,8 +12551,6 @@ function __deprecated__exportCSV_2() {
 
 
             
-
-
 
 
         function __deprecated__exportRichText_2() {
@@ -12732,7 +12912,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
 
 function __deprecated__exportCSV_3() {
     if (!window.XLSX) {
-        alert((currentLang === 'en') ? 'Excel export library is not available.' : 'La bibliothèque d’export Excel n’est pas disponible.');
+        showAlert('Erreur', (currentLang === 'en') ? 'Excel export library is not available.' : 'La bibliothèque d’export Excel n’est pas disponible.');
         return;
     }
     // Excel export (.xlsx): modules, moments and activities (activity cards) only.
@@ -12869,7 +13049,7 @@ function __deprecated__exportCSV_3() {
     });
 
     if (typeof XLSX === 'undefined' || !XLSX.utils) {
-        alert("La librairie Excel (XLSX) n'est pas disponible. Vérifiez votre connexion ou le chargement des scripts.");
+        showAlert('Erreur', "La librairie Excel (XLSX) n'est pas disponible. Vérifiez votre connexion ou le chargement des scripts.");
         return;
     }
 
@@ -12892,8 +13072,6 @@ function __deprecated__exportCSV_3() {
 
 
             
-
-
 
 
         function __deprecated__exportRichText_3() {
@@ -13134,7 +13312,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
 
 function __deprecated__exportCSV_4() {
     if (!window.XLSX) {
-        alert((currentLang === 'en') ? 'Excel export library is not available.' : 'La bibliothèque d’export Excel n’est pas disponible.');
+        showAlert('Erreur', (currentLang === 'en') ? 'Excel export library is not available.' : 'La bibliothèque d’export Excel n’est pas disponible.');
         return;
     }
     // Excel export (.xlsx): modules, moments and activities (activity cards) only.
@@ -13271,7 +13449,7 @@ function __deprecated__exportCSV_4() {
     });
 
     if (typeof XLSX === 'undefined' || !XLSX.utils) {
-        alert("La librairie Excel (XLSX) n'est pas disponible. Vérifiez votre connexion ou le chargement des scripts.");
+        showAlert('Erreur', "La librairie Excel (XLSX) n'est pas disponible. Vérifiez votre connexion ou le chargement des scripts.");
         return;
     }
 
@@ -13294,8 +13472,6 @@ function __deprecated__exportCSV_4() {
 
 
             
-
-
 
 
         function __deprecated__exportRichText_4() {
@@ -14366,7 +14542,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
 function exportCSV() {
     // Export to Excel (.xlsx) – keeps the existing "CSV" menu entry unchanged.
     if (!window.XLSX) {
-        alert((currentLang === 'en') ? 'Excel export library is not available.' : 'La bibliothèque d’export Excel n’est pas disponible.');
+        showAlert('Erreur', (currentLang === 'en') ? 'Excel export library is not available.' : 'La bibliothèque d’export Excel n’est pas disponible.');
         return;
     }
 
@@ -14383,8 +14559,6 @@ function exportCSV() {
 
 
             
-
-
 
 
         function __deprecated__exportRichText_7() {
@@ -15517,9 +15691,6 @@ try { if (typeof syncViewStyleSelect === 'function') syncViewStyleSelect(); } ca
         }
 
 
-
-
-
         /* UI Theme: light / dark */
         function getCurrentUiTheme() {
             return document.documentElement.classList.contains('ui-dark') ? 'dark' : 'light';
@@ -16482,8 +16653,6 @@ function getHistogramBarMeta(kind, val) {
 }
 
 
-
-
 // Draw horizontal bars with absolute counts (not %). Used for competence Top lists.
 function drawCountBars(canvasId, rows, style) {
   const c = document.getElementById(canvasId);
@@ -16610,7 +16779,6 @@ function drawCountBars(canvasId, rows, style) {
     ctx.fillText(String(v), valueX, yMid);
   });
 }
-
 
 
 // Render horizontal bars as real DOM text (not canvas). Used for competence Top lists.
@@ -17672,7 +17840,6 @@ function updateCharts() {
   }
 
 
-
   // Also refresh charts when the competence catalogues change
   try {
     const c1 = document.getElementById('competences-list');
@@ -17833,7 +18000,6 @@ function updateCharts() {
     Object.seal(History);
   } catch (_) {}
 })();
-
 
 
 // =========================
@@ -18315,7 +18481,6 @@ function insertActivity(payload, moduleIndex, momentIndex, position, refStepInde
 }
 
 
-
   function doImport() {
     setError('template-import-error', '');
     if (!loadedTemplate) { setError('template-import-error', "Aucun modèle chargé."); return; }
@@ -18398,8 +18563,6 @@ function bind() {
 }
 
 
-
-
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', bind, { once: true });
   } else {
@@ -18418,10 +18581,40 @@ function bind() {
       Une erreur est survenue.
      </div>
 </div>
-<button aria-label="Fermer" onclick="document.getElementById('js-error-banner').style.display='none'" style="background:transparent; border:0; color:#7f1d1d; font-weight:700; cursor:pointer; padding:0 6px; line-height:1;" type="button">
+<button aria-label="Fermer" data-action="hide-js-error-banner" style="background:transparent; border:0; color:#7f1d1d; font-weight:700; cursor:pointer; padding:0 6px; line-height:1;" type="button">
      ×
     </button>
 </div>
+
+
+<!-- Diagnostic UI panel -->
+<div id="ui-debug-panel" class="hidden fixed bottom-16 right-4 w-[440px] max-w-[calc(100vw-2rem)] bg-white border border-slate-200 rounded-2xl shadow-2xl z-[9998] no-print">
+  <div class="flex items-center justify-between px-3 py-2 border-b border-slate-200">
+    <div class="text-sm font-semibold text-slate-800">Diagnostic UI</div>
+    <div class="flex items-center gap-2">
+      <button class="text-xs font-semibold px-2 py-1 rounded bg-slate-50 hover:bg-slate-100 border border-slate-200" data-action="copy-debug-report" type="button">Copier rapport</button>
+      <button class="text-xs font-semibold px-2 py-1 rounded bg-slate-50 hover:bg-slate-100 border border-slate-200" data-action="download-debug-report" type="button">Télécharger</button>
+      <button class="text-xs font-semibold px-2 py-1 rounded bg-slate-50 hover:bg-slate-100 border border-slate-200" data-action="clear-debug-log" type="button">Effacer</button>
+      <button class="text-slate-500 hover:text-slate-800 px-2 py-1 rounded" data-action="toggle-debug-ui" type="button">✕</button>
+    </div>
+  </div>
+  <div class="px-3 py-2 text-[11px] text-slate-600 flex items-center gap-4 border-b border-slate-200">
+    <div><span class="font-bold">Actions:</span> <span id="ui-debug-actions-count">0</span></div>
+    <div><span class="font-bold">Erreurs:</span> <span id="ui-debug-errors-count">0</span></div>
+    <div class="ml-auto text-[10px] text-slate-400">Survol: affiche data-action · Raccourcis: Ctrl+Alt+D/C/S</div>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-2 p-3">
+    <div class="border border-slate-200 rounded-xl p-2 bg-slate-50">
+      <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Dernières actions</div>
+      <div id="ui-debug-actions" class="max-h-44 overflow-auto text-[11px] font-mono text-slate-700"></div>
+    </div>
+    <div class="border border-slate-200 rounded-xl p-2 bg-slate-50">
+      <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Dernières erreurs</div>
+      <div id="ui-debug-errors" class="max-h-44 overflow-auto text-[11px] font-mono text-slate-700"></div>
+    </div>
+  </div>
+</div>
+<div id="ui-debug-hover" class="hidden fixed z-[9999] pointer-events-none px-2 py-1 rounded-lg bg-slate-900 text-white text-[11px] font-mono shadow-lg"></div>
 </div>
 <!-- i18n : Outil de vérification des traductions -->
 <div class="hidden fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4 no-print" data-display="flex" id="i18n-audit-modal">
@@ -18431,7 +18624,7 @@ function bind() {
 <div class="text-sm font-semibold text-slate-800" data-i18n="i18n_audit_title">Vérification des traductions</div>
 <div class="text-xs text-slate-500" data-i18n="i18n_audit_subtitle">Détecte les clés manquantes dans le pack chargé et les textes statiques non couverts par data-i18n.</div>
 </div>
-<button class="text-slate-500 hover:text-slate-800 px-2 py-1 rounded" onclick="closeI18nAudit()" type="button">✕</button>
+<button class="text-slate-500 hover:text-slate-800 px-2 py-1 rounded" data-action="close-i18n-audit" type="button">✕</button>
 </div>
 <div class="p-4 space-y-4">
 <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -18467,9 +18660,9 @@ function bind() {
 </details>
 </div>
 <div class="flex items-center justify-end gap-2 pt-2">
-<button class="px-3 py-1.5 rounded-md border border-slate-300 text-sm text-slate-700 hover:bg-slate-50" data-i18n="btn_refresh" onclick="runI18nAudit()" type="button">Rafraîchir</button>
-<button class="px-3 py-1.5 rounded-md border border-slate-300 text-sm text-slate-700 hover:bg-slate-50" data-i18n="btn_download_report" onclick="downloadI18nAuditReport()" type="button">Télécharger rapport</button>
-<button class="px-3 py-1.5 rounded-md bg-indigo-600 text-white text-sm hover:bg-indigo-700" data-i18n="btn_close" onclick="closeI18nAudit()" type="button">Fermer</button>
+<button class="px-3 py-1.5 rounded-md border border-slate-300 text-sm text-slate-700 hover:bg-slate-50" data-i18n="btn_refresh" data-action="run-i18n-audit" type="button">Rafraîchir</button>
+<button class="px-3 py-1.5 rounded-md border border-slate-300 text-sm text-slate-700 hover:bg-slate-50" data-i18n="btn_download_report" data-action="download-i18n-audit-report" type="button">Télécharger rapport</button>
+<button class="px-3 py-1.5 rounded-md bg-indigo-600 text-white text-sm hover:bg-indigo-700" data-i18n="btn_close" data-action="close-i18n-audit" type="button">Fermer</button>
 </div>
 </div>
 </div>
