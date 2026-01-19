@@ -913,6 +913,41 @@ details[data-readonly="true"] label{ cursor: default; }
       }
     }
 
+
+
+    // Global alert helper used across import/export flows.
+    // Uses the existing modal when available, otherwise falls back to window.alert.
+    window.showAlert = window.showAlert || function(title, message){
+      try {
+        const modal = document.getElementById('import-error-modal');
+        const titleEl = document.getElementById('import-error-title');
+        const bodyEl  = document.getElementById('import-error-body');
+
+        // Best-effort: hide advanced buttons for generic alerts.
+        const btnDownload = document.getElementById('import-error-download');
+        const btnCopy = document.getElementById('import-error-copy');
+        const btnRecover = document.getElementById('import-error-recover');
+        const btnCopyRecovery = document.getElementById('import-error-copy-recovery');
+
+        if (modal && titleEl && bodyEl) {
+          titleEl.textContent = (title == null || title === '') ? 'Alerte' : String(title);
+          // Use textContent to avoid injecting HTML.
+          bodyEl.textContent = (message == null) ? '' : String(message);
+          if (btnDownload) btnDownload.classList.add('hidden');
+          if (btnCopy) btnCopy.classList.add('hidden');
+          if (btnRecover) btnRecover.classList.add('hidden');
+          if (btnCopyRecovery) btnCopyRecovery.classList.add('hidden');
+          modal.classList.remove('hidden');
+          return;
+        }
+      } catch(_) {}
+      try {
+        window.alert(((title ? String(title) + ': ' : '')) + (message == null ? '' : String(message)));
+      } catch(_) {
+        // Final fallback
+        console.log('[Alert]', title, message);
+      }
+    };
     function notifyDiag(message){
       try {
         if (typeof window.showAlert === 'function') {
@@ -4508,6 +4543,20 @@ function openAimsFromStep(btn) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 }
+
+        // ------------------------------------------------------------
+        // Export convenience helpers (used by Markdown/HTML exports)
+        // ------------------------------------------------------------
+        // NOTE: exportMarkdown() and several templates reference __esc/__selTxt.
+        // They must exist in global scope to avoid ReferenceError.
+        function __esc(v) {
+            return escapeHtml(String(v ?? ''));
+        }
+
+        function __selTxt(el) {
+            return __esc((el && el.selectedOptions && el.selectedOptions[0]) ? el.selectedOptions[0].innerText : '');
+        }
+
 
 function sanitizeTooltipHtml(unsafeHtml) {
     // Allow a minimal, controlled subset of tags/attributes for tooltips.
@@ -8330,7 +8379,7 @@ function buildExportProjectData() {
                     dureeApprentissageValeur: (document.getElementById('param-learning-val')?.value),
                     dureeApprentissageUnite: document.getElementById('param-learning-unit').value,
                     dureeConcueValeur: (document.getElementById('param-designed-val')?.value),
-                    dureeConcueUnite: document.getElementById('param-learning-unit').value,
+                    dureeConcueUnite: (document.getElementById('param-designed-unit')?.value || document.getElementById('param-learning-unit')?.value || ''),
                     objectifs: document.getElementById('param-aims').value,
                     objectifsItems: (typeof getAimsItemsFromUI === 'function') ? getAimsItemsFromUI() : [],
                     resultatsTexte: document.getElementById('param-outcomes-text')?.value || "",
@@ -8378,6 +8427,7 @@ function buildExportProjectData() {
                                 regroupement: stepEl.querySelector('.step-group-mode').value,
                                 nombreGroupes: stepEl.querySelector('.step-group-count').value,
                                 tailleGroupe: stepEl.querySelector('.step-group-size').value,
+                                detailsRegroupement: (stepEl.querySelector('.step-group-details')?.value || ''),
                                 formateur: stepEl.querySelector('.trainer-select').value,
                                 lieu: stepEl.querySelector('.place-select').value,
                                 temps: stepEl.querySelector('.time-select').value,
@@ -8407,6 +8457,7 @@ function buildExportProjectData() {
                             regroupement: stepEl.querySelector('.step-group-mode').value,
                             nombreGroupes: stepEl.querySelector('.step-group-count').value,
                             tailleGroupe: stepEl.querySelector('.step-group-size').value,
+                                detailsRegroupement: (stepEl.querySelector('.step-group-details')?.value || ''),
                             formateur: stepEl.querySelector('.trainer-select').value,
                             lieu: stepEl.querySelector('.place-select').value,
                             temps: stepEl.querySelector('.time-select').value,
@@ -11432,14 +11483,33 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
             }
         }
 
-        function handleExport(select) {
+        
+        function exportPDFPrintFull() {
+            // Ensure print/PDF includes all collapsible content.
+            const details = Array.from(document.querySelectorAll('details'));
+            const prev = details.map(d => d.hasAttribute('open'));
+            details.forEach(d => d.setAttribute('open', ''));
+
+            const cleanup = () => {
+                details.forEach((d, i) => {
+                    if (prev[i]) d.setAttribute('open', '');
+                    else d.removeAttribute('open');
+                });
+                window.removeEventListener('afterprint', cleanup);
+            };
+            window.addEventListener('afterprint', cleanup);
+            window.print();
+            // In some browsers afterprint may not fire if print is cancelled; still keep listener.
+        }
+
+function handleExport(select) {
             const value = select.value;
             select.value = ""; // Reset dropdown
 
             if (value === 'markdown') {
                 runExport(exportMarkdown);
             } else if (value === 'pdf') {
-                window.print();
+                runExport(exportPDFPrintFull);
             } else if (value === 'richtext') {
                 runExport(exportRichText);
             } else if (value === 'rtf') {
@@ -11500,7 +11570,15 @@ function buildExportModel() {
     };
 
     const modules = (project.modules || []).map((m) => {
-        const moments = (m.moments || []).map((mo) => ({
+        const __rawMoments = (m.moments || []);
+        const __momentsSource = (__rawMoments && __rawMoments.length) ? __rawMoments : [{
+            titre: '',
+            description: '',
+            dureeCible: '',
+            uniteDureeCible: '',
+            activites: (m.activites || [])
+        }];
+        const moments = (__momentsSource || []).map((mo) => ({
             title: asStr(mo.titre),
             description: asStr(mo.description),
             target: fmtTarget(mo.dureeCible, mo.uniteDureeCible),
@@ -11511,12 +11589,18 @@ function buildExportModel() {
                 tasks: asStr(a.aFaire),
                 trainerTasks: asStr(a.aFaireFormateur),
                 notes: asStr(a.notes),
+                evaluationSuivi: asStr(a.evaluationSuivi),
                 typeKey: asStr(a.type),
                 typeLabel: safeTypeLabel(asStr(a.type)),
                 groupingKey: asStr(a.regroupement),
                 groupingLabel: safeOptLabel('opt', (a.regroupement === 'class' ? 'whole_class' : a.regroupement === 'groups' ? 'groups' : a.regroupement === 'individual' ? 'individual' : a.regroupement), asStr(a.regroupement)),
                 groupCount: asStr(a.nombreGroupes),
                 groupSize: asStr(a.tailleGroupe),
+                groupDetails: asStr(a.detailsRegroupement),
+                aimsTargets: Array.isArray(a.objectifsCibles) ? a.objectifsCibles : [],
+                outcomesTargets: Array.isArray(a.resultatsApprentissageCibles) ? a.resultatsApprentissageCibles : [],
+                aimsTargetsText: (Array.isArray(a.objectifsCibles) ? a.objectifsCibles : []).join('; '),
+                outcomesTargetsText: (Array.isArray(a.resultatsApprentissageCibles) ? a.resultatsApprentissageCibles : []).join('; '),
                 trainerKey: asStr(a.formateur),
                 placeKey: asStr(a.lieu),
                 timeKey: asStr(a.temps),
@@ -11542,6 +11626,14 @@ function buildExportModel() {
             description: asStr(m.description),
             target: fmtTarget(m.dureeCible, m.uniteDureeCible),
             targetRaw: { value: asStr(m.dureeCible), unit: asStr(m.uniteDureeCible) },
+            aimsTargets: Array.isArray(m.objectifsApprentissageModule) ? m.objectifsApprentissageModule : [],
+            outcomesTargets: Array.isArray(m.resultatsApprentissageModule) ? m.resultatsApprentissageModule : [],
+            competencesSujetIds: Array.isArray(m.competencesModuleSujet) ? m.competencesModuleSujet : [],
+            competencesTransversalesIds: Array.isArray(m.competencesModuleTransversales) ? m.competencesModuleTransversales : [],
+            competencesSujetLabels: __idsToLabels(m.competencesModuleSujet, __compMap),
+            competencesTransversalesLabels: __idsToLabels(m.competencesModuleTransversales, __compTMap),
+            competencesSujetText: __idsToLabels(m.competencesModuleSujet, __compMap).join(', '),
+            competencesTransversalesText: __idsToLabels(m.competencesModuleTransversales, __compTMap).join(', '),
             moments
         };
     });
@@ -11568,64 +11660,96 @@ function buildExportModel() {
 }
 
 function buildTabularExportRows(model) {
+    // Tabular export for XLSX (menu label may say CSV). Keeps a strict header↔row parity.
     const headers = [
-        "Module #",
-        "Module title",
-        "Module description",
-        "Module target duration",
-        "Moment #",
-        "Moment title",
-        "Moment description",
-        "Moment target duration",
-        "Activity #",
-        "Activity title",
-        "Objective",
-        "Learner tasks",
-        "Trainer tasks",
-        "Notes",
-        "Learning type",
-        "Grouping",
-        "Group size",
-        "Group details",
-        "Place",
-        "Time",
-        "Trainer",
-        "Subject competences",
-        "Transversal competences",
-        "Duration (minutes)"
+        'Module #',
+        'Module titre',
+        'Module description',
+        'Module durée cible',
+        'Module objectifs (sélection)',
+        'Module résultats (sélection)',
+        'Module comp. sujet (sélection)',
+        'Module comp. transversales (sélection)',
+        'Moment #',
+        'Moment titre',
+        'Moment description',
+        'Moment durée cible',
+        'Activité #',
+        'Activité titre',
+        'Objectif',
+        'Tâches',
+        'Tâches du formateur',
+        'Évaluation / suivi',
+        'Notes',
+        "Type d'apprentissage",
+        'Regroupement',
+        'Taille groupe',
+        'Nb groupes',
+        'Détails regroupement',
+        'Objectifs ciblés',
+        'Résultats ciblés',
+        'Lieu',
+        'Temps',
+        'Présence formateur',
+        'Compétences du sujet',
+        'Compétences transversales',
+        'Durée (min)'
     ];
 
     const rows = [headers];
-
     const safe = (v) => (v == null ? '' : String(v));
+    const joinArr = (a) => (Array.isArray(a) ? a.map(x => String(x || '').trim()).filter(Boolean).join(' ; ') : '');
+    const blankRow = () => Array(headers.length).fill('');
 
-    model.modules.forEach((mod, mi) => {
+    (model.modules || []).forEach((mod, mi) => {
         const moduleIdx = mi + 1;
+        const modTitle = safe(mod.title);
+        const modDesc = safe(mod.description);
+        const modTarget = safe(mod.target);
+        const modAims = joinArr(mod.aimsTargets);
+        const modOut = joinArr(mod.outcomesTargets);
+        const modCs = safe(mod.competencesSujetText);
+        const modCt = safe(mod.competencesTransversalesText);
 
-        if (mod.moments && mod.moments.length) {
-            mod.moments.forEach((mom, mj) => {
+        const moments = (mod.moments || []);
+        if (moments.length) {
+            moments.forEach((mom, mj) => {
                 const momentIdx = mj + 1;
+                const momTitle = safe(mom.title);
+                const momDesc = safe(mom.description);
+                const momTarget = safe(mom.target);
 
-                if (mom.activities && mom.activities.length) {
-                    mom.activities.forEach((act, ai) => {
+                const acts = (mom.activities || []);
+                if (acts.length) {
+                    acts.forEach((act, ai) => {
+                        const activityIdx = ai + 1;
                         rows.push([
                             moduleIdx,
-                            safe(mod.title),
-                            safe(mod.description),
-                            safe(mod.target),
+                            modTitle,
+                            modDesc,
+                            modTarget,
+                            modAims,
+                            modOut,
+                            modCs,
+                            modCt,
                             momentIdx,
-                            safe(mom.title),
-                            safe(mom.description),
-                            safe(mom.target),
-                            ai + 1,
+                            momTitle,
+                            momDesc,
+                            momTarget,
+                            activityIdx,
                             safe(act.title),
                             safe(act.objective),
                             safe(act.tasks),
+                            safe(act.trainerTasks),
+                            safe(act.evaluationSuivi),
                             safe(act.notes),
                             safe(act.typeLabel),
                             safe(act.groupingLabel),
                             safe(act.groupSize),
                             safe(act.groupCount),
+                            safe(act.groupDetails),
+                            safe(act.aimsTargetsText),
+                            safe(act.outcomesTargetsText),
                             safe(act.placeLabel),
                             safe(act.timeLabel),
                             safe(act.trainerLabel),
@@ -11635,16 +11759,40 @@ function buildTabularExportRows(model) {
                         ]);
                     });
                 } else {
-                    rows.push([moduleIdx, safe(mod.title), safe(mod.description), safe(mod.target), momentIdx, safe(mom.title), safe(mom.description), safe(mom.target), '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+                    const r = blankRow();
+                    r[0] = moduleIdx;
+                    r[1] = modTitle;
+                    r[2] = modDesc;
+                    r[3] = modTarget;
+                    r[4] = modAims;
+                    r[5] = modOut;
+                    r[6] = modCs;
+                    r[7] = modCt;
+                    r[8] = momentIdx;
+                    r[9] = momTitle;
+                    r[10] = momDesc;
+                    r[11] = momTarget;
+                    rows.push(r);
                 }
             });
         } else {
-            rows.push([moduleIdx, safe(mod.title), safe(mod.description), safe(mod.target), '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+            const r = blankRow();
+            r[0] = moduleIdx;
+            r[1] = modTitle;
+            r[2] = modDesc;
+            r[3] = modTarget;
+            r[4] = modAims;
+            r[5] = modOut;
+            r[6] = modCs;
+            r[7] = modCt;
+            rows.push(r);
         }
     });
 
     return rows;
 }
+
+
 
 
 function exportDOCX() {
@@ -11727,6 +11875,22 @@ function exportDOCX() {
             lines(mod.description).forEach(l => children.push(new Paragraph({ text: l })));
         }
 
+        // Sélections du module (objectifs / résultats / compétences)
+        if ((mod.aimsTargets && mod.aimsTargets.length) || (mod.outcomesTargets && mod.outcomesTargets.length) || safe(mod.competencesSujetText) || safe(mod.competencesTransversalesText)) {
+            if (mod.aimsTargets && mod.aimsTargets.length) {
+                children.push(new Paragraph({ children: [new TextRun({ text: 'Objectifs du module (sélection) : ', bold: true }), new TextRun(mod.aimsTargets.join(' ; '))] }));
+            }
+            if (mod.outcomesTargets && mod.outcomesTargets.length) {
+                children.push(new Paragraph({ children: [new TextRun({ text: 'Résultats du module (sélection) : ', bold: true }), new TextRun(mod.outcomesTargets.join(' ; '))] }));
+            }
+            if (safe(mod.competencesSujetText)) {
+                children.push(new Paragraph({ children: [new TextRun({ text: 'Compétences du module (sujet) : ', bold: true }), new TextRun(safe(mod.competencesSujetText) || '—')] }));
+            }
+            if (safe(mod.competencesTransversalesText)) {
+                children.push(new Paragraph({ children: [new TextRun({ text: 'Compétences du module (transversales) : ', bold: true }), new TextRun(safe(mod.competencesTransversalesText) || '—')] }));
+            }
+        }
+
         (mod.moments || []).forEach((mom, mj) => {
             const momentIdx = mj + 1;
             const momTitle = safe(mom.title) || `Moment ${momentIdx}`;
@@ -11745,7 +11909,13 @@ function exportDOCX() {
 
                 const metaParts = [];
                 if (safe(act.typeLabel)) metaParts.push(`Type : ${safe(act.typeLabel)}`);
-                if (safe(act.groupingLabel)) metaParts.push(`Regroupement : ${safe(act.groupingLabel)}${safe(act.groupSize) ? ` (${safe(act.groupSize)})` : ''}`);
+                if (safe(act.groupingLabel)) {
+                    const __gBits = [];
+                    if (safe(act.groupSize)) __gBits.push(`taille: ${safe(act.groupSize)}`);
+                    if (safe(act.groupCount)) __gBits.push(`nb groupes: ${safe(act.groupCount)}`);
+                    if (safe(act.groupDetails)) __gBits.push(`détails: ${safe(act.groupDetails)}`);
+                    metaParts.push(`Regroupement : ${safe(act.groupingLabel)}${__gBits.length ? ` (${__gBits.join(', ')})` : ''}`);
+                }
                 const modality = [safe(act.trainerLabel), safe(act.placeLabel), safe(act.timeLabel)].filter(Boolean).join(', ');
                 if (modality) metaParts.push(`Modalité : ${modality}`);
                 if (act.durationMinutes) metaParts.push(`Durée (min) : ${act.durationMinutes}`);
@@ -11757,13 +11927,25 @@ function exportDOCX() {
                 if (safe(act.objective)) {
                     children.push(new Paragraph({ children: [new TextRun({ text: 'Objectif : ', bold: true }), new TextRun(safe(act.objective))] }));
                 }
+                if (safe(act.aimsTargetsText)) {
+                    children.push(new Paragraph({ children: [new TextRun({ text: 'Objectifs ciblés : ', bold: true }), new TextRun(safe(act.aimsTargetsText))] }));
+                }
+                if (safe(act.outcomesTargetsText)) {
+                    children.push(new Paragraph({ children: [new TextRun({ text: 'Résultats ciblés : ', bold: true }), new TextRun(safe(act.outcomesTargetsText))] }));
+                }
                 if (safe(act.tasks)) {
                     children.push(new Paragraph({ children: [new TextRun({ text: 'Ce que les apprenants doivent faire : ', bold: true }), new TextRun(safe(act.tasks))] }));
                 }
+                if (safe(act.trainerTasks)) {
+                    children.push(new Paragraph({ children: [new TextRun({ text: 'Ce que le formateur doit faire : ', bold: true }), new TextRun(safe(act.trainerTasks))] }));
+                }
+                if (safe(act.evaluationSuivi)) {
+                    children.push(new Paragraph({ children: [new TextRun({ text: 'Évaluation / suivi : ', bold: true }), new TextRun(safe(act.evaluationSuivi))] }));
+                }
                 if (safe(act.notes)) {
-            children.push(new Paragraph({ children: [new TextRun({ text: 'Notes : ', bold: true }), new TextRun(safe(act.notes))] }));
-        }
-        // Competences (subject + transversal)
+                    children.push(new Paragraph({ children: [new TextRun({ text: 'Notes : ', bold: true }), new TextRun(safe(act.notes))] }));
+                }
+                // Competences (subject + transversal)
         if (safe(act.competencesSujetText) || safe(act.competencesTransversalesText)) {
             children.push(new Paragraph({ children: [new TextRun({ text: 'Compétences du sujet : ', bold: true }), new TextRun(safe(act.competencesSujetText) || '—')] }));
             children.push(new Paragraph({ children: [new TextRun({ text: 'Compétences transversales : ', bold: true }), new TextRun(safe(act.competencesTransversalesText) || '—')] }));
@@ -12112,12 +12294,14 @@ function __deprecated__exportRichText_1() {
                 
                 <h2>Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
+                <div class="meta-item"><span class="meta-label">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-designed-unit'))}</div>
                 <h2>Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
@@ -12272,6 +12456,21 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${__esc(moduleTgtVal)} ${__esc(moduleTgtUnitTxt)}</div>`;
                 }
 
+                try {
+                    const __modAims = (typeof getModuleSelectedAims === 'function') ? (getModuleSelectedAims(activity) || []) : [];
+                    const __modOut = (typeof getModuleSelectedOutcomes === 'function') ? (getModuleSelectedOutcomes(activity) || []) : [];
+                    const __compMap = new Map((getCompetencesFromUI() || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
+                    const __compTMap = new Map((getCompetencesTransversalesFromUI() || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
+                    const __idsToLabels = (ids, mp) => (Array.isArray(ids) ? ids.map(x => String(x||'').trim()).filter(Boolean).map(id => mp.get(id) || id) : []);
+                    const __mCsIds = (typeof getSelectedModuleTargetCompetencesSujetIds === 'function') ? (getSelectedModuleTargetCompetencesSujetIds(activity) || []) : [];
+                    const __mCtIds = (typeof getSelectedModuleTargetCompetencesTransversalesIds === 'function') ? (getSelectedModuleTargetCompetencesTransversalesIds(activity) || []) : [];
+                    const __mCs = __idsToLabels(__mCsIds, __compMap);
+                    const __mCt = __idsToLabels(__mCtIds, __compTMap);
+                    if (__modAims.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 6px;"><strong>Objectifs du module (sélection) :</strong> ${__modAims.map(__esc).join(' ; ')}</div>`;
+                    if (__modOut.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Résultats du module (sélection) :</strong> ${__modOut.map(__esc).join(' ; ')}</div>`;
+                    if (__mCs.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Compétences du module (sujet) :</strong> ${__mCs.map(__esc).join(', ')}</div>`;
+                    if (__mCt.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Compétences du module (transversales) :</strong> ${__mCt.map(__esc).join(', ')}</div>`;
+                } catch(_) {}
 
                 const momentEls = activity.querySelectorAll('.moment-group');
                 const hasMoments = momentEls && momentEls.length > 0;
@@ -12284,25 +12483,36 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const groupModeVal = groupModeEl ? groupModeEl.value : '';
                         const groupModeTxt = groupModeEl && groupModeEl.selectedOptions[0] ? (groupModeEl.selectedOptions[0].innerText || '').trim() : '';
                         const groupSizeVal = (step.querySelector('.step-group-size')?.value || '').toString().trim();
+                        const groupCountVal = (step.querySelector('.step-group-count')?.value || '').toString().trim();
                         const groupDetailsVal = (step.querySelector('.step-group-details')?.value || '').toString().trim();
                         let groupInfo = groupModeTxt;
-                        if (groupModeVal === 'groups' && groupSizeVal) groupInfo = `${groupModeTxt} (${groupSizeVal})`;
+                        if (groupModeVal === 'groups') {
+                            const bits = [];
+                            if (groupSizeVal) bits.push(groupSizeVal);
+                            if (groupCountVal) bits.push(`nb groupes: ${groupCountVal}`);
+                            if (bits.length) groupInfo = `${groupModeTxt} (${bits.join(', ')})`;
+                        }
                         if (groupDetailsVal) groupInfo = groupInfo ? `${groupInfo} — ${groupDetailsVal}` : groupDetailsVal;
                         const objective = step.querySelector('.step-input-objective').value || "";
                         const tasks = step.querySelector('.step-input-tasks').value || "";
+                        const trainerTasks = step.querySelector('.step-input-trainer-tasks')?.value || "";
+                        const evalFollowup = step.querySelector('.step-input-eval-followup')?.value || "";
                         const notes = step.querySelector('.step-input-notes').value || "";
+
+                        const __csSel = step.querySelector('.step-competences-select');
+                        const __ctSel = step.querySelector('.step-competences-transversales-select');
+                        const __cs = Array.from((__csSel && __csSel.selectedOptions) ? __csSel.selectedOptions : []).map(o => (o.textContent || '').trim()).filter(Boolean);
+                        const __ct = Array.from((__ctSel && __ctSel.selectedOptions) ? __ctSel.selectedOptions : []).map(o => (o.textContent || '').trim()).filter(Boolean);
+                        const __csTxt = __cs.length ? __cs.map(__esc).join(', ') : '—';
+                        const __ctTxt = __ct.length ? __ct.map(__esc).join(', ') : '—';
+                        const compSujetHtml = __csTxt;
+                        const compTransHtml = __ctTxt;
                         const typeKey = step.querySelector('.learning-type-select').value;
                         const typeLabel = t[`type_${typeKey}`];
                         const trainerText = step.querySelector('.trainer-select').selectedOptions[0].innerText;
                         const placeText = step.querySelector('.place-select').selectedOptions[0].innerText;
                         const timeText = step.querySelector('.time-select').selectedOptions[0].innerText;
 
-                        const __csSel = step.querySelector('.step-competences-select');
-                        const __ctSel = step.querySelector('.step-competences-transversales-select');
-                        const __cs = Array.from((__csSel && __csSel.selectedOptions) ? __csSel.selectedOptions : []).map(o => (o.textContent || '').trim()).filter(Boolean);
-                        const __ct = Array.from((__ctSel && __ctSel.selectedOptions) ? __ctSel.selectedOptions : []).map(o => (o.textContent || '').trim()).filter(Boolean);
-                        const compSujetHtml = __cs.length ? __cs.map(__esc).join(', ') : '—';
-                        const compTransHtml = __ct.length ? __ct.map(__esc).join(', ') : '—';
 
                         const durVal = step.querySelector('.duration-input').value;
                         const durUnitTxt = step.querySelector('.duration-unit').selectedOptions[0].innerText;
@@ -12318,9 +12528,17 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                                 <strong>Modalité :</strong> ${trainerText}, ${placeText}, ${timeText}<br>
                                 <strong>Compétences du sujet :</strong> ${compSujetHtml}<br>
                                 <strong>Compétences transversales :</strong> ${compTransHtml}
+                                <br><strong>Objectifs ciblés :</strong> ${Array.from(step.querySelector('.step-aims-select')?.selectedOptions || []).map(o => __esc((o.value||'').toString().trim())).filter(Boolean).join(' ; ') || '—'}
+                                <br><strong>Résultats ciblés :</strong> ${Array.from(step.querySelector('.step-outcomes-select')?.selectedOptions || []).map(o => __esc((o.value||'').toString().trim())).filter(Boolean).join(' ; ') || '—'}
                             </div>
                             ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${__nl2br(objective)}</div>` : ''}
                             ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${__nl2br(tasks)}</div>` : ''}
+                            ${trainerTasks ? `<div class="task-box"><strong>Ce que le formateur doit faire :</strong><br>${__nl2br(trainerTasks)}</div>` : ''}
+                            ${evalFollowup ? `<div class="task-box"><strong>Évaluation / suivi :</strong><br>${__nl2br(evalFollowup)}</div>` : ''}
+                            <div style="margin-top: 10px; font-size: 0.9em; color: #475569;">
+                              <strong>Compétences du sujet :</strong> ${__csTxt}<br>
+                              <strong>Compétences transversales :</strong> ${__ctTxt}
+                            </div>
                             ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${__nl2br(notes)}</div>` : ''}
                         </div>`;
                     });
@@ -12478,6 +12696,8 @@ function __deprecated__exportCSV_2() {
                         const stepTitle = (stepEl.querySelector('.step-input-title')?.value || '').trim();
                         const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
                         const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
+                        const trainerTasks = (stepEl.querySelector('.step-input-trainer-tasks')?.value || '').trim();
+                        const evalFollowup = (stepEl.querySelector('.step-input-eval-followup')?.value || '').trim();
                         const notes = (stepEl.querySelector('.step-input-notes')?.value || '').trim();
 
                         const typeTxt = getSelectedText(stepEl.querySelector('.learning-type-select'));
@@ -12597,12 +12817,14 @@ function __deprecated__exportCSV_2() {
                 
                 <h2>Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
+                <div class="meta-item"><span class="meta-label">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-designed-unit'))}</div>
                 <h2>Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
@@ -12685,6 +12907,21 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${__esc(moduleTgtVal)} ${__esc(moduleTgtUnitTxt)}</div>`;
                 }
 
+                try {
+                    const __modAims = (typeof getModuleSelectedAims === 'function') ? (getModuleSelectedAims(activity) || []) : [];
+                    const __modOut = (typeof getModuleSelectedOutcomes === 'function') ? (getModuleSelectedOutcomes(activity) || []) : [];
+                    const __compMap = new Map((getCompetencesFromUI() || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
+                    const __compTMap = new Map((getCompetencesTransversalesFromUI() || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
+                    const __idsToLabels = (ids, mp) => (Array.isArray(ids) ? ids.map(x => String(x||'').trim()).filter(Boolean).map(id => mp.get(id) || id) : []);
+                    const __mCsIds = (typeof getSelectedModuleTargetCompetencesSujetIds === 'function') ? (getSelectedModuleTargetCompetencesSujetIds(activity) || []) : [];
+                    const __mCtIds = (typeof getSelectedModuleTargetCompetencesTransversalesIds === 'function') ? (getSelectedModuleTargetCompetencesTransversalesIds(activity) || []) : [];
+                    const __mCs = __idsToLabels(__mCsIds, __compMap);
+                    const __mCt = __idsToLabels(__mCtIds, __compTMap);
+                    if (__modAims.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 6px;"><strong>Objectifs du module (sélection) :</strong> ${__modAims.map(__esc).join(' ; ')}</div>`;
+                    if (__modOut.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Résultats du module (sélection) :</strong> ${__modOut.map(__esc).join(' ; ')}</div>`;
+                    if (__mCs.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Compétences du module (sujet) :</strong> ${__mCs.map(__esc).join(', ')}</div>`;
+                    if (__mCt.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Compétences du module (transversales) :</strong> ${__mCt.map(__esc).join(', ')}</div>`;
+                } catch(_) {}
 
                 const momentEls = activity.querySelectorAll('.moment-group');
                 const hasMoments = momentEls && momentEls.length > 0;
@@ -12697,13 +12934,30 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const groupModeVal = groupModeEl ? groupModeEl.value : '';
                         const groupModeTxt = groupModeEl && groupModeEl.selectedOptions[0] ? (groupModeEl.selectedOptions[0].innerText || '').trim() : '';
                         const groupSizeVal = (step.querySelector('.step-group-size')?.value || '').toString().trim();
+                        const groupCountVal = (step.querySelector('.step-group-count')?.value || '').toString().trim();
                         const groupDetailsVal = (step.querySelector('.step-group-details')?.value || '').toString().trim();
                         let groupInfo = groupModeTxt;
-                        if (groupModeVal === 'groups' && groupSizeVal) groupInfo = `${groupModeTxt} (${groupSizeVal})`;
+                        if (groupModeVal === 'groups') {
+                            const bits = [];
+                            if (groupSizeVal) bits.push(groupSizeVal);
+                            if (groupCountVal) bits.push(`nb groupes: ${groupCountVal}`);
+                            if (bits.length) groupInfo = `${groupModeTxt} (${bits.join(', ')})`;
+                        }
                         if (groupDetailsVal) groupInfo = groupInfo ? `${groupInfo} — ${groupDetailsVal}` : groupDetailsVal;
                         const objective = step.querySelector('.step-input-objective').value || "";
                         const tasks = step.querySelector('.step-input-tasks').value || "";
+                        const trainerTasks = step.querySelector('.step-input-trainer-tasks')?.value || "";
+                        const evalFollowup = step.querySelector('.step-input-eval-followup')?.value || "";
                         const notes = step.querySelector('.step-input-notes').value || "";
+
+                        const __csSel = step.querySelector('.step-competences-select');
+                        const __ctSel = step.querySelector('.step-competences-transversales-select');
+                        const __cs = Array.from((__csSel && __csSel.selectedOptions) ? __csSel.selectedOptions : []).map(o => (o.textContent || '').trim()).filter(Boolean);
+                        const __ct = Array.from((__ctSel && __ctSel.selectedOptions) ? __ctSel.selectedOptions : []).map(o => (o.textContent || '').trim()).filter(Boolean);
+                        const __csTxt = __cs.length ? __cs.map(__esc).join(', ') : '—';
+                        const __ctTxt = __ct.length ? __ct.map(__esc).join(', ') : '—';
+                        const compSujetHtml = __csTxt;
+                        const compTransHtml = __ctTxt;
                         const typeKey = step.querySelector('.learning-type-select').value;
                         const typeLabel = t[`type_${typeKey}`];
                         const trainerText = step.querySelector('.trainer-select').selectedOptions[0].innerText;
@@ -12725,6 +12979,12 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             </div>
                             ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${__nl2br(objective)}</div>` : ''}
                             ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${__nl2br(tasks)}</div>` : ''}
+                            ${trainerTasks ? `<div class="task-box"><strong>Ce que le formateur doit faire :</strong><br>${__nl2br(trainerTasks)}</div>` : ''}
+                            ${evalFollowup ? `<div class="task-box"><strong>Évaluation / suivi :</strong><br>${__nl2br(evalFollowup)}</div>` : ''}
+                            <div style="margin-top: 10px; font-size: 0.9em; color: #475569;">
+                              <strong>Compétences du sujet :</strong> ${__csTxt}<br>
+                              <strong>Compétences transversales :</strong> ${__ctTxt}
+                            </div>
                             ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${__nl2br(notes)}</div>` : ''}
                         </div>`;
                     });
@@ -12883,6 +13143,8 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const title = (stepEl.querySelector('.step-input-title')?.value || '').trim() || `Activité ${si+1}`;
                         const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
                         const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
+                        const trainerTasks = (stepEl.querySelector('.step-input-trainer-tasks')?.value || '').trim();
+                        const evalFollowup = (stepEl.querySelector('.step-input-eval-followup')?.value || '').trim();
                         const notes = (stepEl.querySelector('.step-input-notes')?.value || '').trim();
 
                         const typeTxt = selText(stepEl.querySelector('.learning-type-select'));
@@ -12999,6 +13261,8 @@ function __deprecated__exportCSV_3() {
                         const stepTitle = (stepEl.querySelector('.step-input-title')?.value || '').trim();
                         const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
                         const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
+                        const trainerTasks = (stepEl.querySelector('.step-input-trainer-tasks')?.value || '').trim();
+                        const evalFollowup = (stepEl.querySelector('.step-input-eval-followup')?.value || '').trim();
                         const notes = (stepEl.querySelector('.step-input-notes')?.value || '').trim();
 
                         const typeTxt = getSelectedText(stepEl.querySelector('.learning-type-select'));
@@ -13118,12 +13382,14 @@ function __deprecated__exportCSV_3() {
                 
                 <h2>Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
+                <div class="meta-item"><span class="meta-label">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-designed-unit'))}</div>
                 <h2>Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
@@ -13206,6 +13472,21 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${__esc(moduleTgtVal)} ${__esc(moduleTgtUnitTxt)}</div>`;
                 }
 
+                try {
+                    const __modAims = (typeof getModuleSelectedAims === 'function') ? (getModuleSelectedAims(activity) || []) : [];
+                    const __modOut = (typeof getModuleSelectedOutcomes === 'function') ? (getModuleSelectedOutcomes(activity) || []) : [];
+                    const __compMap = new Map((getCompetencesFromUI() || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
+                    const __compTMap = new Map((getCompetencesTransversalesFromUI() || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
+                    const __idsToLabels = (ids, mp) => (Array.isArray(ids) ? ids.map(x => String(x||'').trim()).filter(Boolean).map(id => mp.get(id) || id) : []);
+                    const __mCsIds = (typeof getSelectedModuleTargetCompetencesSujetIds === 'function') ? (getSelectedModuleTargetCompetencesSujetIds(activity) || []) : [];
+                    const __mCtIds = (typeof getSelectedModuleTargetCompetencesTransversalesIds === 'function') ? (getSelectedModuleTargetCompetencesTransversalesIds(activity) || []) : [];
+                    const __mCs = __idsToLabels(__mCsIds, __compMap);
+                    const __mCt = __idsToLabels(__mCtIds, __compTMap);
+                    if (__modAims.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 6px;"><strong>Objectifs du module (sélection) :</strong> ${__modAims.map(__esc).join(' ; ')}</div>`;
+                    if (__modOut.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Résultats du module (sélection) :</strong> ${__modOut.map(__esc).join(' ; ')}</div>`;
+                    if (__mCs.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Compétences du module (sujet) :</strong> ${__mCs.map(__esc).join(', ')}</div>`;
+                    if (__mCt.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Compétences du module (transversales) :</strong> ${__mCt.map(__esc).join(', ')}</div>`;
+                } catch(_) {}
 
                 const momentEls = activity.querySelectorAll('.moment-group');
                 const hasMoments = momentEls && momentEls.length > 0;
@@ -13218,13 +13499,30 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const groupModeVal = groupModeEl ? groupModeEl.value : '';
                         const groupModeTxt = groupModeEl && groupModeEl.selectedOptions[0] ? (groupModeEl.selectedOptions[0].innerText || '').trim() : '';
                         const groupSizeVal = (step.querySelector('.step-group-size')?.value || '').toString().trim();
+                        const groupCountVal = (step.querySelector('.step-group-count')?.value || '').toString().trim();
                         const groupDetailsVal = (step.querySelector('.step-group-details')?.value || '').toString().trim();
                         let groupInfo = groupModeTxt;
-                        if (groupModeVal === 'groups' && groupSizeVal) groupInfo = `${groupModeTxt} (${groupSizeVal})`;
+                        if (groupModeVal === 'groups') {
+                            const bits = [];
+                            if (groupSizeVal) bits.push(groupSizeVal);
+                            if (groupCountVal) bits.push(`nb groupes: ${groupCountVal}`);
+                            if (bits.length) groupInfo = `${groupModeTxt} (${bits.join(', ')})`;
+                        }
                         if (groupDetailsVal) groupInfo = groupInfo ? `${groupInfo} — ${groupDetailsVal}` : groupDetailsVal;
                         const objective = step.querySelector('.step-input-objective').value || "";
                         const tasks = step.querySelector('.step-input-tasks').value || "";
+                        const trainerTasks = step.querySelector('.step-input-trainer-tasks')?.value || "";
+                        const evalFollowup = step.querySelector('.step-input-eval-followup')?.value || "";
                         const notes = step.querySelector('.step-input-notes').value || "";
+
+                        const __csSel = step.querySelector('.step-competences-select');
+                        const __ctSel = step.querySelector('.step-competences-transversales-select');
+                        const __cs = Array.from((__csSel && __csSel.selectedOptions) ? __csSel.selectedOptions : []).map(o => (o.textContent || '').trim()).filter(Boolean);
+                        const __ct = Array.from((__ctSel && __ctSel.selectedOptions) ? __ctSel.selectedOptions : []).map(o => (o.textContent || '').trim()).filter(Boolean);
+                        const __csTxt = __cs.length ? __cs.map(__esc).join(', ') : '—';
+                        const __ctTxt = __ct.length ? __ct.map(__esc).join(', ') : '—';
+                        const compSujetHtml = __csTxt;
+                        const compTransHtml = __ctTxt;
                         const typeKey = step.querySelector('.learning-type-select').value;
                         const typeLabel = t[`type_${typeKey}`];
                         const trainerText = step.querySelector('.trainer-select').selectedOptions[0].innerText;
@@ -13246,6 +13544,12 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             </div>
                             ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${__nl2br(objective)}</div>` : ''}
                             ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${__nl2br(tasks)}</div>` : ''}
+                            ${trainerTasks ? `<div class="task-box"><strong>Ce que le formateur doit faire :</strong><br>${__nl2br(trainerTasks)}</div>` : ''}
+                            ${evalFollowup ? `<div class="task-box"><strong>Évaluation / suivi :</strong><br>${__nl2br(evalFollowup)}</div>` : ''}
+                            <div style="margin-top: 10px; font-size: 0.9em; color: #475569;">
+                              <strong>Compétences du sujet :</strong> ${__csTxt}<br>
+                              <strong>Compétences transversales :</strong> ${__ctTxt}
+                            </div>
                             ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${__nl2br(notes)}</div>` : ''}
                         </div>`;
                     });
@@ -13399,6 +13703,8 @@ function __deprecated__exportCSV_4() {
                         const stepTitle = (stepEl.querySelector('.step-input-title')?.value || '').trim();
                         const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
                         const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
+                        const trainerTasks = (stepEl.querySelector('.step-input-trainer-tasks')?.value || '').trim();
+                        const evalFollowup = (stepEl.querySelector('.step-input-eval-followup')?.value || '').trim();
                         const notes = (stepEl.querySelector('.step-input-notes')?.value || '').trim();
 
                         const typeTxt = getSelectedText(stepEl.querySelector('.learning-type-select'));
@@ -13518,12 +13824,14 @@ function __deprecated__exportCSV_4() {
                 
                 <h2>Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
+                <div class="meta-item"><span class="meta-label">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-designed-unit'))}</div>
                 <h2>Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
@@ -13606,6 +13914,21 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${__esc(moduleTgtVal)} ${__esc(moduleTgtUnitTxt)}</div>`;
                 }
 
+                try {
+                    const __modAims = (typeof getModuleSelectedAims === 'function') ? (getModuleSelectedAims(activity) || []) : [];
+                    const __modOut = (typeof getModuleSelectedOutcomes === 'function') ? (getModuleSelectedOutcomes(activity) || []) : [];
+                    const __compMap = new Map((getCompetencesFromUI() || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
+                    const __compTMap = new Map((getCompetencesTransversalesFromUI() || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
+                    const __idsToLabels = (ids, mp) => (Array.isArray(ids) ? ids.map(x => String(x||'').trim()).filter(Boolean).map(id => mp.get(id) || id) : []);
+                    const __mCsIds = (typeof getSelectedModuleTargetCompetencesSujetIds === 'function') ? (getSelectedModuleTargetCompetencesSujetIds(activity) || []) : [];
+                    const __mCtIds = (typeof getSelectedModuleTargetCompetencesTransversalesIds === 'function') ? (getSelectedModuleTargetCompetencesTransversalesIds(activity) || []) : [];
+                    const __mCs = __idsToLabels(__mCsIds, __compMap);
+                    const __mCt = __idsToLabels(__mCtIds, __compTMap);
+                    if (__modAims.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 6px;"><strong>Objectifs du module (sélection) :</strong> ${__modAims.map(__esc).join(' ; ')}</div>`;
+                    if (__modOut.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Résultats du module (sélection) :</strong> ${__modOut.map(__esc).join(' ; ')}</div>`;
+                    if (__mCs.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Compétences du module (sujet) :</strong> ${__mCs.map(__esc).join(', ')}</div>`;
+                    if (__mCt.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Compétences du module (transversales) :</strong> ${__mCt.map(__esc).join(', ')}</div>`;
+                } catch(_) {}
 
                 const momentEls = activity.querySelectorAll('.moment-group');
                 const hasMoments = momentEls && momentEls.length > 0;
@@ -13618,13 +13941,30 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const groupModeVal = groupModeEl ? groupModeEl.value : '';
                         const groupModeTxt = groupModeEl && groupModeEl.selectedOptions[0] ? (groupModeEl.selectedOptions[0].innerText || '').trim() : '';
                         const groupSizeVal = (step.querySelector('.step-group-size')?.value || '').toString().trim();
+                        const groupCountVal = (step.querySelector('.step-group-count')?.value || '').toString().trim();
                         const groupDetailsVal = (step.querySelector('.step-group-details')?.value || '').toString().trim();
                         let groupInfo = groupModeTxt;
-                        if (groupModeVal === 'groups' && groupSizeVal) groupInfo = `${groupModeTxt} (${groupSizeVal})`;
+                        if (groupModeVal === 'groups') {
+                            const bits = [];
+                            if (groupSizeVal) bits.push(groupSizeVal);
+                            if (groupCountVal) bits.push(`nb groupes: ${groupCountVal}`);
+                            if (bits.length) groupInfo = `${groupModeTxt} (${bits.join(', ')})`;
+                        }
                         if (groupDetailsVal) groupInfo = groupInfo ? `${groupInfo} — ${groupDetailsVal}` : groupDetailsVal;
                         const objective = step.querySelector('.step-input-objective').value || "";
                         const tasks = step.querySelector('.step-input-tasks').value || "";
+                        const trainerTasks = step.querySelector('.step-input-trainer-tasks')?.value || "";
+                        const evalFollowup = step.querySelector('.step-input-eval-followup')?.value || "";
                         const notes = step.querySelector('.step-input-notes').value || "";
+
+                        const __csSel = step.querySelector('.step-competences-select');
+                        const __ctSel = step.querySelector('.step-competences-transversales-select');
+                        const __cs = Array.from((__csSel && __csSel.selectedOptions) ? __csSel.selectedOptions : []).map(o => (o.textContent || '').trim()).filter(Boolean);
+                        const __ct = Array.from((__ctSel && __ctSel.selectedOptions) ? __ctSel.selectedOptions : []).map(o => (o.textContent || '').trim()).filter(Boolean);
+                        const __csTxt = __cs.length ? __cs.map(__esc).join(', ') : '—';
+                        const __ctTxt = __ct.length ? __ct.map(__esc).join(', ') : '—';
+                        const compSujetHtml = __csTxt;
+                        const compTransHtml = __ctTxt;
                         const typeKey = step.querySelector('.learning-type-select').value;
                         const typeLabel = t[`type_${typeKey}`];
                         const trainerText = step.querySelector('.trainer-select').selectedOptions[0].innerText;
@@ -13646,6 +13986,12 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             </div>
                             ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${__nl2br(objective)}</div>` : ''}
                             ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${__nl2br(tasks)}</div>` : ''}
+                            ${trainerTasks ? `<div class="task-box"><strong>Ce que le formateur doit faire :</strong><br>${__nl2br(trainerTasks)}</div>` : ''}
+                            ${evalFollowup ? `<div class="task-box"><strong>Évaluation / suivi :</strong><br>${__nl2br(evalFollowup)}</div>` : ''}
+                            <div style="margin-top: 10px; font-size: 0.9em; color: #475569;">
+                              <strong>Compétences du sujet :</strong> ${__csTxt}<br>
+                              <strong>Compétences transversales :</strong> ${__ctTxt}
+                            </div>
                             ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${__nl2br(notes)}</div>` : ''}
                         </div>`;
                     });
@@ -13736,7 +14082,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 '\\b ' + escapeRtf(t.label_class_size) + ':\\b0 ' + escapeRtf(document.getElementById('global-class-size')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_total_time) + ':\\b0 ' + escapeRtf(totalDuration) + '\\par' +
                 '\\b ' + escapeRtf(t.label_learning_time) + ':\\b0 ' + escapeRtf((document.getElementById('param-learning-val')?.value || '') + ' ' + (document.getElementById('param-learning-unit')?.selectedOptions[0]?.innerText || '')) + '\\par' +
-                '\\b ' + escapeRtf(t.label_designed_time) + ':\\b0 ' + escapeRtf((document.getElementById('param-designed-val')?.value || '') + ' ' + (document.getElementById('param-learning-unit')?.selectedOptions[0]?.innerText || '')) + '\\par\\par' +
+                '\\b ' + escapeRtf(t.label_designed_time) + ':\\b0 ' + escapeRtf((document.getElementById('param-designed-val')?.value || '') + ' ' + (document.getElementById('param-designed-unit')?.selectedOptions[0]?.innerText || '')) + '\\par\\par' +
 
                 '\\fs24\\b ' + escapeRtf('Informations clés') + '\\b0\\par' +
                 '\\fs20 ' +
@@ -13874,12 +14220,14 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 
                 <h2>Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
+                <div class="meta-item"><span class="meta-label">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-designed-unit'))}</div>
                 <h2>Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
@@ -13962,6 +14310,21 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${__esc(moduleTgtVal)} ${__esc(moduleTgtUnitTxt)}</div>`;
                 }
 
+                try {
+                    const __modAims = (typeof getModuleSelectedAims === 'function') ? (getModuleSelectedAims(activity) || []) : [];
+                    const __modOut = (typeof getModuleSelectedOutcomes === 'function') ? (getModuleSelectedOutcomes(activity) || []) : [];
+                    const __compMap = new Map((getCompetencesFromUI() || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
+                    const __compTMap = new Map((getCompetencesTransversalesFromUI() || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
+                    const __idsToLabels = (ids, mp) => (Array.isArray(ids) ? ids.map(x => String(x||'').trim()).filter(Boolean).map(id => mp.get(id) || id) : []);
+                    const __mCsIds = (typeof getSelectedModuleTargetCompetencesSujetIds === 'function') ? (getSelectedModuleTargetCompetencesSujetIds(activity) || []) : [];
+                    const __mCtIds = (typeof getSelectedModuleTargetCompetencesTransversalesIds === 'function') ? (getSelectedModuleTargetCompetencesTransversalesIds(activity) || []) : [];
+                    const __mCs = __idsToLabels(__mCsIds, __compMap);
+                    const __mCt = __idsToLabels(__mCtIds, __compTMap);
+                    if (__modAims.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 6px;"><strong>Objectifs du module (sélection) :</strong> ${__modAims.map(__esc).join(' ; ')}</div>`;
+                    if (__modOut.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Résultats du module (sélection) :</strong> ${__modOut.map(__esc).join(' ; ')}</div>`;
+                    if (__mCs.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Compétences du module (sujet) :</strong> ${__mCs.map(__esc).join(', ')}</div>`;
+                    if (__mCt.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Compétences du module (transversales) :</strong> ${__mCt.map(__esc).join(', ')}</div>`;
+                } catch(_) {}
 
                 const momentEls = activity.querySelectorAll('.moment-group');
                 const hasMoments = momentEls && momentEls.length > 0;
@@ -13969,11 +14332,34 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 const renderSteps = (stepsNodeList, momentNumberPrefix) => {
                     stepsNodeList.forEach((step, sIdx) => {
                         const stepTitle = step.querySelector('.step-input-title').value || t.md_untitled_step;
-                        const groupMode = step.querySelector('.step-group-mode').value;
-                        let groupInfo = groupMode === 'groups' ? `${t.md_format_groups} ${step.querySelector('.step-group-size').value}` : (groupMode === 'individual' ? t.md_format_individual : t.md_format_whole);
+                        const __modeEl = step.querySelector('.step-group-mode');
+                        const __modeVal = __modeEl ? __modeEl.value : '';
+                        const __modeTxt = (__modeEl && __modeEl.selectedOptions && __modeEl.selectedOptions[0]) ? ((__modeEl.selectedOptions[0].innerText || '').trim()) : '';
+                        const __sizeVal = (step.querySelector('.step-group-size')?.value || '').toString().trim();
+                        const __countVal = (step.querySelector('.step-group-count')?.value || '').toString().trim();
+                        const __detailsVal = (step.querySelector('.step-group-details')?.value || '').toString().trim();
+                        let groupInfo = __modeTxt || __modeVal;
+                        if (__modeVal === 'groups') {
+                            const bits = [];
+                            if (__sizeVal) bits.push('taille: ' + __sizeVal);
+                            if (__countVal) bits.push('nb groupes: ' + __countVal);
+                            groupInfo = (__modeTxt || __modeVal) + (bits.length ? ' (' + bits.join(', ') + ')' : '');
+                        }
+                        if (__detailsVal) groupInfo = groupInfo ? (groupInfo + ' — ' + __detailsVal) : __detailsVal;
                         const objective = step.querySelector('.step-input-objective').value || "";
                         const tasks = step.querySelector('.step-input-tasks').value || "";
+                        const trainerTasks = step.querySelector('.step-input-trainer-tasks')?.value || "";
+                        const evalFollowup = step.querySelector('.step-input-eval-followup')?.value || "";
                         const notes = step.querySelector('.step-input-notes').value || "";
+
+                        const __csSel = step.querySelector('.step-competences-select');
+                        const __ctSel = step.querySelector('.step-competences-transversales-select');
+                        const __cs = Array.from((__csSel && __csSel.selectedOptions) ? __csSel.selectedOptions : []).map(o => (o.textContent || '').trim()).filter(Boolean);
+                        const __ct = Array.from((__ctSel && __ctSel.selectedOptions) ? __ctSel.selectedOptions : []).map(o => (o.textContent || '').trim()).filter(Boolean);
+                        const __csTxt = __cs.length ? __cs.map(__esc).join(', ') : '—';
+                        const __ctTxt = __ct.length ? __ct.map(__esc).join(', ') : '—';
+                        const compSujetHtml = __csTxt;
+                        const compTransHtml = __ctTxt;
                         const typeKey = step.querySelector('.learning-type-select').value;
                         const typeLabel = t[`type_${typeKey}`];
                         const trainerText = step.querySelector('.trainer-select').selectedOptions[0].innerText;
@@ -13995,6 +14381,12 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             </div>
                             ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${__nl2br(objective)}</div>` : ''}
                             ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${__nl2br(tasks)}</div>` : ''}
+                            ${trainerTasks ? `<div class="task-box"><strong>Ce que le formateur doit faire :</strong><br>${__nl2br(trainerTasks)}</div>` : ''}
+                            ${evalFollowup ? `<div class="task-box"><strong>Évaluation / suivi :</strong><br>${__nl2br(evalFollowup)}</div>` : ''}
+                            <div style="margin-top: 10px; font-size: 0.9em; color: #475569;">
+                              <strong>Compétences du sujet :</strong> ${__csTxt}<br>
+                              <strong>Compétences transversales :</strong> ${__ctTxt}
+                            </div>
                             ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${__nl2br(notes)}</div>` : ''}
                         </div>`;
                     });
@@ -14085,7 +14477,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 '\\b ' + escapeRtf(t.label_class_size) + ':\\b0 ' + escapeRtf(document.getElementById('global-class-size')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_total_time) + ':\\b0 ' + escapeRtf(totalDuration) + '\\par' +
                 '\\b ' + escapeRtf(t.label_learning_time) + ':\\b0 ' + escapeRtf((document.getElementById('param-learning-val')?.value || '') + ' ' + (document.getElementById('param-learning-unit')?.selectedOptions[0]?.innerText || '')) + '\\par' +
-                '\\b ' + escapeRtf(t.label_designed_time) + ':\\b0 ' + escapeRtf((document.getElementById('param-designed-val')?.value || '') + ' ' + (document.getElementById('param-learning-unit')?.selectedOptions[0]?.innerText || '')) + '\\par\\par' +
+                '\\b ' + escapeRtf(t.label_designed_time) + ':\\b0 ' + escapeRtf((document.getElementById('param-designed-val')?.value || '') + ' ' + (document.getElementById('param-designed-unit')?.selectedOptions[0]?.innerText || '')) + '\\par\\par' +
 
                 '\\fs24\\b ' + escapeRtf('Informations clés') + '\\b0\\par' +
                 '\\fs20 ' +
@@ -14275,6 +14667,8 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const title = (stepEl.querySelector('.step-input-title')?.value || '').trim() || `Activité ${si+1}`;
                         const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
                         const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
+                        const trainerTasks = (stepEl.querySelector('.step-input-trainer-tasks')?.value || '').trim();
+                        const evalFollowup = (stepEl.querySelector('.step-input-eval-followup')?.value || '').trim();
                         const notes = (stepEl.querySelector('.step-input-notes')?.value || '').trim();
 
                         const typeTxt = selText(stepEl.querySelector('.learning-type-select'));
@@ -14346,12 +14740,14 @@ function __deprecated__exportRichText_6() {
                 
                 <h2>Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
+                <div class="meta-item"><span class="meta-label">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-designed-unit'))}</div>
                 <h2>Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
@@ -14434,6 +14830,21 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${__esc(moduleTgtVal)} ${__esc(moduleTgtUnitTxt)}</div>`;
                 }
 
+                try {
+                    const __modAims = (typeof getModuleSelectedAims === 'function') ? (getModuleSelectedAims(activity) || []) : [];
+                    const __modOut = (typeof getModuleSelectedOutcomes === 'function') ? (getModuleSelectedOutcomes(activity) || []) : [];
+                    const __compMap = new Map((getCompetencesFromUI() || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
+                    const __compTMap = new Map((getCompetencesTransversalesFromUI() || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
+                    const __idsToLabels = (ids, mp) => (Array.isArray(ids) ? ids.map(x => String(x||'').trim()).filter(Boolean).map(id => mp.get(id) || id) : []);
+                    const __mCsIds = (typeof getSelectedModuleTargetCompetencesSujetIds === 'function') ? (getSelectedModuleTargetCompetencesSujetIds(activity) || []) : [];
+                    const __mCtIds = (typeof getSelectedModuleTargetCompetencesTransversalesIds === 'function') ? (getSelectedModuleTargetCompetencesTransversalesIds(activity) || []) : [];
+                    const __mCs = __idsToLabels(__mCsIds, __compMap);
+                    const __mCt = __idsToLabels(__mCtIds, __compTMap);
+                    if (__modAims.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 6px;"><strong>Objectifs du module (sélection) :</strong> ${__modAims.map(__esc).join(' ; ')}</div>`;
+                    if (__modOut.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Résultats du module (sélection) :</strong> ${__modOut.map(__esc).join(' ; ')}</div>`;
+                    if (__mCs.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Compétences du module (sujet) :</strong> ${__mCs.map(__esc).join(', ')}</div>`;
+                    if (__mCt.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Compétences du module (transversales) :</strong> ${__mCt.map(__esc).join(', ')}</div>`;
+                } catch(_) {}
 
                 const momentEls = activity.querySelectorAll('.moment-group');
                 const hasMoments = momentEls && momentEls.length > 0;
@@ -14446,13 +14857,30 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const groupModeVal = groupModeEl ? groupModeEl.value : '';
                         const groupModeTxt = groupModeEl && groupModeEl.selectedOptions[0] ? (groupModeEl.selectedOptions[0].innerText || '').trim() : '';
                         const groupSizeVal = (step.querySelector('.step-group-size')?.value || '').toString().trim();
+                        const groupCountVal = (step.querySelector('.step-group-count')?.value || '').toString().trim();
                         const groupDetailsVal = (step.querySelector('.step-group-details')?.value || '').toString().trim();
                         let groupInfo = groupModeTxt;
-                        if (groupModeVal === 'groups' && groupSizeVal) groupInfo = `${groupModeTxt} (${groupSizeVal})`;
+                        if (groupModeVal === 'groups') {
+                            const bits = [];
+                            if (groupSizeVal) bits.push(groupSizeVal);
+                            if (groupCountVal) bits.push(`nb groupes: ${groupCountVal}`);
+                            if (bits.length) groupInfo = `${groupModeTxt} (${bits.join(', ')})`;
+                        }
                         if (groupDetailsVal) groupInfo = groupInfo ? `${groupInfo} — ${groupDetailsVal}` : groupDetailsVal;
                         const objective = step.querySelector('.step-input-objective').value || "";
                         const tasks = step.querySelector('.step-input-tasks').value || "";
+                        const trainerTasks = step.querySelector('.step-input-trainer-tasks')?.value || "";
+                        const evalFollowup = step.querySelector('.step-input-eval-followup')?.value || "";
                         const notes = step.querySelector('.step-input-notes').value || "";
+
+                        const __csSel = step.querySelector('.step-competences-select');
+                        const __ctSel = step.querySelector('.step-competences-transversales-select');
+                        const __cs = Array.from((__csSel && __csSel.selectedOptions) ? __csSel.selectedOptions : []).map(o => (o.textContent || '').trim()).filter(Boolean);
+                        const __ct = Array.from((__ctSel && __ctSel.selectedOptions) ? __ctSel.selectedOptions : []).map(o => (o.textContent || '').trim()).filter(Boolean);
+                        const __csTxt = __cs.length ? __cs.map(__esc).join(', ') : '—';
+                        const __ctTxt = __ct.length ? __ct.map(__esc).join(', ') : '—';
+                        const compSujetHtml = __csTxt;
+                        const compTransHtml = __ctTxt;
                         const typeKey = step.querySelector('.learning-type-select').value;
                         const typeLabel = t[`type_${typeKey}`];
                         const trainerText = step.querySelector('.trainer-select').selectedOptions[0].innerText;
@@ -14474,6 +14902,12 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             </div>
                             ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${__nl2br(objective)}</div>` : ''}
                             ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${__nl2br(tasks)}</div>` : ''}
+                            ${trainerTasks ? `<div class="task-box"><strong>Ce que le formateur doit faire :</strong><br>${__nl2br(trainerTasks)}</div>` : ''}
+                            ${evalFollowup ? `<div class="task-box"><strong>Évaluation / suivi :</strong><br>${__nl2br(evalFollowup)}</div>` : ''}
+                            <div style="margin-top: 10px; font-size: 0.9em; color: #475569;">
+                              <strong>Compétences du sujet :</strong> ${__csTxt}<br>
+                              <strong>Compétences transversales :</strong> ${__ctTxt}
+                            </div>
                             ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${__nl2br(notes)}</div>` : ''}
                         </div>`;
                     });
@@ -14605,12 +15039,14 @@ function exportCSV() {
                 
                 <h2>Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
+                <div class="meta-item"><span class="meta-label">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-designed-unit'))}</div>
                 <h2>Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
@@ -14693,6 +15129,21 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${__esc(moduleTgtVal)} ${__esc(moduleTgtUnitTxt)}</div>`;
                 }
 
+                try {
+                    const __modAims = (typeof getModuleSelectedAims === 'function') ? (getModuleSelectedAims(activity) || []) : [];
+                    const __modOut = (typeof getModuleSelectedOutcomes === 'function') ? (getModuleSelectedOutcomes(activity) || []) : [];
+                    const __compMap = new Map((getCompetencesFromUI() || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
+                    const __compTMap = new Map((getCompetencesTransversalesFromUI() || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
+                    const __idsToLabels = (ids, mp) => (Array.isArray(ids) ? ids.map(x => String(x||'').trim()).filter(Boolean).map(id => mp.get(id) || id) : []);
+                    const __mCsIds = (typeof getSelectedModuleTargetCompetencesSujetIds === 'function') ? (getSelectedModuleTargetCompetencesSujetIds(activity) || []) : [];
+                    const __mCtIds = (typeof getSelectedModuleTargetCompetencesTransversalesIds === 'function') ? (getSelectedModuleTargetCompetencesTransversalesIds(activity) || []) : [];
+                    const __mCs = __idsToLabels(__mCsIds, __compMap);
+                    const __mCt = __idsToLabels(__mCtIds, __compTMap);
+                    if (__modAims.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 6px;"><strong>Objectifs du module (sélection) :</strong> ${__modAims.map(__esc).join(' ; ')}</div>`;
+                    if (__modOut.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Résultats du module (sélection) :</strong> ${__modOut.map(__esc).join(' ; ')}</div>`;
+                    if (__mCs.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Compétences du module (sujet) :</strong> ${__mCs.map(__esc).join(', ')}</div>`;
+                    if (__mCt.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Compétences du module (transversales) :</strong> ${__mCt.map(__esc).join(', ')}</div>`;
+                } catch(_) {}
 
                 const momentEls = activity.querySelectorAll('.moment-group');
                 const hasMoments = momentEls && momentEls.length > 0;
@@ -14705,13 +15156,30 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const groupModeVal = groupModeEl ? groupModeEl.value : '';
                         const groupModeTxt = groupModeEl && groupModeEl.selectedOptions[0] ? (groupModeEl.selectedOptions[0].innerText || '').trim() : '';
                         const groupSizeVal = (step.querySelector('.step-group-size')?.value || '').toString().trim();
+                        const groupCountVal = (step.querySelector('.step-group-count')?.value || '').toString().trim();
                         const groupDetailsVal = (step.querySelector('.step-group-details')?.value || '').toString().trim();
                         let groupInfo = groupModeTxt;
-                        if (groupModeVal === 'groups' && groupSizeVal) groupInfo = `${groupModeTxt} (${groupSizeVal})`;
+                        if (groupModeVal === 'groups') {
+                            const bits = [];
+                            if (groupSizeVal) bits.push(groupSizeVal);
+                            if (groupCountVal) bits.push(`nb groupes: ${groupCountVal}`);
+                            if (bits.length) groupInfo = `${groupModeTxt} (${bits.join(', ')})`;
+                        }
                         if (groupDetailsVal) groupInfo = groupInfo ? `${groupInfo} — ${groupDetailsVal}` : groupDetailsVal;
                         const objective = step.querySelector('.step-input-objective').value || "";
                         const tasks = step.querySelector('.step-input-tasks').value || "";
+                        const trainerTasks = step.querySelector('.step-input-trainer-tasks')?.value || "";
+                        const evalFollowup = step.querySelector('.step-input-eval-followup')?.value || "";
                         const notes = step.querySelector('.step-input-notes').value || "";
+
+                        const __csSel = step.querySelector('.step-competences-select');
+                        const __ctSel = step.querySelector('.step-competences-transversales-select');
+                        const __cs = Array.from((__csSel && __csSel.selectedOptions) ? __csSel.selectedOptions : []).map(o => (o.textContent || '').trim()).filter(Boolean);
+                        const __ct = Array.from((__ctSel && __ctSel.selectedOptions) ? __ctSel.selectedOptions : []).map(o => (o.textContent || '').trim()).filter(Boolean);
+                        const __csTxt = __cs.length ? __cs.map(__esc).join(', ') : '—';
+                        const __ctTxt = __ct.length ? __ct.map(__esc).join(', ') : '—';
+                        const compSujetHtml = __csTxt;
+                        const compTransHtml = __ctTxt;
                         const typeKey = step.querySelector('.learning-type-select').value;
                         const typeLabel = t[`type_${typeKey}`];
                         const trainerText = step.querySelector('.trainer-select').selectedOptions[0].innerText;
@@ -14733,6 +15201,12 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             </div>
                             ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${__nl2br(objective)}</div>` : ''}
                             ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${__nl2br(tasks)}</div>` : ''}
+                            ${trainerTasks ? `<div class="task-box"><strong>Ce que le formateur doit faire :</strong><br>${__nl2br(trainerTasks)}</div>` : ''}
+                            ${evalFollowup ? `<div class="task-box"><strong>Évaluation / suivi :</strong><br>${__nl2br(evalFollowup)}</div>` : ''}
+                            <div style="margin-top: 10px; font-size: 0.9em; color: #475569;">
+                              <strong>Compétences du sujet :</strong> ${__csTxt}<br>
+                              <strong>Compétences transversales :</strong> ${__ctTxt}
+                            </div>
                             ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${__nl2br(notes)}</div>` : ''}
                         </div>`;
                     });
@@ -14823,7 +15297,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 '\\b ' + escapeRtf(t.label_class_size) + ':\\b0 ' + escapeRtf(document.getElementById('global-class-size')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_total_time) + ':\\b0 ' + escapeRtf(totalDuration) + '\\par' +
                 '\\b ' + escapeRtf(t.label_learning_time) + ':\\b0 ' + escapeRtf((document.getElementById('param-learning-val')?.value || '') + ' ' + (document.getElementById('param-learning-unit')?.selectedOptions[0]?.innerText || '')) + '\\par' +
-                '\\b ' + escapeRtf(t.label_designed_time) + ':\\b0 ' + escapeRtf((document.getElementById('param-designed-val')?.value || '') + ' ' + (document.getElementById('param-learning-unit')?.selectedOptions[0]?.innerText || '')) + '\\par\\par' +
+                '\\b ' + escapeRtf(t.label_designed_time) + ':\\b0 ' + escapeRtf((document.getElementById('param-designed-val')?.value || '') + ' ' + (document.getElementById('param-designed-unit')?.selectedOptions[0]?.innerText || '')) + '\\par\\par' +
 
                 '\\fs24\\b ' + escapeRtf('Informations clés') + '\\b0\\par' +
                 '\\fs20 ' +
@@ -15023,12 +15497,14 @@ let html = `
                 
                 <h2>Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
+                <div class="meta-item"><span class="meta-label">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-designed-unit'))}</div>
                 <h2>Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
@@ -15111,39 +15587,90 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 6px;"><strong>Durée cible :</strong> ${__esc(moduleTgtVal)} ${__esc(moduleTgtUnitTxt)}</div>`;
                 }
 
+                try {
+                    const __modAims = (typeof getModuleSelectedAims === 'function') ? (getModuleSelectedAims(activity) || []) : [];
+                    const __modOut = (typeof getModuleSelectedOutcomes === 'function') ? (getModuleSelectedOutcomes(activity) || []) : [];
+                    const __compMap = new Map((getCompetencesFromUI() || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
+                    const __compTMap = new Map((getCompetencesTransversalesFromUI() || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
+                    const __idsToLabels = (ids, mp) => (Array.isArray(ids) ? ids.map(x => String(x||'').trim()).filter(Boolean).map(id => mp.get(id) || id) : []);
+                    const __mCsIds = (typeof getSelectedModuleTargetCompetencesSujetIds === 'function') ? (getSelectedModuleTargetCompetencesSujetIds(activity) || []) : [];
+                    const __mCtIds = (typeof getSelectedModuleTargetCompetencesTransversalesIds === 'function') ? (getSelectedModuleTargetCompetencesTransversalesIds(activity) || []) : [];
+                    const __mCs = __idsToLabels(__mCsIds, __compMap);
+                    const __mCt = __idsToLabels(__mCtIds, __compTMap);
+                    if (__modAims.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 6px;"><strong>Objectifs du module (sélection) :</strong> ${__modAims.map(__esc).join(' ; ')}</div>`;
+                    if (__modOut.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Résultats du module (sélection) :</strong> ${__modOut.map(__esc).join(' ; ')}</div>`;
+                    if (__mCs.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Compétences du module (sujet) :</strong> ${__mCs.map(__esc).join(', ')}</div>`;
+                    if (__mCt.length) html += `<div style="font-size:0.9em; color:#475569; margin-top: 4px;"><strong>Compétences du module (transversales) :</strong> ${__mCt.map(__esc).join(', ')}</div>`;
+                } catch(_) {}
 
                 const momentEls = activity.querySelectorAll('.moment-group');
                 const hasMoments = momentEls && momentEls.length > 0;
 
                 const renderSteps = (stepsNodeList, momentNumberPrefix) => {
                     stepsNodeList.forEach((step, sIdx) => {
-                        const stepTitle = step.querySelector('.step-input-title').value || t.md_untitled_step;
-                        const groupMode = step.querySelector('.step-group-mode').value;
-                        let groupInfo = groupMode === 'groups' ? `${t.md_format_groups} ${step.querySelector('.step-group-size').value}` : (groupMode === 'individual' ? t.md_format_individual : t.md_format_whole);
-                        const objective = step.querySelector('.step-input-objective').value || "";
-                        const tasks = step.querySelector('.step-input-tasks').value || "";
-                        const notes = step.querySelector('.step-input-notes').value || "";
-                        const typeKey = step.querySelector('.learning-type-select').value;
-                        const typeLabel = t[`type_${typeKey}`];
-                        const trainerText = step.querySelector('.trainer-select').selectedOptions[0].innerText;
-                        const placeText = step.querySelector('.place-select').selectedOptions[0].innerText;
-                        const timeText = step.querySelector('.time-select').selectedOptions[0].innerText;
+                        const stepTitle = step.querySelector('.step-input-title')?.value || t.md_untitled_step;
 
-                        const durVal = step.querySelector('.duration-input').value;
-                        const durUnitTxt = step.querySelector('.duration-unit').selectedOptions[0].innerText;
-                        const duration = `${durVal} ${durUnitTxt}`;
+                        // Grouping (mode + optional size + optional details)
+                        const groupModeEl = step.querySelector('.step-group-mode');
+                        const groupModeVal = groupModeEl ? groupModeEl.value : '';
+                        const groupModeTxt = groupModeEl && groupModeEl.selectedOptions && groupModeEl.selectedOptions[0]
+                            ? (groupModeEl.selectedOptions[0].innerText || '').trim()
+                            : '';
+                        const groupSizeVal = (step.querySelector('.step-group-size')?.value || '').toString().trim();
+                        const groupCountVal = (step.querySelector('.step-group-count')?.value || '').toString().trim();
+                        const groupDetailsVal = (step.querySelector('.step-group-details')?.value || '').toString().trim();
+                        let groupInfo = groupModeTxt;
+                        if (groupModeVal === 'groups') {
+                            const bits = [];
+                            if (groupSizeVal) bits.push(groupSizeVal);
+                            if (groupCountVal) bits.push(`nb groupes: ${groupCountVal}`);
+                            if (bits.length) groupInfo = `${groupModeTxt} (${bits.join(', ')})`;
+                        }
+                        if (groupDetailsVal) groupInfo = groupInfo ? `${groupInfo} — ${groupDetailsVal}` : groupDetailsVal;
+
+                        // Step content
+                        const objective = (step.querySelector('.step-input-objective')?.value || '').trim();
+                        const tasks = (step.querySelector('.step-input-tasks')?.value || '').trim();
+                        const trainerTasks = (step.querySelector('.step-input-trainer-tasks')?.value || '').trim();
+                        const evalFollowup = (step.querySelector('.step-input-eval-followup')?.value || '').trim();
+                        const notes = (step.querySelector('.step-input-notes')?.value || '').trim();
+
+                        // Competences
+                        const csSel = step.querySelector('.step-competences-select');
+                        const ctSel = step.querySelector('.step-competences-transversales-select');
+                        const cs = Array.from(csSel?.selectedOptions || []).map(o => (o.textContent || '').trim()).filter(Boolean);
+                        const ct = Array.from(ctSel?.selectedOptions || []).map(o => (o.textContent || '').trim()).filter(Boolean);
+                        const compSujetHtml = cs.length ? cs.map(__esc).join(', ') : '—';
+                        const compTransHtml = ct.length ? ct.map(__esc).join(', ') : '—';
+
+                        // Tags / modality
+                        const typeKey = step.querySelector('.learning-type-select')?.value || '';
+                        const typeLabel = t[`type_${typeKey}`] || '';
+                        const trainerText = step.querySelector('.trainer-select')?.selectedOptions?.[0]?.innerText || '';
+                        const placeText = step.querySelector('.place-select')?.selectedOptions?.[0]?.innerText || '';
+                        const timeText = step.querySelector('.time-select')?.selectedOptions?.[0]?.innerText || '';
+
+                        const durVal = step.querySelector('.duration-input')?.value || '';
+                        const durUnitTxt = step.querySelector('.duration-unit')?.selectedOptions?.[0]?.innerText || '';
+                        const duration = `${durVal} ${durUnitTxt}`.trim();
 
                         const activityNumber = `${momentNumberPrefix}.${sIdx + 1}`;
 
                         html += `<div class="step-block type-${typeKey}">
                             <h4>${activityNumber}. ${__esc(stepTitle)} <span class="tag bg-${typeKey}" style="float: right;">${__esc(typeLabel)}</span></h4>
                             <div style="font-size: 0.9em; color: #64748b; margin-bottom: 10px;">
-                                <strong>Durée :</strong> ${duration} | 
-                                <strong>Regroupement :</strong> ${groupInfo} | 
-                                <strong>Modalité :</strong> ${trainerText}, ${placeText}, ${timeText}
+                                <strong>Durée :</strong> ${__esc(duration)} |
+                                <strong>Regroupement :</strong> ${__esc(groupInfo)} |
+                                <strong>Modalité :</strong> ${__esc(trainerText)}, ${__esc(placeText)}, ${__esc(timeText)}<br>
+                                <strong>Compétences du sujet :</strong> ${compSujetHtml}<br>
+                                <strong>Compétences transversales :</strong> ${compTransHtml}
+                                <br><strong>Objectifs ciblés :</strong> ${Array.from(step.querySelector('.step-aims-select')?.selectedOptions || []).map(o => __esc((o.value||'').toString().trim())).filter(Boolean).join(' ; ') || '—'}
+                                <br><strong>Résultats ciblés :</strong> ${Array.from(step.querySelector('.step-outcomes-select')?.selectedOptions || []).map(o => __esc((o.value||'').toString().trim())).filter(Boolean).join(' ; ') || '—'}
                             </div>
-                            ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${__nl2br(objective)}</div>` : ''}
+                            ${objective ? `<div class="task-box"><strong>Objectif de l'activité :</strong><br>${__nl2br(objective)}</div>` : ''}
                             ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${__nl2br(tasks)}</div>` : ''}
+                            ${trainerTasks ? `<div class="task-box"><strong>Ce que le formateur doit faire :</strong><br>${__nl2br(trainerTasks)}</div>` : ''}
+                            ${evalFollowup ? `<div class="task-box"><strong>Évaluation / suivi :</strong><br>${__nl2br(evalFollowup)}</div>` : ''}
                             ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${__nl2br(notes)}</div>` : ''}
                         </div>`;
                     });
@@ -15238,10 +15765,16 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 const modeVal = modeEl ? modeEl.value : '';
                 const modeTxt = getSelectedText(modeEl);
                 const sizeVal = (stepEl.querySelector('.step-group-size')?.value || '').toString().trim();
+                const countVal = (stepEl.querySelector('.step-group-count')?.value || '').toString().trim();
                 const detailsVal = (stepEl.querySelector('.step-group-details')?.value || '').toString().trim();
 
                 let txt = modeTxt;
-                if (modeVal === 'groups' && sizeVal) txt = `${modeTxt} (${sizeVal})`;
+                if (modeVal === 'groups') {
+                    const bits = [];
+                    if (sizeVal) bits.push(sizeVal);
+                    if (countVal) bits.push('nb groupes: ' + countVal);
+                    if (bits.length) txt = `${modeTxt} (${bits.join(', ')})`;
+                }
                 if (detailsVal) txt = txt ? `${txt} — ${detailsVal}` : detailsVal;
                 return txt.trim();
             };
@@ -15266,7 +15799,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 '\\b ' + escapeRtf(t.label_class_size) + ':\\b0 ' + escapeRtf(document.getElementById('global-class-size')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_total_time) + ':\\b0 ' + escapeRtf(totalDuration) + '\\par' +
                 '\\b ' + escapeRtf(t.label_learning_time) + ':\\b0 ' + escapeRtf(((document.getElementById('param-learning-val')?.value || '').toString().trim()) + ' ' + (document.getElementById('param-learning-unit')?.selectedOptions?.[0]?.innerText || '')) + '\\par' +
-                '\\b ' + escapeRtf(t.label_designed_time) + ':\\b0 ' + escapeRtf(((document.getElementById('param-designed-val')?.value || '').toString().trim()) + ' ' + (document.getElementById('param-learning-unit')?.selectedOptions?.[0]?.innerText || '')) + '\\par\\par' +
+                '\\b ' + escapeRtf(t.label_designed_time) + ':\\b0 ' + escapeRtf(((document.getElementById('param-designed-val')?.value || '').toString().trim()) + ' ' + (document.getElementById('param-designed-unit')?.selectedOptions?.[0]?.innerText || '')) + '\\par\\par' +
 
                 '\\fs24\\b ' + escapeRtf('Informations clés') + '\\b0\\par' +
                 '\\fs20 ' +
@@ -15313,6 +15846,8 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const stepTitle = (stepEl.querySelector('.step-input-title')?.value || '').trim() || `${t.md_step} ${sIdx + 1}`;
                         const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
                         const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
+                        const trainerTasks = (stepEl.querySelector('.step-input-trainer-tasks')?.value || '').trim();
+                        const evalFollowup = (stepEl.querySelector('.step-input-eval-followup')?.value || '').trim();
                         const notes = (stepEl.querySelector('.step-input-notes')?.value || '').trim();
 
                         const sSecs = readDurationSecs(stepEl);
@@ -15340,10 +15875,11 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         }
                         if (objective) rtf += escapeRtf(`      Objectif : ${objective}`) + '\\par ';
                         if (tasks) rtf += escapeRtf(`      Tâches : ${tasks}`) + '\\par ';
+                        if (trainerTasks) rtf += escapeRtf(`      Tâches du formateur : ${trainerTasks}`) + '\\par ';
+                        if (evalFollowup) rtf += escapeRtf(`      Évaluation / suivi : ${evalFollowup}`) + '\\par ';
                         if (notes) rtf += escapeRtf(`      Notes : ${notes}`) + '\\par ';
                     });
                 };
-
                 if (hasMoments) {
                     momentEls.forEach((momentEl, moIdx) => {
                         const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
@@ -15391,16 +15927,20 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
         function exportMarkdown() {
             const data = getTotals();
             const t = translations[currentLang];
+            const __esc = (v) => escapeHtml(String(v ?? ''));
+            const __selTxt = (el) => __esc((el && el.selectedOptions && el.selectedOptions[0]) ? el.selectedOptions[0].innerText : '');
             let md = `# ${t.md_title}\n\n`;
             md += `## métadonnées\n`;
             md += `- **${t.label_course_name}:** ${__esc(document.getElementById('param-name')?.value)}\n`;
             md += `- **${t.label_authors}:** ${__esc(document.getElementById('param-authors')?.value)}\n`;
+            md += `- **${t.label_trainers || 'Formateur(s)'}:** ${__esc(document.getElementById('param-trainers')?.value || '')}\n`;
+            md += `- **Thème:** ${__esc(document.getElementById('param-topic')?.value || '')}\n`;
             md += `- **${t.label_mode}:** ${__selTxt(document.getElementById('param-mode'))}\n`;
             md += `- **${t.label_level}:** ${__selTxt(document.getElementById('param-level'))}\n`;
             md += `- **${t.label_class_size}:** ${__esc(document.getElementById('global-class-size')?.value)}\n`;
             md += `- **${t.label_total_time}:** ${fmtTotalDuration(data.totalSecs, t)}\n`;
             md += `- **${t.label_learning_time}:** ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}\n`;
-            md += `- **${t.label_designed_time}:** ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}\n`; 
+            md += `- **${t.label_designed_time}:** ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-designed-unit'))}\n`; 
 md += `- **Horodatage d'export :** ${new Date().toISOString()}\n\n`;
             
             md += `## informations_clés\n`;
@@ -15428,6 +15968,10 @@ md += `- **Horodatage d'export :** ${new Date().toISOString()}\n\n`;
             md += `## structure_pédagogique
 
 `;
+
+            const __compMap = new Map((getCompetencesFromUI() || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
+            const __compTMap = new Map((getCompetencesTransversalesFromUI() || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
+            const __idsToLabels = (ids, mp) => (Array.isArray(ids) ? ids.map(x => String(x||'').trim()).filter(Boolean).map(id => mp.get(id) || id) : []);
             document.querySelectorAll('.activity-group').forEach((activity, aIdx) => {
                 const moduleTitle = activity.querySelector('.activity-title').value || t.md_untitled_activity;
                 const moduleDesc = activity.querySelector('.activity-description').value;
@@ -15448,6 +15992,24 @@ md += `- **Horodatage d'export :** ${new Date().toISOString()}\n\n`;
 `;
                 }
 
+                // Sélections au niveau du module (objectifs / résultats / compétences)
+                const __modAims = (typeof getModuleSelectedAims === 'function') ? (getModuleSelectedAims(activity) || []) : [];
+                const __modOut = (typeof getModuleSelectedOutcomes === 'function') ? (getModuleSelectedOutcomes(activity) || []) : [];
+                const __mCsIds = (typeof getSelectedModuleTargetCompetencesSujetIds === 'function') ? (getSelectedModuleTargetCompetencesSujetIds(activity) || []) : [];
+                const __mCtIds = (typeof getSelectedModuleTargetCompetencesTransversalesIds === 'function') ? (getSelectedModuleTargetCompetencesTransversalesIds(activity) || []) : [];
+                const __mCs = __idsToLabels(__mCsIds, __compMap);
+                const __mCt = __idsToLabels(__mCtIds, __compTMap);
+                if (__modAims.length) md += `- **Objectifs du module (sélection) :** ${__modAims.join(' ; ')}
+`;
+                if (__modOut.length) md += `- **Résultats du module (sélection) :** ${__modOut.join(' ; ')}
+`;
+                if (__mCs.length) md += `- **Compétences du module (sujet) :** ${__mCs.join(', ')}
+`;
+                if (__mCt.length) md += `- **Compétences du module (transversales) :** ${__mCt.join(', ')}
+`;
+                if (__modAims.length || __modOut.length || __mCs.length || __mCt.length) md += `
+`;
+
                 const calcMomentSecs = (stepCards) => {
                     let secs = 0;
                     stepCards.forEach(step => {
@@ -15463,14 +16025,29 @@ md += `- **Horodatage d'export :** ${new Date().toISOString()}\n\n`;
                         const stepTitle = step.querySelector('.step-input-title').value || t.md_untitled_step;
                         const typeKey = step.querySelector('.learning-type-select').value;
                         const typeLabel = t[`type_${typeKey}`] || "";
-                        const groupMode = step.querySelector('.step-group-mode').value;
-                        let groupInfo = groupMode === 'groups' ? `${t.md_format_groups} ${step.querySelector('.step-group-size').value}` : (groupMode === 'individual' ? t.md_format_individual : t.md_format_whole);
+                        const groupModeEl = step.querySelector('.step-group-mode');
+                        const groupModeVal = groupModeEl ? groupModeEl.value : '';
+                        const groupModeTxt = (groupModeEl && groupModeEl.selectedOptions && groupModeEl.selectedOptions[0]) ? ((groupModeEl.selectedOptions[0].innerText || '').trim()) : groupModeVal;
+                        const groupSizeVal = (step.querySelector('.step-group-size')?.value || '').toString().trim();
+                        const groupCountVal = (step.querySelector('.step-group-count')?.value || '').toString().trim();
+                        const groupDetailsVal = (step.querySelector('.step-group-details')?.value || '').toString().trim();
+
+                        let groupInfo = groupModeTxt || groupModeVal;
+                        if (groupModeVal === 'groups') {
+                            const bits = [];
+                            if (groupSizeVal) bits.push('taille: ' + groupSizeVal);
+                            if (groupCountVal) bits.push('nb groupes: ' + groupCountVal);
+                            if (bits.length) groupInfo = `${groupModeTxt} (${bits.join(', ')})`;
+                        }
+                        if (groupDetailsVal) groupInfo = groupInfo ? `${groupInfo} — ${groupDetailsVal}` : groupDetailsVal;
                         const trainerText = step.querySelector('.trainer-select').selectedOptions[0].innerText;
                         const placeText = step.querySelector('.place-select').selectedOptions[0].innerText;
                         const timeText = step.querySelector('.time-select').selectedOptions[0].innerText;
 
                         const objective = step.querySelector('.step-input-objective').value || "Non renseigné";
                         const tasks = step.querySelector('.step-input-tasks').value || "Non renseigné";
+                        const trainerTasks = step.querySelector('.step-input-trainer-tasks')?.value || "Non renseigné";
+                        const evalFollowup = step.querySelector('.step-input-eval-followup')?.value || "Non renseigné";
                         const notes = step.querySelector('.step-input-notes').value || "Non renseigné";
 
                         const activityNum = `${momentPrefix}.${sIdx + 1}`;
@@ -15491,15 +16068,31 @@ md += `- **Horodatage d'export :** ${new Date().toISOString()}\n\n`;
                         const __ct = Array.from((__ctSel && __ctSel.selectedOptions) ? __ctSel.selectedOptions : []).map(o => (o.textContent || '').trim()).filter(Boolean);
                         const __csTxt = __cs.length ? __cs.map(__esc).join(', ') : '—';
                         const __ctTxt = __ct.length ? __ct.map(__esc).join(', ') : '—';
+                        const compSujetHtml = __csTxt;
+                        const compTransHtml = __ctTxt;
                         md += `- **Compétences du sujet :** ${__csTxt}
 `;
                         md += `- **Compétences transversales :** ${__ctTxt}
+`;
+                        const __aimsT = Array.from(step.querySelector('.step-aims-select')?.selectedOptions || []).map(o => (o.value || '').toString().trim()).filter(Boolean);
+                        const __outT = Array.from(step.querySelector('.step-outcomes-select')?.selectedOptions || []).map(o => (o.value || '').toString().trim()).filter(Boolean);
+                        md += `- **Objectifs ciblés :** ${__aimsT.length ? __aimsT.join(' ; ') : '—'}
+`;
+                        md += `- **Résultats ciblés :** ${__outT.length ? __outT.join(' ; ') : '—'}
 `;
                         md += `- **Objectif de l'activité :** ${objective}
 
 `;
                         md += `**Ce que les apprenants doivent faire :**
 ${tasks}
+
+`;
+                        md += `**Ce que le formateur doit faire :**
+${trainerTasks}
+
+`;
+                        md += `**Évaluation / suivi :**
+${evalFollowup}
 
 `;
                         md += `**Notes pédagogiques :**
