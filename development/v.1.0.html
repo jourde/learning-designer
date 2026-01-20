@@ -1089,6 +1089,13 @@ details[data-readonly="true"] label{ cursor: default; }
       'add-outcome': () => call('safeAddOutcome'),
       'add-aim-item': () => call('safeAddAimItem'),
       'add-outcomes-text-item': () => call('safeAddOutcomesTextItem'),
+
+    'add-tools-materials-item': () => call('safeAddToolsMaterialsItem'),
+    'remove-tools-materials-item': ({btn}) => {
+        const li = btn.closest('li');
+        if (li) li.remove();
+        try { syncToolsMaterialsTextareaFromList(); } catch (_) {}
+    },
       'add-competence': () => call('safeAddCompetence'),
       'add-competence-transversal': () => call('safeAddCompetenceTransversal'),
       'open-aims-from-step': ({btn}) => call('openAimsFromStep', btn),
@@ -1327,6 +1334,22 @@ details[data-readonly="true"] label{ cursor: default; }
         try { window.reportError(err, { action: 'change:' + action }); } catch(_) {}
       }
     }, true);
+
+            // Capture notes for per-activity tools/materials
+            document.addEventListener('input', function(e){
+                const t = e.target;
+                if (!t) return;
+                if (t.matches && t.matches('textarea.step-toolmat-note')) {
+                    const stepEl = t.closest('.step-card');
+                    if (!stepEl) return;
+                    const tool = String(t.dataset ? (t.dataset.tool || '') : '').trim();
+                    if (!tool) return;
+                    const map = __getStepToolMatNotesMap(stepEl);
+                    map[tool] = (t.value == null) ? '' : String(t.value);
+                    __setStepToolMatNotesMap(stepEl, map);
+                }
+            }, true);
+
 
     document.addEventListener('input', function(e){
       const el = e.target && e.target.closest ? e.target.closest('[data-action-input]') : null;
@@ -1570,6 +1593,7 @@ details[data-readonly="true"] label{ cursor: default; }
 <button class="kpwiz-step-btn px-2 h-[26px] rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[10px] font-bold" data-kpwiz-step="2" type="button">2. Public</button>
 <button class="kpwiz-step-btn px-2 h-[26px] rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[10px] font-bold" data-kpwiz-step="3" type="button">3. Objectifs et résultats</button>
 <button class="kpwiz-step-btn px-2 h-[26px] rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[10px] font-bold" data-kpwiz-step="4" type="button">4. Compétences</button>
+<button class="kpwiz-step-btn px-2 h-[26px] rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[10px] font-bold" data-kpwiz-step="5" type="button">5. Outils et matériel</button>
 </div>
 </div>
 <div class="flex items-center gap-1">
@@ -1921,6 +1945,54 @@ details[data-readonly="true"] label{ cursor: default; }
 </details>
 </div>
 </div>
+</section>
+<section class="kpwiz-step hidden" id="kpwiz-step-5">
+<div class="p-3 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+<div class="md:col-span-2 lg:col-span-3">
+<details class="group border border-slate-200 rounded-lg bg-white/0">
+<summary class="px-3 py-2 cursor-pointer select-none flex items-center justify-between">
+<span class="compact-label">Outils et matériel</span>
+<span class="material-icons-round text-slate-400 text-sm transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<div class="px-3 pb-3">
+<textarea class="hidden" id="param-tools-materials" placeholder="Entrez les outils et matériels..." rows="2"></textarea>
+<div class="bg-slate-50 border border-slate-200 rounded-lg p-2">
+<div class="flex items-center gap-2 mb-2 flex-wrap no-print">
+<button class="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-slate-200 transition-colors flex items-center gap-1" id="btn-load-tools-materials-csv" title="Charger une liste d'outils et matériel (CSV/TSV/TXT)" type="button">
+<span class="material-icons-round text-sm">upload_file</span>
+            Charger fichier (CSV/TSV/TXT)
+          </button>
+<button class="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-slate-200 transition-colors flex items-center gap-1" id="btn-download-tools-materials-template" title="Télécharger un modèle CSV" type="button">
+<span class="material-icons-round text-sm">download</span>
+            Modèle CSV
+          </button>
+<span class="text-[10px] text-slate-400 italic" id="tools-materials-csv-status"></span>
+</div>
+<input accept=".csv,.tsv,.txt" class="hidden" id="tools-materials-csv-file-input" type="file"/>
+
+<div class="grid grid-cols-1 sm:grid-cols-12 gap-1">
+<input class="px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none text-xs sm:col-span-1" id="new-tools-materials-cat-input" list="tools-materials-cat-datalist" placeholder="Catégorie (optionnel)..." type="text"/>
+<input class="px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none text-xs sm:col-span-1" id="new-tools-materials-subcat-input" list="tools-materials-subcat-datalist" placeholder="Sous-catégorie (optionnel)..." type="text"/>
+<datalist id="tools-materials-cat-datalist"></datalist>
+<datalist id="tools-materials-subcat-datalist"></datalist>
+<div class="flex gap-1 flex-col sm:flex-row sm:items-center sm:col-span-10">
+<input class="flex-1 px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none text-xs" id="new-tools-materials-item-input" placeholder="Ajouter un outil ou matériel..." type="text"/>
+<button class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-bold hover:bg-indigo-200 transition-colors flex items-center justify-center h-[26px]" data-action="add-tools-materials-item" title="Ajouter un outil ou matériel" type="button">
+<span class="material-icons-round text-sm">add</span>
+</button>
+</div>
+</div>
+<ul class="space-y-0.5 mt-2" id="tools-materials-list"></ul>
+<p class="text-xs text-slate-400 italic mt-1" id="no-tools-materials-text">Aucun outil / matériel défini</p>
+</div>
+<p class="text-[11px] text-slate-500 mt-2">
+Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellement. Exemple : <span class="font-semibold">Moodle — Forum</span>. Vous pouvez aussi réorganiser les éléments par glisser-déposer.
+</p>
+</div>
+</details>
+</div>
+</div>
+
 </section>
 </div><!-- /kpwiz-steps-wrapper -->
 </div>
@@ -2924,6 +2996,7 @@ details[data-readonly="true"] label{ cursor: default; }
 </div>
 </div>
 <div class="space-y-1 pt-1 border-t border-slate-100">
+
 <div class="space-y-0.5">
 <span class="text-[10px] w-12 text-slate-400 font-bold uppercase flex items-center gap-0.5 relative z-10">
 <span class="material-icons-round text-[10px]">
@@ -2981,6 +3054,19 @@ details[data-readonly="true"] label{ cursor: default; }
           </option>
 </select>
 </div>
+<div class="space-y-0.5">
+  <span class="text-[10px] w-12 text-slate-400 font-bold uppercase flex items-center gap-0.5 relative z-10">
+    <span class="material-icons-round text-[10px]">fact_check</span>
+    <span>Évaluation</span>
+  </span>
+  <select class="evaluation-select w-full px-1 py-0.5 text-[10px] rounded border border-slate-200 focus:ring-1 focus:ring-indigo-500 bg-white outline-none h-[22px]" data-action-change="update-stats">
+    <option value="Aucune" selected>Aucune</option>
+    <option value="Diagnostique">Diagnostique</option>
+    <option value="Formative">Formative</option>
+    <option value="Certificative/Sommative">Certificative/Sommative</option>
+  </select>
+</div>
+
 </div>
 </div>
 <div class="lg:flex-1 space-y-2 step-right-col"><details class="step-right-group border border-slate-200 rounded-lg bg-white"><summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5 bg-slate-50 rounded-lg"><span class="material-icons-round text-[10px] text-slate-400">view_agenda</span><span>Instructions, ressources et notes</span><span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal"><span>Afficher</span><span class="material-icons-round text-[14px] step-group-chevron">expand_more</span></span></summary><div class="px-2 pb-2 pt-2 space-y-2"><details class="step-right-section border border-slate-200 rounded-lg bg-white">
@@ -3104,7 +3190,11 @@ details[data-readonly="true"] label{ cursor: default; }
         </button>
 </div>
 </div>
-</details></div></details><details class="step-right-group border border-slate-200 rounded-lg bg-white"><summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5 bg-slate-50 rounded-lg"><span class="material-icons-round text-[10px] text-slate-400">insights</span><span>Évaluation &amp; suivi</span><span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal"><span>Afficher</span><span class="material-icons-round text-[14px] step-group-chevron">expand_more</span></span></summary><div class="px-2 pb-2 pt-2"><textarea class="step-input-eval-followup w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y leading-relaxed bg-slate-50" rows="3"></textarea></div></details></div>
+</details></details>
+<details class="step-right-group border border-slate-200 rounded-lg bg-white w-full md:col-span-2">  <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5 bg-slate-50 rounded-lg">    <span class="material-icons-round text-[10px] text-slate-400">construction</span>    <span>Outils et matériel (activité)</span>    <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">      <span>Afficher</span>      <span class="material-icons-round text-[14px] step-group-chevron">expand_more</span>    </span>  </summary>  <div class="px-2 pb-2 pt-2">    <div class="step-tools-materials-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[160px] overflow-auto text-[11px] space-y-1"></div>    <select class="step-tools-materials-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>    <p class="text-[11px] text-slate-400 mt-1">Sélection : cochez les outils et matériels requis pour cette activité (ajoutez une remarque si nécessaire).</p>  </div></details>
+</div></details>
+
+</div>
 </div>
 </div>
 </div>
@@ -3261,6 +3351,7 @@ const root = document.getElementById('activities-root');
             ta.value = lines.join('\n');
             _setNoDataTextVisible(document.getElementById('no-aims-text'), lines.length === 0);
             try { updateStatsDebounced(); } catch (_) {}
+            try { refreshAllStepToolsMaterialsOptions(); } catch (_) {}
         }
 
 
@@ -3292,7 +3383,143 @@ const root = document.getElementById('activities-root');
 
         
 
-        // --- CSV import helpers for Objectifs & Résultats (texte) ---
+        
+
+        // --- Outils & matériel (liste catégorisée optionnelle) ---
+        function getToolsMaterialsItemsFromUI() {
+            const list = document.getElementById('tools-materials-list');
+            if (!list) return [];
+            const out = [];
+            list.querySelectorAll('li').forEach(li => {
+                const cat = (li.querySelector('.tm-cat-input')?.value || li.getAttribute('data-cat') || '').trim();
+                const sub = (li.querySelector('.tm-subcat-input')?.value || li.getAttribute('data-subcat') || '').trim();
+                const item = (li.querySelector('.tm-item-input')?.value || li.getAttribute('data-item') || '').trim();
+                if (!item) return;
+                out.push({ categorie: cat, sousCategorie: sub, item });
+            });
+            return out;
+        }
+
+        function refreshToolsMaterialsDatalists() {
+            try {
+                const items = getToolsMaterialsItemsFromUI();
+                const cats = new Set();
+                const subs = new Set();
+                items.forEach(o => {
+                    const c = String(o?.categorie || '').trim();
+                    const s = String(o?.sousCategorie || '').trim();
+                    if (c) cats.add(c);
+                    if (s) subs.add(s);
+                });
+                const catDl = document.getElementById('tools-materials-cat-datalist');
+                const subDl = document.getElementById('tools-materials-subcat-datalist');
+                if (catDl) catDl.innerHTML = Array.from(cats).sort().map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
+                if (subDl) subDl.innerHTML = Array.from(subs).sort().map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
+            } catch (_) {}
+        }
+
+        function syncToolsMaterialsTextareaFromList() {
+            const ta = document.getElementById('param-tools-materials');
+            const list = document.getElementById('tools-materials-list');
+            if (!ta || !list) return;
+            const items = getToolsMaterialsItemsFromUI();
+            const lines = items.map(o => _formatCatSubItemLine(o.categorie, o.sousCategorie, o.item)).filter(Boolean);
+            ta.value = lines.join('\n');
+            _setNoDataTextVisible(document.getElementById('no-tools-materials-text'), lines.length === 0);
+            refreshToolsMaterialsDatalists();
+            try { updateStatsDebounced(); } catch (_) {}
+        }
+
+        function addToolsMaterialsItem(obj) {
+            const list = document.getElementById('tools-materials-list');
+            if (!list) return;
+            const cat = (obj && (obj.categorie ?? obj.cat ?? obj.category) || '').toString().trim();
+            const sub = (obj && (obj.sousCategorie ?? obj.subcat ?? obj.subCategory ?? obj.subcategory) || '').toString().trim();
+            const item = (obj && (obj.item ?? obj.text ?? obj.label) || '').toString().trim();
+            if (!item) return;
+
+            const li = document.createElement('li');
+            li.className = 'flex items-start gap-1 bg-white border border-slate-200 rounded p-1';
+            li.setAttribute('data-cat', cat);
+            li.setAttribute('data-subcat', sub);
+            li.setAttribute('data-item', item);
+
+            li.innerHTML = `
+                <span class="material-icons-round text-slate-400 text-sm cursor-grab drag-handle-tools-materials drag-handle mt-1" title="Glisser-déposer pour réorganiser" aria-label="Glisser-déposer pour réorganiser">drag_indicator</span>
+                <div class="flex flex-col sm:flex-row gap-1 flex-1 min-w-0">
+                    <input class="tm-cat-input px-2 py-1 border border-slate-200 rounded text-xs w-full sm:w-[28%]" placeholder="Catégorie..." value="${escapeHtml(cat)}" />
+                    <input class="tm-subcat-input px-2 py-1 border border-slate-200 rounded text-xs w-full sm:w-[28%]" placeholder="Sous-catégorie..." value="${escapeHtml(sub)}" />
+                    <input class="tm-item-input px-2 py-1 border border-slate-200 rounded text-xs flex-1 min-w-0" placeholder="Outil / matériel..." value="${escapeHtml(item)}" />
+                </div>
+                <button class="text-[10px] px-2 py-1 rounded bg-red-50 text-red-700 hover:bg-red-100 border border-red-100" data-action="remove-tools-materials-item" title="Supprimer" type="button">
+                    <span class="material-icons-round text-sm">delete</span>
+                </button>
+            `;
+
+            const onAnyInput = () => syncToolsMaterialsTextareaFromList();
+            li.querySelectorAll('input').forEach(inp => {
+                inp.addEventListener('input', onAnyInput);
+                inp.addEventListener('change', onAnyInput);
+            });
+
+            list.appendChild(li);
+            syncToolsMaterialsTextareaFromList();
+        }
+
+        function safeAddToolsMaterialsItem() {
+            const itemIn = document.getElementById('new-tools-materials-item-input');
+            const catIn = document.getElementById('new-tools-materials-cat-input');
+            const subIn = document.getElementById('new-tools-materials-subcat-input');
+            const item = (itemIn?.value || '').trim();
+            if (!item) return;
+            const cat = (catIn?.value || '').trim();
+            const sub = (subIn?.value || '').trim();
+            addToolsMaterialsItem({ categorie: cat, sousCategorie: sub, item });
+            if (itemIn) itemIn.value = '';
+            if (catIn) catIn.value = '';
+            if (subIn) subIn.value = '';
+            try { itemIn?.focus(); } catch (_) {}
+        }
+
+        function handleToolsMaterialsCsvFileImport(file) {
+            _readTextFile(file, (err, content) => {
+                const status = document.getElementById('tools-materials-csv-status');
+                if (err) {
+                    console.error('[ToolsMaterialsCsvImportError]', err);
+                    if (status) status.textContent = 'Erreur CSV';
+                    return;
+                }
+                const items = _parseCategorisedListFile(content, file && file.name);
+                let added = 0;
+                try {
+                    items.forEach(it => {
+                        const before = document.getElementById('tools-materials-list')?.querySelectorAll('.tm-item-input')?.length || 0;
+                        addToolsMaterialsItem(it);
+                        const after = document.getElementById('tools-materials-list')?.querySelectorAll('.tm-item-input')?.length || 0;
+                        if (after > before) added += 1;
+                    });
+                } catch (e) {
+                    console.error('[ToolsMaterialsCsvImportError2]', e);
+                }
+                if (status) status.textContent = `Importé : ${added} élément(s)`;
+            });
+        }
+
+        function downloadToolsMaterialsTemplateCSV() {
+            const csv = 'categorie;sous_categorie;item\n'
+                      + '"Plateforme";"LMS";"Moodle — Forum"\n'
+                      + '"Outil";"Collaboratif";"Padlet — Mur"\n'
+                      + '"Matériel";"Salle";"Paperboard + marqueurs"\n';
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'modele_outils_materiel.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+// --- CSV import helpers for Objectifs & Résultats (texte) ---
         function _parseSimpleListCSV(csvContent, fileName) {
             // Robust import for simple lists (Objectifs / Résultats texte)
             // Supports: CSV (comma/semicolon), TSV, and TXT (one item per line).
@@ -3485,7 +3712,7 @@ const root = document.getElementById('activities-root');
 
             const catKeys = ['categorie', 'catégorie', 'category', 'cat'];
             const subKeys = ['sous_categorie', 'sous-categorie', 'souscat', 'souscatégorie', 'subcategory', 'subcat'];
-            const itemKeys = ['item', 'objectif', 'objectifs', 'outcome', 'outcomes', 'résultat', 'resultat', 'résultats', 'resultats', 'texte', 'text', 'label'];
+            const itemKeys = ['item', 'objectif', 'objectifs', 'outcome', 'outcomes', 'résultat', 'resultat', 'résultats', 'resultats', 'texte', 'text', 'label', 'outil', 'outils', 'matériel', 'materiel', 'tools', 'tool', 'material', 'materials'];
 
             function findIndex(keys) {
                 for (const k of keys) {
@@ -4457,6 +4684,22 @@ function openAimsFromStep(btn) {
                     syncOutcomesTextTextareaFromList();
                 }
 
+                // Tools & materials
+                const tmTa = document.getElementById('param-tools-materials');
+                const tmList = document.getElementById('tools-materials-list');
+                if (tmTa && tmList) {
+                    tmList.innerHTML = '';
+                    const fromLoad = (window.__kpwizToolsMaterialsItemsFromLoad && Array.isArray(window.__kpwizToolsMaterialsItemsFromLoad)) ? window.__kpwizToolsMaterialsItemsFromLoad : null;
+                    const lines = fromLoad ? [] : ((typeof _parseTextList === 'function') ? _parseTextList(tmTa.value) : String(tmTa.value||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean));
+                    if (fromLoad) {
+                        fromLoad.forEach(o => addToolsMaterialsItem(o));
+                        window.__kpwizToolsMaterialsItemsFromLoad = null;
+                    } else {
+                        lines.forEach(v => { const o = _parseCatSubItemLine(v); if (o) addToolsMaterialsItem(o); });
+                    }
+                    syncToolsMaterialsTextareaFromList();
+                }
+
                 // Enter key adds item (only on item fields)
                 const aIn = document.getElementById('new-aim-item-input');
                 if (aIn && !aIn.__kpListBound) {
@@ -4470,6 +4713,13 @@ function openAimsFromStep(btn) {
                     oIn.__kpListBound = true;
                     oIn.addEventListener('keydown', (e) => {
                         if (e.key === 'Enter') { e.preventDefault(); safeAddOutcomesTextItem(); }
+                    });
+                }
+                const tmIn = document.getElementById('new-tools-materials-item-input');
+                if (tmIn && !tmIn.__kpListBound) {
+                    tmIn.__kpListBound = true;
+                    tmIn.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') { e.preventDefault(); safeAddToolsMaterialsItem(); }
                     });
                 }
             } catch (e) {
@@ -5262,6 +5512,8 @@ label_learning_time: "Temps d'Apprentissage (Cible)",
                 opt_level_expert: "Expert",
                 label_target_audience: "Public cible",
                 label_prerequisites: "Prérequis",
+                label_tools_materials: "Outils et matériel",
+                ph_tools_materials: "Entrez les outils et matériels...",
                 opt_mode_placeholder: "Sélectionnez une modalité...",
                 opt_mode_online: "Distanciel (en ligne)",
                 opt_mode_blended: "Hybride (sur site et en ligne)",
@@ -5707,6 +5959,21 @@ title_new_activity: "Ajouter un nouveau module",
                     ghostClass: 'sortable-ghost',
                     dragClass: 'sortable-drag',
                     onEnd: function () { try { syncOutcomesTextTextareaFromList(); } catch (_) {} }
+                });
+            }
+
+
+            const toolsMaterialsListEl = document.getElementById('tools-materials-list');
+            if (toolsMaterialsListEl) {
+                new Sortable(toolsMaterialsListEl, {
+                    animation: 150,
+                    handle: '.drag-handle-tools-materials',
+                    ghostClass: 'sortable-ghost',
+                    dragClass: 'sortable-drag',
+                    onEnd: function () {
+                        try { syncToolsMaterialsTextareaFromList(); } catch (_) {}
+                        try { refreshAllStepToolsMaterialsOptions(); } catch (_) {}
+                    }
                 });
             }
 
@@ -7352,7 +7619,253 @@ function updateOutcomeBloom(levelSelect) {
             });
         }
 
-        function refreshAllStepOutcomesOptions() {
+        
+
+        // --- Step-level tools/materials selection (same checkbox+creation system as Alignement) ---
+        function getGlobalToolsMaterialsOptions() {
+            const ta = document.getElementById('param-tools-materials');
+            const raw = ta ? (ta.value || '') : '';
+            let lines = [];
+            try {
+                if (typeof _parseTextList === 'function') {
+                    lines = _parseTextList(raw);
+                } else {
+                    lines = String(raw || '').split(/\r\n|\r|\n/).map(s => s.trim()).filter(Boolean);
+                }
+            } catch (_) {
+                lines = String(raw || '').split(/\r\n|\r|\n/).map(s => s.trim()).filter(Boolean);
+            }
+            const seen = new Set();
+            const out = [];
+            (lines || []).forEach(v0 => {
+                const v = String(v0 || '').trim();
+                if (!v) return;
+                const k = v.toLowerCase();
+                if (seen.has(k)) return;
+                seen.add(k);
+                out.push(v);
+            });
+            return out;
+        }
+
+        function populateStepToolsMaterialsSelect(stepEl, selected = null) {
+            if (!stepEl) return;
+            const sel = stepEl.querySelector('.step-tools-materials-select');
+            if (!sel) return;
+
+            const options = (typeof getGlobalToolsMaterialsOptions === 'function') ? (getGlobalToolsMaterialsOptions() || []) : [];
+            const currentSelected = selected
+                ? (Array.isArray(selected) ? selected.map(v => String(v || '').trim()).filter(Boolean) : _parseTextList(String(selected)))
+                : Array.from(sel.selectedOptions || []).map(o => String(o.value || '').trim()).filter(Boolean);
+
+            sel.innerHTML = '';
+            if (!options.length) {
+                (currentSelected || []).forEach(v => {
+                    if (!v) return;
+                    const opt = document.createElement('option');
+                    opt.value = v;
+                    opt.textContent = v;
+                    opt.selected = true;
+                    sel.appendChild(opt);
+                });
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = "Aucun outil/matériel défini (ajoutez-en dans les paramètres)";
+                opt.disabled = true;
+                if (!currentSelected || !currentSelected.length) opt.selected = true;
+                sel.appendChild(opt);
+                try { _renderStepToolsMaterialsCheckboxesWithNotes(stepEl, sel, '.step-tools-materials-checkboxes', 'step-toolmat-cb', "Aucun outil/matériel disponible."); } catch (_) {}
+                return;
+            }
+
+            const seen = new Set();
+            options.forEach(label => {
+                const v = String(label || '').trim();
+                if (!v) return;
+                const k = v.toLowerCase();
+                if (seen.has(k)) return;
+                seen.add(k);
+                const opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = v;
+                opt.selected = (currentSelected || []).includes(v);
+                sel.appendChild(opt);
+            });
+
+            (currentSelected || []).forEach(v => {
+                const vv = String(v || '').trim();
+                if (!vv) return;
+                const k = vv.toLowerCase();
+                if (seen.has(k)) return;
+                const opt = document.createElement('option');
+                opt.value = vv;
+                opt.textContent = vv;
+                opt.selected = true;
+                sel.appendChild(opt);
+            });
+
+            try { _renderStepToolsMaterialsCheckboxesWithNotes(stepEl, sel, '.step-tools-materials-checkboxes', 'step-toolmat-cb', "Aucun outil/matériel disponible."); } catch (_) {}
+        }
+
+        function getSelectedStepToolsMaterials(stepEl) {
+            const sel = stepEl ? stepEl.querySelector('.step-tools-materials-select') : null;
+            if (!sel) return [];
+            return Array.from(sel.selectedOptions || []).map(o => String(o.value || '').trim()).filter(Boolean);
+        }
+
+        function refreshAllStepToolsMaterialsOptions() {
+            document.querySelectorAll('.step-card').forEach(stepEl => {
+                try { populateStepToolsMaterialsSelect(stepEl, null); } catch (_) {}
+            });
+        }
+
+        // --- Tools/materials notes (per activity) ---
+        function __normaliseToolsMaterialsNotes(raw) {
+            if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+            const out = {};
+            try {
+                Object.keys(raw).forEach(k => {
+                    const kk = String(k || '').trim();
+                    if (!kk) return;
+                    const vv = raw[k];
+                    out[kk] = (vv == null) ? '' : String(vv);
+                });
+            } catch (_) {}
+            return out;
+        }
+
+        function __getStepToolMatNotesMap(stepEl) {
+            if (!stepEl) return {};
+            let raw = null;
+            try { raw = stepEl.dataset ? stepEl.dataset.tmNotes : null; } catch (_) { raw = null; }
+            if (!raw) return {};
+            try {
+                const parsed = JSON.parse(raw);
+                return __normaliseToolsMaterialsNotes(parsed);
+            } catch (_) {
+                return {};
+            }
+        }
+
+        function __setStepToolMatNotesMap(stepEl, mapObj) {
+            if (!stepEl) return;
+            const m = __normaliseToolsMaterialsNotes(mapObj);
+            try { stepEl.dataset.tmNotes = JSON.stringify(m); } catch (_) {}
+        }
+
+        function __toOneLineNote(note) {
+            const s = (note == null) ? '' : String(note);
+            return s.replace(/\r\n|\r|\n/g, ' / ').replace(/\s+/g, ' ').trim();
+        }
+
+        function getSelectedStepToolsMaterialsNotes(stepEl) {
+            const selected = (typeof getSelectedStepToolsMaterials === 'function') ? (getSelectedStepToolsMaterials(stepEl) || []) : [];
+            const map = __getStepToolMatNotesMap(stepEl);
+            const out = {};
+            (selected || []).forEach(k0 => {
+                const k = String(k0 || '').trim();
+                if (!k) return;
+                const v = (map && Object.prototype.hasOwnProperty.call(map, k)) ? map[k] : '';
+                const vv = (v == null) ? '' : String(v);
+                const t = vv.trim();
+                if (t) out[k] = vv; // keep raw (may contain newlines)
+            });
+            return out;
+        }
+
+        function formatSelectedStepToolsMaterialsWithNotes(stepEl) {
+            const selected = (typeof getSelectedStepToolsMaterials === 'function') ? (getSelectedStepToolsMaterials(stepEl) || []) : [];
+            const map = __getStepToolMatNotesMap(stepEl);
+            const parts = [];
+            (selected || []).forEach(k0 => {
+                const k = String(k0 || '').trim();
+                if (!k) return;
+                const raw = (map && Object.prototype.hasOwnProperty.call(map, k)) ? map[k] : '';
+                const note = (raw == null) ? '' : String(raw).trim();
+                if (note) parts.push(k + ' — ' + __toOneLineNote(note));
+                else parts.push(k);
+            });
+            return parts;
+        }
+
+        function _renderStepToolsMaterialsCheckboxesWithNotes(stepEl, selectEl, containerSelector, checkboxClass, emptyText) {
+            if (!stepEl || !selectEl) return;
+            const box = stepEl.querySelector(containerSelector);
+            if (!box) return;
+            box.innerHTML = '';
+
+            const opts = Array.from(selectEl.options || []).filter(o => !(o.disabled && !o.value));
+            const usable = opts.filter(o => String(o.value || '').trim());
+            if (!usable.length) {
+                const div = document.createElement('div');
+                div.className = 'text-slate-400 italic';
+                div.textContent = emptyText || 'Aucun outil/matériel disponible.';
+                box.appendChild(div);
+                return;
+            }
+
+            const notesMap = __getStepToolMatNotesMap(stepEl);
+
+            usable.forEach((o, idx) => {
+                const label = String(o.value || '').trim();
+                if (!label) return;
+
+                const row = document.createElement('div');
+                row.className = 'p-1 rounded border border-slate-200 bg-white/60';
+
+                const lab = document.createElement('label');
+                lab.className = 'flex items-start gap-2 cursor-pointer select-none';
+
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.className = 'mt-0.5 ' + (checkboxClass || '');
+                cb.value = label;
+                cb.checked = !!o.selected;
+
+                const sp = document.createElement('span');
+                sp.className = 'leading-snug';
+                sp.textContent = label;
+
+                lab.appendChild(cb);
+                lab.appendChild(sp);
+                row.appendChild(lab);
+
+                const noteId = 'tm_note_' + (Date.now().toString(36)) + '_' + idx + '_' + Math.floor(Math.random() * 1e6).toString(36);
+                cb.dataset.noteId = noteId;
+
+                const ta = document.createElement('textarea');
+                ta.id = noteId;
+                ta.className = 'step-toolmat-note w-full px-2 py-1 text-[11px] border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y bg-white mt-1';
+                ta.rows = 2;
+                ta.placeholder = 'Remarque (optionnel) — ex. consignes, paramètres, variante';
+                ta.dataset.tool = label;
+                const v = (notesMap && Object.prototype.hasOwnProperty.call(notesMap, label)) ? notesMap[label] : '';
+                ta.value = (v == null) ? '' : String(v);
+
+                if (!cb.checked) {
+                    ta.classList.add('hidden');
+                    ta.disabled = true;
+                }
+
+                // Toggle visibility on check/uncheck (in addition to global sync handler)
+                cb.addEventListener('change', () => {
+                    try {
+                        if (cb.checked) {
+                            ta.disabled = false;
+                            ta.classList.remove('hidden');
+                        } else {
+                            ta.disabled = true;
+                            ta.classList.add('hidden');
+                        }
+                    } catch (_) {}
+                });
+
+                row.appendChild(ta);
+                box.appendChild(row);
+            });
+        }
+
+function refreshAllStepOutcomesOptions() {
             document.querySelectorAll('.step-card').forEach(stepEl => {
                 try { populateStepOutcomesSelect(stepEl, null); } catch (_) {}
             });
@@ -7761,7 +8274,14 @@ function refreshAllModuleAimsOptions() {
                             try { refreshAllModuleAimsOptions(); } catch (_) {}
                     try { refreshAllModuleAimsOptions(); } catch (_) {}
                         });
-                        obs3.observe(alist, { childList: true, subtree: true });
+                                            const tmlist = document.getElementById('tools-materials-list');
+                    if (tmlist) {
+                        const obsTM = new MutationObserver(function(){
+                            try { refreshAllStepToolsMaterialsOptions(); } catch (_) {}
+                        });
+                        obsTM.observe(tmlist, { childList: true, subtree: true });
+                    }
+obs3.observe(alist, { childList: true, subtree: true });
                     }
                 } catch (e) { console.warn('Aims/Outcomes observers init failed', e); }
             });
@@ -7775,6 +8295,18 @@ function refreshAllModuleAimsOptions() {
             }
             if (t.matches('input.step-outcome-cb')) {
                 _syncHiddenSelectFromTextCheckbox(t, '.step-outcomes-select');
+            }
+            if (t.matches('input.step-toolmat-cb')) {
+                _syncHiddenSelectFromTextCheckbox(t, '.step-tools-materials-select');
+                try {
+                    const sid = t.dataset ? t.dataset.noteId : null;
+                    const stepEl = t.closest('.step-card');
+                    const ta = (sid && stepEl) ? stepEl.querySelector('#' + sid) : null;
+                    if (ta) {
+                        if (t.checked) { ta.disabled = false; ta.classList.remove('hidden'); }
+                        else { ta.disabled = true; ta.classList.add('hidden'); }
+                    }
+                } catch (_) {}
             }
             if (t.matches('input.module-aim-cb')) {
                 _syncHiddenSelectFromModuleTextCheckbox(t, '.module-aims-select', setModuleSelectedAims, updateModuleAimsSummary);
@@ -8374,6 +8906,8 @@ function buildExportProjectData() {
                     niveau: document.getElementById('param-level')?.value || 'unspecified',
                     publicCible: document.getElementById('param-target-audience')?.value || '',
                     prerequis: document.getElementById('param-prerequisites')?.value || '',
+                    outilsMateriel: document.getElementById('param-tools-materials')?.value || '',
+                    outilsMaterielItems: (typeof getToolsMaterialsItemsFromUI === 'function') ? getToolsMaterialsItemsFromUI() : [],
                     modalite: document.getElementById('param-mode').value,
                     tailleCohorte: (document.getElementById('global-class-size')?.value),
                     dureeApprentissageValeur: (document.getElementById('param-learning-val')?.value),
@@ -8431,7 +8965,8 @@ function buildExportProjectData() {
                                 formateur: stepEl.querySelector('.trainer-select').value,
                                 lieu: stepEl.querySelector('.place-select').value,
                                 temps: stepEl.querySelector('.time-select').value,
-                                objectifActivite: stepEl.querySelector('.step-input-objective').value,
+                                                                evaluation: (stepEl.querySelector('.evaluation-select')?.value || 'Aucune'),
+objectifActivite: stepEl.querySelector('.step-input-objective').value,
                                 aFaire: stepEl.querySelector('.step-input-tasks').value,
                                 aFaireFormateur: stepEl.querySelector('.step-input-trainer-tasks').value,
                                 notes: stepEl.querySelector('.step-input-notes').value,
@@ -8440,8 +8975,10 @@ function buildExportProjectData() {
                                 competencesSujet: getSelectedStepCompetenceIds(stepEl),
                                 competencesTransversales: getSelectedStepCompetencesTransversalesIds(stepEl),
                                 objectifsCibles: (typeof getSelectedStepAims === 'function') ? getSelectedStepAims(stepEl) : [],
-                                resultatsApprentissageCibles: (typeof getSelectedStepOutcomes === 'function') ? getSelectedStepOutcomes(stepEl) : []
-                            };
+                                resultatsApprentissageCibles: (typeof getSelectedStepOutcomes === 'function') ? getSelectedStepOutcomes(stepEl) : [],
+                                outilsMaterielCibles: (typeof getSelectedStepToolsMaterials === 'function') ? getSelectedStepToolsMaterials(stepEl) : []
+                            ,
+                                outilsMaterielNotes: (typeof getSelectedStepToolsMaterialsNotes === 'function') ? getSelectedStepToolsMaterialsNotes(stepEl) : {}};
                             momentData.activites.push(stepObj);
                             moduleData.activites.push({ ...stepObj });
                         });
@@ -8461,7 +8998,8 @@ function buildExportProjectData() {
                             formateur: stepEl.querySelector('.trainer-select').value,
                             lieu: stepEl.querySelector('.place-select').value,
                             temps: stepEl.querySelector('.time-select').value,
-                            objectifActivite: stepEl.querySelector('.step-input-objective').value,
+                                                            evaluation: (stepEl.querySelector('.evaluation-select')?.value || 'Aucune'),
+objectifActivite: stepEl.querySelector('.step-input-objective').value,
                             aFaire: stepEl.querySelector('.step-input-tasks').value,
                             aFaireFormateur: stepEl.querySelector('.step-input-trainer-tasks').value,
                                 notes: stepEl.querySelector('.step-input-notes').value,
@@ -8470,8 +9008,10 @@ function buildExportProjectData() {
                                 competencesSujet: getSelectedStepCompetenceIds(stepEl),
                                 competencesTransversales: getSelectedStepCompetencesTransversalesIds(stepEl),
                                 objectifsCibles: (typeof getSelectedStepAims === 'function') ? getSelectedStepAims(stepEl) : [],
-                                resultatsApprentissageCibles: (typeof getSelectedStepOutcomes === 'function') ? getSelectedStepOutcomes(stepEl) : []
-                        });
+                                resultatsApprentissageCibles: (typeof getSelectedStepOutcomes === 'function') ? getSelectedStepOutcomes(stepEl) : [],
+                                outilsMaterielCibles: (typeof getSelectedStepToolsMaterials === 'function') ? getSelectedStepToolsMaterials(stepEl) : []
+                        ,
+                                outilsMaterielNotes: (typeof getSelectedStepToolsMaterialsNotes === 'function') ? getSelectedStepToolsMaterialsNotes(stepEl) : {}});
                     });
                 }
 
@@ -9005,11 +9545,17 @@ function forceCanonicalImport(payload) {
         trainer: asStr(s?.trainer ?? s?.formateur ?? "present"),
         place: asStr(s?.place ?? s?.lieu ?? "situ"),
         time: asStr(s?.time ?? s?.temps ?? "sync"),
-        objective: asStr(s?.objective ?? s?.objectifActivite ?? ""),
+                evaluation: asStr(s?.evaluation ?? s?.evaluationType ?? s?.typeEvaluation ?? 'Aucune'),
+objective: asStr(s?.objective ?? s?.objectifActivite ?? ""),
         tasks: asStr(s?.tasks ?? s?.aFaire ?? ""),
         trainerTasks: asStr(s?.trainerTasks ?? s?.aFaireFormateur ?? s?.trainer_actions ?? s?.trainerActions ?? ''),
         notes: asStr(s?.notes ?? ""),
-        evaluationSuivi: asStr(s?.evaluationSuivi ?? s?.evaluation ?? s?.suiviEvaluation ?? s?.followUp ?? s?.evalFollowUp ?? '')
+        evaluationSuivi: asStr(s?.evaluationSuivi ?? s?.evaluation ?? s?.suiviEvaluation ?? s?.followUp ?? s?.evalFollowUp ?? ''),
+        detailsRegroupement: asStr(s?.detailsRegroupement ?? s?.groupDetails ?? ''),
+        objectifsCibles: Array.isArray(s?.objectifsCibles) ? s.objectifsCibles : (Array.isArray(s?.aimsTargeted) ? s.aimsTargeted : []),
+        resultatsApprentissageCibles: Array.isArray(s?.resultatsApprentissageCibles) ? s.resultatsApprentissageCibles : (Array.isArray(s?.outcomesTargeted) ? s.outcomesTargeted : []),
+        outilsMaterielCibles: Array.isArray(s?.outilsMaterielCibles) ? s.outilsMaterielCibles : (Array.isArray(s?.toolsMaterialsTargeted) ? s.toolsMaterialsTargeted : []),
+        outilsMaterielNotes: __normaliseToolsMaterialsNotes(s?.outilsMaterielNotes ?? s?.toolsMaterialsNotes ?? s?.toolsMaterialsNotesByItem ?? {})
     });
 
     const defaultMomentUnit = (document.getElementById("param-learning-unit")?.value || canonicalKeyParams.learningTimeUnit || "mins");
@@ -9102,13 +9648,20 @@ function validateAndNormaliseProjectPayload(payload) {
                     trainer: asStr(s?.trainer ?? s?.formateur ?? ''),
                     place: asStr(s?.place ?? s?.lieu ?? ''),
                     time: asStr(s?.time ?? s?.temps ?? ''),
-                    objective: asStr(s?.objective ?? s?.objectifActivite ?? ''),
+                                        evaluation: asStr(s?.evaluation ?? s?.evaluationType ?? s?.typeEvaluation ?? 'Aucune'),
+objective: asStr(s?.objective ?? s?.objectifActivite ?? ''),
                     tasks: asStr(s?.tasks ?? s?.aFaire ?? ''),
                     trainerTasks: asStr(s?.trainerTasks ?? s?.aFaireFormateur ?? s?.trainer_actions ?? s?.trainerActions ?? ''),
                     notes: asStr(s?.notes ?? ''),
                     competences: subj,
                     competencesSujet: subj,
-                    competencesTransversales: trans
+                    competencesTransversales: trans,
+                    evaluationSuivi: asStr(s?.evaluationSuivi ?? s?.evaluation ?? s?.suiviEvaluation ?? s?.followUp ?? s?.evalFollowUp ?? ''),
+                    detailsRegroupement: asStr(s?.detailsRegroupement ?? s?.groupDetails ?? ''),
+                    objectifsCibles: normIds(s?.objectifsCibles ?? s?.aimsTargeted ?? s?.objectifsCiblesActivite ?? []),
+                    resultatsApprentissageCibles: normIds(s?.resultatsApprentissageCibles ?? s?.outcomesTargeted ?? s?.resultatsCibles ?? []),
+                    outilsMaterielCibles: normIds(s?.outilsMaterielCibles ?? s?.toolsMaterialsTargets ?? s?.toolsMaterialsTargeted ?? []),
+                    outilsMaterielNotes: __normaliseToolsMaterialsNotes(s?.outilsMaterielNotes ?? s?.toolsMaterialsNotes ?? s?.toolsMaterialsNotesByItem ?? {})
                 });
             };
 
@@ -9392,6 +9945,8 @@ function normaliseAndRepairProject(project) {
     mirror("description", p.description);
     mirror("aims", p.objectifs);
     mirror("outcomesText", p.resultatsTexte);
+    mirror("toolsMaterials", p.outilsMateriel);
+    try { if (!kp.toolsMaterialsItems && Array.isArray(p.outilsMaterielItems)) kp.toolsMaterialsItems = p.outilsMaterielItems; } catch (_) {}
     mirror("learningTimeUnit", p.dureeApprentissageUnite);
     mirror("designedTimeUnit", p.dureeConcueUnite);
     mirror("learningTimeVal", p.dureeApprentissageValeur);
@@ -9553,6 +10108,11 @@ const __chartsSuspendFn = window.__setChartsSuspended;
                     if (__ai && Array.isArray(__ai)) window.__kpwizAimsItemsFromLoad = __ai;
                 } catch (_) {}
                 __setVal('param-outcomes-text', __pick(__kp.outcomesText, __pr.resultatsTexte, ""));
+                __setVal('param-tools-materials', __pick(__kp.toolsMaterials, __pr.outilsMateriel, ""));
+                try {
+                    const __ti = __pick(__kp.toolsMaterialsItems, __pr.outilsMaterielItems, null);
+                    if (__ti && Array.isArray(__ti)) window.__kpwizToolsMaterialsItemsFromLoad = __ti;
+                } catch (_) {}
                 try {
                     const __oi = __pick(__kp.outcomesTextItems, __pr.resultatsTexteItems, null);
                     if (__oi && Array.isArray(__oi)) window.__kpwizOutcomesTextItemsFromLoad = __oi;
@@ -10231,16 +10791,23 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
             stepEl.querySelector('.trainer-select').value = data.trainer || "present";
             stepEl.querySelector('.place-select').value = data.place || "situ";
             stepEl.querySelector('.time-select').value = data.time || "sync";
-            stepEl.querySelector('.step-input-objective').value = data.objective || "";
+                        stepEl.querySelector('.evaluation-select').value = data.evaluation || "Aucune";
+stepEl.querySelector('.step-input-objective').value = data.objective || "";
             stepEl.querySelector('.step-input-tasks').value = data.tasks || "";
             stepEl.querySelector('.step-input-trainer-tasks').value = data.trainerTasks || data.aFaireFormateur || data.trainer_actions || data.trainerActions || "";
             stepEl.querySelector('.step-input-notes').value = data.notes || "";
-            stepEl.querySelector('.step-input-eval-followup').value = data.evaluationSuivi || data.evaluation || data.suiviEvaluation || data.followUp || data.evalFollowUp || "";
+            const __ef = stepEl.querySelector('.step-input-eval-followup'); if (__ef) __ef.value = data.evaluationSuivi || data.evaluation || data.suiviEvaluation || data.followUp || data.evalFollowUp || "";
             try { populateStepCompetencesSelect(stepEl, data.competencesSujet || data.competences || data.competenceIds || data.competencies || data.competencesCiblees || []); } catch (_) {}
             try { populateStepCompetencesTransversalesSelect(stepEl, data.competencesTransversales || data.transversalCompetences || data.competences_transversales || []); } catch (_) {}
             try { populateStepAimsSelect(stepEl, data.objectifsCibles || data.aimsTargeted || data.objectifsCiblesActivite || data.objectifs || []); } catch (_) {}
             try { populateStepOutcomesSelect(stepEl, data.resultatsApprentissageCibles || data.outcomesTargeted || data.resultatsCibles || data.resultats || []); } catch (_) {}
-            if (((data.groupMode || data.regroupement) === 'groups')) stepEl.querySelector('.step-group-details').classList.remove('hidden');
+                        try {
+                const rawNotes = (data.outilsMaterielNotes || data.toolsMaterialsNotes || data.toolsMaterialsNotesByItem || {});
+                __setStepToolMatNotesMap(stepEl, __normaliseToolsMaterialsNotes(rawNotes));
+            } catch (_) {}
+            try { populateStepToolsMaterialsSelect(stepEl, data.outilsMaterielCibles || data.toolsMaterialsTargets || data.toolsMaterialsTargeted || []); } catch (_) {}
+try { const _tmD = stepEl.querySelector('.step-tools-materials-select')?.closest('details'); if (_tmD) _tmD.open = false; } catch (_) {}
+if (((data.groupMode || data.regroupement) === 'groups')) stepEl.querySelector('.step-group-details').classList.remove('hidden');
             container.appendChild(clone);
             updateStepType(stepEl.querySelector('.learning-type-select'));
         }
@@ -10330,6 +10897,8 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
             try { populateStepCompetencesTransversalesSelect(newStep, []); } catch (_) {}
             try { populateStepAimsSelect(newStep, []); } catch (_) {}
             try { populateStepOutcomesSelect(newStep, []); } catch (_) {}
+            try { populateStepToolsMaterialsSelect(newStep, []); } catch (_) {}
+try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closest('details'); if (_tmD) _tmD.open = false; } catch (_) {}
 // Default unit should be "min" (stored as 60 seconds)
             const unitSelect = newStep ? newStep.querySelector('.duration-unit') : null;
             if (unitSelect) unitSelect.value = 60;
@@ -11599,15 +12168,30 @@ function buildExportModel() {
                 groupDetails: asStr(a.detailsRegroupement),
                 aimsTargets: Array.isArray(a.objectifsCibles) ? a.objectifsCibles : [],
                 outcomesTargets: Array.isArray(a.resultatsApprentissageCibles) ? a.resultatsApprentissageCibles : [],
+                toolsMaterialsTargets: Array.isArray(a.outilsMaterielCibles) ? a.outilsMaterielCibles : [],
                 aimsTargetsText: (Array.isArray(a.objectifsCibles) ? a.objectifsCibles : []).join('; '),
                 outcomesTargetsText: (Array.isArray(a.resultatsApprentissageCibles) ? a.resultatsApprentissageCibles : []).join('; '),
+                toolsMaterialsTargetsText: (Array.isArray(a.outilsMaterielCibles) ? a.outilsMaterielCibles : []).join('; '),
+                toolsMaterialsNotes: __normaliseToolsMaterialsNotes(a.outilsMaterielNotes ?? a.toolsMaterialsNotes ?? a.toolsMaterialsNotesByItem ?? {}),
+                toolsMaterialsTargetsWithNotesText: (function(){
+                    const __t = (Array.isArray(a.outilsMaterielCibles) ? a.outilsMaterielCibles : []);
+                    const __n = __normaliseToolsMaterialsNotes(a.outilsMaterielNotes ?? a.toolsMaterialsNotes ?? a.toolsMaterialsNotesByItem ?? {});
+                    return (__t || []).map(v0 => {
+                        const v = String(v0 || '').trim();
+                        if (!v) return null;
+                        const nn = (__n && Object.prototype.hasOwnProperty.call(__n, v)) ? String(__n[v] || '').trim() : '';
+                        return nn ? (v + ' — ' + __toOneLineNote(nn)) : v;
+                    }).filter(Boolean).join('; ');
+                })(),
                 trainerKey: asStr(a.formateur),
                 placeKey: asStr(a.lieu),
                 timeKey: asStr(a.temps),
-                trainerLabel: safeOptLabel('opt', asStr(a.formateur), asStr(a.formateur)),
+                                evaluationKey: asStr(a.evaluation || 'Aucune'),
+trainerLabel: safeOptLabel('opt', asStr(a.formateur), asStr(a.formateur)),
                 placeLabel: safeOptLabel('opt', asStr(a.lieu), asStr(a.lieu)),
                 timeLabel: safeOptLabel('opt', asStr(a.temps), asStr(a.temps)),
-                durationValue: asStr(a.duree),
+                                evaluationLabel: asStr(a.evaluation || 'Aucune'),
+durationValue: asStr(a.duree),
                 durationUnitSecs: asStr(a.unite),
                 durationLabel: `${asStr(a.duree)} ${unitLabelFromSecs(a.unite)}`.trim(),
                 durationMinutes: Math.round((asNum(a.duree) * asNum(a.unite) / 60) * 100) / 100,
@@ -11679,7 +12263,7 @@ function buildTabularExportRows(model) {
         'Objectif',
         'Tâches',
         'Tâches du formateur',
-        'Évaluation / suivi',
+        'Évaluation',
         'Notes',
         "Type d'apprentissage",
         'Regroupement',
@@ -11688,6 +12272,7 @@ function buildTabularExportRows(model) {
         'Détails regroupement',
         'Objectifs ciblés',
         'Résultats ciblés',
+        'Outils et matériel (activité)',
         'Lieu',
         'Temps',
         'Présence formateur',
@@ -11741,7 +12326,7 @@ function buildTabularExportRows(model) {
                             safe(act.objective),
                             safe(act.tasks),
                             safe(act.trainerTasks),
-                            safe(act.evaluationSuivi),
+                            safe(act.evaluationLabel || act.evaluationKey || act.evaluation || ''),
                             safe(act.notes),
                             safe(act.typeLabel),
                             safe(act.groupingLabel),
@@ -11750,6 +12335,7 @@ function buildTabularExportRows(model) {
                             safe(act.groupDetails),
                             safe(act.aimsTargetsText),
                             safe(act.outcomesTargetsText),
+                            safe(act.toolsMaterialsTargetsWithNotesText || act.toolsMaterialsTargetsText),
                             safe(act.placeLabel),
                             safe(act.timeLabel),
                             safe(act.trainerLabel),
@@ -11918,6 +12504,8 @@ function exportDOCX() {
                 }
                 const modality = [safe(act.trainerLabel), safe(act.placeLabel), safe(act.timeLabel)].filter(Boolean).join(', ');
                 if (modality) metaParts.push(`Modalité : ${modality}`);
+                const evalLabel = safe(act.evaluationLabel || act.evaluationKey || act.evaluation || '');
+                if (evalLabel) metaParts.push(`Évaluation : ${evalLabel}`);
                 if (act.durationMinutes) metaParts.push(`Durée (min) : ${act.durationMinutes}`);
 
                 if (metaParts.length) {
@@ -11932,6 +12520,9 @@ function exportDOCX() {
                 }
                 if (safe(act.outcomesTargetsText)) {
                     children.push(new Paragraph({ children: [new TextRun({ text: 'Résultats ciblés : ', bold: true }), new TextRun(safe(act.outcomesTargetsText))] }));
+                }
+                if (safe(act.toolsMaterialsTargetsWithNotesText || act.toolsMaterialsTargetsText)) {
+                    children.push(new Paragraph({ children: [new TextRun({ text: 'Outils et matériel (activité) : ', bold: true }), new TextRun(safe(act.toolsMaterialsTargetsWithNotesText || act.toolsMaterialsTargetsText))] }));
                 }
                 if (safe(act.tasks)) {
                     children.push(new Paragraph({ children: [new TextRun({ text: 'Ce que les apprenants doivent faire : ', bold: true }), new TextRun(safe(act.tasks))] }));
@@ -12367,6 +12958,11 @@ function __deprecated__exportRichText_1() {
                 <h3>${t.label_prerequisites}</h3>
                 <p>${__nl2br(document.getElementById('param-prerequisites')?.value || '')}</p>
 
+                <h3>${t.label_tools_materials || 'Outils et matériel'}</h3>
+                <p>${__nl2br(document.getElementById('param-tools-materials')?.value || '')}</p>
+
+                <p>${__nl2br(document.getElementById('param-tools-materials')?.value || '')}</p>
+
                 <h3>${t.label_aims}</h3>
                 <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
 
@@ -12530,6 +13126,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                                 <strong>Compétences transversales :</strong> ${compTransHtml}
                                 <br><strong>Objectifs ciblés :</strong> ${Array.from(step.querySelector('.step-aims-select')?.selectedOptions || []).map(o => __esc((o.value||'').toString().trim())).filter(Boolean).join(' ; ') || '—'}
                                 <br><strong>Résultats ciblés :</strong> ${Array.from(step.querySelector('.step-outcomes-select')?.selectedOptions || []).map(o => __esc((o.value||'').toString().trim())).filter(Boolean).join(' ; ') || '—'}
+                                <br><strong>Outils et matériel (activité) :</strong> ${(() => { const parts = (typeof formatSelectedStepToolsMaterialsWithNotes==='function') ? formatSelectedStepToolsMaterialsWithNotes(step) : Array.from(step.querySelector('.step-tools-materials-select')?.selectedOptions || []).map(o => (o.value||'').toString().trim()).filter(Boolean); return parts.map(p => __esc(String(p||'').trim())).filter(Boolean).join(' ; ') || '—'; })()}
                             </div>
                             ${objective ? `<div class="task-box"><strong>Objectif de l'activité:</strong><br>${__nl2br(objective)}</div>` : ''}
                             ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${__nl2br(tasks)}</div>` : ''}
@@ -12860,6 +13457,9 @@ function __deprecated__exportCSV_2() {
 
                 <h3>${t.label_prerequisites}</h3>
                 <p>${__nl2br(document.getElementById('param-prerequisites')?.value || '')}</p>
+
+                <h3>${t.label_tools_materials || 'Outils et matériel'}</h3>
+                <p>${__nl2br(document.getElementById('param-tools-materials')?.value || '')}</p>
 
                 <h3>${t.label_aims}</h3>
                 <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
@@ -13426,6 +14026,9 @@ function __deprecated__exportCSV_3() {
                 <h3>${t.label_prerequisites}</h3>
                 <p>${__nl2br(document.getElementById('param-prerequisites')?.value || '')}</p>
 
+                <h3>${t.label_tools_materials || 'Outils et matériel'}</h3>
+                <p>${__nl2br(document.getElementById('param-tools-materials')?.value || '')}</p>
+
                 <h3>${t.label_aims}</h3>
                 <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
 
@@ -13868,6 +14471,9 @@ function __deprecated__exportCSV_4() {
                 <h3>${t.label_prerequisites}</h3>
                 <p>${__nl2br(document.getElementById('param-prerequisites')?.value || '')}</p>
 
+                <h3>${t.label_tools_materials || 'Outils et matériel'}</h3>
+                <p>${__nl2br(document.getElementById('param-tools-materials')?.value || '')}</p>
+
                 <h3>${t.label_aims}</h3>
                 <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
 
@@ -14089,6 +14695,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 '\\b ' + escapeRtf(t.label_description) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-description')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_target_audience) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-target-audience')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_prerequisites) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-prerequisites')?.value || '') + '\\par\\par' +
+                '\\b ' + escapeRtf(t.label_tools_materials || 'Outils et matériel') + ':\\b0\\par ' + escapeRtf(document.getElementById('param-tools-materials')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_aims) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-aims')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_outcomes_text) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-outcomes-text')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_outcomes) + ':\\b0\\par ';
@@ -14263,6 +14870,9 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
 
                 <h3>${t.label_prerequisites}</h3>
                 <p>${__nl2br(document.getElementById('param-prerequisites')?.value || '')}</p>
+
+                <h3>${t.label_tools_materials || 'Outils et matériel'}</h3>
+                <p>${__nl2br(document.getElementById('param-tools-materials')?.value || '')}</p>
 
                 <h3>${t.label_aims}</h3>
                 <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
@@ -14484,6 +15094,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 '\\b ' + escapeRtf(t.label_description) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-description')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_target_audience) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-target-audience')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_prerequisites) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-prerequisites')?.value || '') + '\\par\\par' +
+                '\\b ' + escapeRtf(t.label_tools_materials || 'Outils et matériel') + ':\\b0\\par ' + escapeRtf(document.getElementById('param-tools-materials')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_aims) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-aims')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_outcomes_text) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-outcomes-text')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_outcomes) + ':\\b0\\par ';
@@ -14784,6 +15395,9 @@ function __deprecated__exportRichText_6() {
                 <h3>${t.label_prerequisites}</h3>
                 <p>${__nl2br(document.getElementById('param-prerequisites')?.value || '')}</p>
 
+                <h3>${t.label_tools_materials || 'Outils et matériel'}</h3>
+                <p>${__nl2br(document.getElementById('param-tools-materials')?.value || '')}</p>
+
                 <h3>${t.label_aims}</h3>
                 <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
 
@@ -15083,6 +15697,9 @@ function exportCSV() {
                 <h3>${t.label_prerequisites}</h3>
                 <p>${__nl2br(document.getElementById('param-prerequisites')?.value || '')}</p>
 
+                <h3>${t.label_tools_materials || 'Outils et matériel'}</h3>
+                <p>${__nl2br(document.getElementById('param-tools-materials')?.value || '')}</p>
+
                 <h3>${t.label_aims}</h3>
                 <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
 
@@ -15304,6 +15921,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 '\\b ' + escapeRtf(t.label_description) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-description')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_target_audience) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-target-audience')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_prerequisites) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-prerequisites')?.value || '') + '\\par\\par' +
+                '\\b ' + escapeRtf(t.label_tools_materials || 'Outils et matériel') + ':\\b0\\par ' + escapeRtf(document.getElementById('param-tools-materials')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_aims) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-aims')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_outcomes_text) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-outcomes-text')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_outcomes) + ':\\b0\\par ';
@@ -15541,6 +16159,9 @@ let html = `
                 <h3>${t.label_prerequisites}</h3>
                 <p>${__nl2br(document.getElementById('param-prerequisites')?.value || '')}</p>
 
+                <h3>${t.label_tools_materials || 'Outils et matériel'}</h3>
+                <p>${__nl2br(document.getElementById('param-tools-materials')?.value || '')}</p>
+
                 <h3>${t.label_aims}</h3>
                 <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
 
@@ -15649,6 +16270,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const trainerText = step.querySelector('.trainer-select')?.selectedOptions?.[0]?.innerText || '';
                         const placeText = step.querySelector('.place-select')?.selectedOptions?.[0]?.innerText || '';
                         const timeText = step.querySelector('.time-select')?.selectedOptions?.[0]?.innerText || '';
+                        const evaluationText = step.querySelector('.evaluation-select')?.value || 'Aucune';
 
                         const durVal = step.querySelector('.duration-input')?.value || '';
                         const durUnitTxt = step.querySelector('.duration-unit')?.selectedOptions?.[0]?.innerText || '';
@@ -15659,13 +16281,14 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         html += `<div class="step-block type-${typeKey}">
                             <h4>${activityNumber}. ${__esc(stepTitle)} <span class="tag bg-${typeKey}" style="float: right;">${__esc(typeLabel)}</span></h4>
                             <div style="font-size: 0.9em; color: #64748b; margin-bottom: 10px;">
-                                <strong>Durée :</strong> ${__esc(duration)} |
+                                <strong>Durée :</strong> ${__esc(duration)} | <strong>Évaluation :</strong> ${__esc(evaluationText)} |
                                 <strong>Regroupement :</strong> ${__esc(groupInfo)} |
                                 <strong>Modalité :</strong> ${__esc(trainerText)}, ${__esc(placeText)}, ${__esc(timeText)}<br>
                                 <strong>Compétences du sujet :</strong> ${compSujetHtml}<br>
                                 <strong>Compétences transversales :</strong> ${compTransHtml}
                                 <br><strong>Objectifs ciblés :</strong> ${Array.from(step.querySelector('.step-aims-select')?.selectedOptions || []).map(o => __esc((o.value||'').toString().trim())).filter(Boolean).join(' ; ') || '—'}
                                 <br><strong>Résultats ciblés :</strong> ${Array.from(step.querySelector('.step-outcomes-select')?.selectedOptions || []).map(o => __esc((o.value||'').toString().trim())).filter(Boolean).join(' ; ') || '—'}
+                                <br><strong>Outils et matériel (activité) :</strong> ${(() => { const parts = (typeof formatSelectedStepToolsMaterialsWithNotes==='function') ? formatSelectedStepToolsMaterialsWithNotes(step) : Array.from(step.querySelector('.step-tools-materials-select')?.selectedOptions || []).map(o => (o.value||'').toString().trim()).filter(Boolean); return parts.map(p => __esc(String(p||'').trim())).filter(Boolean).join(' ; ') || '—'; })()}
                             </div>
                             ${objective ? `<div class="task-box"><strong>Objectif de l'activité :</strong><br>${__nl2br(objective)}</div>` : ''}
                             ${tasks ? `<div class="task-box"><strong>${t.label_tasks}:</strong><br>${__nl2br(tasks)}</div>` : ''}
@@ -15806,6 +16429,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 '\\b ' + escapeRtf(t.label_description) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-description')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_target_audience) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-target-audience')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_prerequisites) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-prerequisites')?.value || '') + '\\par\\par' +
+                '\\b ' + escapeRtf(t.label_tools_materials || 'Outils et matériel') + ':\\b0\\par ' + escapeRtf(document.getElementById('param-tools-materials')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_aims) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-aims')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_outcomes_text) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-outcomes-text')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_outcomes) + ':\\b0\\par ';
@@ -15868,10 +16492,18 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             if (place) parts.push(`Lieu : ${place}`);
                             if (time) parts.push(`Temps : ${time}`);
                             rtf += escapeRtf(`      Modalité : ${parts.join(' | ')}`) + '\\par ';
+                        const evalType = (stepEl.querySelector('.evaluation-select')?.value || 'Aucune');
+                        if (evalType) rtf += escapeRtf(`      Évaluation : ${evalType}`) + '\\par ';
                             const __cs = Array.from(stepEl.querySelector('.step-competences-select')?.selectedOptions || []).map(o => (o.textContent || '').trim()).filter(Boolean);
                             const __ct = Array.from(stepEl.querySelector('.step-competences-transversales-select')?.selectedOptions || []).map(o => (o.textContent || '').trim()).filter(Boolean);
                             rtf += escapeRtf(`      Compétences du sujet : ${__cs.length ? __cs.join(', ') : '—'}`) + '\\par ';
                             rtf += escapeRtf(`      Compétences transversales : ${__ct.length ? __ct.join(', ') : '—'}`) + '\\par ';
+                            const __aimsSel = Array.from(stepEl.querySelector('.step-aims-select')?.selectedOptions || []).map(o => (o.value||'').toString().trim()).filter(Boolean);
+                            const __outsSel = Array.from(stepEl.querySelector('.step-outcomes-select')?.selectedOptions || []).map(o => (o.value||'').toString().trim()).filter(Boolean);
+                            const __tmSel = (typeof formatSelectedStepToolsMaterialsWithNotes === 'function') ? formatSelectedStepToolsMaterialsWithNotes(stepEl) : Array.from(stepEl.querySelector('.step-tools-materials-select')?.selectedOptions || []).map(o => (o.value||'').toString().trim()).filter(Boolean);
+                            rtf += escapeRtf(`      Objectifs ciblés : ${__aimsSel.length ? __aimsSel.join(' ; ') : '—'}`) + '\\par ';
+                            rtf += escapeRtf(`      Résultats ciblés : ${__outsSel.length ? __outsSel.join(' ; ') : '—'}`) + '\\par ';
+                            rtf += escapeRtf(`      Outils et matériel (activité) : ${__tmSel.length ? __tmSel.join(' ; ') : '—'}`) + '\\par ';
                         }
                         if (objective) rtf += escapeRtf(`      Objectif : ${objective}`) + '\\par ';
                         if (tasks) rtf += escapeRtf(`      Tâches : ${tasks}`) + '\\par ';
@@ -15946,6 +16578,7 @@ md += `- **Horodatage d'export :** ${new Date().toISOString()}\n\n`;
             md += `## informations_clés\n`;
             md += `### ${t.label_target_audience}\n${document.getElementById('param-target-audience')?.value || ''}\n\n`;
             md += `### ${t.label_prerequisites}\n${document.getElementById('param-prerequisites')?.value || ''}\n\n`;
+            md += `### ${t.label_tools_materials || 'Outils et matériel'}\n${document.getElementById('param-tools-materials')?.value || ''}\n\n`;
             md += `### ${t.label_aims}\n${document.getElementById('param-aims').value}\n\n`;
             md += `### ${t.label_outcomes_text}\n${document.getElementById('param-outcomes-text')?.value || ''}\n\n`;
             md += `### ${t.label_outcomes}\n`;
@@ -16062,7 +16695,9 @@ md += `- **Horodatage d'export :** ${new Date().toISOString()}\n\n`;
 `;
                         md += `- **Modalité :** ${trainerText}, ${placeText}, ${timeText}
 `;
-                        const __csSel = step.querySelector('.step-competences-select');
+                                                md += `- **Évaluation :** ${step.querySelector('.evaluation-select')?.value || 'Aucune'}
+`;
+const __csSel = step.querySelector('.step-competences-select');
                         const __ctSel = step.querySelector('.step-competences-transversales-select');
                         const __cs = Array.from((__csSel && __csSel.selectedOptions) ? __csSel.selectedOptions : []).map(o => (o.textContent || '').trim()).filter(Boolean);
                         const __ct = Array.from((__ctSel && __ctSel.selectedOptions) ? __ctSel.selectedOptions : []).map(o => (o.textContent || '').trim()).filter(Boolean);
@@ -16076,9 +16711,12 @@ md += `- **Horodatage d'export :** ${new Date().toISOString()}\n\n`;
 `;
                         const __aimsT = Array.from(step.querySelector('.step-aims-select')?.selectedOptions || []).map(o => (o.value || '').toString().trim()).filter(Boolean);
                         const __outT = Array.from(step.querySelector('.step-outcomes-select')?.selectedOptions || []).map(o => (o.value || '').toString().trim()).filter(Boolean);
+                        const __tmT = (typeof formatSelectedStepToolsMaterialsWithNotes === 'function') ? formatSelectedStepToolsMaterialsWithNotes(step) : Array.from(step.querySelector('.step-tools-materials-select')?.selectedOptions || []).map(o => (o.value || '').toString().trim()).filter(Boolean);
                         md += `- **Objectifs ciblés :** ${__aimsT.length ? __aimsT.join(' ; ') : '—'}
 `;
                         md += `- **Résultats ciblés :** ${__outT.length ? __outT.join(' ; ') : '—'}
+`;
+                        md += `- **Outils et matériel (activité) :** ${__tmT.length ? __tmT.join(' ; ') : '—'}
 `;
                         md += `- **Objectif de l'activité :** ${objective}
 
@@ -16698,6 +17336,25 @@ window.onload = () => {
                 if (outBtnTpl) outBtnTpl.addEventListener('click', downloadOutcomesTextTemplateCSV);
             } catch (e) {
                 console.error('[AimsOutcomesCsvInitError]', e);
+            }
+
+            // Outils & matériel (onglet 5): CSV import bindings
+            try {
+                const tmBtnLoad = document.getElementById('btn-load-tools-materials-csv');
+                const tmFileInput = document.getElementById('tools-materials-csv-file-input');
+                const tmBtnTpl = document.getElementById('btn-download-tools-materials-template');
+
+                if (tmBtnLoad && tmFileInput) tmBtnLoad.addEventListener('click', () => tmFileInput.click());
+                if (tmFileInput) {
+                    tmFileInput.addEventListener('change', (e) => {
+                        const f = e.target.files && e.target.files[0];
+                        if (f) handleToolsMaterialsCsvFileImport(f);
+                        try { e.target.value = ''; } catch (_) {}
+                    });
+                }
+                if (tmBtnTpl) tmBtnTpl.addEventListener('click', downloadToolsMaterialsTemplateCSV);
+            } catch (e) {
+                console.error('[ToolsMaterialsCsvInitError]', e);
             }
 
             // Compétences (onglet 4): Taxonomie + CSV import bindings
