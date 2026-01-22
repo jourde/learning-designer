@@ -1071,10 +1071,12 @@ details[data-readonly="true"] label{ cursor: default; }
       // Modules / steps / moments
       'duplicate-module': ({btn}) => call('cloneModule', btn),
       'delete-module': ({event, btn}) => call('trashModule', event, btn),
-      'duplicate-step': ({btn}) => call('cloneStep', btn),
+      'duplicate-step': ({btn, event}) => call('openDuplicateStepMenu', btn, event),
       'delete-step': ({btn}) => call('trashStep', btn),
       'add-step': ({btn}) => call('addStepToActivity', btn),
       'add-moment': ({btn}) => call('addMomentToActivity', btn),
+      'open-export-preview': ({event}) => call('openExportPreview', event),
+      'close-export-preview': ({event}) => call('closeExportPreview', event),
       'collapse-module-contents': ({btn}) => call('collapseModuleContents', btn),
       'toggle-module-description': ({btn}) => call('toggleDescription', btn),
       'toggle-module': ({btn}) => call('toggleActivity', btn),
@@ -1347,6 +1349,7 @@ details[data-readonly="true"] label{ cursor: default; }
                     const map = __getStepToolMatNotesMap(stepEl);
                     map[tool] = (t.value == null) ? '' : String(t.value);
                     __setStepToolMatNotesMap(stepEl, map);
+                    try { updateStepHeaderChips(stepEl); } catch (_) {}
                 }
             }, true);
 
@@ -1459,6 +1462,13 @@ details[data-readonly="true"] label{ cursor: default; }
          </span>
 </div>
 </div>
+<button class="text-slate-600 hover:text-indigo-700 hover:bg-indigo-50 rounded px-2 py-1 flex items-center gap-1"
+        data-action="open-export-preview"
+        title="Aperçu export"
+        type="button">
+  <span class="material-icons-round text-[16px]">visibility</span>
+  <span class="text-xs font-medium hidden md:inline">Aperçu</span>
+</button>
 <input accept=".json" class="hidden" id="load-file-input" data-action-change="load-project-file" type="file"/>
 </div>
 </div>
@@ -1982,6 +1992,35 @@ details[data-readonly="true"] label{ cursor: default; }
 </button>
 </div>
 </div>
+
+<div class="mt-2 p-2 bg-slate-50 border border-slate-200 rounded-lg">
+  <div class="flex flex-col sm:flex-row gap-2 items-end">
+    <div class="flex-1 min-w-0">
+      <label class="compact-label">Rechercher</label>
+      <input id="tools-materials-search" class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm" type="text" placeholder="Rechercher un outil, une catégorie ou une sous-catégorie..." />
+    </div>
+    <div class="sm:w-48">
+      <label class="compact-label">Catégorie</label>
+      <select id="tools-materials-filter-cat" class="w-full px-2 py-1 border border-slate-200 rounded bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
+        <option value="">Toutes</option>
+      </select>
+    </div>
+    <div class="sm:w-56">
+      <label class="compact-label">Sous-catégorie</label>
+      <select id="tools-materials-filter-subcat" class="w-full px-2 py-1 border border-slate-200 rounded bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
+        <option value="">Toutes</option>
+      </select>
+    </div>
+    <button id="tools-materials-filter-reset" type="button" class="px-2 py-1 rounded bg-white border border-slate-200 text-slate-600 hover:text-slate-800 hover:border-slate-300">
+      Réinitialiser
+    </button>
+  </div>
+  <div class="mt-1 flex items-center justify-between text-[11px] text-slate-400">
+    <span id="tools-materials-filter-count">0/0 affichés</span>
+    <span id="tools-materials-filter-empty" class="hidden italic">Aucun résultat</span>
+  </div>
+</div>
+
 <ul class="space-y-0.5 mt-2" id="tools-materials-list"></ul>
 <p class="text-xs text-slate-400 italic mt-1" id="no-tools-materials-text">Aucun outil / matériel défini</p>
 </div>
@@ -2482,8 +2521,19 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div>
 </div></div></details>
 <div class="max-w-7xl mx-auto w-full" id="view-designer">
-<div class="flex justify-end mb-2 no-print">
-<button class="text-slate-500 hover:text-indigo-600 text-xs font-medium flex items-center gap-1 transition-colors px-2 py-1 rounded hover:bg-slate-100" id="btn-toggle-all-main" data-action="toggle-all-activities">
+<div class="flex items-center justify-between mb-2 no-print gap-2">
+  <div class="flex items-center gap-2">
+    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Navigation</span>
+    <select id="jump-to-select" class="h-[30px] px-2 text-xs border border-slate-300 rounded-md bg-white focus:ring-1 focus:ring-indigo-500 outline-none min-w-[240px] max-w-[420px]">
+      <option value="">Aller à…</option>
+    </select>
+    <button id="jump-to-refresh" class="h-[30px] px-2 border border-slate-300 rounded-md bg-white text-slate-500 hover:text-indigo-600 hover:border-indigo-400 text-xs font-semibold flex items-center gap-1" type="button" title="Actualiser la liste">
+      <span class="material-icons-round text-[16px]">refresh</span>
+      <span class="hidden sm:inline">Actualiser</span>
+    </button>
+  </div>
+  <div class="flex justify-end">
+    <button class="text-slate-500 hover:text-indigo-600 text-xs font-medium flex items-center gap-1 transition-colors px-2 py-1 rounded hover:bg-slate-100" id="btn-toggle-all-main" data-action="toggle-all-activities">
 <span class="material-icons-round text-base" id="icon-toggle-all-main">
        unfold_less
       </span>
@@ -2491,6 +2541,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
        Tout replier
       </span>
 </button>
+  </div>
 </div>
 <div class="space-y-4" id="activities-root">
 </div>
@@ -2622,6 +2673,140 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div>
 </div>
 </div>
+<div aria-labelledby="export-preview-modal-title"
+     aria-modal="true"
+     class="fixed inset-0 hidden items-center justify-center p-4 bg-black/40 z-[100]"
+     id="export-preview-modal"
+     role="dialog">
+  <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-6xl overflow-hidden">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
+      <div class="flex items-center gap-2">
+        <span class="material-icons-round text-slate-600">visibility</span>
+        <h3 class="text-sm font-bold text-slate-800" id="export-preview-modal-title">Aperçu export</h3>
+      </div>
+      <button class="text-slate-500 hover:text-slate-800 p-1 rounded hover:bg-slate-100"
+              data-action="close-export-preview"
+              title="Fermer"
+              type="button">
+        <span class="material-icons-round text-[18px]">close</span>
+      </button>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-0">
+      <!-- Controls -->
+      <div class="w-full lg:w-[360px] border-b lg:border-b-0 lg:border-r border-slate-200 p-4 space-y-4">
+        <div>
+          <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Format</label>
+          <select class="mt-1 w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none"
+                  id="export-preview-format">
+            <option value="markdown">Markdown</option>
+            <option value="richtext">HTML</option>
+            <option value="rtf">RTF</option>
+            <option value="docx">DOCX</option>
+            <option value="xlsx">XLSX</option>
+          </select>
+          <div class="mt-1 text-[11px] text-slate-500">L’aperçu s’affiche en Markdown/HTML. Les autres formats restent exportables.</div>
+        </div>
+
+        <div>
+          <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Périmètre</label>
+          <div class="mt-2 space-y-2 text-xs text-slate-700">
+            <label class="flex items-center gap-2">
+              <input checked name="export-scope" type="radio" value="all"/>
+              <span>Formation entière</span>
+            </label>
+
+            <label class="flex items-center gap-2">
+              <input name="export-scope" type="radio" value="module"/>
+              <span>Un module</span>
+            </label>
+            <div class="pl-6">
+              <select class="w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none"
+                      id="export-preview-scope-module"
+                      disabled>
+              </select>
+            </div>
+
+            <label class="flex items-center gap-2">
+              <input name="export-scope" type="radio" value="activities"/>
+              <span>Activités sélectionnées</span>
+            </label>
+
+            <div class="pl-6 space-y-2">
+              <div class="flex gap-2">
+                <input class="flex-1 px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none"
+                       id="export-preview-activity-filter"
+                       placeholder="Filtrer… (titre module/moment/activité)"
+                       type="text"
+                       disabled/>
+                <button class="px-2 py-1.5 text-xs rounded bg-slate-100 text-slate-700 hover:bg-slate-200"
+                        id="export-preview-activities-clear"
+                        type="button"
+                        disabled>Tout décocher</button>
+              </div>
+
+              <div class="max-h-[220px] overflow-auto border border-slate-200 rounded p-2 bg-slate-50"
+                   id="export-preview-activities"
+                   aria-label="Liste des activités"
+                   data-empty="true">
+                <div class="text-[11px] text-slate-500">Aucune activité.</div>
+              </div>
+
+              <div class="text-[11px] text-slate-500" id="export-preview-activities-count"></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Options</label>
+          <div class="mt-2 space-y-2 text-xs text-slate-700">
+            <label class="flex items-center gap-2">
+              <input checked id="export-opt-align" type="checkbox"/>
+              <span>Inclure alignement</span>
+            </label>
+            <label class="flex items-center gap-2">
+              <input checked id="export-opt-tools" type="checkbox"/>
+              <span>Inclure outils & matériel</span>
+            </label>
+            <label class="flex items-center gap-2 pl-6">
+              <input checked id="export-opt-toolnotes" type="checkbox"/>
+              <span>Inclure remarques outils</span>
+            </label>
+            <label class="flex items-center gap-2">
+              <input id="export-opt-empty" type="checkbox"/>
+              <span>Inclure sections vides</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
+          <button class="px-3 py-1.5 text-xs rounded bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  data-action="close-export-preview"
+                  type="button">Fermer</button>
+          <button class="px-3 py-1.5 text-xs rounded bg-slate-700 text-white hover:bg-slate-800"
+                  id="export-preview-run"
+                  type="button">Exporter</button>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div class="flex-1 p-4 bg-white">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Aperçu</div>
+          <div class="text-[11px] text-slate-500" id="export-preview-hint"></div>
+        </div>
+
+        <div class="border border-slate-200 rounded-lg overflow-auto max-h-[70vh] bg-slate-50">
+          <pre class="p-3 text-[12px] leading-relaxed whitespace-pre-wrap text-slate-800"
+               id="export-preview-text"></pre>
+          <div class="hidden p-3 text-sm leading-relaxed text-slate-800"
+               id="export-preview-html"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <template id="activity-template">
 <div class="activity-group relative bg-white rounded-xl shadow-sm border border-slate-200 p-3">
 <div class="flex flex-col sm:flex-row sm:items-start justify-between mb-2 gap-2">
@@ -2891,6 +3076,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div>
 <div class="flex-1">
 <input class="step-input-title w-full px-1 py-0.5 text-sm font-semibold text-slate-800 border-none bg-transparent focus:ring-0 outline-none" data-i18n-placeholder="ph_step_title" placeholder="Titre de l'activité..." type="text"/>
+
 </div>
 <div class="flex items-center gap-1">
 <input class="duration-input w-16 px-2 py-0.5 text-xs font-semibold border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none h-[22px] text-right text-slate-600" min="0" data-action-input="update-stats-debounced" placeholder="0" type="number"/>
@@ -3191,7 +3377,15 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div>
 </div>
 </details></details>
-<details class="step-right-group border border-slate-200 rounded-lg bg-white w-full md:col-span-2">  <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5 bg-slate-50 rounded-lg">    <span class="material-icons-round text-[10px] text-slate-400">construction</span>    <span>Outils et matériel (activité)</span>    <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">      <span>Afficher</span>      <span class="material-icons-round text-[14px] step-group-chevron">expand_more</span>    </span>  </summary>  <div class="px-2 pb-2 pt-2">    <div class="step-tools-materials-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[160px] overflow-auto text-[11px] space-y-1"></div>    <select class="step-tools-materials-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>    <p class="text-[11px] text-slate-400 mt-1">Sélection : cochez les outils et matériels requis pour cette activité (ajoutez une remarque si nécessaire).</p>  </div></details>
+<details class="step-right-group border border-slate-200 rounded-lg bg-white w-full md:col-span-2">  <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5 bg-slate-50 rounded-lg">    <span class="material-icons-round text-[10px] text-slate-400">construction</span>    <span>Outils et matériel (activité)</span>    <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">      <span>Afficher</span>      <span class="material-icons-round text-[14px] step-group-chevron">expand_more</span>    </span>  </summary>  <div class="px-2 pb-2 pt-2">    
+<div class="flex items-center justify-between gap-2 mb-1 text-[11px] text-slate-500">
+  <label class="flex items-center gap-2 cursor-pointer select-none">
+    <input type="checkbox" class="tm-show-selected-toggle accent-indigo-600" />
+    <span>Afficher uniquement les sélectionnés</span>
+  </label>
+  <span class="tm-selected-count text-[10px] text-slate-400"></span>
+</div>
+<div class="step-tools-materials-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[160px] overflow-auto text-[11px] space-y-1"></div>    <select class="step-tools-materials-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>    <p class="text-[11px] text-slate-400 mt-1">Sélection : cochez les outils et matériels requis pour cette activité (ajoutez une remarque si nécessaire).</p>  </div></details>
 </div></details>
 
 </div>
@@ -5871,7 +6065,9 @@ title_new_activity: "Ajouter un nouveau module",
             applyTranslations();
 
             // Some labels (durations) are computed dynamically; ensure they refresh after language change.
-            try { updateStats(); } catch (_) {}
+            try { updateStats();
+    try { updateAllStepHeaderChips(); } catch (_) {}
+    } catch (_) {}
         }
 
         function handleLanguagePackObject(obj, filename) {
@@ -7675,6 +7871,7 @@ function updateOutcomeBloom(levelSelect) {
                 if (!currentSelected || !currentSelected.length) opt.selected = true;
                 sel.appendChild(opt);
                 try { _renderStepToolsMaterialsCheckboxesWithNotes(stepEl, sel, '.step-tools-materials-checkboxes', 'step-toolmat-cb', "Aucun outil/matériel disponible."); } catch (_) {}
+                try { __initStepToolsSelectedOnlyToggle(stepEl); applyStepToolsSelectedOnly(stepEl); updateStepHeaderChips(stepEl); } catch (_) {}
                 return;
             }
 
@@ -7705,6 +7902,7 @@ function updateOutcomeBloom(levelSelect) {
             });
 
             try { _renderStepToolsMaterialsCheckboxesWithNotes(stepEl, sel, '.step-tools-materials-checkboxes', 'step-toolmat-cb', "Aucun outil/matériel disponible."); } catch (_) {}
+                try { __initStepToolsSelectedOnlyToggle(stepEl); applyStepToolsSelectedOnly(stepEl); updateStepHeaderChips(stepEl); } catch (_) {}
         }
 
         function getSelectedStepToolsMaterials(stepEl) {
@@ -7812,6 +8010,8 @@ function updateOutcomeBloom(levelSelect) {
 
                 const row = document.createElement('div');
                 row.className = 'p-1 rounded border border-slate-200 bg-white/60';
+                row.dataset.tmRow = '1';
+                row.dataset.tool = label;
 
                 const lab = document.createElement('label');
                 lab.className = 'flex items-start gap-2 cursor-pointer select-none';
@@ -8298,6 +8498,7 @@ obs3.observe(alist, { childList: true, subtree: true });
             }
             if (t.matches('input.step-toolmat-cb')) {
                 _syncHiddenSelectFromTextCheckbox(t, '.step-tools-materials-select');
+                try { const stepEl = t.closest('.step-card'); if (stepEl) { applyStepToolsSelectedOnly(stepEl); updateStepHeaderChips(stepEl); } } catch (_) {}
                 try {
                     const sid = t.dataset ? t.dataset.noteId : null;
                     const stepEl = t.closest('.step-card');
@@ -11537,7 +11738,8 @@ function updateStatsDebounced() {
   __updateStatsDebounceTimer = setTimeout(() => {
     __updateStatsDebounceTimer = null;
     updateStats();
-  }, delay);
+    try { updateAllStepHeaderChips(); } catch (_) {}
+    }, delay);
 }
 
 
@@ -20141,6 +20343,1502 @@ function bind() {
     try{ initKeyParamsWizard(); }catch(e){ console.error('KeyParams wizard init failed', e); }
   }, { once:true });
 })();
+
+
+        // --- UI v10: Chips de synthèse (activité) + filtres Outils & matériel ---
+        function __countSelectedFromMultiSelect(sel) {
+            if (!sel) return 0;
+            try {
+                return Array.from(sel.selectedOptions || [])
+                    .map(o => String(o.value || '').trim())
+                    .filter(Boolean).length;
+            } catch (_) { return 0; }
+        }
+
+        function updateStepHeaderChips(stepEl) {
+            if (!stepEl) return;
+
+            const evalSel = stepEl.querySelector('select.evaluation-select');
+            const aimsSel = stepEl.querySelector('select.step-aims-select');
+            const outSel  = stepEl.querySelector('select.step-outcomes-select');
+            const tmSel   = stepEl.querySelector('select.step-tools-materials-select');
+
+            const evalVal = evalSel ? String(evalSel.value || '').trim() : '';
+            const aimsN = __countSelectedFromMultiSelect(aimsSel);
+            const outN  = __countSelectedFromMultiSelect(outSel);
+            const tmN   = __countSelectedFromMultiSelect(tmSel);
+
+            let notesN = 0;
+            try {
+                if (typeof getSelectedStepToolsMaterialsNotes === 'function') {
+                    const m = getSelectedStepToolsMaterialsNotes(stepEl) || {};
+                    notesN = Object.keys(m).length;
+                } else {
+                    const m = __getStepToolMatNotesMap(stepEl) || {};
+                    notesN = Object.keys(m).filter(k => String(m[k] || '').trim()).length;
+                }
+            } catch (_) { notesN = 0; }
+
+            const chipEval = stepEl.querySelector('.step-chip-eval');
+            const chipAims = stepEl.querySelector('.step-chip-aims');
+            const chipOut  = stepEl.querySelector('.step-chip-outcomes');
+            const chipTools = stepEl.querySelector('.step-chip-tools');
+            const chipNotes = stepEl.querySelector('.step-chip-toolnotes');
+
+            if (chipEval) chipEval.textContent = `Évaluation: ${evalVal || '—'}`;
+            if (chipAims) chipAims.textContent = `Objectifs: ${aimsN}`;
+            if (chipOut)  chipOut.textContent  = `Résultats: ${outN}`;
+            if (chipTools) chipTools.textContent = `Outils: ${tmN}`;
+
+            if (chipNotes) {
+                chipNotes.textContent = `Notes outils: ${notesN}`;
+                if (notesN > 0) chipNotes.classList.remove('hidden');
+                else chipNotes.classList.add('hidden');
+            }
+
+            // Update the per-activity tools selected count label (next to the toggle)
+            try {
+                const lbl = stepEl.querySelector('.tm-selected-count');
+                if (lbl) lbl.textContent = tmN ? `${tmN} sélectionné(s)` : '';
+            } catch (_) {}
+        }
+
+        function updateAllStepHeaderChips() {
+            document.querySelectorAll('.step-card').forEach(stepEl => {
+                try { updateStepHeaderChips(stepEl); } catch (_) {}
+            });
+        }
+
+        function __initStepToolsSelectedOnlyToggle(stepEl) {
+            if (!stepEl) return;
+            const tgl = stepEl.querySelector('input.tm-show-selected-toggle');
+            if (!tgl) return;
+
+            // restore state
+            const st = (stepEl.dataset && stepEl.dataset.tmShowSelected) ? String(stepEl.dataset.tmShowSelected) : '';
+            tgl.checked = (st === '1' || st === 'true');
+
+            if (tgl.dataset && tgl.dataset.bound === '1') return;
+            try { if (tgl.dataset) tgl.dataset.bound = '1'; } catch (_) {}
+
+            tgl.addEventListener('change', () => {
+                try {
+                    if (stepEl.dataset) stepEl.dataset.tmShowSelected = tgl.checked ? '1' : '';
+                } catch (_) {}
+                try { applyStepToolsSelectedOnly(stepEl); } catch (_) {}
+                try { updateStepHeaderChips(stepEl); } catch (_) {}
+            });
+        }
+
+        function applyStepToolsSelectedOnly(stepEl) {
+            if (!stepEl) return;
+            const tgl = stepEl.querySelector('input.tm-show-selected-toggle');
+            const showSelectedOnly = !!(tgl && tgl.checked);
+
+            const rows = stepEl.querySelectorAll('.step-tools-materials-checkboxes [data-tm-row="1"]');
+            rows.forEach(row => {
+                const cb = row.querySelector('input.step-toolmat-cb');
+                const checked = !!(cb && cb.checked);
+                if (showSelectedOnly && !checked) row.classList.add('hidden');
+                else row.classList.remove('hidden');
+            });
+
+            // keep count label fresh
+            try { updateStepHeaderChips(stepEl); } catch (_) {}
+        }
+
+        function __tmGetListItems() {
+            const list = document.getElementById('tools-materials-list');
+            if (!list) return [];
+            return Array.from(list.querySelectorAll('li[data-item]'));
+        }
+
+        function refreshToolsMaterialsFilterUI() {
+            const search = document.getElementById('tools-materials-search');
+            const catSel = document.getElementById('tools-materials-filter-cat');
+            const subSel = document.getElementById('tools-materials-filter-subcat');
+            if (!search || !catSel || !subSel) return;
+
+            const items = __tmGetListItems();
+            const cats = new Set();
+            const subsByCat = new Map();
+
+            items.forEach(li => {
+                const c = String(li.getAttribute('data-cat') || '').trim();
+                const s = String(li.getAttribute('data-subcat') || '').trim();
+                if (c) cats.add(c);
+                const key = c || '';
+                if (!subsByCat.has(key)) subsByCat.set(key, new Set());
+                if (s) subsByCat.get(key).add(s);
+            });
+
+            const prevCat = String(catSel.value || '');
+            const prevSub = String(subSel.value || '');
+
+            // Rebuild category options
+            const catArr = Array.from(cats).sort((a,b) => a.localeCompare(b, 'fr'));
+            catSel.innerHTML = '<option value="">Toutes</option>' + catArr.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+            if (catArr.includes(prevCat)) catSel.value = prevCat;
+
+            // Rebuild sub-category options based on selected category (or all)
+            const selCat = String(catSel.value || '');
+            const subSet = new Set();
+            if (selCat) {
+                (subsByCat.get(selCat) || new Set()).forEach(v => subSet.add(v));
+            } else {
+                // all subs
+                subsByCat.forEach(set => set.forEach(v => subSet.add(v)));
+            }
+            const subArr = Array.from(subSet).sort((a,b) => a.localeCompare(b, 'fr'));
+            subSel.innerHTML = '<option value="">Toutes</option>' + subArr.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+            if (subArr.includes(prevSub)) subSel.value = prevSub;
+
+            try { applyToolsMaterialsListFilters(); } catch (_) {}
+        }
+
+        function applyToolsMaterialsListFilters() {
+            const search = document.getElementById('tools-materials-search');
+            const catSel = document.getElementById('tools-materials-filter-cat');
+            const subSel = document.getElementById('tools-materials-filter-subcat');
+            const countEl = document.getElementById('tools-materials-filter-count');
+            const emptyEl = document.getElementById('tools-materials-filter-empty');
+            if (!search || !catSel || !subSel) return;
+
+            const q = String(search.value || '').trim().toLowerCase();
+            const cat = String(catSel.value || '').trim();
+            const sub = String(subSel.value || '').trim();
+
+            const items = __tmGetListItems();
+            let visible = 0;
+
+            items.forEach(li => {
+                const c = String(li.getAttribute('data-cat') || '').trim();
+                const s = String(li.getAttribute('data-subcat') || '').trim();
+                const it = String(li.getAttribute('data-item') || '').trim();
+
+                let ok = true;
+                if (cat && c !== cat) ok = false;
+                if (ok && sub && s !== sub) ok = false;
+                if (ok && q) {
+                    const hay = (c + ' ' + s + ' ' + it).toLowerCase();
+                    if (!hay.includes(q)) ok = false;
+                }
+
+                li.style.display = ok ? '' : 'none';
+                if (ok) visible += 1;
+            });
+
+            const total = items.length;
+            if (countEl) countEl.textContent = `${visible}/${total} affichés`;
+            if (emptyEl) {
+                if (total > 0 && visible === 0) emptyEl.classList.remove('hidden');
+                else emptyEl.classList.add('hidden');
+            }
+        }
+
+        function initToolsMaterialsFilters() {
+            const search = document.getElementById('tools-materials-search');
+            const catSel = document.getElementById('tools-materials-filter-cat');
+            const subSel = document.getElementById('tools-materials-filter-subcat');
+            const resetBtn = document.getElementById('tools-materials-filter-reset');
+            if (!search || !catSel || !subSel || !resetBtn) return;
+
+            if (search.dataset && search.dataset.bound === '1') return;
+            try { if (search.dataset) search.dataset.bound = '1'; } catch (_) {}
+
+            search.addEventListener('input', () => { try { applyToolsMaterialsListFilters(); } catch (_) {} });
+            catSel.addEventListener('change', () => {
+                try { refreshToolsMaterialsFilterUI(); } catch (_) {}
+            });
+            subSel.addEventListener('change', () => { try { applyToolsMaterialsListFilters(); } catch (_) {} });
+
+            resetBtn.addEventListener('click', () => {
+                search.value = '';
+                catSel.value = '';
+                subSel.value = '';
+                try { refreshToolsMaterialsFilterUI(); } catch (_) {}
+            });
+
+            // Observer to refresh options when list changes (add/remove/reorder)
+            const list = document.getElementById('tools-materials-list');
+            if (list) {
+                try {
+                    const obs = new MutationObserver(() => {
+                        try { refreshToolsMaterialsFilterUI(); } catch (_) {}
+                    });
+                    obs.observe(list, { childList: true, subtree: true });
+                } catch (_) {}
+            }
+
+            try { refreshToolsMaterialsFilterUI(); } catch (_) {}
+        }
+
+        document.addEventListener('DOMContentLoaded', function(){
+            try { initToolsMaterialsFilters(); } catch (_) {}
+            try { updateAllStepHeaderChips(); } catch (_) {}
+        });
+
+
+/* === Jump to… (Modules / Activités) ===================================== */
+(function(){
+  let __jumpIndex = new Map();
+  let __jumpTimer = null;
+
+  function ensureJumpKey(el, prefix){
+    try {
+      if (!el || !el.dataset) return '';
+      if (!el.dataset.jumpKey) el.dataset.jumpKey = String(prefix || 'k') + '-' + Math.random().toString(16).slice(2);
+      return el.dataset.jumpKey;
+    } catch (_) { return ''; }
+  }
+
+  function getLabelForModule(modEl, idx){
+    const t = modEl ? modEl.querySelector('input.activity-title') : null;
+    const v = t ? String(t.value || '').trim() : '';
+    return v ? v : ('Module ' + (idx + 1));
+  }
+
+  function getLabelForStep(stepEl, idx){
+    const t = stepEl ? stepEl.querySelector('input.step-input-title') : null;
+    const v = t ? String(t.value || '').trim() : '';
+    return v ? v : ('Activité ' + (idx + 1));
+  }
+
+  function refreshJumpToOptions(preserve){
+    const sel = document.getElementById('jump-to-select');
+    const root = document.getElementById('activities-root');
+    if (!sel || !root) return;
+
+    const prev = preserve ? sel.value : '';
+    __jumpIndex = new Map();
+
+    // reset
+    while (sel.firstChild) sel.removeChild(sel.firstChild);
+    const opt0 = document.createElement('option');
+    opt0.value = '';
+    opt0.textContent = 'Aller à…';
+    sel.appendChild(opt0);
+
+    const modules = Array.from(root.querySelectorAll(':scope > .activity-group'));
+    modules.forEach(function(modEl, mi){
+      const modKey = ensureJumpKey(modEl, 'mod');
+      const modLabel = getLabelForModule(modEl, mi);
+      const opt = document.createElement('option');
+      opt.value = modKey;
+      opt.textContent = 'Module ' + (mi + 1) + ' — ' + modLabel;
+      sel.appendChild(opt);
+      __jumpIndex.set(modKey, { el: modEl, type: 'module' });
+
+      const steps = Array.from(modEl.querySelectorAll('.step-card'));
+      steps.forEach(function(stepEl, si){
+        const stepKey = ensureJumpKey(stepEl, 'act');
+        const stepLabel = getLabelForStep(stepEl, si);
+        const optS = document.createElement('option');
+        optS.value = stepKey;
+        optS.textContent = '↳ Activité ' + (si + 1) + ' — ' + stepLabel;
+        sel.appendChild(optS);
+        __jumpIndex.set(stepKey, { el: stepEl, type: 'step', moduleEl: modEl });
+      });
+    });
+
+    if (prev && __jumpIndex.has(prev)) sel.value = prev;
+  }
+
+  function refreshJumpToOptionsDebounced(){
+    if (__jumpTimer) clearTimeout(__jumpTimer);
+    __jumpTimer = setTimeout(function(){
+      try { refreshJumpToOptions(true); } catch (_) {}
+    }, 180);
+  }
+
+  function ensureModuleExpanded(modEl){
+    try {
+      if (!modEl) return;
+      const body = modEl.querySelector('.activity-body');
+      if (body && !body.classList.contains('open')) {
+        const btn = modEl.querySelector('[data-action="toggle-module"]');
+        if (btn) btn.click();
+        else body.classList.add('open');
+      }
+    } catch (_) {}
+  }
+
+  function openAncestorDetails(el){
+    try {
+      let lead = el;
+      while (lead) {
+        const det = (lead.closest ? lead.closest('details') : null);
+        if (!det) break;
+        det.open = true;
+        lead = det.parentElement;
+      }
+    } catch (_) {}
+  }
+
+  function highlightJumpTarget(el){
+    try {
+      if (!el) return;
+      el.classList.add('ring-2','ring-indigo-300');
+      setTimeout(function(){
+        try { el.classList.remove('ring-2','ring-indigo-300'); } catch (_) {}
+      }, 1200);
+    } catch (_) {}
+  }
+
+  function jumpToSelection(){
+    const sel = document.getElementById('jump-to-select');
+    if (!sel) return;
+    const key = sel.value;
+    if (!key) return;
+
+    const item = __jumpIndex.get(key);
+    if (!item || !item.el) return;
+
+    try {
+      if (item.type === 'step') {
+        const modEl = item.moduleEl || (item.el.closest ? item.el.closest('.activity-group') : null);
+        ensureModuleExpanded(modEl);
+        openAncestorDetails(item.el);
+      } else if (item.type === 'module') {
+        ensureModuleExpanded(item.el);
+      }
+
+      item.el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      highlightJumpTarget(item.el);
+    } catch (_) {}
+  }
+
+  function initJumpToNavigator(){
+    const sel = document.getElementById('jump-to-select');
+    const btn = document.getElementById('jump-to-refresh');
+    const root = document.getElementById('activities-root');
+    if (!sel || !root) return;
+
+    refreshJumpToOptions(false);
+
+    sel.addEventListener('change', function(){ jumpToSelection(); });
+    if (btn) btn.addEventListener('click', function(){ refreshJumpToOptions(true); });
+
+    // Observe add/remove/reorder of modules/steps
+    try {
+      const obs = new MutationObserver(function(){ refreshJumpToOptionsDebounced(); });
+      obs.observe(root, { childList: true, subtree: true });
+    } catch (_) {}
+
+    // Update labels when titles change
+    document.addEventListener('input', function(e){
+      const t = e.target;
+      if (!t || !t.classList) return;
+      if (t.classList.contains('activity-title') || t.classList.contains('step-input-title')) {
+        refreshJumpToOptionsDebounced();
+      }
+    }, true);
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    try { initJumpToNavigator(); } catch (_) {}
+  });
+})();
+
+
+
+/* ===========================
+   v12 – Productivité & Exports
+   - Duplication d’activité (options)
+   - Aperçu export + périmètre + options (modal uniquement)
+   =========================== */
+
+(function(){
+  'use strict';
+
+  function __qs(sel, root){ return (root || document).querySelector(sel); }
+  function __qsa(sel, root){ return Array.from((root || document).querySelectorAll(sel)); }
+  function __isOpenModal(modal){ return !!(modal && !modal.classList.contains('hidden')); }
+
+  function __asText(v){ return (v == null) ? '' : String(v); }
+  function __trim(v){ return __asText(v).trim(); }
+  function __has(v){ return __trim(v).length > 0; }
+  function __safeList(arr){
+    return (Array.isArray(arr) ? arr : []).map(v => __trim(v)).filter(Boolean);
+  }
+  function __oneLine(v){
+    return __asText(v).replace(/\r\n|\r|\n/g, ' ').replace(/\s+/g,' ').trim();
+  }
+
+  function __escapeMd(s){
+    // Minimal escaping for Markdown readability.
+    const t = __asText(s);
+    return t.replace(/[\\`*_{}[\]()#+\-.!|>]/g, '\\$&');
+  }
+
+  function __escapeHtml2(s){
+    const t = __asText(s);
+    return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function __ensureExportPreviewModal(){
+    const modal = __qs('#export-preview-modal');
+    if (!modal) return null;
+
+    if (modal.__initDone) return modal;
+    modal.__initDone = true;
+
+    // Click outside closes
+    modal.addEventListener('click', function(e){
+      try {
+        if (e.target === modal) { window.closeExportPreview(); }
+      } catch(_){}
+    });
+
+    // Escape closes
+    document.addEventListener('keydown', function(e){
+      try {
+        if (e.key !== 'Escape') return;
+        if (!__isOpenModal(modal)) return;
+        window.closeExportPreview();
+      } catch(_){}
+    });
+
+    // Wire controls
+    const formatSel = __qs('#export-preview-format', modal);
+    const modSel = __qs('#export-preview-scope-module', modal);
+    const actFilter = __qs('#export-preview-activity-filter', modal);
+    const actWrap = __qs('#export-preview-activities', modal);
+    const actClear = __qs('#export-preview-activities-clear', modal);
+
+    const optAlign = __qs('#export-opt-align', modal);
+    const optTools = __qs('#export-opt-tools', modal);
+    const optToolNotes = __qs('#export-opt-toolnotes', modal);
+    const optEmpty = __qs('#export-opt-empty', modal);
+
+    const runBtn = __qs('#export-preview-run', modal);
+
+    function onAnyChange(){
+      try { __refreshExportPreview(); } catch(err){ try { window.reportError(err, { action: 'export-preview-refresh' }); } catch(_) {} }
+    }
+
+    __qsa('input[name="export-scope"]', modal).forEach(r => r.addEventListener('change', onAnyChange));
+    [formatSel, modSel, optAlign, optTools, optToolNotes, optEmpty].forEach(el => el && el.addEventListener('change', onAnyChange));
+    if (actFilter) actFilter.addEventListener('input', onAnyChange);
+    if (actWrap) actWrap.addEventListener('change', function(e){
+      const cb = e.target && e.target.matches ? (e.target.matches('input[type="checkbox"][data-activity-key]') ? e.target : null) : null;
+      if (!cb) return;
+      onAnyChange();
+    });
+
+    if (actClear) actClear.addEventListener('click', function(){
+      try {
+        __qsa('input[type="checkbox"][data-activity-key]', actWrap).forEach(cb => cb.checked = false);
+        onAnyChange();
+      } catch(_){}
+    });
+
+    if (optTools && optToolNotes) {
+      optTools.addEventListener('change', function(){
+        try {
+          optToolNotes.disabled = !optTools.checked;
+          if (!optTools.checked) optToolNotes.checked = false;
+          onAnyChange();
+        } catch(_){}
+      });
+    }
+
+    if (runBtn) runBtn.addEventListener('click', function(){
+      try { __runExportFromPreview(); } catch(err){ try { window.reportError(err, { action: 'export-preview-export' }); } catch(_) {} }
+    });
+
+    return modal;
+  }
+
+  function __getExportPreviewState(){
+    const modal = __qs('#export-preview-modal');
+    if (!modal) return null;
+
+    const scope = (__qs('input[name="export-scope"]:checked', modal) || {}).value || 'all';
+    const moduleIndex = parseInt((__qs('#export-preview-scope-module', modal) || {}).value || '0', 10);
+
+    const actKeys = __qsa('#export-preview-activities input[type="checkbox"][data-activity-key]:checked', modal)
+      .map(cb => cb.getAttribute('data-activity-key'));
+
+    const opts = {
+      includeAlignment: !!(__qs('#export-opt-align', modal) || {}).checked,
+      includeTools: !!(__qs('#export-opt-tools', modal) || {}).checked,
+      includeToolNotes: !!(__qs('#export-opt-toolnotes', modal) || {}).checked,
+      includeEmpty: !!(__qs('#export-opt-empty', modal) || {}).checked
+    };
+
+    const format = (__qs('#export-preview-format', modal) || {}).value || 'markdown';
+
+    const filterTxt = __trim((__qs('#export-preview-activity-filter', modal) || {}).value || '');
+
+    return { modal, scope, moduleIndex: isNaN(moduleIndex) ? 0 : moduleIndex, actKeys, opts, format, filterTxt };
+  }
+
+  function __buildActivityKey(mi, moi, ai){
+    return `m${mi}__mo${moi}__a${ai}`;
+  }
+
+  function __parseActivityKey(k){
+    const m = /^m(\d+)__mo(\d+)__a(\d+)$/.exec(__asText(k));
+    if (!m) return null;
+    return { mi: parseInt(m[1],10), moi: parseInt(m[2],10), ai: parseInt(m[3],10) };
+  }
+
+  function __buildFilteredModel(baseModel, state){
+    if (!baseModel || !baseModel.modules) return baseModel;
+
+    if (state.scope === 'all') return baseModel;
+
+    if (state.scope === 'module') {
+      const m = baseModel.modules[state.moduleIndex];
+      return { meta: baseModel.meta, modules: m ? [m] : [] };
+    }
+
+    // activities
+    const selected = new Set((state.actKeys || []).filter(Boolean));
+    const outModules = [];
+    baseModel.modules.forEach((m, mi) => {
+      const outMoments = [];
+      (m.moments || []).forEach((mo, moi) => {
+        const outActs = [];
+        (mo.activities || []).forEach((a, ai) => {
+          const key = __buildActivityKey(mi, moi, ai);
+          if (selected.has(key)) outActs.push(a);
+        });
+        if (outActs.length) outMoments.push(Object.assign({}, mo, { activities: outActs }));
+      });
+      if (outMoments.length) outModules.push(Object.assign({}, m, { moments: outMoments }));
+    });
+    return { meta: baseModel.meta, modules: outModules };
+  }
+
+  function __renderToolsList(activity, opts){
+    const tools = __safeList(activity.toolsMaterialsTargets);
+    if (!opts.includeTools) return '';
+    if (!tools.length && !opts.includeEmpty) return '';
+
+    const notesMap = (opts.includeToolNotes ? (activity.toolsMaterialsNotes || {}) : {});
+    const lines = tools.map(t => {
+      const note = opts.includeToolNotes ? __trim(notesMap[t] || '') : '';
+      return note ? `${t} — ${__oneLine(note)}` : t;
+    });
+    return lines.join('\n');
+  }
+
+  function __renderAlignmentBlock(activity, opts){
+    if (!opts.includeAlignment) return '';
+    const parts = [];
+    const cs = __trim(activity.competencesSujetText || '');
+    const ct = __trim(activity.competencesTransversalesText || '');
+    const aims = __safeList(activity.aimsTargets);
+    const outs = __safeList(activity.outcomesTargets);
+
+    if (__has(cs) || opts.includeEmpty) parts.push(`- Compétences (Sujet): ${cs || '—'}`);
+    if (__has(ct) || opts.includeEmpty) parts.push(`- Compétences (Transversales): ${ct || '—'}`);
+    if (aims.length || opts.includeEmpty) parts.push(`- Objectifs ciblés: ${aims.length ? aims.join('; ') : '—'}`);
+    if (outs.length || opts.includeEmpty) parts.push(`- Résultats ciblés: ${outs.length ? outs.join('; ') : '—'}`);
+
+    if (!parts.length) return '';
+    return parts.join('\n');
+  }
+
+  function __renderMarkdownFromModel(model, opts){
+    const meta = model && model.meta ? model.meta : {};
+    let md = '';
+    const title = __trim(meta.courseName) || 'Formation';
+    md += `# ${__escapeMd(title)}\n\n`;
+
+    md += `## Métadonnées\n`;
+    const metaLines = [];
+    function mline(label, val){
+      const v = __trim(val);
+      if (!v && !opts.includeEmpty) return;
+      metaLines.push(`- **${__escapeMd(label)}:** ${__escapeMd(v || '—')}`);
+    }
+    mline('Thème', meta.topic);
+    mline('Auteur(s)', meta.authors);
+    mline('Formateur(s)', meta.trainers);
+    mline('Niveau', meta.level);
+    mline('Public cible', meta.targetAudience);
+    mline('Prérequis', meta.prerequisites);
+    mline('Modalité', meta.mode);
+    mline('Taille cohorte', meta.cohortSize);
+    mline('Durée apprentissage', meta.learningTime);
+    mline('Durée conçue', meta.designedTime);
+    mline('Objectifs (formation)', meta.aims);
+    mline('Résultats (formation)', meta.outcomesText);
+    mline('Description', meta.description);
+    mline('Généré le', meta.generatedOn);
+
+    md += metaLines.join('\n') + '\n\n';
+
+    const modules = (model && model.modules) ? model.modules : [];
+    modules.forEach((m, mi) => {
+      const mt = __trim(m.title) || `Module ${mi+1}`;
+      md += `## Module ${mi+1} — ${__escapeMd(mt)}\n\n`;
+      if (__has(m.description) || opts.includeEmpty) {
+        md += `**Description :** ${__escapeMd(__trim(m.description) || '—')}\n\n`;
+      }
+      if (__has(m.target) || opts.includeEmpty) {
+        md += `**Cible :** ${__escapeMd(__trim(m.target) || '—')}\n\n`;
+      }
+
+      if (opts.includeAlignment) {
+        const mAims = __safeList(m.aimsTargets);
+        const mOuts = __safeList(m.outcomesTargets);
+        const mCs = __trim(m.competencesSujetText || '');
+        const mCt = __trim(m.competencesTransversalesText || '');
+
+        if (mCs || opts.includeEmpty) md += `- **Compétences (Sujet) :** ${__escapeMd(mCs || '—')}\n`;
+        if (mCt || opts.includeEmpty) md += `- **Compétences (Transversales) :** ${__escapeMd(mCt || '—')}\n`;
+        if (mAims.length || opts.includeEmpty) md += `- **Objectifs (module) :** ${__escapeMd(mAims.length ? mAims.join('; ') : '—')}\n`;
+        if (mOuts.length || opts.includeEmpty) md += `- **Résultats (module) :** ${__escapeMd(mOuts.length ? mOuts.join('; ') : '—')}\n`;
+        md += '\n';
+      }
+
+      (m.moments || []).forEach((mo, moi) => {
+        const mot = __trim(mo.title) || `Moment ${moi+1}`;
+        md += `### Moment ${moi+1} — ${__escapeMd(mot)}\n\n`;
+        if (__has(mo.description) || opts.includeEmpty) md += `**Description :** ${__escapeMd(__trim(mo.description) || '—')}\n\n`;
+        if (__has(mo.target) || opts.includeEmpty) md += `**Cible :** ${__escapeMd(__trim(mo.target) || '—')}\n\n`;
+
+        (mo.activities || []).forEach((a, ai) => {
+          const at = __trim(a.title) || `Activité ${ai+1}`;
+          md += `#### Activité ${ai+1} — ${__escapeMd(at)}\n\n`;
+
+          // Left-column logistical fields
+          function aline(label, val){
+            const v = __trim(val);
+            if (!v && !opts.includeEmpty) return;
+            md += `- **${__escapeMd(label)} :** ${__escapeMd(v || '—')}\n`;
+          }
+
+          aline('Type', a.typeLabel);
+          aline('Regroupement', a.groupingLabel);
+          aline('Nombre de groupes', a.groupCount);
+          aline('Taille groupe', a.groupSize);
+          aline('Détails regroupement', a.groupDetails);
+          aline('Formateur', a.trainerLabel);
+          aline('Lieu', a.placeLabel);
+          aline('Temps', a.timeLabel);
+          aline('Durée', a.durationLabel);
+          aline('Évaluation', a.evaluationLabel);
+
+          md += '\n';
+
+          // Content fields
+          if (__has(a.objective) || opts.includeEmpty) md += `**Objectif :** ${__escapeMd(__trim(a.objective) || '—')}\n\n`;
+          if (__has(a.tasks) || opts.includeEmpty) md += `**À faire :** ${__escapeMd(__trim(a.tasks) || '—')}\n\n`;
+          if (__has(a.trainerTasks) || opts.includeEmpty) md += `**À faire (formateur) :** ${__escapeMd(__trim(a.trainerTasks) || '—')}\n\n`;
+          if (__has(a.notes) || opts.includeEmpty) md += `**Notes :** ${__escapeMd(__trim(a.notes) || '—')}\n\n`;
+
+          const alignBlock = __renderAlignmentBlock(a, opts);
+          if (alignBlock) {
+            md += `**Alignement :**\n${alignBlock.split('\n').map(l => l ? l : '').join('\n')}\n\n`;
+          } else if (opts.includeAlignment && opts.includeEmpty) {
+            md += `**Alignement :**\n- —\n\n`;
+          }
+
+          if (opts.includeTools) {
+            const toolsTxt = __renderToolsList(a, opts);
+            if (toolsTxt || opts.includeEmpty) {
+              md += `**Outils et matériel :**\n`;
+              if (toolsTxt) {
+                md += toolsTxt.split('\n').map(l => `- ${__escapeMd(l)}`).join('\n') + '\n\n';
+              } else {
+                md += `- —\n\n`;
+              }
+            }
+          }
+        });
+      });
+    });
+
+    return md.trim() + '\n';
+  }
+
+  function __renderHTMLFromModel(model, opts){
+    const meta = model && model.meta ? model.meta : {};
+    const title = __trim(meta.courseName) || 'Formation';
+    let html = '';
+    html += `<h1>${__escapeHtml2(title)}</h1>`;
+
+    html += `<h2>Métadonnées</h2><ul>`;
+    function li(label, val){
+      const v = __trim(val);
+      if (!v && !opts.includeEmpty) return;
+      html += `<li><strong>${__escapeHtml2(label)} :</strong> ${__escapeHtml2(v || '—')}</li>`;
+    }
+    li('Thème', meta.topic);
+    li('Auteur(s)', meta.authors);
+    li('Formateur(s)', meta.trainers);
+    li('Niveau', meta.level);
+    li('Public cible', meta.targetAudience);
+    li('Prérequis', meta.prerequisites);
+    li('Modalité', meta.mode);
+    li('Taille cohorte', meta.cohortSize);
+    li('Durée apprentissage', meta.learningTime);
+    li('Durée conçue', meta.designedTime);
+    li('Objectifs (formation)', meta.aims);
+    li('Résultats (formation)', meta.outcomesText);
+    li('Description', meta.description);
+    li('Généré le', meta.generatedOn);
+    html += `</ul>`;
+
+    const modules = (model && model.modules) ? model.modules : [];
+    modules.forEach((m, mi) => {
+      const mt = __trim(m.title) || `Module ${mi+1}`;
+      html += `<h2>Module ${mi+1} — ${__escapeHtml2(mt)}</h2>`;
+
+      if (__has(m.description) || opts.includeEmpty) html += `<p><strong>Description :</strong> ${__escapeHtml2(__trim(m.description) || '—')}</p>`;
+      if (__has(m.target) || opts.includeEmpty) html += `<p><strong>Cible :</strong> ${__escapeHtml2(__trim(m.target) || '—')}</p>`;
+
+      if (opts.includeAlignment) {
+        html += `<ul>`;
+        const mCs = __trim(m.competencesSujetText || '');
+        const mCt = __trim(m.competencesTransversalesText || '');
+        const mAims = __safeList(m.aimsTargets);
+        const mOuts = __safeList(m.outcomesTargets);
+
+        if (mCs || opts.includeEmpty) html += `<li><strong>Compétences (Sujet) :</strong> ${__escapeHtml2(mCs || '—')}</li>`;
+        if (mCt || opts.includeEmpty) html += `<li><strong>Compétences (Transversales) :</strong> ${__escapeHtml2(mCt || '—')}</li>`;
+        if (mAims.length || opts.includeEmpty) html += `<li><strong>Objectifs (module) :</strong> ${__escapeHtml2(mAims.length ? mAims.join('; ') : '—')}</li>`;
+        if (mOuts.length || opts.includeEmpty) html += `<li><strong>Résultats (module) :</strong> ${__escapeHtml2(mOuts.length ? mOuts.join('; ') : '—')}</li>`;
+        html += `</ul>`;
+      }
+
+      (m.moments || []).forEach((mo, moi) => {
+        const mot = __trim(mo.title) || `Moment ${moi+1}`;
+        html += `<h3>Moment ${moi+1} — ${__escapeHtml2(mot)}</h3>`;
+        if (__has(mo.description) || opts.includeEmpty) html += `<p><strong>Description :</strong> ${__escapeHtml2(__trim(mo.description) || '—')}</p>`;
+        if (__has(mo.target) || opts.includeEmpty) html += `<p><strong>Cible :</strong> ${__escapeHtml2(__trim(mo.target) || '—')}</p>`;
+
+        (mo.activities || []).forEach((a, ai) => {
+          const at = __trim(a.title) || `Activité ${ai+1}`;
+          html += `<h4>Activité ${ai+1} — ${__escapeHtml2(at)}</h4>`;
+
+          html += `<ul>`;
+          function li2(label, val){
+            const v = __trim(val);
+            if (!v && !opts.includeEmpty) return;
+            html += `<li><strong>${__escapeHtml2(label)} :</strong> ${__escapeHtml2(v || '—')}</li>`;
+          }
+          li2('Type', a.typeLabel);
+          li2('Regroupement', a.groupingLabel);
+          li2('Nombre de groupes', a.groupCount);
+          li2('Taille groupe', a.groupSize);
+          li2('Détails regroupement', a.groupDetails);
+          li2('Formateur', a.trainerLabel);
+          li2('Lieu', a.placeLabel);
+          li2('Temps', a.timeLabel);
+          li2('Durée', a.durationLabel);
+          li2('Évaluation', a.evaluationLabel);
+          html += `</ul>`;
+
+          if (__has(a.objective) || opts.includeEmpty) html += `<p><strong>Objectif :</strong><br>${__escapeHtml2(__trim(a.objective) || '—')}</p>`;
+          if (__has(a.tasks) || opts.includeEmpty) html += `<p><strong>À faire :</strong><br>${__escapeHtml2(__trim(a.tasks) || '—')}</p>`;
+          if (__has(a.trainerTasks) || opts.includeEmpty) html += `<p><strong>À faire (formateur) :</strong><br>${__escapeHtml2(__trim(a.trainerTasks) || '—')}</p>`;
+          if (__has(a.notes) || opts.includeEmpty) html += `<p><strong>Notes :</strong><br>${__escapeHtml2(__trim(a.notes) || '—')}</p>`;
+
+          if (opts.includeAlignment) {
+            const ab = __renderAlignmentBlock(a, opts);
+            if (ab || opts.includeEmpty) {
+              html += `<p><strong>Alignement :</strong></p><ul>`;
+              if (ab) {
+                ab.split('\n').forEach(l => {
+                  const t = __trim(l).replace(/^- /,'');
+                  if (!t && !opts.includeEmpty) return;
+                  html += `<li>${__escapeHtml2(t || '—')}</li>`;
+                });
+              } else {
+                html += `<li>—</li>`;
+              }
+              html += `</ul>`;
+            }
+          }
+
+          if (opts.includeTools) {
+            const tt = __renderToolsList(a, opts);
+            if (tt || opts.includeEmpty) {
+              html += `<p><strong>Outils et matériel :</strong></p><ul>`;
+              if (tt) {
+                tt.split('\n').forEach(l => html += `<li>${__escapeHtml2(l)}</li>`);
+              } else {
+                html += `<li>—</li>`;
+              }
+              html += `</ul>`;
+            }
+          }
+        });
+      });
+    });
+
+    return `<!doctype html><html><head><meta charset="utf-8"><title>${__escapeHtml2(title)}</title></head><body>${html}</body></html>`;
+  }
+
+  function __renderRTFFromModel(model, opts){
+    // Basic RTF rendering (headings bold, paragraphs separated).
+    const esc = (typeof escapeRtf === 'function') ? escapeRtf : (s => __asText(s));
+    const meta = model && model.meta ? model.meta : {};
+    let rtf = '{\\rtf1\\ansi\\deff0\n';
+    const title = __trim(meta.courseName) || 'Formation';
+    rtf += '\\b ' + esc(title) + '\\b0\\par\\par\n';
+
+    rtf += '\\b Métadonnées\\b0\\par\n';
+    function mline(label, val){
+      const v = __trim(val);
+      if (!v && !opts.includeEmpty) return;
+      rtf += esc(label + ' : ') + esc(v || '—') + '\\par\n';
+    }
+    mline('Thème', meta.topic);
+    mline('Auteur(s)', meta.authors);
+    mline('Formateur(s)', meta.trainers);
+    mline('Niveau', meta.level);
+    mline('Public cible', meta.targetAudience);
+    mline('Prérequis', meta.prerequisites);
+    mline('Modalité', meta.mode);
+    mline('Taille cohorte', meta.cohortSize);
+    mline('Durée apprentissage', meta.learningTime);
+    mline('Durée conçue', meta.designedTime);
+    mline('Objectifs (formation)', meta.aims);
+    mline('Résultats (formation)', meta.outcomesText);
+    mline('Description', meta.description);
+    mline('Généré le', meta.generatedOn);
+    rtf += '\\par\n';
+
+    const modules = (model && model.modules) ? model.modules : [];
+    modules.forEach((m, mi) => {
+      const mt = __trim(m.title) || `Module ${mi+1}`;
+      rtf += '\\b ' + esc(`Module ${mi+1} — ${mt}`) + '\\b0\\par\n';
+      if (__has(m.description) || opts.includeEmpty) rtf += esc('Description : ') + esc(__trim(m.description) || '—') + '\\par\n';
+      if (__has(m.target) || opts.includeEmpty) rtf += esc('Cible : ') + esc(__trim(m.target) || '—') + '\\par\n';
+
+      if (opts.includeAlignment) {
+        const mCs = __trim(m.competencesSujetText || '');
+        const mCt = __trim(m.competencesTransversalesText || '');
+        const mAims = __safeList(m.aimsTargets);
+        const mOuts = __safeList(m.outcomesTargets);
+        if (mCs || opts.includeEmpty) rtf += esc('Compétences (Sujet) : ') + esc(mCs || '—') + '\\par\n';
+        if (mCt || opts.includeEmpty) rtf += esc('Compétences (Transversales) : ') + esc(mCt || '—') + '\\par\n';
+        if (mAims.length || opts.includeEmpty) rtf += esc('Objectifs (module) : ') + esc(mAims.length ? mAims.join('; ') : '—') + '\\par\n';
+        if (mOuts.length || opts.includeEmpty) rtf += esc('Résultats (module) : ') + esc(mOuts.length ? mOuts.join('; ') : '—') + '\\par\n';
+      }
+
+      (m.moments || []).forEach((mo, moi) => {
+        const mot = __trim(mo.title) || `Moment ${moi+1}`;
+        rtf += '\\par\\b ' + esc(`Moment ${moi+1} — ${mot}`) + '\\b0\\par\n';
+        if (__has(mo.description) || opts.includeEmpty) rtf += esc('Description : ') + esc(__trim(mo.description) || '—') + '\\par\n';
+        if (__has(mo.target) || opts.includeEmpty) rtf += esc('Cible : ') + esc(__trim(mo.target) || '—') + '\\par\n';
+
+        (mo.activities || []).forEach((a, ai) => {
+          const at = __trim(a.title) || `Activité ${ai+1}`;
+          rtf += '\\par\\b ' + esc(`Activité ${ai+1} — ${at}`) + '\\b0\\par\n';
+          function aline(label, val){
+            const v = __trim(val);
+            if (!v && !opts.includeEmpty) return;
+            rtf += esc(label + ' : ') + esc(v || '—') + '\\par\n';
+          }
+          aline('Type', a.typeLabel);
+          aline('Regroupement', a.groupingLabel);
+          aline('Nombre de groupes', a.groupCount);
+          aline('Taille groupe', a.groupSize);
+          aline('Détails regroupement', a.groupDetails);
+          aline('Formateur', a.trainerLabel);
+          aline('Lieu', a.placeLabel);
+          aline('Temps', a.timeLabel);
+          aline('Durée', a.durationLabel);
+          aline('Évaluation', a.evaluationLabel);
+
+          if (__has(a.objective) || opts.includeEmpty) rtf += esc('Objectif : ') + esc(__trim(a.objective) || '—') + '\\par\n';
+          if (__has(a.tasks) || opts.includeEmpty) rtf += esc('À faire : ') + esc(__trim(a.tasks) || '—') + '\\par\n';
+          if (__has(a.trainerTasks) || opts.includeEmpty) rtf += esc('À faire (formateur) : ') + esc(__trim(a.trainerTasks) || '—') + '\\par\n';
+          if (__has(a.notes) || opts.includeEmpty) rtf += esc('Notes : ') + esc(__trim(a.notes) || '—') + '\\par\n';
+
+          if (opts.includeAlignment) {
+            const ab = __renderAlignmentBlock(a, opts);
+            if (ab || opts.includeEmpty) {
+              rtf += esc('Alignement :') + '\\par\n';
+              if (ab) ab.split('\n').forEach(l => rtf += esc('  ' + l.replace(/^- /,'')) + '\\par\n');
+              else rtf += esc('  —') + '\\par\n';
+            }
+          }
+
+          if (opts.includeTools) {
+            const tt = __renderToolsList(a, opts);
+            if (tt || opts.includeEmpty) {
+              rtf += esc('Outils et matériel :') + '\\par\n';
+              if (tt) tt.split('\n').forEach(l => rtf += esc('  ' + l) + '\\par\n');
+              else rtf += esc('  —') + '\\par\n';
+            }
+          }
+        });
+      });
+
+      rtf += '\\par\n';
+    });
+
+    rtf += '}';
+    return rtf;
+  }
+
+  async function __exportDOCXFromModel(model, opts){
+    if (!window.docx || !window.docx.Document) {
+      alert("La bibliothèque d’export DOCX n’est pas disponible.");
+      return;
+    }
+    const { Document, Packer, Paragraph, TextRun, HeadingLevel } = window.docx;
+
+    function para(text, heading){
+      const p = new Paragraph({ children: [new TextRun({ text: __asText(text) })] });
+      if (heading) p.heading = heading;
+      return p;
+    }
+
+    function addKeyVal(children, label, val){
+      const v = __trim(val);
+      if (!v && !opts.includeEmpty) return;
+      children.push(new Paragraph({
+        children: [
+          new TextRun({ text: label + ': ', bold: true }),
+          new TextRun({ text: v || '—' })
+        ]
+      }));
+    }
+
+    const children = [];
+    const meta = model && model.meta ? model.meta : {};
+    const title = __trim(meta.courseName) || 'Formation';
+    children.push(new Paragraph({ text: title, heading: HeadingLevel.TITLE }));
+
+    children.push(new Paragraph({ text: 'Métadonnées', heading: HeadingLevel.HEADING_1 }));
+    addKeyVal(children, 'Thème', meta.topic);
+    addKeyVal(children, 'Auteur(s)', meta.authors);
+    addKeyVal(children, 'Formateur(s)', meta.trainers);
+    addKeyVal(children, 'Niveau', meta.level);
+    addKeyVal(children, 'Public cible', meta.targetAudience);
+    addKeyVal(children, 'Prérequis', meta.prerequisites);
+    addKeyVal(children, 'Modalité', meta.mode);
+    addKeyVal(children, 'Taille cohorte', meta.cohortSize);
+    addKeyVal(children, 'Durée apprentissage', meta.learningTime);
+    addKeyVal(children, 'Durée conçue', meta.designedTime);
+    addKeyVal(children, 'Objectifs (formation)', meta.aims);
+    addKeyVal(children, 'Résultats (formation)', meta.outcomesText);
+    addKeyVal(children, 'Description', meta.description);
+    addKeyVal(children, 'Généré le', meta.generatedOn);
+
+    const modules = (model && model.modules) ? model.modules : [];
+    modules.forEach((m, mi) => {
+      const mt = __trim(m.title) || `Module ${mi+1}`;
+      children.push(new Paragraph({ text: `Module ${mi+1} — ${mt}`, heading: HeadingLevel.HEADING_1 }));
+
+      addKeyVal(children, 'Description', m.description);
+      addKeyVal(children, 'Cible', m.target);
+
+      if (opts.includeAlignment) {
+        addKeyVal(children, 'Compétences (Sujet)', m.competencesSujetText);
+        addKeyVal(children, 'Compétences (Transversales)', m.competencesTransversalesText);
+        addKeyVal(children, 'Objectifs (module)', __safeList(m.aimsTargets).join('; '));
+        addKeyVal(children, 'Résultats (module)', __safeList(m.outcomesTargets).join('; '));
+      }
+
+      (m.moments || []).forEach((mo, moi) => {
+        const mot = __trim(mo.title) || `Moment ${moi+1}`;
+        children.push(new Paragraph({ text: `Moment ${moi+1} — ${mot}`, heading: HeadingLevel.HEADING_2 }));
+        addKeyVal(children, 'Description', mo.description);
+        addKeyVal(children, 'Cible', mo.target);
+
+        (mo.activities || []).forEach((a, ai) => {
+          const at = __trim(a.title) || `Activité ${ai+1}`;
+          children.push(new Paragraph({ text: `Activité ${ai+1} — ${at}`, heading: HeadingLevel.HEADING_3 }));
+
+          addKeyVal(children, 'Type', a.typeLabel);
+          addKeyVal(children, 'Regroupement', a.groupingLabel);
+          addKeyVal(children, 'Nombre de groupes', a.groupCount);
+          addKeyVal(children, 'Taille groupe', a.groupSize);
+          addKeyVal(children, 'Détails regroupement', a.groupDetails);
+          addKeyVal(children, 'Formateur', a.trainerLabel);
+          addKeyVal(children, 'Lieu', a.placeLabel);
+          addKeyVal(children, 'Temps', a.timeLabel);
+          addKeyVal(children, 'Durée', a.durationLabel);
+          addKeyVal(children, 'Évaluation', a.evaluationLabel);
+
+          addKeyVal(children, 'Objectif', a.objective);
+          addKeyVal(children, 'À faire', a.tasks);
+          addKeyVal(children, 'À faire (formateur)', a.trainerTasks);
+          addKeyVal(children, 'Notes', a.notes);
+
+          if (opts.includeAlignment) {
+            addKeyVal(children, 'Compétences (Sujet)', a.competencesSujetText);
+            addKeyVal(children, 'Compétences (Transversales)', a.competencesTransversalesText);
+            addKeyVal(children, 'Objectifs ciblés', __safeList(a.aimsTargets).join('; '));
+            addKeyVal(children, 'Résultats ciblés', __safeList(a.outcomesTargets).join('; '));
+          }
+
+          if (opts.includeTools) {
+            const tools = __safeList(a.toolsMaterialsTargets);
+            if (tools.length || opts.includeEmpty) {
+              const notesMap = opts.includeToolNotes ? (a.toolsMaterialsNotes || {}) : {};
+              const line = tools.map(t => {
+                const note = opts.includeToolNotes ? __trim(notesMap[t] || '') : '';
+                return note ? `${t} — ${__oneLine(note)}` : t;
+              }).join('; ');
+              addKeyVal(children, 'Outils et matériel', line);
+            }
+          }
+        });
+      });
+    });
+
+    const doc = new Document({
+      sections: [{ children }]
+    });
+
+    const blob = await Packer.toBlob(doc);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `learning-design_${new Date().toISOString().slice(0,10)}.docx`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ try { a.remove(); URL.revokeObjectURL(url);} catch(_){} }, 0);
+  }
+
+  function __exportXLSXFromModel(model, opts){
+    if (!window.XLSX || !window.XLSX.utils) {
+      alert("La bibliothèque d’export Excel n’est pas disponible.");
+      return;
+    }
+
+    // Build a lightweight clone to respect options for tabular columns.
+    const out = { meta: model.meta, modules: [] };
+    (model.modules || []).forEach(m => {
+      const m2 = Object.assign({}, m);
+      if (!opts.includeAlignment) {
+        m2.aimsTargets = [];
+        m2.outcomesTargets = [];
+        m2.competencesSujetText = '';
+        m2.competencesTransversalesText = '';
+      }
+      const moments = (m.moments || []).map(mo => {
+        const mo2 = Object.assign({}, mo);
+        mo2.activities = (mo.activities || []).map(a => {
+          const a2 = Object.assign({}, a);
+          if (!opts.includeAlignment) {
+            a2.aimsTargets = [];
+            a2.outcomesTargets = [];
+            a2.aimsTargetsText = '';
+            a2.outcomesTargetsText = '';
+            a2.competencesSujetText = '';
+            a2.competencesTransversalesText = '';
+          }
+          if (!opts.includeTools) {
+            a2.toolsMaterialsTargets = [];
+            a2.toolsMaterialsTargetsText = '';
+            a2.toolsMaterialsTargetsWithNotesText = '';
+            a2.toolsMaterialsNotes = {};
+          } else if (!opts.includeToolNotes) {
+            a2.toolsMaterialsTargetsWithNotesText = __safeList(a2.toolsMaterialsTargets).join('; ');
+            a2.toolsMaterialsNotes = {};
+          }
+          return a2;
+        });
+        return mo2;
+      });
+      m2.moments = moments;
+      out.modules.push(m2);
+    });
+
+    const rows = (typeof buildTabularExportRows === 'function') ? buildTabularExportRows(out) : [];
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Learning design');
+    const filename = `learning-design_${new Date().toISOString().slice(0,10)}.xlsx`;
+    XLSX.writeFile(wb, filename);
+  }
+
+  function __refreshExportPreview(){
+    const st = __getExportPreviewState();
+    if (!st) return;
+
+    const modal = __ensureExportPreviewModal();
+    if (!modal) return;
+
+    // Build model
+    let baseModel;
+    try {
+      baseModel = (typeof buildExportModel === 'function') ? buildExportModel() : null;
+    } catch(err) {
+      baseModel = null;
+      try { window.reportError(err, { action: 'export-preview-build-model' }); } catch(_){}
+    }
+    if (!baseModel) baseModel = { meta: {}, modules: [] };
+
+    // Populate module select & activities list (once per open or when model size changes)
+    const modSel = __qs('#export-preview-scope-module', modal);
+    const actWrap = __qs('#export-preview-activities', modal);
+    const actCount = __qs('#export-preview-activities-count', modal);
+
+    // Enable/disable scope-specific controls
+    const scopeVal = st.scope;
+    const moduleScope = (scopeVal === 'module');
+    const actScope = (scopeVal === 'activities');
+
+    if (modSel) modSel.disabled = !moduleScope;
+    const actFilter = __qs('#export-preview-activity-filter', modal);
+    const actClear = __qs('#export-preview-activities-clear', modal);
+    if (actFilter) actFilter.disabled = !actScope;
+    if (actClear) actClear.disabled = !actScope;
+
+    // Fill module selector
+    if (modSel && !modSel.__filled) {
+      modSel.innerHTML = '';
+      (baseModel.modules || []).forEach((m, mi) => {
+        const opt = document.createElement('option');
+        const mt = __trim(m.title) || `Module ${mi+1}`;
+        opt.value = String(mi);
+        opt.textContent = `Module ${mi+1} — ${mt}`;
+        modSel.appendChild(opt);
+      });
+      modSel.__filled = true;
+      if (modSel.options.length) {
+        const safeIdx = Math.max(0, Math.min(st.moduleIndex, modSel.options.length-1));
+        modSel.value = String(safeIdx);
+      }
+    }
+
+    // Fill activities list (only once per open)
+    if (actWrap && !actWrap.__filled) {
+      actWrap.innerHTML = '';
+      let total = 0;
+      (baseModel.modules || []).forEach((m, mi) => {
+        const mt = __trim(m.title) || `Module ${mi+1}`;
+        const h = document.createElement('div');
+        h.className = 'text-[11px] font-bold text-slate-600 mt-1';
+        h.textContent = `Module ${mi+1} — ${mt}`;
+        actWrap.appendChild(h);
+
+        (m.moments || []).forEach((mo, moi) => {
+          const mot = __trim(mo.title) || `Moment ${moi+1}`;
+          const hh = document.createElement('div');
+          hh.className = 'text-[11px] font-semibold text-slate-500 mt-1 ml-2';
+          hh.textContent = `Moment ${moi+1} — ${mot}`;
+          actWrap.appendChild(hh);
+
+          (mo.activities || []).forEach((a, ai) => {
+            total++;
+            const key = __buildActivityKey(mi, moi, ai);
+            const at = __trim(a.title) || `Activité ${ai+1}`;
+            const row = document.createElement('label');
+            row.className = 'flex items-start gap-2 text-xs text-slate-700 ml-4 py-1';
+            row.setAttribute('data-search', (__oneLine(`${mt} ${mot} ${at}`)).toLowerCase());
+            row.innerHTML = `
+              <input type="checkbox" class="mt-0.5" data-activity-key="${key}"/>
+              <span class="leading-snug">${__escapeHtml2(`Activité ${ai+1} — ${at}`)}</span>
+            `;
+            actWrap.appendChild(row);
+          });
+        });
+      });
+
+      if (!total) {
+        actWrap.innerHTML = `<div class="text-[11px] text-slate-500">Aucune activité.</div>`;
+        actWrap.setAttribute('data-empty','true');
+      } else {
+        actWrap.setAttribute('data-empty','false');
+      }
+      actWrap.__filled = true;
+    }
+
+    // Apply filter in activities list
+    if (actWrap) {
+      const q = (st.filterTxt || '').toLowerCase();
+      let shown = 0;
+      let total = 0;
+      __qsa('label[data-search]', actWrap).forEach(row => {
+        total++;
+        const hay = row.getAttribute('data-search') || '';
+        const ok = !q || hay.includes(q);
+        row.style.display = ok ? '' : 'none';
+        if (ok) shown++;
+      });
+      if (actCount) {
+        if (actWrap.getAttribute('data-empty') === 'true') actCount.textContent = '';
+        else actCount.textContent = q ? `${shown}/${total} activités affichées` : `${total} activités`;
+      }
+    }
+
+    // Build filtered model for preview/export
+    let scoped = __buildFilteredModel(baseModel, st);
+
+    // Render preview (Markdown/HTML only)
+    const hint = __qs('#export-preview-hint', modal);
+    const pre = __qs('#export-preview-text', modal);
+    const htmlBox = __qs('#export-preview-html', modal);
+
+    const fmt = st.format;
+
+    function setPreviewText(txt){
+      if (pre) pre.textContent = __asText(txt || '');
+      if (htmlBox) htmlBox.classList.add('hidden');
+      if (pre) pre.classList.remove('hidden');
+      if (hint) hint.textContent = 'Aperçu en Markdown';
+    }
+    function setPreviewHtml(docHtml){
+      if (htmlBox) {
+        htmlBox.innerHTML = __asText(docHtml || '');
+        htmlBox.classList.remove('hidden');
+      }
+      if (pre) pre.classList.add('hidden');
+      if (hint) hint.textContent = 'Aperçu en HTML';
+    }
+
+    try {
+      if (fmt === 'richtext') {
+        const full = __renderHTMLFromModel(scoped, st.opts);
+        // Show body only in preview pane
+        const body = full.replace(/^.*?<body>/s,'').replace(/<\/body>.*$/s,'');
+        setPreviewHtml(body);
+      } else {
+        const md = __renderMarkdownFromModel(scoped, st.opts);
+        setPreviewText(md);
+      }
+    } catch(err) {
+      try { window.reportError(err, { action: 'export-preview-render' }); } catch(_){}
+      if (pre) pre.textContent = 'Erreur lors de la génération de l’aperçu.';
+    }
+
+    // Update hint for non-preview formats
+    if (fmt === 'docx' || fmt === 'xlsx' || fmt === 'rtf') {
+      if (hint) hint.textContent = 'Aperçu en Markdown (export vers le format sélectionné disponible)';
+      if (pre && !pre.textContent) {
+        pre.textContent = __renderMarkdownFromModel(scoped, st.opts);
+      }
+    }
+  }
+
+  function __runExportFromPreview(){
+    const st = __getExportPreviewState();
+    if (!st) return;
+
+    let baseModel = null;
+    try { baseModel = (typeof buildExportModel === 'function') ? buildExportModel() : null; } catch(_) {}
+    if (!baseModel) baseModel = { meta: {}, modules: [] };
+
+    const scoped = __buildFilteredModel(baseModel, st);
+    const fmt = st.format;
+
+    // Export with scope/options — does not affect the main Export dropdown.
+    if (fmt === 'markdown') {
+      const md = __renderMarkdownFromModel(scoped, st.opts);
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `learning-design_${new Date().toISOString().slice(0,10)}.md`;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>{ try { a.remove(); URL.revokeObjectURL(url);} catch(_){} }, 0);
+      return;
+    }
+
+    if (fmt === 'richtext') {
+      const h = __renderHTMLFromModel(scoped, st.opts);
+      const blob = new Blob([h], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `learning-design_${new Date().toISOString().slice(0,10)}.html`;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>{ try { a.remove(); URL.revokeObjectURL(url);} catch(_){} }, 0);
+      return;
+    }
+
+    if (fmt === 'rtf') {
+      const r = __renderRTFFromModel(scoped, st.opts);
+      const blob = new Blob([r], { type: 'application/rtf;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `learning-design_${new Date().toISOString().slice(0,10)}.rtf`;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>{ try { a.remove(); URL.revokeObjectURL(url);} catch(_){} }, 0);
+      return;
+    }
+
+    if (fmt === 'xlsx') {
+      __exportXLSXFromModel(scoped, st.opts);
+      return;
+    }
+
+    if (fmt === 'docx') {
+      __exportDOCXFromModel(scoped, st.opts);
+      return;
+    }
+
+    // fallback
+    const md = __renderMarkdownFromModel(scoped, st.opts);
+    const blob = new Blob([md], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `learning-design_${new Date().toISOString().slice(0,10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ try { a.remove(); URL.revokeObjectURL(url);} catch(_){} }, 0);
+  }
+
+  window.openExportPreview = function(){
+    const modal = __ensureExportPreviewModal();
+    if (!modal) return;
+
+    // Reset dynamic fill flags so we rebuild lists on open (titles may have changed)
+    const modSel = __qs('#export-preview-scope-module', modal);
+    const actWrap = __qs('#export-preview-activities', modal);
+    if (modSel) { modSel.__filled = false; }
+    if (actWrap) { actWrap.__filled = false; }
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    // Default: keep previous state if already set
+    try { __refreshExportPreview(); } catch(_) {}
+  };
+
+  window.closeExportPreview = function(){
+    const modal = __qs('#export-preview-modal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  };
+
+  // -------------------------
+  // Duplication d’activité (options)
+  // -------------------------
+  function __ensureDuplicateStepMenu(){
+    let menu = __qs('#duplicate-step-menu');
+    if (menu) return menu;
+
+    menu = document.createElement('div');
+    menu.id = 'duplicate-step-menu';
+    menu.className = 'fixed z-[120] hidden bg-white border border-slate-200 rounded-lg shadow-lg p-1 w-[240px]';
+    menu.innerHTML = `
+      <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider px-2 py-1">Dupliquer</div>
+      <button type="button" class="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100" data-mode="all">Dupliquer tout</button>
+      <button type="button" class="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100" data-mode="no-align">Sans alignement</button>
+      <button type="button" class="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100" data-mode="no-tools">Sans outils & matériel</button>
+      <button type="button" class="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100" data-mode="skeleton">Squelette (contenu vidé)</button>
+    `;
+    document.body.appendChild(menu);
+
+    // Close on outside click
+    document.addEventListener('click', function(e){
+      try {
+        if (menu.classList.contains('hidden')) return;
+        const inside = e.target && (e.target === menu || (e.target.closest && e.target.closest('#duplicate-step-menu')));
+        const onBtn = e.target && e.target.closest && e.target.closest('[data-action="duplicate-step"]');
+        if (inside || onBtn) return;
+        menu.classList.add('hidden');
+      } catch(_){}
+    }, true);
+
+    // Choose mode
+    menu.addEventListener('click', function(e){
+      const btn = e.target && e.target.closest ? e.target.closest('button[data-mode]') : null;
+      if (!btn) return;
+      const mode = btn.getAttribute('data-mode') || 'all';
+      const srcBtn = menu.__sourceBtn;
+      menu.classList.add('hidden');
+      menu.__sourceBtn = null;
+      try { window.cloneStepWithOptions(srcBtn, mode); } catch(err){ try { window.reportError(err, { action: 'duplicate-step-option' }); } catch(_) {} }
+    });
+
+    return menu;
+  }
+
+  window.openDuplicateStepMenu = function(btn, event){
+    try { event && event.preventDefault && event.preventDefault(); } catch(_){}
+    const menu = __ensureDuplicateStepMenu();
+    if (!menu || !btn) return;
+
+    menu.__sourceBtn = btn;
+
+    const r = btn.getBoundingClientRect();
+    const x = Math.min(window.innerWidth - 260, Math.max(8, r.right - 240));
+    const y = Math.min(window.innerHeight - 220, Math.max(8, r.bottom + 6));
+    menu.style.left = x + 'px';
+    menu.style.top = y + 'px';
+
+    menu.classList.remove('hidden');
+  };
+
+  window.cloneStepWithOptions = function(btn, mode){
+    if (!btn) return;
+    if (typeof historyCaptureNow === 'function') { try { historyCaptureNow(); } catch(_) {} }
+
+    const original = btn.closest('.step-card');
+    if (!original) return;
+    const clone = original.cloneNode(true);
+    original.after(clone);
+    try { copyFormValues(original, clone); } catch(_) {}
+
+    // Ensure unique IDs/render for checkbox lists by re-populating selects
+    try { populateStepCompetencesSelect(clone, (typeof getSelectedStepCompetenceIds === 'function') ? getSelectedStepCompetenceIds(clone) : []); } catch(_) {}
+    try { populateStepCompetencesTransversalesSelect(clone, (typeof getSelectedStepCompetencesTransversalesIds === 'function') ? getSelectedStepCompetencesTransversalesIds(clone) : []); } catch(_) {}
+    try { populateStepAimsSelect(clone, (typeof getSelectedStepAims === 'function') ? getSelectedStepAims(clone) : []); } catch(_) {}
+    try { populateStepOutcomesSelect(clone, (typeof getSelectedStepOutcomes === 'function') ? getSelectedStepOutcomes(clone) : []); } catch(_) {}
+    try { populateStepToolsMaterialsSelect(clone, (typeof getSelectedStepToolsMaterials === 'function') ? getSelectedStepToolsMaterials(clone) : []); } catch(_) {}
+
+    // Apply mode rules
+    const m = __trim(mode || 'all');
+
+    function clearMultiSelect(className, popFn){
+      try {
+        const sel = clone.querySelector(className);
+        if (sel) Array.from(sel.options || []).forEach(o => o.selected = false);
+      } catch(_){}
+      try { popFn && popFn(); } catch(_){}
+    }
+
+    if (m === 'no-align' || m === 'skeleton') {
+      try { clearMultiSelect('.step-competences-select', () => populateStepCompetencesSelect(clone, [])); } catch(_) {}
+      try { clearMultiSelect('.step-competences-transversales-select', () => populateStepCompetencesTransversalesSelect(clone, [])); } catch(_) {}
+      try { clearMultiSelect('.step-aims-select', () => populateStepAimsSelect(clone, [])); } catch(_) {}
+      try { clearMultiSelect('.step-outcomes-select', () => populateStepOutcomesSelect(clone, [])); } catch(_) {}
+    }
+
+    if (m === 'no-tools' || m === 'skeleton') {
+      try {
+        clone.dataset.tmNotes = '{}';
+      } catch(_){}
+      try { clearMultiSelect('.step-tools-materials-select', () => populateStepToolsMaterialsSelect(clone, [])); } catch(_) {}
+    }
+
+    if (m === 'skeleton') {
+      // Clear pedagogical content; keep logistics (grouping, time, evaluation, duration)
+      try { const t = clone.querySelector('.step-input-objective'); if (t) t.value = ''; } catch(_) {}
+      try { const t = clone.querySelector('.step-input-tasks'); if (t) t.value = ''; } catch(_) {}
+      try { const t = clone.querySelector('.step-input-trainer-tasks'); if (t) t.value = ''; } catch(_) {}
+      try { const t = clone.querySelector('.step-input-notes'); if (t) t.value = ''; } catch(_) {}
+    }
+
+    // Visual cue in title (non-destructive)
+    try {
+      const title = clone.querySelector('.step-input-title');
+      if (title && title.value && !/\(copie\)\s*$/i.test(title.value)) title.value = title.value + ' (copie)';
+    } catch(_){}
+
+    // Reapply type UI + stats
+    try { const select = clone.querySelector('.learning-type-select'); if (select) updateStepType(select); } catch(_) {}
+    try { if (typeof updateStats === 'function') updateStats(); } catch(_) {}
+
+    // Refresh jump-to if available
+    try { if (typeof refreshJumpToOptionsDebounced === 'function') refreshJumpToOptionsDebounced(); } catch(_) {}
+  };
+
+})();
+
 </script>
 </body>
 </html>
