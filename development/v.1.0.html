@@ -184,8 +184,11 @@ input, select, textarea {
         }
 
         :focus-visible {
-            outline: 2px solid rgba(99, 102, 241, 0.55);
-            outline-offset: 2px;
+            outline: 3px solid rgba(99, 102, 241, 0.70) !important;
+            outline-offset: 2px !important;
+        }
+        html.ui-dark :focus-visible {
+            outline-color: rgba(165, 180, 252, 0.90) !important;
         }
         
         .compact-label {
@@ -272,7 +275,7 @@ input, select, textarea {
         body.contrast-plus .border-slate-200 { border-color: #94a3b8 !important; }
         body.contrast-plus .border-slate-300 { border-color: #64748b !important; }
         body.contrast-plus .activity-container { border-left-color: #94a3b8 !important; }
-        body.contrast-plus :focus-visible { outline-color: rgba(37, 99, 235, 0.7); }
+        body.contrast-plus :focus-visible { outline-color: rgba(37, 99, 235, 0.85) !important; }
 
         @media print {
           body.contrast-plus { filter: none !important; }
@@ -616,6 +619,50 @@ body.focus-mode .activity-group.focus-active { display: block; }
         .step-right-group > summary { list-style: none; }
         .step-right-group > summary::-webkit-details-marker { display: none; }
         .step-right-group[open] .step-group-chevron { transform: rotate(180deg); }
+
+
+        /* Step tabs (Activity right column) */
+        .step-tabs{
+          display:flex;
+          gap:0.25rem;
+          padding:0.25rem;
+          background: rgba(241,245,249,0.9); /* slate-100 */
+          border: 1px solid rgba(226,232,240,1); /* slate-200 */
+          border-radius: 0.75rem;
+        }
+        .step-tab{
+          flex:1;
+          font-size: 0.75rem;
+          font-weight: 700;
+          padding: 0.375rem 0.5rem;
+          border-radius: 0.65rem;
+          color: rgba(71,85,105,1); /* slate-600 */
+          transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+          border: 1px solid transparent;
+        }
+        .step-tab[aria-selected="false"]:hover{
+          background: rgba(255,255,255,0.7);
+        }
+        .step-tab[aria-selected="true"]{
+          background: #ffffff;
+          border-color: rgba(226,232,240,1); /* slate-200 */
+          color: rgba(67,56,202,1); /* indigo-700 */
+          box-shadow: 0 1px 2px rgba(15,23,42,0.06);
+        }
+        html.ui-dark .step-tabs{
+          background: rgba(15,23,42,0.45);
+          border-color: rgba(148,163,184,0.25);
+        }
+        html.ui-dark .step-tab{
+          color: rgba(226,232,240,0.85);
+        }
+        html.ui-dark .step-tab[aria-selected="true"]{
+          background: rgba(15,23,42,0.85);
+          border-color: rgba(148,163,184,0.35);
+          color: rgba(165,180,252,1); /* indigo-200 */
+        }
+        /* Hide panels via [hidden] (keeps a11y) */
+        .step-tabpanel[hidden]{ display:none !important; }
         
 /* Module derived targets: read-only (reflects activities) */
 details[data-readonly="true"] .no-print{ display:none !important; }
@@ -646,6 +693,37 @@ details[data-readonly="true"] label{ cursor: default; }
 #analysis-tabs-wrap .panel-content{max-height:none !important;opacity:1 !important;overflow:visible !important;transition:none !important;}
 #analysis-tabs-wrap .panel-content.open{max-height:none !important;opacity:1 !important;}
 
+
+        body.has-batch-bar { padding-bottom: 90px; }
+        .step-coherence-indicator { cursor: help; }
+
+/* --- UI: make batch actions bar more visible --- */
+#batch-actions-bar{
+  background: rgba(15, 23, 42, 0.55); /* slate-900 @ ~55% */
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-top: 1px solid rgba(148, 163, 184, 0.35); /* slate-400 */
+}
+#batch-actions-bar .batch-actions-inner{
+  box-shadow: 0 18px 45px rgba(2, 6, 23, 0.35);
+}
+
+
+/* --- Long text fields: compact mode + expand/collapse --- */
+textarea.ld-ta-compact {
+  height: 3.2em !important;
+  min-height: 3.2em !important;
+}
+textarea.ld-ta-expanded {
+  height: 110px !important;
+  min-height: 110px !important;
+}
+@media (min-width: 640px) {
+  textarea.ld-ta-expanded {
+    height: 140px !important;
+    min-height: 140px !important;
+  }
+}
 </style>
 <script>
 /* Modèles: stubs globaux disponibles dès le chargement (évite les clics "inerte" avant l'initialisation).
@@ -1468,6 +1546,13 @@ details[data-readonly="true"] label{ cursor: default; }
         type="button">
   <span class="material-icons-round text-[16px]">visibility</span>
   <span class="text-xs font-medium hidden md:inline">Aperçu</span>
+</button>
+<button id="open-global-search-btn"
+        class="text-slate-600 hover:text-indigo-700 hover:bg-indigo-50 rounded px-2 py-1 flex items-center gap-1"
+        title="Recherche globale (Ctrl+K)"
+        type="button">
+  <span class="material-icons-round text-[16px]">search</span>
+  <span class="text-xs font-medium hidden md:inline">Recherche</span>
 </button>
 <input accept=".json" class="hidden" id="load-file-input" data-action-change="load-project-file" type="file"/>
 </div>
@@ -2673,6 +2758,58 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div>
 </div>
 </div>
+<!-- Global Search Modal -->
+<div aria-labelledby="global-search-modal-title"
+     aria-modal="true"
+     class="fixed inset-0 hidden items-start justify-center p-3 md:p-8 z-[110]"
+     id="global-search-modal"
+     role="dialog">
+  <div class="absolute inset-0 bg-black/30" data-role="global-search-backdrop"></div>
+  <div class="relative w-full max-w-4xl bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50">
+      <div class="flex items-center gap-2">
+        <span class="material-icons-round text-slate-500">search</span>
+        <div class="font-semibold text-sm" id="global-search-modal-title">Recherche globale</div>
+        <div class="text-xs text-slate-500 hidden md:block">Ctrl+K</div>
+      </div>
+      <button class="p-1.5 rounded hover:bg-slate-200 text-slate-600"
+              id="global-search-close-btn"
+              type="button"
+              title="Fermer">
+        <span class="material-icons-round text-[18px]">close</span>
+      </button>
+    </div>
+
+    <div class="px-4 py-3 border-b border-slate-200">
+      <div class="flex flex-col md:flex-row md:items-center gap-2">
+        <input class="flex-1 w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none"
+               id="global-search-input"
+               placeholder="Rechercher dans les modules, activités, contenus…"
+               type="text" />
+        <button class="px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white hover:bg-slate-50"
+                id="global-search-refresh-btn"
+                type="button">Actualiser</button>
+      </div>
+      <div class="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-600">
+        <label class="inline-flex items-center gap-1">
+          <input class="accent-indigo-600" id="global-search-in-tools" type="checkbox" checked />
+          Inclure outils &amp; remarques
+        </label>
+        <label class="inline-flex items-center gap-1">
+          <input class="accent-indigo-600" id="global-search-in-align" type="checkbox" checked />
+          Inclure alignement
+        </label>
+      </div>
+      <div class="mt-2 text-xs text-slate-500" id="global-search-count"></div>
+    </div>
+
+    <div class="max-h-[65vh] overflow-auto">
+      <div class="divide-y divide-slate-100" id="global-search-results"></div>
+      <div class="hidden p-4 text-sm text-slate-500" id="global-search-empty">Aucun résultat.</div>
+    </div>
+  </div>
+</div>
+
 <div aria-labelledby="export-preview-modal-title"
      aria-modal="true"
      class="fixed inset-0 hidden items-center justify-center p-4 bg-black/40 z-[100]"
@@ -3074,6 +3211,10 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
        drag_indicator
       </span>
 </div>
+<label class="no-print flex items-center justify-center mr-1" title="Sélectionner l’activité (actions groupées)">
+  <input type="checkbox" class="step-batch-select w-4 h-4 accent-indigo-600" aria-label="Sélectionner l’activité"/>
+</label>
+<span class="material-icons-round text-amber-500 text-[18px] step-coherence-indicator hidden no-print" title="">warning_amber</span>
 <div class="flex-1">
 <input class="step-input-title w-full px-1 py-0.5 text-sm font-semibold text-slate-800 border-none bg-transparent focus:ring-0 outline-none" data-i18n-placeholder="ph_step_title" placeholder="Titre de l'activité..." type="text"/>
 
@@ -3255,138 +3396,183 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 
 </div>
 </div>
-<div class="lg:flex-1 space-y-2 step-right-col"><details class="step-right-group border border-slate-200 rounded-lg bg-white"><summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5 bg-slate-50 rounded-lg"><span class="material-icons-round text-[10px] text-slate-400">view_agenda</span><span>Instructions, ressources et notes</span><span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal"><span>Afficher</span><span class="material-icons-round text-[14px] step-group-chevron">expand_more</span></span></summary><div class="px-2 pb-2 pt-2 space-y-2"><details class="step-right-section border border-slate-200 rounded-lg bg-white">
-<summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
-<span class="material-icons-round text-[10px] text-slate-400">flag</span>
-<span data-i18n="label_step_objective">Description de l'activité</span>
-<span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
-<span>Afficher</span>
-<span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
-</span>
-</summary>
-<div class="px-2 pb-2 pt-1">
-<textarea class="step-input-objective w-full px-2 py-1.5 text-[12px] border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 bg-slate-50 text-slate-700" data-i18n-placeholder="ph_step_objective" placeholder="Décrivez l'activité..." rows="2"></textarea>
+<div class="lg:flex-1 step-right-col">
+  <!-- Onglets : Déroulé / Alignement / Ressources -->
+  <div class="step-tabs" role="tablist" aria-label="Panneaux de l'activité">
+    <button class="step-tab" type="button" role="tab" aria-selected="true" tabindex="0" data-step-tab="flow">Déroulé</button>
+    <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="alignment">Alignement</button>
+    <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="resources">Ressources</button>
+  </div>
+
+  <div class="step-tabpanels">
+    <!-- Déroulé -->
+    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="flow">
+      <details class="step-right-section border border-slate-200 rounded-lg bg-white" open>
+        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
+          <span class="material-icons-round text-[10px] text-slate-400">flag</span>
+          <span data-i18n="label_step_objective">Description de l'activité</span>
+          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
+            <span>Afficher</span>
+            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
+          </span>
+        </summary>
+        <div class="px-2 pb-2 pt-1">
+          <textarea class="step-input-objective w-full px-2 py-1.5 text-[12px] border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 bg-slate-50 text-slate-700" data-i18n-placeholder="ph_step_objective" placeholder="Décrivez l'activité..." rows="2"></textarea>
+        </div>
+      </details>
+
+      <details class="step-right-section border border-slate-200 rounded-lg bg-white" open>
+        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
+          <span class="material-icons-round text-[10px] text-slate-400">assignment</span>
+          <span data-i18n="label_tasks">Ce que les apprenants doivent faire</span>
+          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
+            <span>Afficher</span>
+            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
+          </span>
+        </summary>
+        <div class="px-2 pb-2 pt-1">
+          <textarea class="step-input-tasks w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y leading-relaxed" data-i18n-placeholder="ph_tasks" placeholder="Décrivez les étapes, instructions et tâches..." rows="2"></textarea>
+        </div>
+      </details>
+
+      <details class="step-right-section border border-slate-200 rounded-lg bg-white" open>
+        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
+          <span class="material-icons-round text-[10px] text-slate-400">support_agent</span>
+          <span data-i18n="label_trainer_tasks">Ce que le ou les formateurs doivent faire</span>
+          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
+            <span>Afficher</span>
+            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
+          </span>
+        </summary>
+        <div class="px-2 pb-2 pt-1">
+          <textarea class="step-input-trainer-tasks w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y leading-relaxed bg-slate-50" data-i18n-placeholder="ph_trainer_tasks" placeholder="Décrivez les actions attendues du formateur..." rows="2"></textarea>
+        </div>
+      </details>
+    </div>
+
+    <!-- Alignement -->
+    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="alignment" hidden>
+      <details class="step-right-section border border-slate-200 rounded-lg bg-white">
+        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
+          <span class="material-icons-round text-[10px] text-slate-400">school</span>
+          <span>Compétences ciblées</span>
+          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
+            <span>Afficher</span>
+            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
+          </span>
+        </summary>
+        <div class="px-2 pb-2 pt-1">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div>
+              <div class="text-[10px] text-slate-500 font-bold uppercase mb-1">Compétences du sujet</div>
+              <div class="step-competences-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[140px] overflow-auto text-[11px] space-y-1"></div>
+              <select class="step-competences-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>
+            </div>
+            <div>
+              <div class="text-[10px] text-slate-500 font-bold uppercase mb-1">Compétences transversales</div>
+              <div class="step-competences-transversales-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[140px] overflow-auto text-[11px] space-y-1"></div>
+              <select class="step-competences-transversales-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Sélection : cochez les compétences concernées</p>
+          <div class="mt-2 flex items-center justify-between gap-2 no-print">
+            <div class="text-[10px] text-slate-400 italic">Si une compétence/objectif manque, ajoutez-la manuellement.</div>
+            <button class="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-100 transition-colors flex items-center gap-1" data-action="open-aims-from-step" title="Ajouter une compétence dans les paramètres" type="button">
+              <span class="material-icons-round text-[14px]">add</span>
+              Ajouter une compétence
+            </button>
+          </div>
+        </div>
+      </details>
+
+      <details class="step-right-section border border-slate-200 rounded-lg bg-white">
+        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
+          <span class="material-icons-round text-[10px] text-slate-400">flag</span>
+          <span>Objectifs ciblés</span>
+          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
+            <span>Afficher</span>
+            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
+          </span>
+        </summary>
+        <div class="px-2 pb-2 pt-1">
+          <div class="step-aims-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[140px] overflow-auto text-[11px] space-y-1"></div>
+          <select class="step-aims-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>
+          <p class="text-[11px] text-slate-400 mt-1">Sélection : cochez les objectifs concernés</p>
+          <div class="mt-2 flex items-center justify-between gap-2 no-print">
+            <div class="text-[10px] text-slate-400 italic">Si un objectif manque, ajoutez-le manuellement.</div>
+            <button class="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-100 transition-colors flex items-center gap-1" data-action="open-aims-from-step" title="Ajouter un objectif dans les paramètres" type="button">
+              <span class="material-icons-round text-[14px]">add</span>
+              Ajouter un objectif
+            </button>
+          </div>
+        </div>
+      </details>
+
+      <details class="step-right-section border border-slate-200 rounded-lg bg-white">
+        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
+          <span class="material-icons-round text-[10px] text-slate-400">assignment_turned_in</span>
+          <span>Résultats d'apprentissage ciblés</span>
+          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
+            <span>Afficher</span>
+            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
+          </span>
+        </summary>
+        <div class="px-2 pb-2 pt-1">
+          <div class="step-outcomes-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[140px] overflow-auto text-[11px] space-y-1"></div>
+          <select class="step-outcomes-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>
+          <p class="text-[11px] text-slate-400 mt-1">Sélection : cochez les résultats concernés</p>
+          <div class="mt-2 flex items-center justify-between gap-2 no-print">
+            <div class="text-[10px] text-slate-400 italic">Si un résultat manque, ajoutez-le manuellement.</div>
+            <button class="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-100 transition-colors flex items-center gap-1" data-action="open-outcomes-from-step" title="Ajouter un résultat dans les paramètres" type="button">
+              <span class="material-icons-round text-[14px]">add</span>
+              Ajouter un résultat
+            </button>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <!-- Ressources -->
+    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="resources" hidden>
+      <details class="step-right-section border border-slate-200 rounded-lg bg-white" open>
+        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
+          <span class="material-icons-round text-[10px] text-slate-400">comment</span>
+          <span data-i18n="label_notes">Notes, ressources, liens</span>
+          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
+            <span>Afficher</span>
+            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
+          </span>
+        </summary>
+        <div class="px-2 pb-2 pt-1">
+          <textarea class="step-input-notes w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y bg-slate-50 text-slate-600 italic" data-i18n-placeholder="ph_notes" placeholder="Notes formateur, ressources ou liens..." rows="2"></textarea>
+        </div>
+      </details>
+
+      <details class="step-right-section border border-slate-200 rounded-lg bg-white" data-section="tools-materials">
+        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5 bg-slate-50 rounded-lg">
+          <span class="material-icons-round text-[10px] text-slate-400">construction</span>
+          <span>Outils et matériel (activité)</span>
+          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
+            <span>Afficher</span>
+            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
+          </span>
+        </summary>
+        <div class="px-2 pb-2 pt-2">
+          <div class="flex items-center justify-between gap-2 mb-1 text-[11px] text-slate-500">
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" class="tm-show-selected-toggle accent-indigo-600" />
+              <span>Afficher uniquement les sélectionnés</span>
+            </label>
+            <span class="tm-selected-count text-[10px] text-slate-400"></span>
+          </div>
+          <div class="step-tools-materials-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[160px] overflow-auto text-[11px] space-y-1"></div>
+          <select class="step-tools-materials-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>
+          <p class="text-[11px] text-slate-400 mt-1">Sélection : cochez les outils et matériels requis pour cette activité (ajoutez une remarque si nécessaire).</p>
+        </div>
+      </details>
+    </div>
+  </div>
 </div>
-</details><details class="step-right-section border border-slate-200 rounded-lg bg-white">
-<summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
-<span class="material-icons-round text-[10px] text-slate-400">assignment</span>
-<span data-i18n="label_tasks">Ce que les apprenants doivent faire</span>
-<span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
-<span>Afficher</span>
-<span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
-</span>
-</summary>
-<div class="px-2 pb-2 pt-1">
-<textarea class="step-input-tasks w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y leading-relaxed" data-i18n-placeholder="ph_tasks" placeholder="Décrivez les étapes, instructions et tâches..." rows="2"></textarea>
-</div>
-</details><details class="step-right-section border border-slate-200 rounded-lg bg-white">
-<summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
-<span class="material-icons-round text-[10px] text-slate-400">support_agent</span>
-<span data-i18n="label_trainer_tasks">Ce que le ou les formateurs doivent faire</span>
-<span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
-<span>Afficher</span>
-<span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
-</span>
-</summary>
-<div class="px-2 pb-2 pt-1">
-<textarea class="step-input-trainer-tasks w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y leading-relaxed bg-slate-50" data-i18n-placeholder="ph_trainer_tasks" placeholder="Décrivez les actions attendues du formateur..." rows="2"></textarea>
-</div>
-</details><details class="step-right-section border border-slate-200 rounded-lg bg-white">
-<summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
-<span class="material-icons-round text-[10px] text-slate-400">comment</span>
-<span data-i18n="label_notes">Notes, ressources, liens</span>
-<span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
-<span>Afficher</span>
-<span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
-</span>
-</summary>
-<div class="px-2 pb-2 pt-1">
-<textarea class="step-input-notes w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y bg-slate-50 text-slate-600 italic" data-i18n-placeholder="ph_notes" placeholder="Notes formateur, ressources ou liens..." rows="2"></textarea>
-</div>
-</details></div></details><details class="step-right-group border border-slate-200 rounded-lg bg-white"><summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5 bg-slate-50 rounded-lg"><span class="material-icons-round text-[10px] text-slate-400">rule</span><span>Alignement</span><span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal"><span>Afficher</span><span class="material-icons-round text-[14px] step-group-chevron">expand_more</span></span></summary><div class="px-2 pb-2 pt-2 space-y-2"><details class="step-right-section border border-slate-200 rounded-lg bg-white">
-<summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
-<span class="material-icons-round text-[10px] text-slate-400">school</span>
-<span>Compétences ciblées</span>
-<span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
-<span>Afficher</span>
-<span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
-</span>
-</summary>
-<div class="px-2 pb-2 pt-1">
-<div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-<div>
-<div class="text-[10px] text-slate-500 font-bold uppercase mb-1">Compétences du sujet</div>
-<div class="step-competences-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[140px] overflow-auto text-[11px] space-y-1"></div>
-<select class="step-competences-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>
-</div>
-<div>
-<div class="text-[10px] text-slate-500 font-bold uppercase mb-1">Compétences transversales</div>
-<div class="step-competences-transversales-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[140px] overflow-auto text-[11px] space-y-1"></div>
-<select class="step-competences-transversales-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>
-</div>
-</div>
-<p class="text-[11px] text-slate-400 mt-1">Sélection : cochez les compétences concernées</p>
-<div class="mt-2 flex items-center justify-between gap-2 no-print">
-<div class="text-[10px] text-slate-400 italic">Si une compétence/objectif manque, ajoutez-la manuellement.</div>
-<button class="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-100 transition-colors flex items-center gap-1" data-action="open-aims-from-step" title="Ajouter une compétence dans les paramètres" type="button">
-<span class="material-icons-round text-[14px]">add</span>
-          Ajouter une compétence
-        </button>
-</div>
-</div>
-</details><details class="step-right-section border border-slate-200 rounded-lg bg-white">
-<summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
-<span class="material-icons-round text-[10px] text-slate-400">flag</span>
-<span>Objectifs ciblés</span>
-<span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
-<span>Afficher</span>
-<span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
-</span>
-</summary>
-<div class="px-2 pb-2 pt-1">
-<div class="step-aims-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[140px] overflow-auto text-[11px] space-y-1"></div>
-<select class="step-aims-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>
-<p class="text-[11px] text-slate-400 mt-1">Sélection : cochez les objectifs concernés</p>
-<div class="mt-2 flex items-center justify-between gap-2 no-print">
-<div class="text-[10px] text-slate-400 italic">Si un objectif manque, ajoutez-le manuellement.</div>
-<button class="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-100 transition-colors flex items-center gap-1" data-action="open-aims-from-step" title="Ajouter un objectif dans les paramètres" type="button">
-<span class="material-icons-round text-[14px]">add</span>
-          Ajouter un objectif
-        </button>
-</div>
-</div>
-</details><details class="step-right-section border border-slate-200 rounded-lg bg-white">
-<summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
-<span class="material-icons-round text-[10px] text-slate-400">assignment_turned_in</span>
-<span>Résultats d'apprentissage ciblés</span>
-<span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
-<span>Afficher</span>
-<span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
-</span>
-</summary>
-<div class="px-2 pb-2 pt-1">
-<div class="step-outcomes-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[140px] overflow-auto text-[11px] space-y-1"></div>
-<select class="step-outcomes-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>
-<p class="text-[11px] text-slate-400 mt-1">Sélection : cochez les résultats concernés</p>
-<div class="mt-2 flex items-center justify-between gap-2 no-print">
-<div class="text-[10px] text-slate-400 italic">Si un résultat manque, ajoutez-le manuellement.</div>
-<button class="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-100 transition-colors flex items-center gap-1" data-action="open-outcomes-from-step" title="Ajouter un résultat dans les paramètres" type="button">
-<span class="material-icons-round text-[14px]">add</span>
-          Ajouter un résultat
-        </button>
-</div>
-</div>
-</details></details>
-<details class="step-right-group border border-slate-200 rounded-lg bg-white w-full md:col-span-2">  <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5 bg-slate-50 rounded-lg">    <span class="material-icons-round text-[10px] text-slate-400">construction</span>    <span>Outils et matériel (activité)</span>    <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">      <span>Afficher</span>      <span class="material-icons-round text-[14px] step-group-chevron">expand_more</span>    </span>  </summary>  <div class="px-2 pb-2 pt-2">    
-<div class="flex items-center justify-between gap-2 mb-1 text-[11px] text-slate-500">
-  <label class="flex items-center gap-2 cursor-pointer select-none">
-    <input type="checkbox" class="tm-show-selected-toggle accent-indigo-600" />
-    <span>Afficher uniquement les sélectionnés</span>
-  </label>
-  <span class="tm-selected-count text-[10px] text-slate-400"></span>
-</div>
-<div class="step-tools-materials-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[160px] overflow-auto text-[11px] space-y-1"></div>    <select class="step-tools-materials-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>    <p class="text-[11px] text-slate-400 mt-1">Sélection : cochez les outils et matériels requis pour cette activité (ajoutez une remarque si nécessaire).</p>  </div></details>
-</div></details>
 
 </div>
 </div>
@@ -6243,7 +6429,9 @@ function initSortableSteps(container) {
             const clone = momentTemplate.content.cloneNode(true);
             momentsRoot.appendChild(clone);
             const moment = momentsRoot.lastElementChild;
-            initSortableSteps(moment.querySelector('.activity-steps-container'));
+            
+            try { setupCompactTextareas(moment); } catch (_) {}
+initSortableSteps(moment.querySelector('.activity-steps-container'));
             const mUnitSel = moment.querySelector('.moment-target-unit');
             if (mUnitSel) mUnitSel.value = 60;
             updateMomentIndexes(activityGroup);
@@ -6711,6 +6899,7 @@ function toggleMomentDescription(btn) {
                 icon.style.transform = 'rotate(0deg)';
             }
         }
+        
         function toggleStepSections(btn) {
             try {
                 const stepCard = btn.closest('.step-card');
@@ -6725,15 +6914,22 @@ function toggleMomentDescription(btn) {
                     if (mainIcon) mainIcon.style.transform = 'rotate(180deg)';
                 }
 
-                const groups = Array.from(stepCard.querySelectorAll('details.step-right-group'));
-                if (!groups.length) return;
+                const hasTabs = !!stepCard.querySelector('.step-tabs');
+                const activePanel = hasTabs ? (stepCard.querySelector('.step-tabpanel:not([hidden])') || stepCard) : stepCard;
 
-                const anyClosed = groups.some(g => !g.open);
+                // Prefer sections in the currently visible tab panel (if tabs exist).
+                let sections = Array.from(activePanel.querySelectorAll('details.step-right-section'));
+                if (!sections.length) sections = Array.from(stepCard.querySelectorAll('details.step-right-section'));
+                if (!sections.length) return;
 
-                // Toggle all groups and their inner sections.
-                groups.forEach(g => { g.open = anyClosed; });
-                const sections = Array.from(stepCard.querySelectorAll('details.step-right-section'));
+                const anyClosed = sections.some(s => !s.open);
+
+                // Toggle all sections in scope
                 sections.forEach(s => { s.open = anyClosed; });
+
+                // Backward compatibility: also toggle legacy groups if present
+                const groups = Array.from(activePanel.querySelectorAll('details.step-right-group'));
+                if (groups.length) groups.forEach(g => { g.open = anyClosed; });
 
                 const ico = btn.querySelector('[data-role="toggle-step-sections-icon"]');
                 if (ico) ico.textContent = anyClosed ? 'unfold_less' : 'unfold_more';
@@ -6744,7 +6940,6 @@ function toggleMomentDescription(btn) {
         }
 
 
-        
         function toggleDescription(btn) {
             try {
                 const group = btn.closest('.activity-group');
@@ -7985,6 +8180,91 @@ function updateOutcomeBloom(levelSelect) {
             });
             return parts;
         }
+
+        
+        // --- Long text fields: compact preview + expand/collapse ---
+        function __isLongTextareaCandidate(ta) {
+            if (!ta) return false;
+            // Exclude tool/material note textareas (already contextual + compact)
+            if (ta.classList && ta.classList.contains('step-toolmat-note')) return false;
+            // Exclude hidden/system textareas
+            if (ta.classList && ta.classList.contains('hidden')) return false;
+            if (ta.type && ta.type.toLowerCase() === 'hidden') return false;
+            return true;
+        }
+
+        function __toggleCompactTextarea(ta, btn) {
+            if (!ta) return;
+            const state = ta.dataset.taState || 'compact';
+            if (state === 'expanded') {
+                ta.dataset.taState = 'compact';
+                ta.classList.remove('ld-ta-expanded');
+                ta.classList.add('ld-ta-compact');
+                if (btn) btn.textContent = 'Développer';
+            } else {
+                ta.dataset.taState = 'expanded';
+                ta.classList.remove('ld-ta-compact');
+                ta.classList.add('ld-ta-expanded');
+                if (btn) btn.textContent = 'Réduire';
+                try { ta.focus(); } catch (_) {}
+            }
+        }
+
+        function setupCompactTextareas(scopeEl) {
+            const scope = scopeEl || document;
+            const selector = [
+                'textarea.activity-description',
+                'textarea.moment-description',
+                'textarea.step-input-objective',
+                'textarea.step-input-tasks',
+                'textarea.step-input-trainer-tasks',
+                'textarea.step-input-notes',
+                'textarea.step-input-eval-followup',
+                'textarea#ctx-objective'
+            ].join(',');
+
+            const list = scope.querySelectorAll(selector);
+            list.forEach(ta => {
+                if (!__isLongTextareaCandidate(ta)) return;
+                if (ta.dataset && ta.dataset.taCompactInit === '1') return;
+                ta.dataset.taCompactInit = '1';
+
+                // Default compact
+                ta.dataset.taState = 'compact';
+                ta.classList.add('ld-ta-compact');
+                ta.classList.remove('ld-ta-expanded');
+
+                // Create toggle bar and button
+                const bar = document.createElement('div');
+                bar.className = 'mt-1 flex justify-end no-print';
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'text-[11px] px-2 py-1 border border-slate-200 rounded-md bg-white hover:bg-slate-50 text-slate-600';
+                btn.textContent = 'Développer';
+                btn.addEventListener('click', function() { __toggleCompactTextarea(ta, btn); });
+                bar.appendChild(btn);
+
+                // Insert just after textarea
+                ta.insertAdjacentElement('afterend', bar);
+
+                // Convenience: expand on focus if user starts editing (optional, non-destructive)
+                ta.addEventListener('focus', function() {
+                    // Do not auto-expand on simple tabbing if already expanded; keep compact by default.
+                });
+            });
+        }
+
+        (function(){
+            function _initLongTextCompact() {
+                try { setupCompactTextareas(document); } catch (_) {}
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', _initLongTextCompact, { once: true });
+            } else {
+                _initLongTextCompact();
+            }
+        })();
+
 
         function _renderStepToolsMaterialsCheckboxesWithNotes(stepEl, selectEl, containerSelector, checkboxClass, emptyText) {
             if (!stepEl || !selectEl) return;
@@ -10939,7 +11219,8 @@ loadProjectFromObject(project);
                         if (mUnitSel) mUnitSel.value = mapUnitToSecs(momentData.targetUnit ?? getDefaultDurationUnitKey());
 const stepsContainer = momentEl.querySelector('.activity-steps-container');
                         initSortableSteps(stepsContainer);
-                        (momentData.steps || []).forEach(stepData => {
+                                                try { setupCompactTextareas(momentEl); } catch (_) {}
+(momentData.steps || []).forEach(stepData => {
                             addStepToContainerFromData(stepsContainer, stepData);
                         });
                     }
@@ -11010,6 +11291,7 @@ stepEl.querySelector('.step-input-objective').value = data.objective || "";
 try { const _tmD = stepEl.querySelector('.step-tools-materials-select')?.closest('details'); if (_tmD) _tmD.open = false; } catch (_) {}
 if (((data.groupMode || data.regroupement) === 'groups')) stepEl.querySelector('.step-group-details').classList.remove('hidden');
             container.appendChild(clone);
+            try { setupCompactTextareas(stepEl); } catch (_) {}
             updateStepType(stepEl.querySelector('.learning-type-select'));
         }
 
@@ -11099,6 +11381,8 @@ if (((data.groupMode || data.regroupement) === 'groups')) stepEl.querySelector('
             try { populateStepAimsSelect(newStep, []); } catch (_) {}
             try { populateStepOutcomesSelect(newStep, []); } catch (_) {}
             try { populateStepToolsMaterialsSelect(newStep, []); } catch (_) {}
+
+            try { setupCompactTextareas(newStep); } catch (_) {}
 try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closest('details'); if (_tmD) _tmD.open = false; } catch (_) {}
 // Default unit should be "min" (stored as 60 seconds)
             const unitSelect = newStep ? newStep.querySelector('.duration-unit') : null;
@@ -13393,6 +13677,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             html += `
 
 <!-- Modèles : Export -->
+
 
 
 </body></html>`;
@@ -19874,7 +20159,9 @@ function insertMoment(payload, moduleIndex, position, refMomentIndex) {
       });
     }
     if (typeof initSortableSteps === 'function') initSortableSteps(stepsContainer);
-  }
+  
+  try { setupCompactTextareas(stepsContainer); } catch (_) {}
+}
 
   // Insert at right place
   const existing = Array.from(momentsRoot.querySelectorAll('.moment-group'));
@@ -19929,7 +20216,9 @@ function insertActivity(payload, moduleIndex, momentIndex, position, refStepInde
   }
 
   if (typeof initSortableSteps === 'function') initSortableSteps(stepsContainer);
-  if (typeof updateMomentIndexes === 'function') updateMomentIndexes(modEl);
+  
+  try { setupCompactTextareas(stepsContainer); } catch (_) {}
+if (typeof updateMomentIndexes === 'function') updateMomentIndexes(modEl);
 }
 
 
@@ -21839,6 +22128,1748 @@ function bind() {
 
 })();
 
+
+
+
+
+/* =========================================================
+   Contextual Side Panel + Global Search
+   ========================================================= */
+(function(){
+  // Contextual Side Panel + Global Search
+  // ------------------------------
+  let __ctxSelectedStep = null;
+  let __ctxPanelPinned = false;
+  let __ctxSearchIndex = null;
+  let __ctxSearchHits = [];
+
+  function __ctxQ(sel, root){ try { return (root || document).querySelector(sel); } catch(_) { return null; } }
+  function __ctxQA(sel, root){ try { return Array.from((root || document).querySelectorAll(sel)); } catch(_) { return []; } }
+
+  function __ctxGetText(v){ return (v == null) ? '' : String(v); }
+
+  function __ctxSelectedOptions(selectEl){
+    try {
+      if (!selectEl) return [];
+      return Array.from(selectEl.selectedOptions || [])
+        .map(o => __ctxGetText(o.value || o.textContent || '').trim())
+        .filter(Boolean);
+    } catch(_) { return []; }
+  }
+
+  function __ctxGetTools(stepEl){
+    try {
+      const sel = __ctxQ('.step-tools-materials-select', stepEl);
+      return __ctxSelectedOptions(sel);
+    } catch(_) { return []; }
+  }
+
+  function __ctxGetToolNotesMap(stepEl){
+    try {
+      if (typeof __getStepToolMatNotesMap === 'function') return (__getStepToolMatNotesMap(stepEl) || {});
+      const raw = (stepEl && stepEl.dataset) ? stepEl.dataset.tmNotes : '';
+      return raw ? (JSON.parse(raw) || {}) : {};
+    } catch(_) { return {}; }
+  }
+
+  function __ctxFindGroup(stepEl){
+    try { return stepEl ? stepEl.closest('.activity-group') : null; } catch(_) { return null; }
+  }
+
+  function __ctxComputePath(stepEl){
+    try {
+      const group = __ctxFindGroup(stepEl);
+      const modTitleEl = group ? __ctxQ('.activity-title', group) : null;
+      const modTitle = __ctxGetText(modTitleEl ? modTitleEl.value : '').trim() || 'Module';
+      const steps = group ? __ctxQA('.step-card', group) : [];
+      const idx = steps.indexOf(stepEl);
+      const stepNum = (idx >= 0) ? (idx + 1) : '';
+      return modTitle + (stepNum ? (' — Activité ' + stepNum) : '');
+    } catch(_) { return ''; }
+  }
+
+  function __ctxOpenPanel(){
+    const panel = __ctxQ('#context-panel');
+    const handle = __ctxQ('#context-panel-handle');
+    if (panel) panel.classList.remove('hidden');
+    if (panel) panel.classList.add('flex');
+    if (handle) handle.classList.add('hidden');
+  }
+
+  function __ctxClosePanel(force){
+    if (!force && __ctxPanelPinned) return;
+    const panel = __ctxQ('#context-panel');
+    const handle = __ctxQ('#context-panel-handle');
+    if (panel) { panel.classList.add('hidden'); panel.classList.remove('flex'); }
+    if (handle) handle.classList.remove('hidden');
+  }
+
+  function __ctxSetPinned(v){
+    __ctxPanelPinned = !!v;
+    const btn = __ctxQ('#context-panel-pin');
+    if (btn) {
+      btn.classList.toggle('bg-indigo-50', __ctxPanelPinned);
+      btn.classList.toggle('text-indigo-700', __ctxPanelPinned);
+      btn.classList.toggle('text-slate-600', !__ctxPanelPinned);
+    }
+  }
+
+  function __ctxSelectStep(stepEl, opts){
+    if (!stepEl) return;
+    const prev = __ctxSelectedStep;
+    if (prev && prev !== stepEl) {
+      prev.classList.remove('ring-2','ring-indigo-400','ring-offset-1');
+    }
+    __ctxSelectedStep = stepEl;
+    stepEl.classList.add('ring-2','ring-indigo-400','ring-offset-1');
+
+    __ctxUpdatePanel(stepEl);
+    if (!opts || opts.openPanel !== false) __ctxOpenPanel();
+  }
+
+  function __ctxUpdatePanel(stepEl){
+    const pathEl = __ctxQ('#context-panel-path');
+    const hintEl = __ctxQ('#ctx-hint');
+    if (pathEl) pathEl.textContent = __ctxComputePath(stepEl);
+    if (hintEl) hintEl.textContent = '';
+
+    const titleSrc = __ctxQ('.step-input-title', stepEl);
+    const durSrc = __ctxQ('.duration-input', stepEl);
+    const durUnitSrc = __ctxQ('.duration-unit', stepEl);
+    const evalSrc = __ctxQ('.evaluation-select', stepEl);
+    const objSrc = __ctxQ('.step-input-objective', stepEl);
+
+    const title = __ctxQ('#ctx-title');
+    const dur = __ctxQ('#ctx-duration');
+    const durUnit = __ctxQ('#ctx-duration-unit');
+    const evalSel = __ctxQ('#ctx-evaluation');
+    const obj = __ctxQ('#ctx-objective');
+
+    if (title && titleSrc) title.value = titleSrc.value || '';
+    if (dur && durSrc) dur.value = durSrc.value || '';
+    if (durUnit && durUnitSrc) durUnit.value = durUnitSrc.value || '60';
+    if (evalSel && evalSrc) evalSel.value = evalSrc.value || 'Aucune';
+    if (obj && objSrc) obj.value = objSrc.value || '';
+
+    // Alignement
+    const alignBox = __ctxQ('#ctx-align');
+    if (alignBox) {
+      const comps = __ctxSelectedOptions(__ctxQ('.step-competences-select', stepEl));
+      const compsT = __ctxSelectedOptions(__ctxQ('.step-competences-transversales-select', stepEl));
+      const aims = __ctxSelectedOptions(__ctxQ('.step-aims-select', stepEl));
+      const outs = __ctxSelectedOptions(__ctxQ('.step-outcomes-select', stepEl));
+      const lines = [];
+      if (comps.length) lines.push('<div class="text-xs"><span class="font-semibold">Compétences</span> : ' + comps.map(__ctxEsc).join(', ') + '</div>');
+      if (compsT.length) lines.push('<div class="text-xs"><span class="font-semibold">Transversales</span> : ' + compsT.map(__ctxEsc).join(', ') + '</div>');
+      if (aims.length) lines.push('<div class="text-xs"><span class="font-semibold">Objectifs</span> : ' + aims.map(__ctxEsc).join(', ') + '</div>');
+      if (outs.length) lines.push('<div class="text-xs"><span class="font-semibold">Résultats</span> : ' + outs.map(__ctxEsc).join(', ') + '</div>');
+      alignBox.innerHTML = lines.length ? lines.join('') : '<div class="text-xs text-slate-500">Aucun élément sélectionné.</div>';
+    }
+
+    // Tools + notes
+    const toolsBox = __ctxQ('#ctx-tools');
+    if (toolsBox) {
+      const tools = __ctxGetTools(stepEl);
+      const notes = __ctxGetToolNotesMap(stepEl);
+      if (!tools.length) {
+        toolsBox.innerHTML = '<div class="text-xs text-slate-500">Aucun outil/matériel sélectionné.</div>';
+      } else {
+        const html = tools.map(t => {
+          const n = (notes && Object.prototype.hasOwnProperty.call(notes, t)) ? __ctxGetText(notes[t]).trim() : '';
+          const notePreview = n ? ('<div class="text-[11px] text-slate-600 mt-0.5 whitespace-pre-wrap">' + __ctxEsc(n) + '</div>') : '<div class="text-[11px] text-slate-400 mt-0.5 italic">Aucune remarque</div>';
+          return (
+            '<button type="button" class="w-full text-left rounded-lg border border-slate-200 p-2 hover:bg-slate-50" data-ctx-tool="' + __ctxEscAttr(t) + '">' +
+              '<div class="text-xs font-semibold text-slate-800">' + __ctxEsc(t) + '</div>' +
+              notePreview +
+            '</button>'
+          );
+        }).join('<div class="h-2"></div>');
+        toolsBox.innerHTML = html;
+      }
+    }
+
+    // Scroll button
+    const scrollBtn = __ctxQ('#ctx-scroll-to-step');
+    if (scrollBtn) scrollBtn.disabled = !stepEl;
+  }
+
+  function __ctxEsc(s){
+    return __ctxGetText(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c] || c));
+  }
+  function __ctxEscAttr(s){
+    return __ctxGetText(s).replace(/"/g, '&quot;');
+  }
+
+  
+  function __ctxFocusToolNote(stepEl, toolName){
+    try {
+      if (!stepEl || !toolName) return;
+
+      // Ensure the step panel is open
+      const body = stepEl.querySelector('.step-body');
+      if (body && body.classList.contains('collapsed')) {
+        body.classList.remove('collapsed');
+        const mainToggleBtn = stepEl.querySelector('button[data-action="toggle-step"]');
+        const mainIcon = mainToggleBtn ? mainToggleBtn.querySelector('.rotate-icon') : null;
+        if (mainIcon) mainIcon.style.transform = 'rotate(180deg)';
+      }
+
+      // Ensure the "Ressources" tab is visible when tabs are enabled
+      try {
+        if (typeof window.__setStepTab === 'function') {
+          window.__setStepTab(stepEl, 'resources', { focus: false });
+        } else {
+          // Fallback: show resources panel if present
+          const panels = Array.from(stepEl.querySelectorAll('.step-tabpanel[data-step-panel]'));
+          const tabs = Array.from(stepEl.querySelectorAll('.step-tab[data-step-tab]'));
+          if (panels.length && tabs.length) {
+            panels.forEach(p => { p.hidden = (p.getAttribute('data-step-panel') !== 'resources'); });
+            tabs.forEach(t => {
+              const isActive = (t.getAttribute('data-step-tab') === 'resources');
+              t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+              t.tabIndex = isActive ? 0 : -1;
+            });
+          }
+        }
+      } catch(_) {}
+
+      // Ensure the tools/materials section is expanded
+      const toolsDetails =
+        __ctxQ('details.step-right-section[data-section="tools-materials"]', stepEl) ||
+        __ctxQ('details.step-right-group[data-section="tools-materials"]', stepEl) ||
+        __ctxQ('details.step-right-section', stepEl) ||
+        __ctxQ('details.step-right-group', stepEl);
+      if (toolsDetails && toolsDetails.tagName === 'DETAILS') toolsDetails.open = true;
+    } catch(_) {}
+
+    // Focus matching note textarea if present
+    try {
+      const ta = stepEl.querySelector('textarea.step-toolmat-note[data-tool="' + CSS.escape(toolName) + '"]');
+      if (ta) {
+        ta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        ta.focus();
+      } else {
+        stepEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    } catch(_) {
+      try { stepEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(__) {}
+    }
+  }
+
+
+  function __ctxBuildSearchIndex(){
+    const items = [];
+    const groups = __ctxQA('.activity-group');
+    groups.forEach((g, gi) => {
+      const modTitleEl = __ctxQ('.activity-title', g);
+      const modTitle = __ctxGetText(modTitleEl ? modTitleEl.value : '').trim();
+      const modText = modTitle || ('Module ' + (gi+1));
+      items.push({ kind: 'module', title: modText, text: modText, el: g });
+
+      const steps = __ctxQA('.step-card', g);
+      steps.forEach((s, si) => {
+        const stepTitleEl = __ctxQ('.step-input-title', s);
+        const stepTitle = __ctxGetText(stepTitleEl ? stepTitleEl.value : '').trim() || ('Activité ' + (si+1));
+        const evalEl = __ctxQ('.evaluation-select', s);
+        const evalVal = __ctxGetText(evalEl ? evalEl.value : '').trim();
+        const durEl = __ctxQ('.duration-input', s);
+        const durUnitEl = __ctxQ('.duration-unit', s);
+        const durVal = __ctxGetText(durEl ? durEl.value : '').trim();
+        const durUnitVal = __ctxGetText(durUnitEl ? durUnitEl.value : '').trim();
+        const left = [
+          modText,
+          stepTitle,
+          evalVal,
+          durVal,
+          durUnitVal,
+          __ctxGetText(__ctxQ('.step-input-objective', s)?.value),
+          __ctxGetText(__ctxQ('.step-input-tasks', s)?.value),
+          __ctxGetText(__ctxQ('.step-input-trainer-tasks', s)?.value),
+          __ctxGetText(__ctxQ('.step-input-logbook', s)?.value),
+          __ctxGetText(__ctxQ('.step-input-resources', s)?.value)
+        ].join('\n');
+
+        const inAlign = __ctxSelectedOptions(__ctxQ('.step-competences-select', s))
+          .concat(__ctxSelectedOptions(__ctxQ('.step-competences-transversales-select', s)))
+          .concat(__ctxSelectedOptions(__ctxQ('.step-aims-select', s)))
+          .concat(__ctxSelectedOptions(__ctxQ('.step-outcomes-select', s)))
+          .join('\n');
+
+        const inTools = __ctxGetTools(s).join('\n') + '\n' + Object.values(__ctxGetToolNotesMap(s) || {}).join('\n');
+
+        items.push({
+          kind: 'step',
+          title: (modText ? (modText + ' — ') : '') + stepTitle,
+          text: left,
+          textAlign: inAlign,
+          textTools: inTools,
+          el: s
+        });
+      });
+    });
+    __ctxSearchIndex = items;
+    return items;
+  }
+
+  function __ctxSnippet(text, q){
+    try {
+      const t = __ctxGetText(text);
+      const qq = __ctxGetText(q).trim().toLowerCase();
+      if (!qq) return '';
+      const i = t.toLowerCase().indexOf(qq);
+      if (i < 0) return '';
+      const start = Math.max(0, i - 40);
+      const end = Math.min(t.length, i + qq.length + 60);
+      return (start > 0 ? '…' : '') + t.slice(start, end).replace(/\s+/g, ' ') + (end < t.length ? '…' : '');
+    } catch(_) { return ''; }
+  }
+
+  function __ctxRunSearch(query){
+    const q = __ctxGetText(query).trim();
+    const resBox = __ctxQ('#global-search-results');
+    const empty = __ctxQ('#global-search-empty');
+    const countEl = __ctxQ('#global-search-count');
+    if (!resBox) return;
+
+    if (!__ctxSearchIndex) __ctxBuildSearchIndex();
+    const inTools = !!(__ctxQ('#global-search-in-tools')?.checked);
+    const inAlign = !!(__ctxQ('#global-search-in-align')?.checked);
+
+    const qq = q.toLowerCase();
+    __ctxSearchHits = [];
+    if (qq) {
+      __ctxSearchIndex.forEach((it) => {
+        const hay = (__ctxGetText(it.text) + '\n' + (inAlign ? __ctxGetText(it.textAlign) : '') + '\n' + (inTools ? __ctxGetText(it.textTools) : '')).toLowerCase();
+        if (hay.indexOf(qq) >= 0) __ctxSearchHits.push(it);
+      });
+    }
+
+    resBox.innerHTML = '';
+    if (!qq) {
+      if (empty) empty.classList.add('hidden');
+      if (countEl) countEl.textContent = 'Saisissez un terme de recherche.';
+      return;
+    }
+
+    if (!__ctxSearchHits.length) {
+      if (empty) empty.classList.remove('hidden');
+      if (countEl) countEl.textContent = '0 résultat.';
+      return;
+    }
+
+    if (empty) empty.classList.add('hidden');
+    if (countEl) countEl.textContent = __ctxSearchHits.length + ' résultat' + (__ctxSearchHits.length > 1 ? 's' : '') + '.';
+
+    __ctxSearchHits.slice(0, 200).forEach((hit, idx) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'w-full text-left px-4 py-3 hover:bg-slate-50 focus:outline-none focus:bg-slate-50';
+      btn.dataset.hitIndex = String(idx);
+
+      const kindLabel = (hit.kind === 'module') ? 'Module' : 'Activité';
+      const snippet = __ctxSnippet(hit.text + '\n' + __ctxGetText(hit.textAlign) + '\n' + __ctxGetText(hit.textTools), q);
+
+      btn.innerHTML =
+        '<div class="flex items-start justify-between gap-3">' +
+          '<div class="min-w-0">' +
+            '<div class="text-xs text-slate-500">' + kindLabel + '</div>' +
+            '<div class="text-sm font-semibold text-slate-800 truncate">' + __ctxEsc(hit.title || '') + '</div>' +
+            (snippet ? '<div class="text-xs text-slate-600 mt-0.5">' + __ctxEsc(snippet) + '</div>' : '') +
+          '</div>' +
+          '<span class="material-icons-round text-[18px] text-slate-300">arrow_forward</span>' +
+        '</div>';
+
+      btn.addEventListener('click', () => {
+        try {
+          const el = hit.el;
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (hit.kind === 'step') __ctxSelectStep(el, { openPanel: true });
+          }
+        } catch(_) {}
+        __ctxCloseSearch();
+      });
+      resBox.appendChild(btn);
+    });
+  }
+
+  function __ctxOpenSearch(){
+    const modal = __ctxQ('#global-search-modal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    if (!__ctxSearchIndex) __ctxBuildSearchIndex();
+    const input = __ctxQ('#global-search-input');
+    if (input) {
+      try { input.focus(); input.select(); } catch(_) {}
+      __ctxRunSearch(input.value || '');
+    }
+  }
+
+  function __ctxCloseSearch(){
+    const modal = __ctxQ('#global-search-modal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+
+  function initContextPanelAndGlobalSearch(){
+    // Panel open/close
+    const handle = __ctxQ('#context-panel-handle');
+    const close = __ctxQ('#context-panel-close');
+    const pin = __ctxQ('#context-panel-pin');
+    const scrollBtn = __ctxQ('#ctx-scroll-to-step');
+
+    if (handle) handle.addEventListener('click', () => {
+      if (__ctxSelectedStep) __ctxOpenPanel();
+      else __ctxOpenPanel();
+    });
+    if (close) close.addEventListener('click', () => __ctxClosePanel(true));
+    if (pin) pin.addEventListener('click', () => __ctxSetPinned(!__ctxPanelPinned));
+    if (scrollBtn) scrollBtn.addEventListener('click', () => {
+      if (!__ctxSelectedStep) return;
+      try { __ctxSelectedStep.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(_) {}
+    });
+
+    // Quick-edit bindings
+    const ctxTitle = __ctxQ('#ctx-title');
+    const ctxDur = __ctxQ('#ctx-duration');
+    const ctxDurUnit = __ctxQ('#ctx-duration-unit');
+    const ctxEval = __ctxQ('#ctx-evaluation');
+    const ctxObj = __ctxQ('#ctx-objective');
+
+    function mirrorInput(ctxEl, srcSelector, evtName){
+      if (!ctxEl) return;
+      ctxEl.addEventListener('input', () => {
+        if (!__ctxSelectedStep) return;
+        const src = __ctxQ(srcSelector, __ctxSelectedStep);
+        if (!src) return;
+        src.value = ctxEl.value;
+        try { src.dispatchEvent(new Event(evtName || 'input', { bubbles: true })); } catch(_) {}
+      });
+      ctxEl.addEventListener('change', () => {
+        if (!__ctxSelectedStep) return;
+        const src = __ctxQ(srcSelector, __ctxSelectedStep);
+        if (!src) return;
+        src.value = ctxEl.value;
+        try { src.dispatchEvent(new Event('change', { bubbles: true })); } catch(_) {}
+      });
+    }
+    mirrorInput(ctxTitle, '.step-input-title', 'input');
+    mirrorInput(ctxDur, '.duration-input', 'input');
+    mirrorInput(ctxDurUnit, '.duration-unit', 'change');
+    mirrorInput(ctxEval, '.evaluation-select', 'change');
+    mirrorInput(ctxObj, '.step-input-objective', 'input');
+
+    // Click-to-select step
+    document.addEventListener('click', (e) => {
+      const step = e.target && e.target.closest ? e.target.closest('.step-card') : null;
+      if (step) __ctxSelectStep(step, { openPanel: false });
+    }, true);
+
+    // Live update when selected step changes
+    document.addEventListener('input', (e) => {
+      if (!__ctxSelectedStep) return;
+      if (__ctxSelectedStep.contains(e.target)) __ctxUpdatePanel(__ctxSelectedStep);
+    }, true);
+    document.addEventListener('change', (e) => {
+      if (!__ctxSelectedStep) return;
+      if (__ctxSelectedStep.contains(e.target)) __ctxUpdatePanel(__ctxSelectedStep);
+    }, true);
+
+    // Tool note focus from panel
+    const panel = __ctxQ('#context-panel');
+    if (panel) {
+      panel.addEventListener('click', (e) => {
+        const btn = e.target && e.target.closest ? e.target.closest('[data-ctx-tool]') : null;
+        if (!btn || !__ctxSelectedStep) return;
+        const tool = btn.getAttribute('data-ctx-tool') || '';
+        if (tool) __ctxFocusToolNote(__ctxSelectedStep, tool);
+      });
+    }
+
+    // Global search wiring
+    const openBtn = __ctxQ('#open-global-search-btn');
+    const closeBtn = __ctxQ('#global-search-close-btn');
+    const refreshBtn = __ctxQ('#global-search-refresh-btn');
+    const input = __ctxQ('#global-search-input');
+    const backdrop = __ctxQ('[data-role="global-search-backdrop"]');
+
+    if (openBtn) openBtn.addEventListener('click', () => __ctxOpenSearch());
+    if (closeBtn) closeBtn.addEventListener('click', () => __ctxCloseSearch());
+    if (backdrop) backdrop.addEventListener('click', () => __ctxCloseSearch());
+    if (refreshBtn) refreshBtn.addEventListener('click', () => { __ctxBuildSearchIndex(); __ctxRunSearch(input ? input.value : ''); });
+
+    function scheduleSearch(){
+      if (!input) return;
+      const q = input.value || '';
+      try { clearTimeout(__ctxSearchTimer); } catch(_) {}
+      __ctxSearchTimer = setTimeout(() => __ctxRunSearch(q), 120);
+    }
+
+    if (input) {
+      input.addEventListener('input', scheduleSearch);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { e.preventDefault(); __ctxCloseSearch(); }
+      });
+    }
+    const inTools = __ctxQ('#global-search-in-tools');
+    const inAlign = __ctxQ('#global-search-in-align');
+    if (inTools) inTools.addEventListener('change', scheduleSearch);
+    if (inAlign) inAlign.addEventListener('change', scheduleSearch);
+
+    // Ctrl/Cmd + K shortcut
+    document.addEventListener('keydown', (e) => {
+      const isCmdCtrl = !!(e.ctrlKey || e.metaKey);
+      if (!isCmdCtrl) return;
+      const k = String(e.key || '').toLowerCase();
+      if (k === 'k') {
+        e.preventDefault();
+        __ctxOpenSearch();
+      }
+      if (k === 'escape') {
+        __ctxCloseSearch();
+      }
+    }, true);
+
+    // Initialise panel state
+    __ctxClosePanel(true);
+  }
+
+function init(){
+    try { initContextPanelAndGlobalSearch(); } catch(_) {}
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
 </script>
+<!-- Contextual Side Panel (Activity) -->
+<div class="fixed top-3 right-3 bottom-3 w-[360px] max-w-[92vw] bg-white border border-slate-200 rounded-xl shadow-xl z-[105] hidden flex flex-col"
+     id="context-panel"
+     role="complementary"
+     aria-label="Panneau contextuel">
+  <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50">
+    <div class="flex items-center gap-2">
+      <span class="material-icons-round text-slate-500">view_sidebar</span>
+      <div class="font-semibold text-sm">Panneau contextuel</div>
+    </div>
+    <div class="flex items-center gap-1">
+      <button class="p-1.5 rounded hover:bg-slate-200 text-slate-600"
+              id="context-panel-pin"
+              type="button"
+              title="Épingler">
+        <span class="material-icons-round text-[18px]">push_pin</span>
+      </button>
+      <button class="p-1.5 rounded hover:bg-slate-200 text-slate-600"
+              id="context-panel-close"
+              type="button"
+              title="Fermer">
+        <span class="material-icons-round text-[18px]">close</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="px-4 py-3 overflow-auto space-y-3">
+    <div class="text-xs text-slate-500" id="context-panel-path"></div>
+
+    <div>
+      <label class="text-[11px] text-slate-500 font-semibold uppercase">Titre</label>
+      <input class="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none"
+             id="ctx-title"
+             type="text" />
+    </div>
+
+    <div class="grid grid-cols-2 gap-2">
+      <div>
+        <label class="text-[11px] text-slate-500 font-semibold uppercase">Durée</label>
+        <input class="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none"
+               id="ctx-duration"
+               type="number"
+               min="0" />
+      </div>
+      <div>
+        <label class="text-[11px] text-slate-500 font-semibold uppercase">Unité</label>
+        <select class="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:ring-1 focus:ring-indigo-500 outline-none"
+                id="ctx-duration-unit">
+          <option value="60">Minutes</option>
+          <option value="3600">Heures</option>
+          <option value="86400">Jours</option>
+          <option value="604800">Semaines</option>
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <label class="text-[11px] text-slate-500 font-semibold uppercase">Évaluation</label>
+      <select class="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:ring-1 focus:ring-indigo-500 outline-none"
+              id="ctx-evaluation">
+        <option value="Aucune">Aucune</option>
+        <option value="Diagnostique">Diagnostique</option>
+        <option value="Formative">Formative</option>
+        <option value="Certificative/Sommative">Certificative/Sommative</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="text-[11px] text-slate-500 font-semibold uppercase">Objectif</label>
+      <textarea class="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none resize-y"
+                id="ctx-objective"
+                rows="2"></textarea>
+    </div>
+
+    <details class="border border-slate-200 rounded-lg bg-white" open>
+      <summary class="cursor-pointer select-none flex items-center justify-between px-3 py-2 text-sm font-semibold text-slate-700">
+        Alignement
+        <span class="material-icons-round text-[16px] text-slate-400">expand_more</span>
+      </summary>
+      <div class="px-3 pb-3 text-sm text-slate-700" id="ctx-align"></div>
+    </details>
+
+    <details class="border border-slate-200 rounded-lg bg-white" open>
+      <summary class="cursor-pointer select-none flex items-center justify-between px-3 py-2 text-sm font-semibold text-slate-700">
+        Outils et matériel
+        <span class="material-icons-round text-[16px] text-slate-400">expand_more</span>
+      </summary>
+      <div class="px-3 pb-3 text-sm text-slate-700" id="ctx-tools"></div>
+    </details>
+  </div>
+
+  <div class="px-4 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-2">
+    <div class="text-xs text-slate-500" id="ctx-hint">Cliquez une activité pour afficher ses détails.</div>
+    <button class="px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white hover:bg-slate-50"
+            id="ctx-scroll-to-step"
+            type="button">Aller à l’activité</button>
+  </div>
+</div>
+
+<button class="fixed right-3 bottom-3 z-[104] px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 shadow-sm flex items-center gap-2"
+        id="context-panel-handle"
+        type="button"
+        title="Ouvrir le panneau contextuel">
+  <span class="material-icons-round text-[18px] text-slate-600">view_sidebar</span>
+  <span class="text-xs font-medium text-slate-700 hidden md:inline">Panneau</span>
+</button>
+
+
+<!-- Barre : Actions groupées -->
+<div id="batch-actions-bar" class="fixed bottom-0 left-0 right-0 hidden no-print z-[105]">
+  <div class="max-w-6xl mx-auto p-2">
+    <div class="batch-actions-inner bg-white border border-slate-200 rounded-xl shadow-lg p-2 flex flex-wrap items-center gap-2">
+      <div class="flex items-center gap-2">
+        <span class="material-icons-round text-slate-400 text-[18px]">done_all</span>
+        <span class="text-xs font-semibold text-slate-700">Actions groupées</span>
+        <span id="batch-selected-count" class="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">0</span>
+      </div>
+
+      <div class="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+
+      <div class="flex items-center gap-1">
+        <span class="text-[10px] font-bold text-slate-500 uppercase">Évaluation</span>
+        <select id="batch-evaluation" class="w-48 px-2 py-1 text-xs border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-200">
+          <option value="">— choisir —</option>
+          <option value="Aucune">Aucune</option>
+          <option value="Diagnostique">Diagnostique</option>
+          <option value="Formative">Formative</option>
+          <option value="Certificative/Sommative">Certificative/Sommative</option>
+        </select>
+        <button id="batch-apply-evaluation" type="button" class="px-2 py-1 rounded-md bg-slate-800 text-white text-xs hover:bg-slate-900">Appliquer</button>
+      </div>
+
+      <div class="h-6 w-px bg-slate-200 mx-1 hidden md:block"></div>
+
+      <div class="flex items-center gap-1">
+        <button id="batch-add-tool" type="button" class="px-2 py-1 rounded-md border border-slate-200 text-slate-700 text-xs hover:bg-slate-50">Ajouter outil</button>
+        <button id="batch-remove-tool" type="button" class="px-2 py-1 rounded-md border border-slate-200 text-slate-700 text-xs hover:bg-slate-50">Retirer outil</button>
+      </div>
+      <div class="h-6 w-px bg-slate-200 mx-1 hidden lg:block"></div>
+
+      <div class="flex items-center gap-1">
+        <span class="text-[10px] font-bold text-slate-500 uppercase">Alignement</span>
+        <select id="batch-alignment-kind" class="w-56 px-2 py-1 text-xs border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-200">
+          <option value="aim">Objectif</option>
+          <option value="outcome">Résultat</option>
+          <option value="comp">Compétence</option>
+          <option value="compT">Compétence transversale</option>
+        </select>
+        <button id="batch-add-alignment" type="button" class="px-2 py-1 rounded-md border border-slate-200 text-slate-700 text-xs hover:bg-slate-50">Ajouter</button>
+        <button id="batch-remove-alignment" type="button" class="px-2 py-1 rounded-md border border-slate-200 text-slate-700 text-xs hover:bg-slate-50">Retirer</button>
+      </div>
+
+
+      <div class="flex-1"></div>
+
+      <button id="batch-clear-selection" type="button" class="px-2 py-1 rounded-md border border-slate-200 text-slate-700 text-xs hover:bg-slate-50">Désélectionner</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+
+(function(){
+  const Q = (window.Q ? window.Q : (sel, root=document) => root.querySelector(sel));
+  const QA = (window.QA ? window.QA : (sel, root=document) => Array.from(root.querySelectorAll(sel)));
+
+  const bar = Q('#batch-actions-bar');
+
+  function selectedSteps(){
+    return QA('.step-batch-select:checked').map(chk => chk.closest('.step-card')).filter(Boolean);
+  }
+
+  function updateBatchBar(){
+    const n = selectedSteps().length;
+    const nEl = Q('#batch-selected-count');
+    if (nEl) nEl.textContent = String(n);
+    if (!bar) return;
+    if (n > 0){
+      bar.classList.remove('hidden');
+      document.body.classList.add('has-batch-bar');
+    } else {
+      bar.classList.add('hidden');
+      document.body.classList.remove('has-batch-bar');
+    }
+  }
+
+  function clearSelection(){
+    QA('.step-batch-select:checked').forEach(chk => { chk.checked = false; });
+    updateBatchBar();
+  }
+
+  function getDurationMinutes(stepEl){
+    const v = parseFloat(Q('.duration-input', stepEl)?.value || '0');
+    const unit = parseFloat(Q('.duration-unit', stepEl)?.value || '60'); // seconds per unit
+    if (!isFinite(v) || v <= 0) return 0;
+    if (!isFinite(unit) || unit <= 0) return 0;
+    return (v * unit) / 60;
+  }
+
+  function getAlignmentCount(stepEl){
+    const aims = Q('.step-aims-select', stepEl);
+    const outs = Q('.step-outcomes-select', stepEl);
+    const kcs  = Q('.step-competences-select', stepEl);
+    const n1 = aims ? (aims.selectedOptions ? aims.selectedOptions.length : 0) : 0;
+    const n2 = outs ? (outs.selectedOptions ? outs.selectedOptions.length : 0) : 0;
+    const n3 = kcs  ? (kcs.selectedOptions  ? kcs.selectedOptions.length  : 0) : 0;
+    return n1 + n2 + n3;
+  }
+
+  function computeCoherenceIssues(stepEl){
+    const issues = [];
+    const title = String(Q('.step-input-title', stepEl)?.value || '').trim();
+    if (!title) issues.push("Titre manquant");
+    const dur = getDurationMinutes(stepEl);
+    if (!dur || dur <= 0) issues.push("Durée = 0");
+    if (getAlignmentCount(stepEl) === 0) issues.push("Alignement non renseigné");
+    return issues;
+  }
+
+  function updateStepCoherence(stepEl){
+    const ind = Q('.step-coherence-indicator', stepEl);
+    if (!ind) return;
+    const issues = computeCoherenceIssues(stepEl);
+    if (issues.length){
+      ind.classList.remove('hidden');
+      ind.title = issues.join(" • ");
+    } else {
+      ind.classList.add('hidden');
+      ind.title = "";
+    }
+  }
+
+  function promptListChoice(title, options, defaultValue){
+    const opts = (Array.isArray(options) ? options : []).map(o => String(o || '').trim()).filter(Boolean);
+    if (!opts.length) return null;
+    const list = opts.slice(0, 50).map(o => "- " + o).join("\n");
+    const msg =
+      title + "\n\n" +
+      list +
+      (opts.length > 50 ? "\n… (liste tronquée)" : "");
+    const choice = window.prompt(msg, defaultValue || opts[0] || '');
+    if (choice == null) return null;
+    const c = String(choice || '').trim();
+    if (!c) return null;
+    return c;
+  }
+
+  function promptAimChoice(){
+    let options = [];
+    try{ if (typeof getGlobalLearningAimsOptions === 'function') options = getGlobalLearningAimsOptions() || []; }catch(_){}
+    if (!options || !options.length){
+      alert("Aucun objectif n'est défini. Ajoutez/en chargez dans l’onglet Objectifs.");
+      return null;
+    }
+    return promptListChoice("Choisissez un objectif (copiez/collez une ligne exacte depuis la liste ci-dessous) :", options, options[0] || '');
+  }
+
+  function promptOutcomeChoice(){
+    let options = [];
+    try{ if (typeof getGlobalLearningOutcomesOptions === 'function') options = getGlobalLearningOutcomesOptions() || []; }catch(_){}
+    if (!options || !options.length){
+      alert("Aucun résultat d’apprentissage n'est défini. Ajoutez/en chargez dans l’onglet Résultats d’apprentissage.");
+      return null;
+    }
+    return promptListChoice("Choisissez un résultat d’apprentissage (copiez/collez une ligne exacte depuis la liste ci-dessous) :", options, options[0] || '');
+  }
+
+  function promptCompetenceChoice(isTransversal){
+    let items = [];
+    try{
+      if (isTransversal && typeof getCompetencesTransversalesFromUI === 'function') items = getCompetencesTransversalesFromUI() || [];
+      if (!isTransversal && typeof getCompetencesFromUI === 'function') items = getCompetencesFromUI() || [];
+    }catch(_){}
+    items = Array.isArray(items) ? items : [];
+    if (!items.length){
+      alert(isTransversal ? "Aucune compétence transversale n'est définie." : "Aucune compétence n'est définie.");
+      return null;
+    }
+
+    const entries = items.map(it => {
+      const cat = String(it.categorie || '').trim() || '—';
+      const sub = String(it.sousCategorie || '').trim() || '—';
+      const label = String(it.label || '').trim();
+      return (cat + " / " + sub + " — " + label);
+    }).filter(Boolean);
+
+    const choice = promptListChoice(
+      isTransversal
+        ? "Choisissez une compétence transversale (copiez/collez une ligne exacte) :"
+        : "Choisissez une compétence (copiez/collez une ligne exacte) :",
+      entries,
+      entries[0] || ''
+    );
+    if (!choice) return null;
+
+    const parts = String(choice).split(" — ");
+    const label = (parts.length >= 2 ? parts.slice(1).join(" — ") : String(choice)).trim();
+    let cat = '';
+    let sub = '';
+    if (parts.length >= 2){
+      const left = String(parts[0] || '').trim();
+      const cs = left.split(" / ");
+      cat = (cs[0] || '').trim();
+      sub = (cs[1] || '').trim();
+      if (cat === '—') cat = '';
+      if (sub === '—') sub = '';
+    }
+
+    // Match first exact label, then case-insensitive; if cat/sub provided, use them
+    let found = items.find(it => {
+      const l = String(it.label || '').trim();
+      if (l !== label) return false;
+      if (cat && String(it.categorie || '').trim() !== cat) return false;
+      if (sub && String(it.sousCategorie || '').trim() !== sub) return false;
+      return true;
+    });
+
+    if (!found){
+      const lower = label.toLowerCase();
+      found = items.find(it => String(it.label || '').trim().toLowerCase() === lower);
+    }
+
+    if (!found) return null;
+    return { id: found.id, label: String(found.label || '').trim() };
+  }
+
+  function batchApplyEvaluation(){
+    const v = (Q('#batch-evaluation')?.value || '').trim();
+    if (!v) return;
+    selectedSteps().forEach(stepEl => {
+      const sel = Q('.evaluation-select', stepEl);
+      if (sel){
+        sel.value = v;
+        try{ sel.dispatchEvent(new Event('change', {bubbles:true})); }catch(_){}
+      }
+      updateStepCoherence(stepEl);
+    });
+  }
+
+  function promptToolChoice(){
+    let options = [];
+    try{
+      if (typeof getGlobalToolsMaterialsOptions === 'function'){
+        options = getGlobalToolsMaterialsOptions() || [];
+      }
+    }catch(_){}
+    options = (Array.isArray(options) ? options : []).map(o => String(o || '').trim()).filter(Boolean);
+    if (!options.length){
+      alert("Aucun outil/matériel n'est défini. Ajoutez-en dans l’onglet 5.");
+      return null;
+    }
+    const list = options.slice(0, 50).map(o => "- " + o).join("\n");
+    const msg =
+      "Choisissez un outil/matériel (copiez/collez une ligne exacte depuis la liste ci-dessous) :\n\n" +
+      list +
+      (options.length > 50 ? "\n… (liste tronquée)" : "");
+    const choice = window.prompt(msg, options[0] || '');
+    if (choice == null) return null;
+    const c = String(choice || '').trim();
+    if (!c) return null;
+    return c;
+  }
+
+  function batchAddTool(){
+    const tool = promptToolChoice();
+    if (!tool) return;
+    const notePrompt = window.prompt("Remarque (optionnelle) pour cet outil/matériel :", "");
+    const note = (notePrompt == null) ? "" : String(notePrompt || "");
+    selectedSteps().forEach(stepEl => {
+      let selTools = [];
+      try{
+        if (typeof getSelectedStepToolsMaterials === 'function'){
+          selTools = getSelectedStepToolsMaterials(stepEl) || [];
+        }
+      }catch(_){}
+      selTools = Array.isArray(selTools) ? selTools : [];
+      if (!selTools.includes(tool)) selTools.push(tool);
+      try{
+        if (typeof populateStepToolsMaterialsSelect === 'function'){
+          populateStepToolsMaterialsSelect(stepEl, selTools);
+        }
+      }catch(_){}
+      if (note && typeof __getStepToolMatNotesMap === 'function' && typeof __setStepToolMatNotesMap === 'function'){
+        const m = __getStepToolMatNotesMap(stepEl) || {};
+        m[tool] = note;
+        __setStepToolMatNotesMap(stepEl, m);
+        try{ if (typeof renderStepToolsMaterialsNotes === 'function') renderStepToolsMaterialsNotes(stepEl); }catch(_){}
+      }
+      updateStepCoherence(stepEl);
+    });
+  }
+
+  function batchRemoveTool(){
+    const tool = promptToolChoice();
+    if (!tool) return;
+    selectedSteps().forEach(stepEl => {
+      let selTools = [];
+      try{
+        if (typeof getSelectedStepToolsMaterials === 'function'){
+          selTools = getSelectedStepToolsMaterials(stepEl) || [];
+        }
+      }catch(_){}
+      selTools = (Array.isArray(selTools) ? selTools : []).filter(t => String(t || '').trim() !== tool);
+      try{
+        if (typeof populateStepToolsMaterialsSelect === 'function'){
+          populateStepToolsMaterialsSelect(stepEl, selTools);
+        }
+      }catch(_){}
+      try{
+        if (typeof __getStepToolMatNotesMap === 'function' && typeof __setStepToolMatNotesMap === 'function'){
+          const m = __getStepToolMatNotesMap(stepEl) || {};
+          delete m[tool];
+          __setStepToolMatNotesMap(stepEl, m);
+          if (typeof renderStepToolsMaterialsNotes === 'function') renderStepToolsMaterialsNotes(stepEl);
+        }
+      }catch(_){}
+      updateStepCoherence(stepEl);
+    });
+  }
+
+  function getSelectedTextFromSelect(sel){
+    if (!sel) return [];
+    return Array.from(sel.selectedOptions || []).map(o => String(o.value || '').trim()).filter(Boolean);
+  }
+
+  function batchAddAlignment(){
+    const kind = (Q('#batch-alignment-kind')?.value || 'aim').trim();
+    let picked = null;
+
+    if (kind === 'aim') picked = promptAimChoice();
+    else if (kind === 'outcome') picked = promptOutcomeChoice();
+    else if (kind === 'comp') picked = promptCompetenceChoice(false);
+    else if (kind === 'compT') picked = promptCompetenceChoice(true);
+
+    if (!picked) return;
+
+    selectedSteps().forEach(stepEl => {
+      try{
+        if (kind === 'aim'){
+          const current = (typeof getSelectedStepAims === 'function') ? (getSelectedStepAims(stepEl) || []) : getSelectedTextFromSelect(Q('.step-aims-select', stepEl));
+          const next = Array.from(new Set([...(current||[]), String(picked).trim()].filter(Boolean)));
+          if (typeof populateStepAimsSelect === 'function') populateStepAimsSelect(stepEl, next);
+        } else if (kind === 'outcome'){
+          const current = (typeof getSelectedStepOutcomes === 'function') ? (getSelectedStepOutcomes(stepEl) || []) : getSelectedTextFromSelect(Q('.step-outcomes-select', stepEl));
+          const next = Array.from(new Set([...(current||[]), String(picked).trim()].filter(Boolean)));
+          if (typeof populateStepOutcomesSelect === 'function') populateStepOutcomesSelect(stepEl, next);
+        } else if (kind === 'comp'){
+          const id = String(picked.id || '').trim();
+          if (!id) return;
+          const current = (typeof getSelectedStepCompetenceIds === 'function') ? (getSelectedStepCompetenceIds(stepEl) || []) : [];
+          const next = Array.from(new Set([...(current||[]), id].filter(Boolean)));
+          if (typeof populateStepCompetencesSelect === 'function') populateStepCompetencesSelect(stepEl, next);
+        } else if (kind === 'compT'){
+          const id = String(picked.id || '').trim();
+          if (!id) return;
+          const current = (typeof getSelectedStepCompetencesTransversalesIds === 'function') ? (getSelectedStepCompetencesTransversalesIds(stepEl) || []) : [];
+          const next = Array.from(new Set([...(current||[]), id].filter(Boolean)));
+          if (typeof populateStepCompetencesTransversalesSelect === 'function') populateStepCompetencesTransversalesSelect(stepEl, next);
+        }
+      }catch(_){}
+      updateStepCoherence(stepEl);
+    });
+  }
+
+  function batchRemoveAlignment(){
+    const kind = (Q('#batch-alignment-kind')?.value || 'aim').trim();
+    let picked = null;
+
+    if (kind === 'aim') picked = promptAimChoice();
+    else if (kind === 'outcome') picked = promptOutcomeChoice();
+    else if (kind === 'comp') picked = promptCompetenceChoice(false);
+    else if (kind === 'compT') picked = promptCompetenceChoice(true);
+
+    if (!picked) return;
+
+    selectedSteps().forEach(stepEl => {
+      try{
+        if (kind === 'aim'){
+          const current = (typeof getSelectedStepAims === 'function') ? (getSelectedStepAims(stepEl) || []) : getSelectedTextFromSelect(Q('.step-aims-select', stepEl));
+          const target = String(picked).trim();
+          const next = (current||[]).filter(v => String(v || '').trim() !== target);
+          if (typeof populateStepAimsSelect === 'function') populateStepAimsSelect(stepEl, next);
+        } else if (kind === 'outcome'){
+          const current = (typeof getSelectedStepOutcomes === 'function') ? (getSelectedStepOutcomes(stepEl) || []) : getSelectedTextFromSelect(Q('.step-outcomes-select', stepEl));
+          const target = String(picked).trim();
+          const next = (current||[]).filter(v => String(v || '').trim() !== target);
+          if (typeof populateStepOutcomesSelect === 'function') populateStepOutcomesSelect(stepEl, next);
+        } else if (kind === 'comp'){
+          const id = String(picked.id || '').trim();
+          if (!id) return;
+          const current = (typeof getSelectedStepCompetenceIds === 'function') ? (getSelectedStepCompetenceIds(stepEl) || []) : [];
+          const next = (current||[]).filter(v => String(v || '').trim() !== id);
+          if (typeof populateStepCompetencesSelect === 'function') populateStepCompetencesSelect(stepEl, next);
+        } else if (kind === 'compT'){
+          const id = String(picked.id || '').trim();
+          if (!id) return;
+          const current = (typeof getSelectedStepCompetencesTransversalesIds === 'function') ? (getSelectedStepCompetencesTransversalesIds(stepEl) || []) : [];
+          const next = (current||[]).filter(v => String(v || '').trim() !== id);
+          if (typeof populateStepCompetencesTransversalesSelect === 'function') populateStepCompetencesTransversalesSelect(stepEl, next);
+        }
+      }catch(_){}
+      updateStepCoherence(stepEl);
+    });
+  }
+
+  // Wiring
+  Q('#batch-apply-evaluation')?.addEventListener('click', batchApplyEvaluation);
+  Q('#batch-add-tool')?.addEventListener('click', batchAddTool);
+  Q('#batch-remove-tool')?.addEventListener('click', batchRemoveTool);
+  Q('#batch-add-alignment')?.addEventListener('click', batchAddAlignment);
+  Q('#batch-remove-alignment')?.addEventListener('click', batchRemoveAlignment);
+  Q('#batch-clear-selection')?.addEventListener('click', clearSelection);
+
+  document.addEventListener('change', function(e){
+    const t = e.target;
+    if (!t) return;
+    if (t.matches('.step-batch-select')) { updateBatchBar(); return; }
+    const stepEl = t.closest ? t.closest('.step-card') : null;
+    if (stepEl) updateStepCoherence(stepEl);
+  }, true);
+
+  document.addEventListener('input', function(e){
+    const t = e.target;
+    if (!t) return;
+    const stepEl = t.closest ? t.closest('.step-card') : null;
+    if (stepEl) updateStepCoherence(stepEl);
+  }, true);
+
+  // Init
+  function init(){
+    QA('.step-card').forEach(stepEl => { try{ updateStepCoherence(stepEl); }catch(_){} });
+    updateBatchBar();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+
+})();
+
+</script>
+
+
+<script>
+/* A11Y-ERGONOMIE: focus/ARIA/Esc/keyboard-dnd */
+(function(){
+  'use strict';
+
+  function qs(sel, ctx){ return (ctx||document).querySelector(sel); }
+  function qsa(sel, ctx){ return Array.prototype.slice.call((ctx||document).querySelectorAll(sel)); }
+  function ensureId(el, prefix){
+    if (!el) return null;
+    if (el.id) return el.id;
+    const id = prefix + '-' + Math.random().toString(36).slice(2, 9);
+    el.id = id;
+    return id;
+  }
+  function isHidden(el){
+    if (!el) return true;
+    if (el.classList.contains('hidden')) return true;
+    const cs = window.getComputedStyle ? getComputedStyle(el) : null;
+    if (cs && (cs.display === 'none' || cs.visibility === 'hidden')) return true;
+    return false;
+  }
+  function live(msg){
+    try {
+      let lr = qs('#a11y-live-region');
+      if (!lr) {
+        lr = document.createElement('div');
+        lr.id = 'a11y-live-region';
+        lr.setAttribute('aria-live', 'polite');
+        lr.setAttribute('aria-atomic', 'true');
+        lr.style.position = 'absolute';
+        lr.style.width = '1px';
+        lr.style.height = '1px';
+        lr.style.margin = '-1px';
+        lr.style.border = '0';
+        lr.style.padding = '0';
+        lr.style.overflow = 'hidden';
+        lr.style.clip = 'rect(0 0 0 0)';
+        lr.style.clipPath = 'inset(50%)';
+        document.body.appendChild(lr);
+      }
+      lr.textContent = msg;
+    } catch(_) {}
+  }
+
+  // ---------- ARIA: "Plus..." menu ----------
+  function initMoreMenuA11y(){
+    const btn = qs('#btn-more');
+    const menu = qs('#more-menu');
+    if (!btn || !menu) return;
+
+    btn.setAttribute('aria-haspopup', 'menu');
+    btn.setAttribute('aria-controls', 'more-menu');
+    btn.setAttribute('aria-expanded', menu.classList.contains('hidden') ? 'false' : 'true');
+
+    menu.setAttribute('role', 'menu');
+    menu.setAttribute('aria-label', 'Menu Plus');
+    const items = qsa('button, [role="menuitem"]', menu).filter(el => el.tagName === 'BUTTON');
+    items.forEach((it) => {
+      it.setAttribute('role', 'menuitem');
+      // roving tabindex
+      it.tabIndex = -1;
+    });
+
+    let lastOpener = null;
+
+    function setExpanded(open){
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    function openMenu(){
+      if (!menu.classList.contains('hidden')) return;
+      lastOpener = document.activeElement;
+      menu.classList.remove('hidden');
+      setExpanded(true);
+      const first = items.find(x => !x.disabled) || items[0];
+      items.forEach(it => { it.tabIndex = -1; });
+      if (first) {
+        first.tabIndex = 0;
+        setTimeout(() => { try { first.focus(); } catch(_) {} }, 0);
+      }
+    }
+
+    function closeMenu(opts){
+      if (menu.classList.contains('hidden')) return;
+      menu.classList.add('hidden');
+      setExpanded(false);
+      const restore = (opts && opts.restoreFocus);
+      if (restore) {
+        const target = (lastOpener && lastOpener.isConnected) ? lastOpener : btn;
+        try { target.focus(); } catch(_) {}
+      }
+    }
+
+    // Wrap existing functions (if present) so other code keeps working.
+    const origToggle = window.toggleMoreMenu;
+    const origClose = window.closeMoreMenu;
+
+    window.closeMoreMenu = function(){
+      try { closeMenu({ restoreFocus: false }); } catch(_) {}
+      try { if (typeof origClose === 'function') origClose(); } catch(_) {}
+    };
+
+    window.toggleMoreMenu = function(ev){
+      // prefer our a11y open/close behaviour
+      try {
+        if (ev && ev.preventDefault) ev.preventDefault();
+        if (ev && ev.stopPropagation) ev.stopPropagation();
+      } catch(_) {}
+      const willOpen = menu.classList.contains('hidden');
+      if (willOpen) openMenu(); else closeMenu({ restoreFocus: true });
+    };
+
+    // Keyboard navigation within menu
+    menu.addEventListener('keydown', (e) => {
+      const k = e.key;
+      const enabled = items.filter(x => !x.disabled);
+      const cur = document.activeElement;
+      const i = enabled.indexOf(cur);
+      if (k === 'Escape') {
+        e.preventDefault();
+        closeMenu({ restoreFocus: true });
+      } else if (k === 'ArrowDown') {
+        e.preventDefault();
+        const next = enabled[(i + 1 + enabled.length) % enabled.length] || enabled[0];
+        if (next) next.focus();
+      } else if (k === 'ArrowUp') {
+        e.preventDefault();
+        const prev = enabled[(i - 1 + enabled.length) % enabled.length] || enabled[0];
+        if (prev) prev.focus();
+      } else if (k === 'Home') {
+        e.preventDefault(); if (enabled[0]) enabled[0].focus();
+      } else if (k === 'End') {
+        e.preventDefault(); if (enabled[enabled.length-1]) enabled[enabled.length-1].focus();
+      } else if (k === 'Tab') {
+        // leave menu -> close
+        closeMenu({ restoreFocus: false });
+      }
+    });
+
+    // Open on ArrowDown when focused on trigger
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+        if (menu.classList.contains('hidden')) {
+          e.preventDefault();
+          openMenu();
+        }
+      }
+      if (e.key === 'Escape' && !menu.classList.contains('hidden')) {
+        e.preventDefault();
+        closeMenu({ restoreFocus: true });
+      }
+    }, true);
+
+    // Click outside already handled elsewhere; just keep aria in sync (MutationObserver)
+    const mo = new MutationObserver(() => {
+      const open = !menu.classList.contains('hidden');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      // If menu closed while focus is inside, restore focus to trigger.
+      try {
+        const ae = document.activeElement;
+        if (!open && ae && menu.contains(ae)) btn.focus();
+      } catch(_) {}
+    });
+mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
+  }
+
+  // ---------- ARIA: accordion-like toggles (modules / steps / moments / panels) ----------
+  function syncToggle(btn, panel, expanded){
+    if (!btn || !panel) return;
+    ensureId(panel, 'panel');
+    btn.setAttribute('aria-controls', panel.id);
+    btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+  }
+
+  function updateAriaForModule(btn){
+    try {
+      const group = btn.closest('.activity-group');
+      const body = group ? group.querySelector('.activity-body') : null;
+      if (!body) return;
+      const expanded = !body.classList.contains('collapsed');
+      syncToggle(btn, body, expanded);
+    } catch(_) {}
+  }
+
+  function updateAriaForStep(btn){
+    try {
+      const card = btn.closest('.step-card');
+      const body = card ? card.querySelector('.step-body') : null;
+      if (!body) return;
+      const expanded = !body.classList.contains('collapsed');
+      syncToggle(btn, body, expanded);
+    } catch(_) {}
+  }
+
+  function updateAriaForMoment(btn){
+    try {
+      const group = btn.closest('.moment-group');
+      const body = group ? group.querySelector('.moment-body') : null;
+      if (!body) return;
+      const expanded = !body.classList.contains('collapsed');
+      syncToggle(btn, body, expanded);
+    } catch(_) {}
+  }
+
+  function updateAriaForPanel(panelId){
+    try {
+      const panel = qs('#' + panelId);
+      if (!panel) return;
+      const open = panel.classList.contains('open') && !isHidden(panel);
+      qsa('[data-action="toggle-panel"][data-panel="'+panelId+'"]').forEach(btn => {
+        syncToggle(btn, panel, open);
+      });
+    } catch(_) {}
+  }
+
+  function wrapFn(name, after){
+    const orig = window[name];
+    if (typeof orig !== 'function') return;
+    if (orig.__a11y_wrapped) return;
+    const wrapped = function(){
+      const res = orig.apply(this, arguments);
+      try { after.apply(this, arguments); } catch(_) {}
+      return res;
+    };
+    wrapped.__a11y_wrapped = true;
+    window[name] = wrapped;
+  }
+
+  function initAccordionAria(){
+    // Initial sync for existing DOM
+    qsa('button[data-action="toggle-module"]').forEach(updateAriaForModule);
+    qsa('button[data-action="toggle-step"]').forEach(updateAriaForStep);
+    qsa('button[data-action="toggle-moment"]').forEach(updateAriaForMoment);
+    qsa('button[data-action="toggle-panel"][data-panel]').forEach(btn => updateAriaForPanel(btn.dataset.panel));
+
+    // Wrap togglers so aria stays in sync
+    wrapFn('toggleActivity', function(btn){ updateAriaForModule(btn); });
+    wrapFn('toggleStep', function(btn){ updateAriaForStep(btn); });
+    wrapFn('toggleMoment', function(btn){ updateAriaForMoment(btn); });
+    wrapFn('toggleAllActivities', function(){
+      qsa('button[data-action="toggle-module"]').forEach(updateAriaForModule);
+    });
+    wrapFn('togglePanel', function(panelId){ updateAriaForPanel(panelId); });
+
+    // Observe added nodes (new modules/steps/moments)
+    const root = qs('#activities-root');
+    if (root) {
+      const obs = new MutationObserver((muts) => {
+        muts.forEach(m => {
+          m.addedNodes && Array.prototype.forEach.call(m.addedNodes, (n) => {
+            if (!n || n.nodeType !== 1) return;
+            qsa('button[data-action="toggle-module"]', n).forEach(updateAriaForModule);
+            qsa('button[data-action="toggle-step"]', n).forEach(updateAriaForStep);
+            qsa('button[data-action="toggle-moment"]', n).forEach(updateAriaForMoment);
+          });
+        });
+      });
+      obs.observe(root, { childList: true, subtree: true });
+    }
+  }
+
+
+  // ---------- Tabs: colonne droite d'une activité (Déroulé / Alignement / Ressources) ----------
+  function initStepTabs(){
+    function setup(stepEl){
+      if (!stepEl || stepEl.__stepTabsInit) return;
+      const tablist = qs('.step-tabs', stepEl);
+      if (!tablist) return;
+
+      const tabs = qsa('.step-tab[data-step-tab]', tablist);
+      const panels = qsa('.step-tabpanel[data-step-panel]', stepEl);
+      if (!tabs.length || !panels.length) return;
+
+      tablist.setAttribute('role', 'tablist');
+
+      // Link tabs <-> panels
+      tabs.forEach((tab) => {
+        tab.setAttribute('role', 'tab');
+        tab.setAttribute('type', 'button');
+        const name = tab.getAttribute('data-step-tab');
+        const panel = panels.find(p => p.getAttribute('data-step-panel') === name);
+        if (!panel) return;
+
+        const tabId = ensureId(tab, 'step-tab');
+        const panelId = ensureId(panel, 'step-panel');
+
+        tab.setAttribute('aria-controls', panelId);
+        panel.setAttribute('role', 'tabpanel');
+        panel.setAttribute('aria-labelledby', tabId);
+      });
+
+      function activate(tab, opts){
+        if (!tab) return;
+        const name = tab.getAttribute('data-step-tab');
+
+        tabs.forEach(t => {
+          const sel = (t === tab);
+          t.setAttribute('aria-selected', sel ? 'true' : 'false');
+          t.tabIndex = sel ? 0 : -1;
+        });
+
+        panels.forEach(p => {
+          const isActive = (p.getAttribute('data-step-panel') === name);
+          p.hidden = !isActive;
+        });
+
+        if (opts && opts.focus) {
+          try { tab.focus(); } catch(_) {}
+        }
+      }
+
+      // Initial active tab: aria-selected="true" else first
+      const initial = tabs.find(t => t.getAttribute('aria-selected') === 'true') || tabs[0];
+      activate(initial, { focus: false });
+
+      // Interactions: click + roving focus + activation
+      tabs.forEach((tab, idx) => {
+        tab.addEventListener('click', () => activate(tab, { focus: false }));
+        tab.addEventListener('keydown', (e) => {
+          const k = e.key;
+          const n = tabs.length;
+          if (!n) return;
+
+          if (k === 'ArrowRight' || k === 'ArrowDown') {
+            e.preventDefault();
+            const ni = (idx + 1) % n;
+            try { tabs[ni].focus(); } catch(_) {}
+            return;
+          }
+          if (k === 'ArrowLeft' || k === 'ArrowUp') {
+            e.preventDefault();
+            const ni = (idx - 1 + n) % n;
+            try { tabs[ni].focus(); } catch(_) {}
+            return;
+          }
+          if (k === 'Home') {
+            e.preventDefault();
+            try { tabs[0].focus(); } catch(_) {}
+            return;
+          }
+          if (k === 'End') {
+            e.preventDefault();
+            try { tabs[n-1].focus(); } catch(_) {}
+            return;
+          }
+          if (k === 'Enter' || k === ' ') {
+            e.preventDefault();
+            activate(tab, { focus: true });
+            return;
+          }
+        });
+      });
+
+      stepEl.__stepTabsActivate = activate;
+      stepEl.__stepTabsInit = true;
+    }
+
+    // Init existing
+    qsa('.step-card').forEach(setup);
+
+    // Init dynamically added steps
+    const root = qs('#activities-root') || document.body;
+    const obs = new MutationObserver((muts) => {
+      muts.forEach(m => {
+        m.addedNodes && Array.prototype.forEach.call(m.addedNodes, (n) => {
+          if (!n || n.nodeType !== 1) return;
+          if (n.classList && n.classList.contains('step-card')) setup(n);
+          qsa('.step-card', n).forEach(setup);
+        });
+      });
+    });
+    obs.observe(root, { childList: true, subtree: true });
+
+    // Global helper (used by search/context shortcuts)
+    window.__setStepTab = function(stepEl, tabName, opts){
+      try{
+        if (!stepEl) return;
+        setup(stepEl);
+        const esc = (window.CSS && CSS.escape) ? CSS.escape : (s => String(s).replace(/["\\]/g, "\\$&"));
+        const tab = qs('.step-tab[data-step-tab="' + esc(tabName) + '"]', stepEl);
+        if (tab && typeof stepEl.__stepTabsActivate === 'function') {
+          stepEl.__stepTabsActivate(tab, opts || {});
+        }
+      } catch(_) {}
+    };
+  }
+
+  // ---------- Keyboard drag & drop (reorder) ----------
+  const KBD = {
+    active: false,
+    handle: null,
+    item: null,
+    container: null,
+    snapshot: null
+  };
+
+  function getReorderItemFromHandle(handle){
+    if (!handle) return null;
+    return handle.closest('li, .step-card, .moment-group, .activity-group');
+  }
+  function getContainerForItem(item){
+    if (!item) return null;
+    return item.parentElement;
+  }
+  function itemIndex(item){
+    if (!item || !item.parentElement) return -1;
+    const kids = Array.prototype.filter.call(item.parentElement.children, el => el.nodeType===1);
+    return kids.indexOf(item);
+  }
+  function itemCount(container){
+    if (!container) return 0;
+    return Array.prototype.filter.call(container.children, el => el.nodeType===1).length;
+  }
+  function syncAfterReorder(container){
+    try {
+      if (!container) return;
+      const id = container.id || '';
+      if (id === 'aims-list' && typeof window.syncAimsTextareaFromList === 'function') window.syncAimsTextareaFromList();
+      if (id === 'outcomes-text-list' && typeof window.syncOutcomesTextTextareaFromList === 'function') window.syncOutcomesTextTextareaFromList();
+      if (id === 'tools-materials-list' && typeof window.syncToolsMaterialsTextareaFromList === 'function') window.syncToolsMaterialsTextareaFromList();
+      if (typeof window.refreshAllStepToolsMaterialsOptions === 'function' && id === 'tools-materials-list') window.refreshAllStepToolsMaterialsOptions();
+      if ((id === 'competences-list' || id === 'competences-transversales-list') && typeof window.notifyCompetencesUpdated === 'function') window.notifyCompetencesUpdated();
+      // Steps/moments/modules: update derived views
+      if (typeof window.updateMomentIndexes === 'function' && container.closest('.activity-group') && container.classList.contains('activity-moments-container')) {
+        window.updateMomentIndexes(container.closest('.activity-group'));
+      }
+      if (typeof window.updateStats === 'function') window.updateStats();
+      if (typeof window.updateEmptyState === 'function') window.updateEmptyState();
+    } catch(_) {}
+  }
+
+  function startGrab(handle){
+    const item = getReorderItemFromHandle(handle);
+    const container = getContainerForItem(item);
+    if (!item || !container) return;
+
+    // Snapshot for undo if available
+    try {
+      if (typeof window.snapshotProject === 'function') {
+        KBD.snapshot = window.snapshotProject();
+      } else {
+        KBD.snapshot = null;
+      }
+    } catch(_) { KBD.snapshot = null; }
+
+    KBD.active = true;
+    KBD.handle = handle;
+    KBD.item = item;
+    KBD.container = container;
+
+    handle.setAttribute('aria-pressed', 'true');
+    item.classList.add('kbd-grabbed');
+    live('Mode réorganisation activé. Utilisez les flèches haut/bas pour déplacer. Échap pour annuler.');
+  }
+
+  function endGrab(cancel){
+    if (!KBD.active) return;
+
+    try {
+      if (!cancel && KBD.snapshot && typeof window.pushUndoSnapshot === 'function') {
+        window.pushUndoSnapshot(KBD.snapshot);
+      }
+    } catch(_) {}
+
+    try {
+      if (KBD.handle) KBD.handle.setAttribute('aria-pressed', 'false');
+      if (KBD.item) KBD.item.classList.remove('kbd-grabbed');
+    } catch(_) {}
+
+    KBD.active = false;
+    KBD.handle = null;
+    KBD.item = null;
+    KBD.container = null;
+    KBD.snapshot = null;
+
+    if (cancel) live('Réorganisation annulée.'); else live('Réorganisation terminée.');
+  }
+
+  function moveItem(delta){
+    if (!KBD.active || !KBD.item || !KBD.container) return;
+    const item = KBD.item;
+    const container = KBD.container;
+    const beforeIndex = itemIndex(item);
+    if (beforeIndex < 0) return;
+
+    const siblings = Array.prototype.filter.call(container.children, el => el.nodeType===1);
+    const targetIndex = beforeIndex + delta;
+    if (targetIndex < 0 || targetIndex >= siblings.length) {
+      live('Déplacement impossible.');
+      return;
+    }
+
+    const ref = siblings[targetIndex];
+    if (delta < 0) {
+      container.insertBefore(item, ref);
+    } else {
+      container.insertBefore(item, ref.nextSibling);
+    }
+
+    // keep focus
+    try { KBD.handle.focus(); } catch(_) {}
+
+    syncAfterReorder(container);
+
+    const afterIndex = itemIndex(item);
+    const total = itemCount(container);
+    live('Élément déplacé en position ' + (afterIndex + 1) + ' sur ' + total + '.');
+  }
+
+  function decorateHandles(ctx){
+    const handles = qsa('.drag-handle', ctx || document);
+    handles.forEach(h => {
+      // Avoid affecting real buttons (already focusable)
+      if (h.tagName === 'BUTTON' || h.getAttribute('role') === 'button') {
+        // still ensure aria
+      } else {
+        h.setAttribute('role', 'button');
+      }
+      if (!h.hasAttribute('tabindex')) h.tabIndex = 0;
+      if (!h.hasAttribute('aria-label')) h.setAttribute('aria-label', 'Réordonner');
+      h.setAttribute('aria-pressed', 'false');
+    });
+  }
+
+  function initKeyboardDnD(){
+    // Add minimal visual cue when grabbed
+    const styleId = 'a11y-kbd-dnd-style';
+    if (!qs('#' + styleId)) {
+      const st = document.createElement('style');
+      st.id = styleId;
+      st.textContent = '.kbd-grabbed{ outline: 2px dashed rgba(99,102,241,0.9); outline-offset: 2px; }';
+      document.head.appendChild(st);
+    }
+
+    decorateHandles(document);
+
+    // When nodes are added dynamically, decorate again
+    const root = qs('#activities-root') || document.body;
+    const obs = new MutationObserver((muts) => {
+      muts.forEach(m => {
+        m.addedNodes && Array.prototype.forEach.call(m.addedNodes, (n) => {
+          if (n && n.nodeType === 1) decorateHandles(n);
+        });
+      });
+    });
+    obs.observe(root, { childList: true, subtree: true });
+
+    // Key handling on handles
+    document.addEventListener('keydown', (e) => {
+      const handle = e.target && (e.target.classList && e.target.classList.contains('drag-handle')) ? e.target : null;
+      const k = e.key;
+
+      // Global cancellation of keyboard grab
+      if (k === 'Escape' && KBD.active) {
+        e.preventDefault();
+        endGrab(true);
+        return;
+      }
+
+      if (!handle) return;
+
+      if (k === ' ' || k === 'Enter') {
+        e.preventDefault();
+        if (KBD.active && KBD.handle === handle) endGrab(false);
+        else if (!KBD.active) startGrab(handle);
+        return;
+      }
+
+      if (!KBD.active || KBD.handle !== handle) return;
+
+      if (k === 'ArrowUp') { e.preventDefault(); moveItem(-1); return; }
+      if (k === 'ArrowDown') { e.preventDefault(); moveItem(+1); return; }
+      if (k === 'Home') { e.preventDefault(); while (itemIndex(KBD.item) > 0) moveItem(-1); return; }
+      if (k === 'End') { e.preventDefault(); while (itemIndex(KBD.item) < itemCount(KBD.container)-1) moveItem(+1); return; }
+    }, true);
+  }
+
+  // ---------- ESC: close top-most overlay/menu ----------
+  function initGlobalEscape(){
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+
+      // If keyboard DnD active, handled elsewhere.
+      if (KBD.active) return;
+
+      // 1) Close duplicate step menu if open
+      const dup = qs('#duplicate-step-menu');
+      if (dup && !isHidden(dup)) {
+        e.preventDefault();
+        dup.classList.add('hidden');
+        return;
+      }
+
+      // 2) Close more menu if open
+      const more = qs('#more-menu');
+      if (more && !more.classList.contains('hidden')) {
+        e.preventDefault();
+        try { if (typeof window.closeMoreMenu === 'function') window.closeMoreMenu(); else more.classList.add('hidden'); } catch(_) {}
+        return;
+      }
+
+      // 3) Close global search modal if open
+      const gsm = qs('#global-search-modal');
+      if (gsm && !gsm.classList.contains('hidden')) {
+        e.preventDefault();
+        try {
+        gsm.classList.add('hidden');
+        gsm.classList.remove('flex');
+      } catch(_) {}
+        return;
+      }
+
+      // 4) Close export preview modal if open
+      const ep = qs('#export-preview-modal');
+      if (ep && !ep.classList.contains('hidden')) {
+        e.preventDefault();
+        try { if (typeof window.closeExportPreview === 'function') window.closeExportPreview(e); else ep.classList.add('hidden'); } catch(_) {}
+        return;
+      }
+
+      // 5) Close template/i18n modals if open
+      const modalIds = ['template-export-modal','template-import-modal','i18n-audit-modal','import-error-modal'];
+      for (let i=0;i<modalIds.length;i++) {
+        const el = qs('#' + modalIds[i]);
+        if (el && !el.classList.contains('hidden')) {
+          e.preventDefault();
+          // Prefer existing close handlers when available
+          try {
+            if (modalIds[i] === 'template-export-modal' && typeof window.closeExport === 'function') window.closeExport();
+            else if (modalIds[i] === 'template-import-modal' && typeof window.closeImport === 'function') window.closeImport();
+            else if (modalIds[i] === 'i18n-audit-modal' && typeof window.closeI18nAudit === 'function') window.closeI18nAudit();
+            else {
+              el.classList.add('hidden');
+              el.classList.remove('flex');
+            }
+          } catch(_) {
+            el.classList.add('hidden');
+          }
+          return;
+        }
+      }
+    }, true);
+  }
+
+  // ---------- ARIA roles for key modals (dialog basics) ----------
+  function initModalAria(){
+    const modalIds = [
+      ['template-export-modal','Exporter un modèle'],
+      ['template-import-modal','Importer un modèle'],
+      ['i18n-audit-modal','Vérifier traductions'],
+      ['export-preview-modal','Aperçu export']
+    ];
+    modalIds.forEach(([id,label]) => {
+      const el = qs('#' + id);
+      if (!el) return;
+      el.setAttribute('role', 'dialog');
+      el.setAttribute('aria-modal', 'true');
+      if (!el.getAttribute('aria-label') && !el.getAttribute('aria-labelledby')) {
+        el.setAttribute('aria-label', label);
+      }
+    });
+  }
+
+  function boot(){
+    try { initMoreMenuA11y(); } catch(_) {}
+    try { initAccordionAria(); } catch(_) {}
+    try { initStepTabs(); } catch(_) {}
+    try { initKeyboardDnD(); } catch(_) {}
+    try { initGlobalEscape(); } catch(_) {}
+    try { initModalAria(); } catch(_) {}
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();
+</script>
+
+
 </body>
 </html>
