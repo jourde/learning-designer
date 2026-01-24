@@ -3032,25 +3032,38 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div>
 </div>
 <div class="activity-body panel-content open">
-<div class="module-subblocks hidden">
-<div class="activity-description-panel panel-content open">
-<div class="mb-2 ml-8 pr-1">
-<details class="module-description-summary border border-slate-200 rounded-lg bg-white">
-<summary class="flex items-center gap-2 cursor-pointer select-none px-2 py-1.5 text-[11px] text-slate-600">
-<span class="material-icons-round text-[14px] text-slate-400">description</span>
-<span class="font-semibold">Description du module</span>
-<span class="ml-auto flex items-center gap-2 text-[10px] text-slate-400 font-normal">
-<span class="material-icons-round text-[16px]">expand_more</span>
-</span>
-</summary>
-<div class="px-2 pb-2 pt-1">
-<textarea class="activity-description w-full px-3 py-2 text-sm text-slate-700 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y bg-slate-50 leading-relaxed" data-i18n-placeholder="ph_activity_desc" placeholder="Description du module..." rows="1"></textarea>
-</div>
-</details>
-</div>
-</div>
-<div class="mb-2 ml-8 pr-1">
-<details class="module-competence-summary border border-slate-200 rounded-lg bg-white" data-readonly="true">
+<div class="module-subblocks hidden ml-8 pr-1 mb-2">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-2">
+
+    <!-- Carte A — SAISIE -->
+    <section class="rounded-xl border border-indigo-100 bg-white shadow-sm">
+      <div class="flex items-center justify-between px-3 py-2 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <span class="material-icons-round text-[16px] text-indigo-600">edit</span>
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-600">Saisie du module</span>
+        </div>
+        <span class="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">Éditable</span>
+      </div>
+
+      <div class="p-3">
+        <div class="compact-label">Description du module</div>
+        <textarea class="activity-description w-full px-3 py-2 text-sm text-slate-700 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y bg-slate-50 leading-relaxed" data-i18n-placeholder="ph_activity_desc" placeholder="Description du module..." rows="4"></textarea>
+        <p class="text-[11px] text-slate-400 mt-1">Saisie manuelle : ce texte est exporté tel quel.</p>
+      </div>
+    </section>
+
+    <!-- Carte B — SYNTHÈSE AUTO -->
+    <section class="rounded-xl border border-slate-200 bg-slate-50 shadow-sm">
+      <div class="flex items-center justify-between px-3 py-2 border-b border-slate-200">
+        <div class="flex items-center gap-2">
+          <span class="material-icons-round text-[16px] text-slate-500">autorenew</span>
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-600">Synthèse automatique</span>
+        </div>
+        <span class="text-[10px] text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-full">D’après les activités</span>
+      </div>
+
+      <div class="p-2 space-y-2">
+        <details class="module-competence-summary border border-slate-200 rounded-lg bg-white" data-readonly="true">
 <summary class="flex items-center gap-2 cursor-pointer select-none px-2 py-1.5 text-[11px] text-slate-600">
 <span class="material-icons-round text-[14px] text-slate-400">checklist</span>
 <span class="font-semibold">Compétences du module (d'après les activités)</span>
@@ -3084,9 +3097,8 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div>
 </div>
 </details>
-</div>
-<div class="mb-2 ml-8 pr-1">
-<details class="module-aims-summary border border-slate-200 rounded-lg bg-white" data-readonly="true">
+
+        <details class="module-aims-summary border border-slate-200 rounded-lg bg-white" data-readonly="true">
 <summary class="flex items-center gap-2 cursor-pointer select-none px-2 py-1.5 text-[11px] text-slate-600">
 <span class="material-icons-round text-[14px] text-slate-400">flag</span>
 <span class="font-semibold">Objectifs d'apprentissage du module (d'après les activités)</span>
@@ -3109,9 +3121,8 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <div class="mt-2 module-aims-chips flex flex-wrap gap-1"></div>
 </div>
 </details>
-</div>
-<div class="mb-2 ml-8 pr-1">
-<details class="module-outcomes-summary border border-slate-200 rounded-lg bg-white" data-readonly="true">
+
+        <details class="module-outcomes-summary border border-slate-200 rounded-lg bg-white" data-readonly="true">
 <summary class="flex items-center gap-2 cursor-pointer select-none px-2 py-1.5 text-[11px] text-slate-600">
 <span class="material-icons-round text-[14px] text-slate-400">assignment_turned_in</span>
 <span class="font-semibold">Résultats d'apprentissage du module (d'après les activités)</span>
@@ -3134,7 +3145,14 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <div class="mt-2 module-outcomes-chips flex flex-wrap gap-1"></div>
 </div>
 </details>
-</div>
+
+        <p class="text-[11px] text-slate-400 px-1">
+          Pour modifier cette synthèse, ajustez les activités du module.
+        </p>
+      </div>
+    </section>
+
+  </div>
 </div>
 <div class="activity-moments-container ml-4 pl-4 space-y-3 min-h-[20px]"></div>
 <div class="mt-2 pt-1 flex justify-center gap-2 no-print border-t border-slate-100">
@@ -3591,6 +3609,236 @@ const root = document.getElementById('activities-root');
         const DEFAULT_LANG = 'fr';
         let currentLang = DEFAULT_LANG;
         let loadedLangCode = null;
+
+        // ------------------------------
+        // Import diagnostics (global, safe)
+        // Ensures import errors are reportable even when the payload cannot be loaded.
+        // ------------------------------
+        (function(){
+            if (window.__ld_importDiagReady) return;
+            window.__ld_importDiagReady = true;
+
+            window.__lastImportReport = null;
+            window.__lastImportParsedObject = null;
+            window.__lastImportRawJson = null;
+
+            function __ldEscapeHtml(s){
+                return String(s ?? '').replace(/[&<>"']/g, function(ch){
+                    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]) || ch;
+                });
+            }
+
+            function __ldI18n(key, fallback){
+                try {
+                    const pack = (typeof translations !== 'undefined' && translations && translations[currentLang])
+                        ? translations[currentLang]
+                        : (typeof translations !== 'undefined' && translations && translations.fr ? translations.fr : null);
+                    const v = pack ? pack[key] : null;
+                    return (typeof v === 'string' && v.length) ? v : (fallback || '');
+                } catch (_) { return fallback || ''; }
+            }
+
+            function __ldSummariseKeys(obj, limit){
+                try {
+                    if (!obj || typeof obj !== 'object') return [];
+                    const keys = Object.keys(obj);
+                    const lim = Number.isFinite(limit) ? limit : 18;
+                    return (keys.length <= lim) ? keys : keys.slice(0, lim).concat([`…(+${keys.length - lim})`]);
+                } catch (_) { return []; }
+            }
+
+            function __ldAnalyseShape(obj){
+                const shape = { type: (obj === null) ? 'null' : (Array.isArray(obj) ? 'array' : typeof obj), rootKeys: __ldSummariseKeys(obj, 18), flags: {} };
+                if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return shape;
+
+                const p = (obj.project || obj.data || obj.conception || obj.learningDesign || obj);
+                shape.flags.hasProjectWrapper = !!(obj.project || obj.data || obj.conception || obj.learningDesign);
+
+                try {
+                    const keys = Object.keys(p || {});
+                    const has = (k) => keys.includes(k);
+                    shape.flags.hasActivities = has('activities') || has('activites') || has('modules');
+                    shape.flags.hasKeyParams = has('keyParams') || has('parametres') || has('parameters') || has('params');
+                    shape.flags.hasI18n = has('i18n') || has('languagePack') || has('langPack');
+                    shape.flags.hasSchemaVersion = has('schemaVersion') || has('schema') || has('version');
+                    shape.flags.schemaVersionValue = (p && (p.schemaVersion ?? p.schema ?? p.version)) ?? null;
+                    shape.flags.looksLikeSlides = has('slides') || has('pptx') || has('presentation');
+                    shape.flags.looksLikeGraph = has('nodes') || has('edges');
+                } catch (_) {}
+                return shape;
+            }
+
+            window.__ld_buildImportReport = function ({ file = null, stage = 'unknown', error = null, parsedObject = null } = {}) {
+                const now = new Date();
+                const errObj = (error && typeof error === 'object') ? {
+                    name: error.name || 'Error',
+                    message: error.message || String(error),
+                    stack: (typeof error.stack === 'string') ? error.stack.split('\n').slice(0, 10).join('\n') : ''
+                } : (error ? { name: 'Error', message: String(error), stack: '' } : null);
+
+                const shape = __ldAnalyseShape(parsedObject);
+
+                return {
+                    kind: 'import_report',
+                    generatedAt: now.toISOString(),
+                    stage,
+                    file: file ? {
+                        name: file.name || '',
+                        size: file.size ?? null,
+                        type: file.type || '',
+                        lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null
+                    } : null,
+                    error: errObj,
+                    detected: shape,
+                    ui: {
+                        title: document && document.title ? document.title : '',
+                        url: (typeof location !== 'undefined' && location && location.href) ? location.href : '',
+                        userAgent: (typeof navigator !== 'undefined' && navigator && navigator.userAgent) ? navigator.userAgent : ''
+                    }
+                };
+            };
+
+            function __ldDownloadText(filename, text, mime){
+                const blob = new Blob([String(text ?? '')], { type: mime || 'text/plain;charset=utf-8' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => { try { URL.revokeObjectURL(a.href); } catch(_){} try { a.remove(); } catch(_){} }, 0);
+            }
+
+            async function __ldCopyToClipboard(text){
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                }
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.setAttribute('readonly', '');
+                ta.style.position = 'fixed';
+                ta.style.left = '-9999px';
+                ta.style.top = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                ta.setSelectionRange(0, ta.value.length);
+                let ok = false;
+                try { ok = document.execCommand('copy'); } catch(_) { ok = false; }
+                ta.remove();
+                if (!ok) throw new Error('copy_failed');
+                return true;
+            }
+
+            window.__ld_closeImportErrorModal = function(){
+                const modal = document.getElementById('import-error-modal');
+                if (modal) modal.classList.add('hidden');
+            };
+
+            window.__ld_downloadLastImportReport = function(){
+                if (!window.__lastImportReport) return;
+                const stamp = (new Date()).toISOString().slice(0,19).replace(/[:T]/g,'-');
+                __ldDownloadText(`rapport_import_${stamp}.json`, JSON.stringify(window.__lastImportReport, null, 2), 'application/json;charset=utf-8');
+            };
+
+            window.__ld_copyLastImportDiagnostic = async function(){
+                if (!window.__lastImportReport) return;
+                const header = 'IMPORT_DIAGNOSTIC\n';
+                const payload = JSON.stringify(window.__lastImportReport, null, 2);
+                await __ldCopyToClipboard(header + payload);
+            };
+
+            window.__ld_downloadLastImportRecovery = function(){
+                const obj = window.__lastImportParsedObject;
+                if (!obj) return;
+                const stamp = (new Date()).toISOString().slice(0,19).replace(/[:T]/g,'-');
+                __ldDownloadText(`recuperation_import_${stamp}.json`, JSON.stringify(obj, null, 2), 'application/json;charset=utf-8');
+            };
+
+            window.__ld_copyLastImportRecovery = async function(){
+                const obj = window.__lastImportParsedObject;
+                if (!obj) return;
+                const header = 'IMPORT_RECOVERY_JSON\n';
+                await __ldCopyToClipboard(header + JSON.stringify(obj, null, 2));
+            };
+
+            window.__ld_showImportError = function(report){
+                window.__lastImportReport = report || null;
+
+                const modal = document.getElementById('import-error-modal');
+                const body = document.getElementById('import-error-body');
+                const btnDl = document.getElementById('import-error-download');
+                const btnCopy = document.getElementById('import-error-copy');
+                const btnCopyRec = document.getElementById('import-error-copy-recovery');
+                const btnRec = document.getElementById('import-error-recover');
+
+                if (!modal || !body) {
+                    try { alert(__ldI18n('import_error_cause_generic', 'Import impossible.')); } catch(_) {}
+                    return;
+                }
+
+                const stage = (report && report.stage) ? report.stage : 'unknown';
+                const errMsg = (report && report.error && report.error.message) ? report.error.message : '';
+                const keys = (report && report.detected && Array.isArray(report.detected.rootKeys)) ? report.detected.rootKeys : [];
+                const flags = (report && report.detected && report.detected.flags) ? report.detected.flags : {};
+
+                const parts = [];
+                parts.push(`<div class="text-sm font-semibold text-slate-800">${__ldEscapeHtml(__ldI18n('import_error_title', 'Import impossible'))}</div>`);
+                parts.push(`<div class="text-xs text-slate-500 mt-1">${__ldEscapeHtml(__ldI18n('import_error_stage', 'Étape'))}: <span class="font-semibold text-slate-700">${__ldEscapeHtml(stage)}</span></div>`);
+                if (errMsg) parts.push(`<div class="mt-2 text-sm text-red-700"><span class="font-semibold">${__ldEscapeHtml(__ldI18n('import_error_details', 'Détails'))}:</span> ${__ldEscapeHtml(errMsg)}</div>`);
+                if (keys.length) parts.push(`<div class="mt-2 text-xs text-slate-600"><span class="font-semibold">${__ldEscapeHtml(__ldI18n('import_error_detected', 'Détecté'))}:</span> ${__ldEscapeHtml(keys.join(', '))}</div>`);
+
+                const hintBits = [];
+                try {
+                    if (flags.hasProjectWrapper) hintBits.push('wrapper');
+                    if (flags.hasActivities) hintBits.push('activities');
+                    if (flags.hasKeyParams) hintBits.push('keyParams');
+                    if (flags.hasI18n) hintBits.push('i18n');
+                    if (flags.looksLikeSlides) hintBits.push('slides');
+                    if (flags.looksLikeGraph) hintBits.push('graph');
+                } catch(_) {}
+                if (hintBits.length) parts.push(`<div class="mt-1 text-xs text-slate-500">${__ldEscapeHtml(__ldI18n('import_error_hints', 'Indices'))}: ${__ldEscapeHtml(hintBits.join(', '))}</div>`);
+
+                body.innerHTML = parts.join('');
+
+                if (btnDl) btnDl.disabled = !window.__lastImportReport;
+                if (btnCopy) btnCopy.disabled = !window.__lastImportReport;
+
+                const hasRec = !!window.__lastImportParsedObject;
+                if (btnRec) btnRec.classList.toggle('hidden', !hasRec);
+                if (btnCopyRec) btnCopyRec.classList.toggle('hidden', !hasRec);
+
+                modal.classList.remove('hidden');
+            };
+
+            function __ldBindImportModal(){
+                const modal = document.getElementById('import-error-modal');
+                const closeBtn = document.getElementById('import-error-close');
+                const dlBtn = document.getElementById('import-error-download');
+                const copyBtn = document.getElementById('import-error-copy');
+                const copyRecBtn = document.getElementById('import-error-copy-recovery');
+                const recBtn = document.getElementById('import-error-recover');
+
+                if (modal && modal.dataset && modal.dataset.ldBound === '1') return;
+                if (modal && modal.dataset) modal.dataset.ldBound = '1';
+
+                if (closeBtn) closeBtn.addEventListener('click', window.__ld_closeImportErrorModal);
+                if (dlBtn) dlBtn.addEventListener('click', window.__ld_downloadLastImportReport);
+                if (copyBtn) copyBtn.addEventListener('click', () => { window.__ld_copyLastImportDiagnostic().catch(()=>{}); });
+                if (copyRecBtn) copyRecBtn.addEventListener('click', () => { window.__ld_copyLastImportRecovery().catch(()=>{}); });
+                if (recBtn) recBtn.addEventListener('click', window.__ld_downloadLastImportRecovery);
+
+                if (modal) {
+                    modal.addEventListener('click', (e) => { if (e.target === modal) window.__ld_closeImportErrorModal(); });
+                    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) window.__ld_closeImportErrorModal(); });
+                }
+            }
+
+            // Bind immediately if DOM is already ready, otherwise wait.
+            if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', __ldBindImportModal);
+            else __ldBindImportModal();
+
+        })();
+        
         let loadedLangPackRaw = null;
 
         let __confirmAction = null;
@@ -10500,14 +10748,14 @@ const __chartsSuspendFn = window.__setChartsSuspended;
                             const __repaired = normaliseAndRepairProject(minimal);
                             __checked = { ok: true, data: (__repaired && __repaired.data) ? __repaired.data : minimal, warnings: ['tolerant_minimal_import'] };
                         } else {
-                            const report = buildImportReport({ stage: "tolerant_reject", error: new Error("unrecognised_project_structure"), parsedObject: project });
-                            showImportError(report);
+                            const report = window.__ld_buildImportReport({ stage: "tolerant_reject", error: new Error("unrecognised_project_structure"), parsedObject: project });
+                            window.__ld_showImportError(report);
                             return;
                         }
                     } catch (e2) {
                         console.error('Tolerant minimal import error:', e2);
-                        const report = buildImportReport({ stage: "tolerant_reject", error: e2, parsedObject: project });
-                        showImportError(report);
+                        const report = window.__ld_buildImportReport({ stage: "tolerant_reject", error: e2, parsedObject: project });
+                        window.__ld_showImportError(report);
                         return;
                     }
                 }
@@ -11179,8 +11427,8 @@ loadProjectFromObject(project);
                     console.error("Import parse error:", err);
                     window.__lastImportParsedObject = null;
                     window.__lastImportRawJson = null;
-                    const report = buildImportReport({ file, stage: "parse", error: err, parsedObject: null });
-                    showImportError(report);
+                    const report = window.__ld_buildImportReport({ file, stage: "parse", error: err, parsedObject: null });
+                    window.__ld_showImportError(report);
                 } finally {
                     window.__loadFileDialogLock = false;
                 }
@@ -12057,11 +12305,22 @@ function updateStats() {
 
             // Updated logic for synced time units
             const learningUnitSelect = document.getElementById('param-learning-unit');
-            const learningUnit = learningUnitSelect.value;
-            const learningUnitText = learningUnitSelect.options[learningUnitSelect.selectedIndex].text;
+            const learningUnit = learningUnitSelect ? learningUnitSelect.value : 'mins';
+            let learningUnitText = '';
+            try {
+                if (learningUnitSelect && learningUnitSelect.options && learningUnitSelect.options.length) {
+                    const idx = (learningUnitSelect.selectedIndex != null && learningUnitSelect.selectedIndex >= 0)
+                        ? learningUnitSelect.selectedIndex : 0;
+                    const opt = learningUnitSelect.options[idx];
+                    learningUnitText = opt ? (opt.text || opt.textContent || '') : '';
+                }
+            } catch (_) { learningUnitText = ''; }
             
             // Sync UI text display
-            document.getElementById('param-designed-unit-display').innerText = learningUnitText;
+            try {
+                const disp = document.getElementById('param-designed-unit-display');
+                if (disp) disp.innerText = learningUnitText || '';
+            } catch (_) {}
             
             const headerDesignedUnitEl = document.getElementById('header-designed-unit');
             if (headerDesignedUnitEl) headerDesignedUnitEl.innerText = learningUnitText;
