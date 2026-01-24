@@ -216,6 +216,11 @@ input, select, textarea {
         }
     
 
+        /* Keep toolbar buttons on a single line (used in Compétences tab) */
+        .toolbar-nowrap { flex-wrap: nowrap !important; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .toolbar-nowrap > * { flex: 0 0 auto; white-space: nowrap; }
+
+
         
         .activity-group { scroll-margin-top: 80px; }
         .step-card { box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06); }
@@ -372,10 +377,7 @@ body.hc #timeline-ruler .timeline-ruler-tick { background-color: #475569; }
 body.hc #timeline-ruler .timeline-ruler-label { border-color: #94a3b8; background-color: #ffffff; }
   
 
-.moment-target-wrap{display:none !important;}
-
-  
-  .timeline-missing-light,
+.timeline-missing-light,
   .timeline-alert-light{
     
     background:
@@ -1810,7 +1812,7 @@ textarea.ld-ta-expanded {
 <section class="kpwiz-step hidden" id="kpwiz-step-3">
 <div class="p-3 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
 <div class="md:col-span-2 lg:col-span-3">
-<details class="group border border-slate-200 rounded-lg bg-white/0">
+<details open class="group border border-slate-200 rounded-lg bg-white/0">
 <summary class="px-3 py-2 cursor-pointer select-none flex items-center justify-between">
 <span class="compact-label" data-i18n="label_aims">Objectifs d'apprentissage (ce qu'on va enseigner)</span>
 <span class="material-icons-round text-slate-400 text-sm transition-transform group-open:rotate-180">expand_more</span>
@@ -1874,7 +1876,7 @@ textarea.ld-ta-expanded {
 </details>
 </div>
 <div class="md:col-span-2 lg:col-span-3">
-<details class="group border border-slate-200 rounded-lg bg-white/0">
+<details open class="group border border-slate-200 rounded-lg bg-white/0">
 <summary class="px-3 py-2 cursor-pointer select-none flex items-center justify-between">
 <span class="compact-label" data-i18n="label_outcomes_text">Résultats d'apprentissage (ce que les apprenants sauront faire)</span>
 <span class="material-icons-round text-slate-400 text-sm transition-transform group-open:rotate-180">expand_more</span>
@@ -1934,14 +1936,14 @@ textarea.ld-ta-expanded {
 <section class="kpwiz-step hidden" id="kpwiz-step-4">
 <div class="p-3 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
 <div class="md:col-span-2 lg:col-span-3">
-<details class="group border border-slate-200 rounded-lg bg-white/0">
+<details open class="group border border-slate-200 rounded-lg bg-white/0">
 <summary class="px-3 py-2 cursor-pointer select-none flex items-center justify-between">
 <span>Compétences du sujet</span>
 <span class="material-icons-round text-slate-400 text-sm transition-transform group-open:rotate-180">expand_more</span>
 </summary>
 <div class="mt-1">
 <div class="bg-slate-50 border border-slate-200 rounded-lg p-2">
-<div class="flex items-center gap-2 mb-2 flex-wrap no-print">
+<div class="flex items-center gap-2 mb-2 toolbar-nowrap no-print">
 <button class="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-slate-200 transition-colors flex items-center gap-1" id="btn-load-competences-csv" title="Charger une liste de compétences du sujet (CSV/TSV/TXT)" type="button">
 <span class="material-icons-round text-sm">upload_file</span>
       Charger fichier (CSV/TSV/TXT)
@@ -1953,7 +1955,7 @@ textarea.ld-ta-expanded {
 <span class="text-[10px] text-slate-400 italic" id="competences-csv-status"></span>
 </div>
 <input accept=".csv,.tsv,.txt" class="hidden" id="competences-csv-file-input" type="file"/>
-<div class="flex items-center gap-2 mb-2 flex-wrap no-print">
+<div class="flex items-center gap-2 mb-2 toolbar-nowrap no-print">
 <button class="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-slate-200 transition-colors flex items-center gap-1" id="btn-load-competences-taxonomy" title="Charger une taxonomie de compétences du sujet (CSV)" type="button">
 <span class="material-icons-round text-sm">schema</span>
       Charger taxonomie (CSV)
@@ -1986,14 +1988,14 @@ textarea.ld-ta-expanded {
 </div>
 </div>
 </details>
-<details class="group border border-slate-200 rounded-lg bg-white/0 mt-3">
+<details open class="group border border-slate-200 rounded-lg bg-white/0 mt-3">
 <summary class="px-3 py-2 cursor-pointer select-none flex items-center justify-between">
 <span>Compétences transversales</span>
 <span class="material-icons-round text-slate-400 text-sm transition-transform group-open:rotate-180">expand_more</span>
 </summary>
 <div class="mt-1">
 <div class="bg-slate-50 border border-slate-200 rounded-lg p-2">
-<div class="flex items-center gap-2 mb-2 flex-wrap no-print">
+<div class="flex items-center gap-2 mb-2 toolbar-nowrap no-print">
 <button class="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-slate-200 transition-colors flex items-center gap-1" id="btn-load-competences-trans-csv" title="Charger une liste de compétences transversales (CSV/TSV/TXT)" type="button">
 <span class="material-icons-round text-sm">upload_file</span>
       Charger fichier (CSV/TSV/TXT)
@@ -2005,7 +2007,7 @@ textarea.ld-ta-expanded {
 <span class="text-[10px] text-slate-400 italic" id="competences-trans-csv-status"></span>
 </div>
 <input accept=".csv,.tsv,.txt" class="hidden" id="competences-trans-csv-file-input" type="file"/>
-<div class="flex items-center gap-2 mb-2 flex-wrap no-print">
+<div class="flex items-center gap-2 mb-2 toolbar-nowrap no-print">
 <button class="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-slate-200 transition-colors flex items-center gap-1" id="btn-load-competences-trans-taxonomy" title="Charger une taxonomie de compétences transversales (CSV)" type="button">
 <span class="material-icons-round text-sm">schema</span>
       Charger taxonomie (CSV)
@@ -2044,7 +2046,7 @@ textarea.ld-ta-expanded {
 <section class="kpwiz-step hidden" id="kpwiz-step-5">
 <div class="p-3 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
 <div class="md:col-span-2 lg:col-span-3">
-<details class="group border border-slate-200 rounded-lg bg-white/0">
+<details open class="group border border-slate-200 rounded-lg bg-white/0">
 <summary class="px-3 py-2 cursor-pointer select-none flex items-center justify-between">
 <span class="compact-label">Outils et matériel</span>
 <span class="material-icons-round text-slate-400 text-sm transition-transform group-open:rotate-180">expand_more</span>
@@ -3046,9 +3048,15 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
       </div>
 
       <div class="p-3">
-        <div class="compact-label">Description du module</div>
-        <textarea class="activity-description w-full px-3 py-2 text-sm text-slate-700 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y bg-slate-50 leading-relaxed" data-i18n-placeholder="ph_activity_desc" placeholder="Description du module..." rows="4"></textarea>
+        <div class="compact-label" data-i18n="label_module_objectives">Objectif(s) du module</div>
+        <textarea class="activity-description w-full px-3 py-2 text-sm text-slate-700 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y bg-slate-50 leading-relaxed" data-i18n-placeholder="ph_activity_desc" placeholder="Objectif(s) du module..." rows="4"></textarea>
         <p class="text-[11px] text-slate-400 mt-1">Saisie manuelle : ce texte est exporté tel quel.</p>
+
+        <div class="mt-3">
+          <div class="compact-label" data-i18n="label_module_notes">Notes</div>
+          <textarea class="module-notes w-full px-3 py-2 text-sm text-slate-700 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y bg-white leading-relaxed" data-i18n-placeholder="ph_module_notes" placeholder="Notes..." rows="3"></textarea>
+          <p class="text-[11px] text-slate-400 mt-1" data-i18n="help_module_notes">Remarques diverses du formateur (exportées telles quelles).</p>
+        </div>
       </div>
     </section>
 
@@ -3552,20 +3560,6 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 
     <!-- Ressources -->
     <div class="step-tabpanel mt-2 space-y-2" data-step-panel="resources" hidden>
-      <details class="step-right-section border border-slate-200 rounded-lg bg-white" open>
-        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
-          <span class="material-icons-round text-[10px] text-slate-400">comment</span>
-          <span data-i18n="label_notes">Notes, ressources, liens</span>
-          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
-            <span>Afficher</span>
-            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
-          </span>
-        </summary>
-        <div class="px-2 pb-2 pt-1">
-          <textarea class="step-input-notes w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y bg-slate-50 text-slate-600 italic" data-i18n-placeholder="ph_notes" placeholder="Notes formateur, ressources ou liens..." rows="2"></textarea>
-        </div>
-      </details>
-
       <details class="step-right-section border border-slate-200 rounded-lg bg-white" data-section="tools-materials">
         <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5 bg-slate-50 rounded-lg">
           <span class="material-icons-round text-[10px] text-slate-400">construction</span>
@@ -3586,6 +3580,20 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
           <div class="step-tools-materials-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[160px] overflow-auto text-[11px] space-y-1"></div>
           <select class="step-tools-materials-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>
           <p class="text-[11px] text-slate-400 mt-1">Sélection : cochez les outils et matériels requis pour cette activité (ajoutez une remarque si nécessaire).</p>
+        </div>
+      </details>
+
+      <details class="step-right-section border border-slate-200 rounded-lg bg-white" open>
+        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
+          <span class="material-icons-round text-[10px] text-slate-400">comment</span>
+          <span data-i18n="label_notes">Notes, ressources, liens</span>
+          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
+            <span>Afficher</span>
+            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
+          </span>
+        </summary>
+        <div class="px-2 pb-2 pt-1">
+          <textarea class="step-input-notes w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y bg-slate-50 text-slate-600 italic" data-i18n-placeholder="ph_notes" placeholder="Notes formateur, ressources ou liens..." rows="2"></textarea>
         </div>
       </details>
     </div>
@@ -6053,7 +6061,7 @@ btn_export_dropdown: "Exporter...",
                 btn_create_activity: "Créer un Module",
                 btn_add_step: "Ajouter Activité",
                 ph_activity_title: "Titre du module (ex: Module 1 : Introduction)",
-                ph_activity_desc: "Description du module...",
+                ph_activity_desc: "Objectif(s) du module...",
                 label_step_title: "Titre de l'activité",
                 ph_step_title: "Titre pour cette activité...",
                 label_learning_type: "Type d'apprentissage",
@@ -9659,6 +9667,7 @@ function buildExportProjectData() {
                 const moduleData = {
                     titre: actEl.querySelector('.activity-title').value,
                     description: actEl.querySelector('.activity-description').value,
+                    notes: (actEl.querySelector('.module-notes')?.value || ''),
                     dureeCible: actEl.querySelector('.activity-target-time').value,
                     uniteDureeCible: actEl.querySelector('.activity-target-unit')?.value || "60",
                         objectifsApprentissageModule: getModuleSelectedAims(actEl),
@@ -9763,17 +9772,8 @@ function saveProject() {
             const a = document.createElement('a');
             a.href = url;
 
-            const courseName = (document.getElementById('param-name')?.value || '').trim();
-            const safeCourseName = courseName
-                .replace(/[\\/:*?"<>|]+/g, '-')
-                .replace(/\s+/g, ' ')
-                .trim()
-                .slice(0, 120);
-
-            const ymd = new Date().toISOString().slice(0, 10);
-            a.download = safeCourseName
-                ? `conception_pedagogique_${safeCourseName}_${ymd}.json`
-                : `conception_pedagogique_${ymd}.json`;
+            const filename = __ldBuildExportFilename('json');
+            a.download = filename;
 
             a.click();
             URL.revokeObjectURL(url);
@@ -10410,6 +10410,7 @@ objective: asStr(s?.objective ?? s?.objectifActivite ?? ''),
                 return {
                     title: asStr(a?.title ?? a?.titre ?? ''),
                     description: asStr(a?.description ?? ''),
+                    notes: asStr(a?.notes ?? a?.moduleNotes ?? a?.remarques ?? a?.observations ?? ''),
                     targetTime: asNumStr(a?.targetTime ?? a?.dureeCible ?? ''),
                     targetUnit: asStr(a?.targetUnit ?? a?.uniteDureeCible ?? '60'),
                     moments,
@@ -11135,6 +11136,40 @@ function _downloadTextFile(filename, text, mime = 'text/plain;charset=utf-8') {
     }, 0);
 }
 
+// ------------------------------
+// Export filename helpers (training title + local date/time)
+// ------------------------------
+function __ldGetTrainingTitleForFilename() {
+    const v = (document.getElementById('param-name')?.value || '').trim();
+    return v || 'conception_pedagogique';
+}
+function __ldSanitiseFilenamePart(s) {
+    const raw = String(s || '').trim();
+    // Remove diacritics, then keep a conservative safe set for cross-platform filenames.
+    const noDia = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return noDia
+        .replace(/[\/:*?"<>|]+/g, '-')      // illegal on Windows
+        .replace(/[\r\n\t]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .replace(/\s/g, '_')                // spaces -> underscores
+        .replace(/_+/g, '_')
+        .slice(0, 120) || 'conception_pedagogique';
+}
+function __ldExportStampLocal() {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`;
+}
+function __ldBuildExportFilename(ext, label) {
+    const base = __ldSanitiseFilenamePart(__ldGetTrainingTitleForFilename());
+    const stamp = __ldExportStampLocal();
+    const lbl = label ? `_${__ldSanitiseFilenamePart(label)}` : '';
+    return `${base}${lbl}_${stamp}.${ext}`;
+}
+
+
+
 function _recAsStr(v) {
     return (typeof v === "string") ? v : (v == null ? "" : String(v));
 }
@@ -11446,6 +11481,9 @@ loadProjectFromObject(project);
 
             actEl.querySelector('.activity-title').value = data.title || "";
             actEl.querySelector('.activity-description').value = data.description || "";
+            
+            const __modNotesEl = actEl.querySelector('.module-notes');
+            if (__modNotesEl) __modNotesEl.value = (data.notes || data.moduleNotes || "");
             actEl.querySelector('.activity-target-time').value = data.targetTime || "";
             const tgtUnitSel = actEl.querySelector('.activity-target-unit');
             if (tgtUnitSel) tgtUnitSel.value = mapUnitToSecs(data.targetUnit || getDefaultDurationUnitKey());
@@ -13299,7 +13337,7 @@ function exportDOCX() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `learning-design_${new Date().toISOString().slice(0,10)}.docx`;
+        a.download = __ldBuildExportFilename('docx');
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -13462,7 +13500,7 @@ function __deprecated__exportCSV_1() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `learning-design_${new Date().toISOString().slice(0,10)}.xlsx`;
+    a.download = __ldBuildExportFilename('xlsx');
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -13945,7 +13983,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'profil_conception_pedagogique.html';
+            a.download = __ldBuildExportFilename('html');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -14105,7 +14143,7 @@ function __deprecated__exportCSV_2() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `learning-design_${new Date().toISOString().slice(0,10)}.xlsx`;
+    a.download = __ldBuildExportFilename('xlsx');
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -14390,7 +14428,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'profil_conception_pedagogique.html';
+            a.download = __ldBuildExportFilename('html');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -14673,7 +14711,7 @@ function __deprecated__exportCSV_3() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `learning-design_${new Date().toISOString().slice(0,10)}.xlsx`;
+    a.download = __ldBuildExportFilename('xlsx');
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -14958,7 +14996,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'profil_conception_pedagogique.html';
+            a.download = __ldBuildExportFilename('html');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -15118,7 +15156,7 @@ function __deprecated__exportCSV_4() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `learning-design_${new Date().toISOString().slice(0,10)}.xlsx`;
+    a.download = __ldBuildExportFilename('xlsx');
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -15403,7 +15441,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'profil_conception_pedagogique.html';
+            a.download = __ldBuildExportFilename('html');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -15524,7 +15562,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'profil_conception_pedagogique.rtf';
+            a.download = __ldBuildExportFilename('rtf');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -15802,7 +15840,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'profil_conception_pedagogique.html';
+            a.download = __ldBuildExportFilename('html');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -15923,7 +15961,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'profil_conception_pedagogique.rtf';
+            a.download = __ldBuildExportFilename('rtf');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -16327,7 +16365,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'profil_conception_pedagogique.html';
+            a.download = __ldBuildExportFilename('html');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -16347,7 +16385,7 @@ function exportCSV() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Learning design');
 
-    const filename = `learning-design_${new Date().toISOString().slice(0,10)}.xlsx`;
+    const filename = __ldBuildExportFilename('xlsx');
     XLSX.writeFile(wb, filename);
 }
 
@@ -16629,7 +16667,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'profil_conception_pedagogique.html';
+            a.download = __ldBuildExportFilename('html');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -16750,7 +16788,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'profil_conception_pedagogique.rtf';
+            a.download = __ldBuildExportFilename('rtf');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -17099,7 +17137,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'profil_conception_pedagogique.html';
+            a.download = __ldBuildExportFilename('html');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -17297,7 +17335,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'profil_conception_pedagogique.rtf';
+            a.download = __ldBuildExportFilename('rtf');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -17537,7 +17575,7 @@ ${notes}
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'profil_conception_pedagogique.md';
+            a.download = __ldBuildExportFilename('md');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -21945,7 +21983,7 @@ function bind() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `learning-design_${new Date().toISOString().slice(0,10)}.docx`;
+    a.download = __ldBuildExportFilename('docx');
     document.body.appendChild(a);
     a.click();
     setTimeout(()=>{ try { a.remove(); URL.revokeObjectURL(url);} catch(_){} }, 0);
@@ -22000,7 +22038,7 @@ function bind() {
     const ws = XLSX.utils.aoa_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Learning design');
-    const filename = `learning-design_${new Date().toISOString().slice(0,10)}.xlsx`;
+    const filename = __ldBuildExportFilename('xlsx');
     XLSX.writeFile(wb, filename);
   }
 
