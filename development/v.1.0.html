@@ -876,6 +876,23 @@ body[data-view-level="submoments"] [data-action="add-step-submoment"] { display:
 .moment-group .moment-direct-steps .step-card,
 .submoment-card .step-card { margin-left: 10px; }
 /* ===== END_LD_HIERARCHY_ACCENTS_V1 ===== */
+
+
+/* ===== LD_PANORAMA_VIEW_V1: Vue panoramique (tableau compact) ===== */
+#panorama-view { display: none; }
+body[data-view-level="panorama"] #panorama-view { display: block !important; }
+body[data-view-level="panorama"] #activities-root { display: none !important; }
+
+/* Compacité du tableau */
+#panorama-table th, #panorama-table td { vertical-align: top; }
+#panorama-table tbody tr { border-top: 1px solid rgba(226,232,240,0.9); }
+#panorama-table tbody tr:hover { background: rgba(241,245,249,0.6); }
+#panorama-table td { padding: 4px 8px; }
+#panorama-table td .muted { color: rgba(100,116,139,0.9); }
+#panorama-table .pano-open { color: rgba(100,116,139,0.9); }
+#panorama-table .pano-open:hover { color: rgba(67,56,202,0.95); }
+.ld-panorama-highlight { outline: 2px solid rgba(199,210,254,0.9); outline-offset: 2px; border-radius: 10px; }
+/* ===== END_LD_PANORAMA_VIEW_V1 ===== */
 </style>
 <script>
 /* Modèles: stubs globaux disponibles dès le chargement (évite les clics "inerte" avant l'initialisation).
@@ -2803,10 +2820,42 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
       <button type="button" class="h-[26px] px-2 text-xs font-extrabold text-slate-600 hover:text-indigo-700 hover:bg-slate-50 border-r border-slate-200 transition-colors" data-view-level="moments" aria-pressed="false" title="Afficher aussi les blocs moment">Moments</button>
       <button type="button" class="h-[26px] px-2 text-xs font-extrabold text-slate-600 hover:text-indigo-700 hover:bg-slate-50 border-r border-slate-200 transition-colors" data-view-level="submoments" aria-pressed="false" title="Afficher aussi les blocs sous moment">Sous-moments</button>
       <button type="button" class="h-[26px] px-2 text-xs font-extrabold text-slate-600 hover:text-indigo-700 hover:bg-slate-50 transition-colors" data-view-level="activities" aria-pressed="false" title="Afficher aussi les activités">Activités</button>
-    </div>
+    
+      <button type="button" class="h-[26px] px-2 text-xs font-extrabold text-slate-600 hover:text-indigo-700 hover:bg-slate-50 border-l border-slate-200 transition-colors" data-view-level="panorama" aria-pressed="false" title="Vue panoramique (tableau très compact)">Panorama</button>
+</div>
   </div>
 </div>
 </div>
+<div id="panorama-view" class="hidden mt-2">
+  <div class="flex items-center justify-between gap-2 mb-2">
+    <div class="text-xs font-extrabold text-slate-500">Vue panoramique</div>
+    <div class="flex items-center gap-2">
+      <input id="panorama-filter" class="h-[26px] w-56 px-2 rounded-md border border-slate-200 bg-white text-slate-600 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-200" placeholder="Filtrer (module, moment, activité…)"/>
+      <button id="panorama-refresh" type="button" class="h-[26px] px-2 rounded-md border border-slate-200 bg-white text-slate-600 text-xs font-extrabold hover:text-indigo-700 hover:bg-slate-50 transition-colors" title="Rafraîchir la vue panoramique">
+        Rafraîchir
+      </button>
+    </div>
+  </div>
+
+  <div class="border border-slate-200 rounded-lg bg-white overflow-auto">
+    <table class="w-full text-[11px] leading-tight" id="panorama-table">
+      <thead class="sticky top-0 bg-slate-50 border-b border-slate-200">
+        <tr class="text-slate-600">
+          <th class="text-left font-extrabold px-2 py-1 w-12">#</th>
+          <th class="text-left font-extrabold px-2 py-1 min-w-[180px]">Module</th>
+          <th class="text-left font-extrabold px-2 py-1 min-w-[160px]">Moment</th>
+          <th class="text-left font-extrabold px-2 py-1 min-w-[160px]">Bloc</th>
+          <th class="text-left font-extrabold px-2 py-1 min-w-[220px]">Activité</th>
+          <th class="text-left font-extrabold px-2 py-1 w-28">Type</th>
+          <th class="text-left font-extrabold px-2 py-1 w-20">Durée</th>
+          <th class="text-left font-extrabold px-2 py-1 w-16">Ouvrir</th>
+        </tr>
+      </thead>
+      <tbody id="panorama-tbody" class="text-slate-700"></tbody>
+    </table>
+  </div>
+</div>
+
 <div class="space-y-4" id="activities-root">
 </div>
 <div class="hidden text-center py-12 bg-white rounded-xl border-2 border-dashed border-slate-300" id="empty-state">
@@ -3860,12 +3909,181 @@ function __ldUpdateViewLevelSegmentedUI(level) {
 }
 
 function applyViewLevel(level) {
-  const allowed = new Set(['modules','moments','submoments','activities']);
+  const allowed = new Set(['modules','moments','submoments','activities','panorama']);
   const v = allowed.has(level) ? level : 'activities';
   try { document.body.setAttribute('data-view-level', v); } catch (_) {}
   try { localStorage.setItem('ld_view_level', v); } catch (_) {}
   try { __ldUpdateViewLevelSegmentedUI(v); } catch (_) {}
+
+  try { if (v === "panorama") renderPanoramaView(); } catch (_) {}
 }
+
+
+
+// ---- Panorama view (tableau compact) ----
+function __ldGetSelectedOptionText(sel) {
+  try { return sel && sel.selectedIndex >= 0 ? (sel.options[sel.selectedIndex]?.text || '') : ''; } catch (_) { return ''; }
+}
+
+function buildPanoramaRowsFromDOM() {
+  const rows = [];
+  const root = document.getElementById('activities-root');
+  if (!root) return rows;
+
+  const modules = Array.from(root.querySelectorAll('.activity-group'));
+  let counter = 0;
+
+  modules.forEach((modEl, mIdx) => {
+    const modTitle = (modEl.querySelector('.activity-title')?.value || modEl.querySelector('.module-title')?.value || `Module ${mIdx+1}`).trim();
+
+    const moments = Array.from(modEl.querySelectorAll('.activity-moments-container .moment-group'));
+    if (!moments.length) return;
+
+    moments.forEach((momentEl, moIdx) => {
+      const moTitle = (momentEl.querySelector('.moment-title')?.value || `Moment ${moIdx+1}`).trim();
+
+      // Sub-moments
+      const subs = Array.from(momentEl.querySelectorAll('.submoments-container .submoment-card'));
+      if (subs.length) {
+        subs.forEach((smEl, smIdx) => {
+          const smTitle = (smEl.querySelector('.submoment-title')?.value || '').trim();
+          const steps = Array.from(smEl.querySelectorAll('.step-card'));
+          steps.forEach((stepEl, sIdx) => {
+            counter += 1;
+            const stTitle = (stepEl.querySelector('.step-input-title')?.value || `Activité ${sIdx+1}`).trim();
+            const ltSel = stepEl.querySelector('.learning-type-select');
+            const ltTxt = __ldGetSelectedOptionText(ltSel).trim();
+
+            let durTxt = '';
+            try {
+              const secs = (typeof getStepDurationSecs === 'function') ? getStepDurationSecs(stepEl) : 0;
+              durTxt = (typeof formatTimelineDuration === 'function') ? formatTimelineDuration(secs) : '';
+            } catch (_) {}
+
+            if (!stepEl.dataset.panoId) stepEl.dataset.panoId = `pano_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+            rows.push({
+              n: counter,
+              module: modTitle,
+              moment: moTitle,
+              bloc: smTitle,
+              activite: stTitle,
+              type: ltTxt,
+              duree: durTxt,
+              panoId: stepEl.dataset.panoId
+            });
+          });
+        });
+      }
+
+      // Direct steps in moment (no sub-moment)
+      const directSteps = Array.from(momentEl.querySelectorAll('.moment-direct-steps .step-card'));
+      if (directSteps.length) {
+        directSteps.forEach((stepEl, sIdx) => {
+          counter += 1;
+          const stTitle = (stepEl.querySelector('.step-input-title')?.value || `Activité ${sIdx+1}`).trim();
+          const ltSel = stepEl.querySelector('.learning-type-select');
+          const ltTxt = __ldGetSelectedOptionText(ltSel).trim();
+
+          let durTxt = '';
+          try {
+            const secs = (typeof getStepDurationSecs === 'function') ? getStepDurationSecs(stepEl) : 0;
+            durTxt = (typeof formatTimelineDuration === 'function') ? formatTimelineDuration(secs) : '';
+          } catch (_) {}
+
+          if (!stepEl.dataset.panoId) stepEl.dataset.panoId = `pano_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+          rows.push({
+            n: counter,
+            module: modTitle,
+            moment: moTitle,
+            bloc: '',
+            activite: stTitle,
+            type: ltTxt,
+            duree: durTxt,
+            panoId: stepEl.dataset.panoId
+          });
+        });
+      }
+    });
+  });
+
+  return rows;
+}
+
+function renderPanoramaView() {
+  const wrap = document.getElementById('panorama-view');
+  const tbody = document.getElementById('panorama-tbody');
+  if (!wrap || !tbody) return;
+
+  const filterVal = (document.getElementById('panorama-filter')?.value || '').trim().toLowerCase();
+
+  const rows = buildPanoramaRowsFromDOM();
+  tbody.innerHTML = '';
+
+  const frag = document.createDocumentFragment();
+  rows
+    .filter(r => {
+      if (!filterVal) return true;
+      const hay = `${r.module} ${r.moment} ${r.bloc} ${r.activite} ${r.type} ${r.duree}`.toLowerCase();
+      return hay.includes(filterVal);
+    })
+    .forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="px-2 py-1 text-slate-500 font-semibold">${r.n}</td>
+        <td class="px-2 py-1">${r.module || '<span class="muted">—</span>'}</td>
+        <td class="px-2 py-1">${r.moment || '<span class="muted">—</span>'}</td>
+        <td class="px-2 py-1">${r.bloc || '<span class="muted">—</span>'}</td>
+        <td class="px-2 py-1">${r.activite || '<span class="muted">—</span>'}</td>
+        <td class="px-2 py-1">${r.type || '<span class="muted">—</span>'}</td>
+        <td class="px-2 py-1 font-semibold">${r.duree || '<span class="muted">—</span>'}</td>
+        <td class="px-2 py-1">
+          <button type="button" class="pano-open text-xs font-extrabold hover:underline" data-pano-open="${r.panoId}">Aller</button>
+        </td>
+      `;
+      frag.appendChild(tr);
+    });
+
+  tbody.appendChild(frag);
+}
+
+function focusStepByPanoId(panoId) {
+  if (!panoId) return;
+  const stepEl = document.querySelector(`.step-card[data-pano-id="${panoId}"]`);
+  if (!stepEl) return;
+
+  // switch back to detailed view for editing
+  try { applyViewLevel('activities'); } catch (_) {}
+  setTimeout(() => {
+    try {
+      stepEl.classList.add('ld-panorama-highlight');
+      stepEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => { try { stepEl.classList.remove('ld-panorama-highlight'); } catch (_) {} }, 1600);
+    } catch (_) {}
+  }, 50);
+}
+
+function initPanoramaUI() {
+  const wrap = document.getElementById('panorama-view');
+  if (!wrap) return;
+
+  const refreshBtn = document.getElementById('panorama-refresh');
+  const filterInput = document.getElementById('panorama-filter');
+  const table = document.getElementById('panorama-table');
+
+  if (refreshBtn) refreshBtn.addEventListener('click', () => renderPanoramaView());
+  if (filterInput) filterInput.addEventListener('input', () => renderPanoramaView());
+
+  if (table) {
+    table.addEventListener('click', (e) => {
+      const btn = e.target && e.target.closest ? e.target.closest('[data-pano-open]') : null;
+      if (!btn) return;
+      focusStepByPanoId(btn.getAttribute('data-pano-open'));
+    });
+  }
+}
+// ---- End Panorama view ----
 
 function initViewLevelSegmentedUI() {
   const wrap = document.getElementById('ld-view-level-segmented');
@@ -6783,7 +7001,8 @@ title_new_activity: "Ajouter un nouveau module",
             try { __ldApplyUnitLabelFormat(); } catch (_) {}
             // Some labels (durations) are computed dynamically; ensure they refresh after language change.
             try { updateStats();
-        initViewLevelSegmentedUI();try { updateAllStepHeaderChips(); } catch (_) {}
+        initViewLevelSegmentedUI();
+        initPanoramaUI();try { updateAllStepHeaderChips(); } catch (_) {}
     } catch (_) {}
         }
 
