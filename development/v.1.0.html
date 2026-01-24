@@ -8,6 +8,60 @@
    Concepteur Pédagogique - Learning Designer - v. 1.0
   </title>
 <script src="https://cdn.tailwindcss.com">
+
+// ---- Export filename helper (fallback, global) ----
+(function(){
+  try{
+    if (typeof window.__ldBuildExportFilename === 'function') return;
+    if (typeof window._ldBuildExportFilename === 'function') { window.__ldBuildExportFilename = window._ldBuildExportFilename; return; }
+
+    const pad = (n)=>String(n).padStart(2,'0');
+    const stamp = ()=>{
+      const d=new Date();
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`;
+    };
+    const strip = (s)=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const safe = (s)=>strip(s).replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'').replace(/_+/g,'_') || 'export';
+
+    const getTitle = ()=>{
+      const el = document.querySelector('[data-training-title], #training-title, input[name="trainingTitle"], .training-title-input');
+      const v = el && ('value' in el) ? el.value : (el ? el.textContent : '');
+      return v || document.title || 'export';
+    };
+
+    window.__ldBuildExportFilename = function(ext,label){
+      const base = safe(getTitle());
+      const lbl = label ? `_${safe(label)}` : '';
+      return `${base}${lbl}_${stamp()}.${ext}`;
+    };
+    window._ldBuildExportFilename = window.__ldBuildExportFilename;
+  }catch(_){}
+})();
+
+// ---- Learning type select visual sync (grey when 'none') ----
+function __ldSyncLearningTypeSelectVisual(sel){
+  try{
+    if(!sel || !sel.classList) return;
+    const v = (sel.value || '').toString();
+    const isNone = (v === 'none' || v === '');
+    sel.classList.toggle('ld-select-none', isNone);
+  }catch(_){}
+}
+document.addEventListener('change', (e)=>{
+  const t = e.target;
+  if(t && t.classList && t.classList.contains('learning-type-select')){
+    __ldSyncLearningTypeSelectVisual(t);
+  }
+}, true);
+document.addEventListener('DOMContentLoaded', ()=>{
+  try{
+    document.querySelectorAll('.learning-type-select').forEach(__ldSyncLearningTypeSelectVisual);
+  }catch(_){}
+});
+
+
+
+
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js">
 </script>
@@ -15,6 +69,27 @@
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
 <style>
+
+/* Locked duration unit selects (global unit controlled in initial parameters) */
+.ld-locked-unit { opacity: 1 !important; background-color: #f8fafc !important; color: #475569 !important; }
+
+
+/* Learning type select: keep 'Aucun' option visually greyed out */
+.learning-type-select option[value="none"],
+.learning-type-select option.ld-opt-none{
+  background-color:#f1f5f9;
+  color:#64748b;
+}
+.learning-type-select.ld-select-none{
+  background-color:#f1f5f9 !important;
+  color:#64748b !important;
+}
+
+
+/* Textareas: consistent vertical resizing */
+textarea{resize:vertical;}
+.ld-ta-compact, .ld-ta-expanded{resize:vertical;}
+
    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
         /* Prevent layout shift when the vertical scrollbar appears/disappears (e.g., wizard tab switch) */
@@ -713,17 +788,17 @@ details[data-readonly="true"] label{ cursor: default; }
 
 /* --- Long text fields: compact mode + expand/collapse --- */
 textarea.ld-ta-compact {
-  height: 3.2em !important;
-  min-height: 3.2em !important;
+  height: 3.2em;
+  min-height: 3.2em;
 }
 textarea.ld-ta-expanded {
-  height: 110px !important;
-  min-height: 110px !important;
+  height: 110px;
+  min-height: 110px;
 }
 @media (min-width: 640px) {
   textarea.ld-ta-expanded {
-    height: 140px !important;
-    min-height: 140px !important;
+    height: 140px;
+    min-height: 140px;
   }
 }
 </style>
@@ -1731,7 +1806,22 @@ textarea.ld-ta-expanded {
           </option>
 </select>
 </div>
-</div><div class="flex-1">
+</div>
+
+<div class="flex-1">
+  <label class="compact-label block">Unité préférée (Modules / Moments / Activités)</label>
+  <select class="w-full px-2 py-1 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" id="param-preferred-unit">
+    <option value="60" data-i18n="unit_mins">min</option>
+    <option value="3600" data-i18n="unit_hours">Heures</option>
+    <option value="86400" data-i18n="unit_days">Jours</option>
+    <option value="604800" data-i18n="unit_weeks">Semaines</option>
+    <option value="2592000" data-i18n="unit_months">Mois</option>
+  </select>
+  <p class="text-[11px] text-slate-400 mt-1">Défaut pour l’unité affichée et saisie dans les blocs. Vous pouvez modifier une unité localement si nécessaire.</p>
+</div>
+
+
+<div class="flex-1">
 <label class="compact-label block" data-i18n="label_designed_time">
          Temps Conçu (Planifié)
         </label>
@@ -3044,8 +3134,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
           <span class="material-icons-round text-[16px] text-indigo-600">edit</span>
           <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-600">Saisie du module</span>
         </div>
-        <span class="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">Éditable</span>
-      </div>
+</div>
 
       <div class="p-3">
         <div class="compact-label" data-i18n="label_module_objectives">Objectif(s) du module</div>
@@ -3201,12 +3290,16 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <option data-i18n="unit_hours" value="3600">Heures</option>
 <option data-i18n="unit_days" value="86400">Jours</option>
 <option data-i18n="unit_weeks" value="604800">Semaines</option>
+
+<option data-i18n="unit_months" value="2592000">
+           Mois
+          </option>
 </select>
 </div>
 </div>
-<div class="flex flex-col items-end">
+<span aria-hidden="true" class="moment-time-compare text-xs font-bold bg-transparent mx-1 select-none self-center">=</span><div class="flex flex-col items-end">
 <span class="text-[9px] text-slate-400 uppercase font-bold tracking-wider leading-none mb-0.5" data-i18n="label_designed">Conçu</span>
-<div class="bg-indigo-50 border border-indigo-100 rounded px-2 py-0.5 h-[22px] flex items-center min-w-[3rem] justify-end">
+<div class="bg-indigo-50 border border-indigo-100 rounded px-2 py-0.5 h-[22px] flex items-center min-w-[3rem] justify-end moment-designed-badge">
 <span class="moment-total-time text-xs font-bold text-indigo-700 font-mono">0m</span>
 </div>
 </div>
@@ -3260,11 +3353,15 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <option data-i18n="unit_weeks" value="604800">
         Semaines
        </option>
+
+<option data-i18n="unit_months" value="2592000">
+           Mois
+          </option>
 </select>
 </div>
 <div class="w-24 learning-type-container">
 <select class="learning-type-select w-full px-2 py-0.5 text-xs font-semibold border rounded focus:ring-1 focus:ring-indigo-500 outline-none transition-all select-acquisition h-[22px]" data-action-change="update-step-type">
-<option data-i18n="type_none" value="none">
+<option data-i18n="type_none" value="none" class="ld-opt-none" style="background-color:#f1f5f9;color:#64748b;">
         Aucun
        </option>
 <option data-i18n="type_acquisition" value="acquisition">
@@ -3609,6 +3706,20 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 
 
 const root = document.getElementById('activities-root');
+
+// ---- Global step duration helper (seconds) ----
+// Used for all designed-duration aggregates (module/moment), regardless of per-step unit.
+function getStepDurationSecs(stepCard) {
+  try {
+    if (!stepCard) return 0;
+    const v = Math.max(0, parseFloat(stepCard.querySelector('.duration-input')?.value) || 0);
+    const u = Math.max(0, parseFloat(stepCard.querySelector('.duration-unit')?.value) || 0);
+    const secs = v * (u || 60); // unit values are seconds-per-unit
+    return Number.isFinite(secs) ? secs : 0;
+  } catch (_) { return 0; }
+}
+try { window.getStepDurationSecs = getStepDurationSecs; } catch (_) {}
+
         const emptyState = document.getElementById('empty-state');
         const activityTemplate = document.getElementById('activity-template');
         const momentTemplate = document.getElementById('moment-template');
@@ -6505,7 +6616,7 @@ title_new_activity: "Ajouter un nouveau module",
 
             updateUiLanguageSelector();
             applyTranslations();
-
+            try { __ldApplyUnitLabelFormat(); } catch (_) {}
             // Some labels (durations) are computed dynamically; ensure they refresh after language change.
             try { updateStats();
     try { updateAllStepHeaderChips(); } catch (_) {}
@@ -6689,7 +6800,11 @@ function initSortableSteps(container) {
             try { setupCompactTextareas(moment); } catch (_) {}
 initSortableSteps(moment.querySelector('.activity-steps-container'));
             const mUnitSel = moment.querySelector('.moment-target-unit');
-            if (mUnitSel) mUnitSel.value = 60;
+            if (mUnitSel) {
+                __ldEnsureUnitOption(mUnitSel, 2592000, 'unit_months', 'Mois');
+                mUnitSel.value = String(getDefaultDurationUnitSecs());
+                __ldLockUnitSelect(mUnitSel);
+            }
             updateMomentIndexes(activityGroup);
             return moment;
         }
@@ -6724,9 +6839,14 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             const moment = momentsRoot.lastElementChild;
             initSortableSteps(moment.querySelector('.activity-steps-container'));
             const mUnitSel = moment.querySelector('.moment-target-unit');
-            if (mUnitSel) mUnitSel.value = 60;
+            if (mUnitSel) {
+                __ldEnsureUnitOption(mUnitSel, 2592000, 'unit_months', 'Mois');
+                mUnitSel.value = String(getDefaultDurationUnitSecs());
+                __ldLockUnitSelect(mUnitSel);
+            }
             updateMomentIndexes(activityGroup);
             applyTranslations();
+            try { __ldApplyUnitLabelFormat(); } catch (_) {}
             updateStats();
         }
 
@@ -9772,7 +9892,7 @@ function saveProject() {
             const a = document.createElement('a');
             a.href = url;
 
-            const filename = __ldBuildExportFilename('json');
+            const filename = window.__ldBuildExportFilename('json');
             a.download = filename;
 
             a.click();
@@ -11168,6 +11288,11 @@ function __ldBuildExportFilename(ext, label) {
     return `${base}${lbl}_${stamp}.${ext}`;
 }
 
+// Backward-compatible alias (some handlers reference _ldBuildExportFilename)
+window._ldBuildExportFilename = __ldBuildExportFilename;
+window.__ldBuildExportFilename = __ldBuildExportFilename;
+
+
 
 
 function _recAsStr(v) {
@@ -11524,7 +11649,7 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
             }
 
             applyTranslations();
-
+            try { __ldApplyUnitLabelFormat(); } catch (_) {}
             // Restore module-level learning goals/outcomes selections (optional)
             try {
                 if (Array.isArray(data.objectifsApprentissageModule)) {
@@ -11627,10 +11752,15 @@ if (((data.groupMode || data.regroupement) === 'groups')) stepEl.querySelector('
             initSortableMoments(momentsRoot);
             ensureDefaultMoment(lastActivity);
             const actUnitSel = lastActivity.querySelector('.activity-target-unit');
-            if (actUnitSel) actUnitSel.value = 60;
+            if (actUnitSel) {
+                __ldEnsureUnitOption(actUnitSel, 2592000, 'unit_months', 'Mois');
+                actUnitSel.value = String(getDefaultDurationUnitSecs());
+                __ldLockUnitSelect(actUnitSel);
+            }
 
             addStepToActivity(lastActivity.querySelector('button'));
             applyTranslations();
+            try { __ldApplyUnitLabelFormat(); } catch (_) {}
             try { updateModuleAimsSummary(lastActivity); } catch (_) {}
             try { populateModuleTargetCompetencesSujetSelect(lastActivity); } catch (_) {}
             try { populateModuleTargetCompetencesTransvSelect(lastActivity); } catch (_) {}
@@ -11672,7 +11802,11 @@ if (((data.groupMode || data.regroupement) === 'groups')) stepEl.querySelector('
 try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closest('details'); if (_tmD) _tmD.open = false; } catch (_) {}
 // Default unit should be "min" (stored as 60 seconds)
             const unitSelect = newStep ? newStep.querySelector('.duration-unit') : null;
-            if (unitSelect) unitSelect.value = 60;
+            if (unitSelect) {
+                __ldEnsureUnitOption(unitSelect, 2592000, 'unit_months', 'Mois');
+                unitSelect.value = String(getDefaultDurationUnitSecs());
+                __ldLockUnitSelect(unitSelect);
+            }
 
             // Ensure group-size reflects global cohort size at creation time
             const groupSize = newStep ? newStep.querySelector('.step-group-size') : null;
@@ -11814,9 +11948,7 @@ try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closes
                 const steps = act.querySelectorAll('.step-card');
                 
                 steps.forEach(step => {
-                    const dur = Math.max(0, parseFloat(step.querySelector('.duration-input').value) || 0); // Prevent negative
-                    const unit = parseFloat(step.querySelector('.duration-unit').value) || 60;
-                    const secs = dur * unit;
+                    const secs = getStepDurationSecs(step);
                     const type = step.querySelector('.learning-type-select').value;
                     
                     const stepTitle = step.querySelector('.step-input-title').value || translations[currentLang].md_untitled_step;
@@ -12266,10 +12398,344 @@ function formatTimelineDuration(secs) {
             if (v === 'days' || v === 'day' || v === 'd' || v === 'jours' || v === 'jour') return 86400;
             if (v === 'weeks' || v === 'week' || v === 'w' || v === 'semaines' || v === 'semaine') return 604800;
             // If months was selected in Parameters, default to weeks for per-field units
-            if (v === 'months' || v === 'month' || v === 'mois') return 604800;
+            if (v === 'months' || v === 'month' || v === 'mois') return 2592000;
 
             return 60;
         }
+
+
+        // ---- Preferred unit for Modules / Moments / Activities (seconds-based) ----
+        function __ldGetPreferredUnitSecs() {
+            try {
+                const sel = document.getElementById('param-preferred-unit');
+                const v = sel ? parseFloat(sel.value) : NaN;
+                if (!isNaN(v) && isFinite(v) && v > 0) return v;
+            } catch (_) {}
+            try {
+                const stored = localStorage.getItem('ld_preferred_unit_secs');
+                const s = parseFloat(stored);
+                if (!isNaN(s) && isFinite(s) && s > 0) return s;
+            } catch (_) {}
+            return 60;
+        }
+
+        function __ldSetPreferredUnitSecs(secs) {
+            try {
+                const sel = document.getElementById('param-preferred-unit');
+                if (sel) sel.value = String(secs);
+            } catch (_) {}
+            try { localStorage.setItem('ld_preferred_unit_secs', String(secs)); } catch (_) {}
+        }
+
+        function __ldConvertValuePreserveSecs(valStr, fromSecs, toSecs) {
+            const v = parseFloat(valStr);
+            if (isNaN(v)) return '';
+            const secs = v * (fromSecs || 60);
+            let out = secs / (toSecs || 60);
+            if ((toSecs || 60) === 60) out = Math.round(out);
+            else out = parseFloat(out.toFixed(2));
+            return (typeof __ldTrimNumber === 'function') ? __ldTrimNumber(out) : String(out);
+        }
+
+        function __ldApplyPreferredUnit(convertExisting) {
+            try {
+                const newSecs = __ldGetPreferredUnitSecs();
+                // Ensure months exists
+                document.querySelectorAll('.activity-target-unit, .moment-target-unit, .duration-unit').forEach(sel => {
+                    try { __ldEnsureUnitOption(sel, 2592000, 'unit_months', 'Mois'); } catch (_) {}
+                });
+
+                // MODULE target units
+                document.querySelectorAll('.activity-group').forEach(group => {
+                    const unitSel = group.querySelector('.activity-target-unit');
+                    const valEl = group.querySelector('.activity-target-time');
+                    if (!unitSel) return;
+                    const oldSecs = mapUnitToSecs(unitSel.value || 60);
+                    if (convertExisting && valEl && valEl.value !== '') {
+                        valEl.value = __ldConvertValuePreserveSecs(valEl.value, oldSecs, newSecs);
+                    }
+                    if (Array.from(unitSel.options || []).some(o => String(o.value) === String(newSecs))) unitSel.value = String(newSecs);
+                    // keep editable
+                    unitSel.disabled = false;
+                    unitSel.classList.remove('ld-locked-unit');
+                });
+
+                // MOMENT target units
+                document.querySelectorAll('.moment-group').forEach(momentEl => {
+                    const unitSel = momentEl.querySelector('.moment-target-unit');
+                    const valEl = momentEl.querySelector('.moment-target-time');
+                    if (!unitSel) return;
+                    const oldSecs = mapUnitToSecs(unitSel.value || 60);
+                    if (convertExisting && valEl && valEl.value !== '') {
+                        valEl.value = __ldConvertValuePreserveSecs(valEl.value, oldSecs, newSecs);
+                    }
+                    if (Array.from(unitSel.options || []).some(o => String(o.value) === String(newSecs))) unitSel.value = String(newSecs);
+                    unitSel.disabled = false;
+                    unitSel.classList.remove('ld-locked-unit');
+                });
+
+                // STEP duration units
+                document.querySelectorAll('.step-card').forEach(stepEl => {
+                    const unitSel = stepEl.querySelector('.duration-unit');
+                    const valEl = stepEl.querySelector('.duration-input');
+                    if (!unitSel) return;
+                    const oldSecs = mapUnitToSecs(unitSel.value || 60);
+                    if (convertExisting && valEl && valEl.value !== '') {
+                        valEl.value = __ldConvertValuePreserveSecs(valEl.value, oldSecs, newSecs);
+                    }
+                    if (Array.from(unitSel.options || []).some(o => String(o.value) === String(newSecs))) unitSel.value = String(newSecs);
+                    unitSel.disabled = false;
+                    unitSel.classList.remove('ld-locked-unit');
+                });
+
+                try { updateStats(); } catch (_) {}
+            } catch (_) {}
+        }
+
+        // Backward compatibility: disable previous locking helper if present
+        function __ldLockUnitSelect(_) { /* no-op (units must remain editable) */ }
+        function __ldApplyGlobalDurationUnit(_) { /* deprecated (replaced by preferred unit) */ }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const sel = document.getElementById('param-preferred-unit');
+                if (!sel) return;
+
+                // Restore preference
+                try {
+                    const stored = localStorage.getItem('ld_preferred_unit_secs');
+                    if (stored && !isNaN(parseFloat(stored))) sel.value = String(parseFloat(stored));
+                } catch (_) {}
+
+                // Apply to any initial content (mostly zero values) without harm
+                __ldApplyPreferredUnit(true);
+
+                sel.addEventListener('change', () => {
+                    // Apply and convert existing values to preserve durations
+                    __ldSetPreferredUnitSecs(parseFloat(sel.value) || 60);
+                    __ldApplyPreferredUnit(true);
+                    try { if (typeof __ldApplyUnitLabelFormat === 'function') __ldApplyUnitLabelFormat(); } catch (_) {}
+                });
+            } catch (_) {}
+        });
+
+
+
+
+        // ---- Global duration display unit (modules / moments / activities) ----
+        function __ldTrimNumber(n) {
+            const s = (typeof n === 'number') ? n.toString() : String(n ?? '');
+            return s.replace(/\.00$/, '').replace(/(\.\d)0$/, '$1');
+        }
+        function __ldConvertValuePreserveSecs(valStr, fromSecs, toSecs) {
+            const v = parseFloat(valStr);
+            if (isNaN(v)) return '';
+            const secs = v * (fromSecs || 60);
+            let out = secs / (toSecs || 60);
+            if ((toSecs || 60) === 60) out = Math.round(out);
+            else out = parseFloat(out.toFixed(2));
+            return __ldTrimNumber(out);
+        }
+        function __ldEnsureUnitOption(selectEl, secsValue, i18nKey, fallbackText) {
+            try {
+                const v = String(secsValue);
+                const exists = Array.from(selectEl.options || []).some(o => String(o.value) === v);
+                if (exists) return;
+                const opt = document.createElement('option');
+                opt.value = v;
+                if (i18nKey) opt.setAttribute('data-i18n', i18nKey);
+                opt.textContent = (translations && translations[currentLang] && i18nKey && translations[currentLang][i18nKey]) ? translations[currentLang][i18nKey] : (fallbackText || v);
+                selectEl.appendChild(opt);
+            } catch (_) {}
+        }
+        function __ldLockUnitSelect(selectEl) {
+            try {
+                if (!selectEl) return;
+                selectEl.disabled = true;
+                selectEl.classList.add('ld-locked-unit');
+                selectEl.title = "Unité globale (modifiable dans les paramètres initiaux)";
+            } catch (_) {}
+        }
+        function __ldApplyGlobalDurationUnit(convertInputs) {
+            try {
+                const globalKeySel = document.getElementById('param-learning-unit');
+                if (!globalKeySel) return;
+
+                const globalKey = globalKeySel.value || 'mins';
+                const newSecs = mapUnitToSecs(globalKey);
+
+                // Persist preference (local only)
+                try { localStorage.setItem('ld_global_unit_key', globalKey); } catch (_) {}
+
+                // Ensure months option exists where needed
+                document.querySelectorAll('.activity-target-unit, .moment-target-unit, .duration-unit').forEach(sel => {
+                    if (!sel) return;
+                    __ldEnsureUnitOption(sel, 2592000, 'unit_months', 'Mois');
+                });
+
+                // Update MODULE target unit + (optional) convert target value
+                document.querySelectorAll('.activity-group').forEach(group => {
+                    const unitSel = group.querySelector('.activity-target-unit');
+                    const valEl = group.querySelector('.activity-target-time');
+                    if (!unitSel) return;
+                    const oldSecs = mapUnitToSecs(unitSel.value || 60);
+                    if (convertInputs && valEl && valEl.value !== '') {
+                        valEl.value = __ldConvertValuePreserveSecs(valEl.value, oldSecs, newSecs);
+                    }
+                    // set unit
+                    const targetVal = String(newSecs);
+                    if (Array.from(unitSel.options).some(o => String(o.value) === targetVal)) unitSel.value = targetVal;
+                    __ldLockUnitSelect(unitSel);
+                });
+
+                // Update MOMENT target unit + (optional) convert target value
+                document.querySelectorAll('.moment-group').forEach(momentEl => {
+                    const unitSel = momentEl.querySelector('.moment-target-unit');
+                    const valEl = momentEl.querySelector('.moment-target-time');
+                    if (!unitSel) return;
+                    const oldSecs = mapUnitToSecs(unitSel.value || 60);
+                    if (convertInputs && valEl && valEl.value !== '') {
+                        valEl.value = __ldConvertValuePreserveSecs(valEl.value, oldSecs, newSecs);
+                    }
+                    const targetVal = String(newSecs);
+                    if (Array.from(unitSel.options).some(o => String(o.value) === targetVal)) unitSel.value = targetVal;
+                    __ldLockUnitSelect(unitSel);
+                });
+
+                // Update STEP (activity) duration units + (optional) convert values
+                document.querySelectorAll('.step-card').forEach(stepEl => {
+                    const unitSel = stepEl.querySelector('.duration-unit');
+                    const valEl = stepEl.querySelector('.duration-input');
+                    if (!unitSel) return;
+                    const oldSecs = mapUnitToSecs(unitSel.value || 60);
+                    if (convertInputs && valEl && valEl.value !== '') {
+                        valEl.value = __ldConvertValuePreserveSecs(valEl.value, oldSecs, newSecs);
+                    }
+                    const targetVal = String(newSecs);
+                    if (Array.from(unitSel.options).some(o => String(o.value) === targetVal)) unitSel.value = targetVal;
+                    __ldLockUnitSelect(unitSel);
+                });
+
+                // Update derived displays
+                try { updateStats(); } catch (_) {}
+            } catch (_) {}
+        }
+
+        // Initialise global unit preference from localStorage (only if no project has set it yet)
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const sel = document.getElementById('param-learning-unit');
+                if (!sel) return;
+
+                // store previous key for conversion when user changes the global unit
+                sel.dataset.prevUnitKey = sel.value || 'mins';
+
+                // Restore preference (local) for fresh sessions
+                try {
+                    const stored = localStorage.getItem('ld_global_unit_key');
+                    if (stored && stored !== sel.value) {
+                        // only apply if it's a recognised key
+                        if (['mins','hours','days','weeks','months'].includes(stored)) {
+                            sel.value = stored;
+                        }
+                    }
+                } catch (_) {}
+
+                // Apply without conversion on initial load (no values yet)
+                __ldApplyGlobalDurationUnit(false);
+
+                sel.addEventListener('change', () => {
+                    const oldKey = sel.dataset.prevUnitKey || 'mins';
+                    const newKey = sel.value || 'mins';
+                    const oldSecs = mapUnitToSecs(oldKey);
+                    const newSecs = mapUnitToSecs(newKey);
+
+                    // Convert GLOBAL learning target value to preserve seconds
+                    try {
+                        const vEl = document.getElementById('param-learning-val');
+                        if (vEl && vEl.value !== '') {
+                            vEl.value = __ldConvertValuePreserveSecs(vEl.value, oldSecs, newSecs);
+                        }
+                    } catch (_) {}
+
+                    // Convert all module/moment/step values and lock to the new unit
+                    __ldApplyGlobalDurationUnit(true);
+
+                    sel.dataset.prevUnitKey = newKey;
+                });
+            } catch (_) {}
+        });
+
+        // ---- Unit label format (short/long) for time units ----
+        function __ldGetUnitLabelByKey(unitKey, format) {
+            const f = (format || 'short').toString();
+            const k = (unitKey || 'mins').toString();
+            const shortMap = { mins: 'min', hours: 'h', days: 'j', weeks: 'sem', months: 'mois' };
+            const longMap  = { mins: 'minutes', hours: 'heures', days: 'jours', weeks: 'semaines', months: 'mois' };
+            return (f === 'long' ? (longMap[k] || longMap.mins) : (shortMap[k] || shortMap.mins));
+        }
+        function __ldGetUnitLabelBySecs(unitSecs, format) {
+            const s = parseFloat(unitSecs) || 60;
+            if (s === 60) return __ldGetUnitLabelByKey('mins', format);
+            if (s === 3600) return __ldGetUnitLabelByKey('hours', format);
+            if (s === 86400) return __ldGetUnitLabelByKey('days', format);
+            if (s === 604800) return __ldGetUnitLabelByKey('weeks', format);
+            if (s === 2592000) return __ldGetUnitLabelByKey('months', format);
+            return __ldGetUnitLabelByKey('mins', format);
+        }
+        function __ldApplyUnitLabelFormat() {
+            try {
+                const fmtSel = document.getElementById('param-unit-label-format');
+                const fmt = (fmtSel && fmtSel.value) ? fmtSel.value : 'short';
+
+                // Persist preference (local only)
+                try { localStorage.setItem('ld_unit_label_format', fmt); } catch (_) {}
+
+                // Update global unit selector (key-based)
+                const globalSel = document.getElementById('param-learning-unit');
+                if (globalSel) {
+                    Array.from(globalSel.options || []).forEach(opt => {
+                        const k = opt.value;
+                        opt.textContent = __ldGetUnitLabelByKey(k, fmt);
+                    });
+                }
+
+                // Update all seconds-based unit selects
+                document.querySelectorAll('.activity-target-unit, .moment-target-unit, .duration-unit').forEach(sel => {
+                    if (!sel) return;
+                    Array.from(sel.options || []).forEach(opt => {
+                        const secs = parseFloat(opt.value);
+                        if (!isNaN(secs)) opt.textContent = __ldGetUnitLabelBySecs(secs, fmt);
+                    });
+                });
+
+                // Update any static unit display spans if present
+                const designedSpan = document.getElementById('param-designed-unit-display');
+                if (designedSpan) {
+                    const key = (globalSel && globalSel.value) ? globalSel.value : 'mins';
+                    designedSpan.textContent = __ldGetUnitLabelByKey(key, fmt);
+                }
+
+                // Refresh derived displays with the new label format
+                try { updateStats(); } catch (_) {}
+            } catch (_) {}
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const fmtSel = document.getElementById('param-unit-label-format');
+                if (!fmtSel) return;
+
+                // Restore preference
+                try {
+                    const stored = localStorage.getItem('ld_unit_label_format');
+                    if (stored && (stored === 'short' || stored === 'long')) fmtSel.value = stored;
+                } catch (_) {}
+
+                __ldApplyUnitLabelFormat();
+                fmtSel.addEventListener('change', () => { __ldApplyUnitLabelFormat(); });
+            } catch (_) {}
+        });
 
 // Debounced wrapper for heavy timeline/canvas recomputation (used by input events)
 // Micro-optimisation: adapt debounce delay to the type of field being edited to avoid rebuilding heavy timelines while typing titles/long text.
@@ -12388,15 +12854,11 @@ function updateStats() {
             // Update designed time per moment (sum of contained activities), expressed in the moment unit
             document.querySelectorAll('.moment-group').forEach(momentEl => {
                 let secs = 0;
-                momentEl.querySelectorAll('.step-card').forEach(stepEl => {
-                    const v = parseFloat(stepEl.querySelector('.duration-input')?.value) || 0;
-                    const u = parseFloat(stepEl.querySelector('.duration-unit')?.value) || 60;
-                    secs += v * u;
-                });
+                momentEl.querySelectorAll('.step-card').forEach(stepEl => { secs += getStepDurationSecs(stepEl); });
 
                 const unitSel = momentEl.querySelector('.moment-target-unit');
                 const unitSecs = parseFloat(unitSel?.value) || getDefaultDurationUnitSecs();
-                const unitText = unitSel?.options?.[unitSel.selectedIndex]?.text || translations[currentLang].unit_mins;
+                const unitText = __ldGetUnitLabelBySecs(unitSecs, 'short');
 
                 const label = momentEl.querySelector('.moment-total-time');
                 if (label) {
@@ -12406,6 +12868,35 @@ function updateStats() {
                     else v = parseFloat(v.toFixed(1));
                     label.innerText = `${v} ${unitText}`;
                 }
+                // Moment designed duration alert + comparison (target vs designed)
+                try {
+                    const targetVal = momentEl.querySelector('.moment-target-time');
+                    const designedBadge = momentEl.querySelector('.moment-designed-badge');
+                    const compareEl = momentEl.querySelector('.moment-time-compare');
+
+                    if (designedBadge) designedBadge.classList.remove('duration-alert-light');
+
+                    const tv = targetVal ? parseFloat(targetVal.value) : 0;
+                    const targetSecs = (isNaN(tv) ? 0 : tv) * (isNaN(unitSecs) ? 60 : unitSecs);
+
+                    if (targetSecs > 0 && Math.round(secs) !== Math.round(targetSecs)) {
+                        if (designedBadge) designedBadge.classList.add('duration-alert-light');
+                    }
+
+                    if (compareEl) {
+                        if (targetSecs > 0) {
+                            const a = Math.round(targetSecs);
+                            const b = Math.round(secs);
+                            const sym = (a === b) ? '=' : (a < b ? '<' : '>');
+                            compareEl.textContent = sym;
+                            compareEl.classList.toggle('text-red-600', sym === '<' || sym === '>');
+                        } else {
+                            compareEl.textContent = '=';
+                            compareEl.classList.remove('text-red-600');
+                        }
+                    }
+                } catch (_) {}
+
             });
 
             // DOM Elements for the two timelines
@@ -12765,14 +13256,12 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
                     if (bar && label) {
                         bar.innerHTML = '';
                         // Update label
-                        const mins = Math.round(actData.duration / 60);
-                        let durationText = `${mins}m`;
-                        if (mins >= 60) {
-                             const h = Math.floor(mins / 60);
-                             const m = mins % 60;
-                             durationText = m === 0 ? `${h}h` : `${h}h${m}`;
-                        }
-	                        label.innerText = durationText;
+                        const unitSecs = parseFloat(targetUnitSel?.value) || getDefaultDurationUnitSecs();
+                        const unitText = __ldGetUnitLabelBySecs(unitSecs, 'short');
+                        let v = actData.duration / unitSecs;
+                        if (unitSecs === 60) v = Math.round(v);
+                        else v = parseFloat(v.toFixed(1));
+                        label.innerText = `${v} ${unitText}`;
 
 	                        // Module designed duration alert: if target is set and differs, tint the designed badge
 	                        if (designedBadge) {
@@ -13337,7 +13826,7 @@ function exportDOCX() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = __ldBuildExportFilename('docx');
+        a.download = window.__ldBuildExportFilename('docx');
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -13500,7 +13989,7 @@ function __deprecated__exportCSV_1() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = __ldBuildExportFilename('xlsx');
+    a.download = window.__ldBuildExportFilename('xlsx');
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -13983,7 +14472,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = __ldBuildExportFilename('html');
+            a.download = window.__ldBuildExportFilename('html');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -14143,7 +14632,7 @@ function __deprecated__exportCSV_2() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = __ldBuildExportFilename('xlsx');
+    a.download = window.__ldBuildExportFilename('xlsx');
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -14428,7 +14917,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = __ldBuildExportFilename('html');
+            a.download = window.__ldBuildExportFilename('html');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -14711,7 +15200,7 @@ function __deprecated__exportCSV_3() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = __ldBuildExportFilename('xlsx');
+    a.download = window.__ldBuildExportFilename('xlsx');
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -14996,7 +15485,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = __ldBuildExportFilename('html');
+            a.download = window.__ldBuildExportFilename('html');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -15156,7 +15645,7 @@ function __deprecated__exportCSV_4() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = __ldBuildExportFilename('xlsx');
+    a.download = window.__ldBuildExportFilename('xlsx');
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -15441,7 +15930,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = __ldBuildExportFilename('html');
+            a.download = window.__ldBuildExportFilename('html');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -15562,7 +16051,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = __ldBuildExportFilename('rtf');
+            a.download = window.__ldBuildExportFilename('rtf');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -15840,7 +16329,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = __ldBuildExportFilename('html');
+            a.download = window.__ldBuildExportFilename('html');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -15961,7 +16450,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = __ldBuildExportFilename('rtf');
+            a.download = window.__ldBuildExportFilename('rtf');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -16365,7 +16854,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = __ldBuildExportFilename('html');
+            a.download = window.__ldBuildExportFilename('html');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -16385,7 +16874,7 @@ function exportCSV() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Learning design');
 
-    const filename = __ldBuildExportFilename('xlsx');
+    const filename = window.__ldBuildExportFilename('xlsx');
     XLSX.writeFile(wb, filename);
 }
 
@@ -16667,7 +17156,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = __ldBuildExportFilename('html');
+            a.download = window.__ldBuildExportFilename('html');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -16788,7 +17277,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = __ldBuildExportFilename('rtf');
+            a.download = window.__ldBuildExportFilename('rtf');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -17137,7 +17626,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = __ldBuildExportFilename('html');
+            a.download = window.__ldBuildExportFilename('html');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -17335,7 +17824,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = __ldBuildExportFilename('rtf');
+            a.download = window.__ldBuildExportFilename('rtf');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -17575,7 +18064,7 @@ ${notes}
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = __ldBuildExportFilename('md');
+            a.download = window.__ldBuildExportFilename('md');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -17975,6 +18464,7 @@ function initHistory() {
 
 window.onload = () => {
             applyTranslations();
+            try { __ldApplyUnitLabelFormat(); } catch (_) {}
             // Taxonomy: load any user-defined taxonomy before rendering selectors
             // Taxonomie: interface agnostique. Aucune taxonomie n'est chargée automatiquement.
             resetTaxonomy();
@@ -20608,6 +21098,147 @@ function bind() {
   }
 })();
 
+
+
+
+// ---- Unit labels override ----
+// Target duration unit dropdowns: full words. Designed durations: abbreviated.
+function __ldGetUnitLabelByKey(unitKey, format) {
+    const k = (unitKey || 'mins').toString();
+    const shortMap = { mins: 'min', hours: 'h', days: 'j', weeks: 'sem', months: 'mois' };
+    const longMap  = { mins: 'Minutes', hours: 'Heures', days: 'Jours', weeks: 'Semaines', months: 'Mois' };
+    return (format === 'long') ? (longMap[k] || longMap.mins) : (shortMap[k] || shortMap.mins);
+}
+function __ldGetUnitLabelBySecs(unitSecs, format) {
+    const s = parseFloat(unitSecs) || 60;
+    if (s === 60) return __ldGetUnitLabelByKey('mins', format);
+    if (s === 3600) return __ldGetUnitLabelByKey('hours', format);
+    if (s === 86400) return __ldGetUnitLabelByKey('days', format);
+    if (s === 604800) return __ldGetUnitLabelByKey('weeks', format);
+    if (s === 2592000) return __ldGetUnitLabelByKey('months', format);
+    return __ldGetUnitLabelByKey('mins', format);
+}
+function __ldApplyUnitLabelFormat() {
+    try {
+        // Course target (key-based): long
+        const globalSel = document.getElementById('param-learning-unit');
+        if (globalSel) {
+            Array.from(globalSel.options || []).forEach(opt => {
+                opt.textContent = __ldGetUnitLabelByKey(opt.value, 'long');
+            });
+        }
+        // Preferred unit selector: long
+        const prefSel = document.getElementById('param-preferred-unit');
+        if (prefSel) {
+            Array.from(prefSel.options || []).forEach(opt => {
+                opt.textContent = __ldGetUnitLabelBySecs(opt.value, 'long');
+            });
+        }
+        // Target unit selects (seconds-based): long
+        document.querySelectorAll('.activity-target-unit, .moment-target-unit').forEach(sel => {
+            Array.from(sel.options || []).forEach(opt => {
+                const secs = parseFloat(opt.value);
+                if (!isNaN(secs)) opt.textContent = __ldGetUnitLabelBySecs(secs, 'long');
+            });
+        });
+        // Designed duration unit selects (steps): short
+        document.querySelectorAll('.duration-unit').forEach(sel => {
+            Array.from(sel.options || []).forEach(opt => {
+                const secs = parseFloat(opt.value);
+                if (!isNaN(secs)) opt.textContent = __ldGetUnitLabelBySecs(secs, 'short');
+            });
+        });
+        try { updateStats(); } catch (_) {}
+    } catch (_) {}
+}
+document.addEventListener('DOMContentLoaded', () => { try { __ldApplyUnitLabelFormat(); } catch (_) {} });
+
+
+
+
+// ---- Step duration unit conversion (preserve seconds) ----
+// Allows user to change the unit per activity step without changing the underlying duration (in seconds).
+function __ldConvertNumberPreserveSecs(valStr, fromSecs, toSecs) {
+  const v = parseFloat(valStr);
+  if (isNaN(v)) return '';
+  const secs = v * (fromSecs || 60);
+  let out = secs / (toSecs || 60);
+  if ((toSecs || 60) === 60) out = Math.round(out);
+  else out = parseFloat(out.toFixed(2));
+  return (typeof __ldTrimNumber === 'function') ? __ldTrimNumber(out) : String(out);
+}
+function __ldInitDurationUnitSelect(sel) {
+  try {
+    if (!sel) return;
+    sel.disabled = false;
+    sel.dataset.prevSecs = String(parseFloat(sel.value) || 60);
+  } catch (_) {}
+}
+document.addEventListener('change', (e) => {
+  const t = e.target;
+  if (!t || !t.classList || !t.classList.contains('duration-unit')) return;
+
+  try {
+    const stepEl = t.closest('.step-card');
+    const input = stepEl ? stepEl.querySelector('.duration-input') : null;
+
+    const oldSecs = parseFloat(t.dataset.prevSecs || t.value || 60) || 60;
+    const newSecs = parseFloat(t.value || 60) || 60;
+
+    if (input && input.value !== '' && oldSecs > 0 && newSecs > 0) {
+      input.value = __ldConvertNumberPreserveSecs(input.value, oldSecs, newSecs);
+    }
+    t.dataset.prevSecs = String(newSecs);
+  } catch (_) {}
+
+  try { updateStats(); } catch (_) {}
+}, true);
+
+document.addEventListener('DOMContentLoaded', () => {
+  try { document.querySelectorAll('.duration-unit').forEach(__ldInitDurationUnitSelect); } catch (_) {}
+});
+
+
+
+
+// ---- Guard interactions for duration unit dropdowns ----
+// Prevent drag/toggle handlers from hijacking native select interactions inside step headers.
+(function(){
+  const guard = (e) => {
+    const t = e.target;
+    if (!t) return;
+    if (t.matches && t.matches('select.duration-unit')) {
+      try { e.stopPropagation(); } catch(_) {}
+      try { e.stopImmediatePropagation(); } catch(_) {}
+    }
+  };
+  document.addEventListener('pointerdown', guard, true);
+  document.addEventListener('mousedown', guard, true);
+  document.addEventListener('click', guard, true);
+})();
+
+
+
+
+// Init duration-unit selects for dynamically added steps
+(function(){
+  try {
+    const root = document.getElementById('activities-root') || document.body;
+    const obs = new MutationObserver((muts) => {
+      muts.forEach(m => {
+        (m.addedNodes || []).forEach(n => {
+          if (!n || n.nodeType !== 1) return;
+          try {
+            if (n.matches && n.matches('select.duration-unit')) __ldInitDurationUnitSelect(n);
+            if (n.querySelectorAll) n.querySelectorAll('select.duration-unit').forEach(__ldInitDurationUnitSelect);
+          } catch(_) {}
+        });
+      });
+    });
+    obs.observe(root, { childList: true, subtree: true });
+  } catch(_) {}
+})();
+
 </script>
 <div id="js-error-banner" style="display:none; position:fixed; bottom:12px; left:12px; right:12px; z-index:9999; background:#fee2e2; color:#7f1d1d; padding:8px 10px; border:1px solid #fecaca; border-radius:10px; font-size:12px; line-height:1.2; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif; box-shadow:0 10px 30px rgba(15,23,42,0.15);">
 <div style="display:flex; gap:10px; align-items:flex-start;">
@@ -21983,7 +22614,7 @@ function bind() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = __ldBuildExportFilename('docx');
+    a.download = window.__ldBuildExportFilename('docx');
     document.body.appendChild(a);
     a.click();
     setTimeout(()=>{ try { a.remove(); URL.revokeObjectURL(url);} catch(_){} }, 0);
@@ -22038,7 +22669,7 @@ function bind() {
     const ws = XLSX.utils.aoa_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Learning design');
-    const filename = __ldBuildExportFilename('xlsx');
+    const filename = window.__ldBuildExportFilename('xlsx');
     XLSX.writeFile(wb, filename);
   }
 
