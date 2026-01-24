@@ -1230,6 +1230,9 @@ textarea.ld-ta-expanded {
       'delete-step': ({btn}) => call('trashStep', btn),
       'add-step': ({btn}) => call('addStepToActivity', btn),
       'add-moment': ({btn}) => call('addMomentToActivity', btn),
+      'add-submoment': ({btn}) => call('addSubmomentToMoment', btn),
+      'delete-submoment': ({btn}) => call('deleteSubmoment', btn),
+      'add-step-submoment': ({btn}) => call('addStepToSubmoment', btn),
       'open-export-preview': ({event}) => call('openExportPreview', event),
       'close-export-preview': ({event}) => call('closeExportPreview', event),
       'collapse-module-contents': ({btn}) => call('collapseModuleContents', btn),
@@ -3318,10 +3321,50 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <div class="compact-label">Description</div>
 <textarea class="moment-description w-full min-h-[64px] resize-y px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Description du moment..."></textarea>
 </div>
-<div class="activity-steps-container activity-container space-y-2 min-h-[20px]"></div>
+
+<div class="mt-2 flex items-start justify-between gap-2">
+  <div>
+    <div class="compact-label">Sous-moments</div>
+    <p class="text-[11px] text-slate-400 mt-1">Optionnel : ajoutez des sous-moments pour structurer les activités à l’intérieur du moment.</p>
+  </div>
+  <button class="no-print text-xs font-semibold text-slate-500 hover:text-indigo-700 px-2 py-1 rounded transition-colors flex items-center gap-1 hover:bg-slate-50" data-action="add-submoment" title="Ajouter un sous-moment" type="button">
+    <span class="material-icons-round text-sm">add</span>
+    <span>Ajouter un sous-moment</span>
+  </button>
+</div>
+<div class="submoments-container space-y-2 mt-2"></div>
+
+<div class="moment-direct-steps mt-2">
+  <div class="compact-label">Activités (moment)</div>
+  <div class="activity-steps-container activity-container space-y-2 min-h-[20px]"></div>
+</div>
+
 </div>
 </div>
 </template>
+
+<template id="submoment-template">
+  <div class="submoment-card border border-slate-200 rounded-lg bg-white">
+    <div class="flex items-center justify-between px-3 py-2 bg-slate-50 border-b border-slate-100 rounded-t-lg">
+      <div class="flex items-center gap-2 flex-1 min-w-0">
+        <span class="text-xs font-semibold text-slate-500">Sous-moment</span>
+        <input class="submoment-title w-full text-sm font-semibold bg-transparent border border-transparent focus:border-indigo-300 rounded px-2 py-1 outline-none" placeholder="Titre du sous-moment..." />
+      </div>
+      <div class="flex items-center gap-1">
+        <button class="no-print text-slate-400 hover:text-indigo-700 transition-colors" data-action="add-step-submoment" title="Ajouter une activité au sous-moment" type="button">
+          <span class="material-icons-round text-sm">add</span>
+        </button>
+        <button class="no-print text-slate-400 hover:text-rose-600 transition-colors" data-action="delete-submoment" title="Supprimer ce sous-moment" type="button">
+          <span class="material-icons-round text-sm">delete_outline</span>
+        </button>
+      </div>
+    </div>
+    <div class="submoment-body px-3 py-2">
+      <div class="submoment-steps steps-container space-y-2 min-h-[20px]"></div>
+    </div>
+  </div>
+</template>
+
 <template id="step-template">
 <div class="step-card bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative group flex flex-col">
 <div class="flex items-center gap-2 p-2 bg-slate-50 border-b border-slate-100 transition-colors">
@@ -3724,6 +3767,7 @@ try { window.getStepDurationSecs = getStepDurationSecs; } catch (_) {}
         const activityTemplate = document.getElementById('activity-template');
         const momentTemplate = document.getElementById('moment-template');
         const stepTemplate = document.getElementById('step-template');
+        const submomentTemplate = document.getElementById('submoment-template');
         const tooltipEl = document.getElementById('global-tooltip');
         const DEFAULT_LANG = 'fr';
         let currentLang = DEFAULT_LANG;
@@ -6806,6 +6850,7 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
                 __ldLockUnitSelect(mUnitSel);
             }
             updateMomentIndexes(activityGroup);
+            syncMomentSubmomentsUI(moment);
             return moment;
         }
 
@@ -6845,10 +6890,125 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
                 __ldLockUnitSelect(mUnitSel);
             }
             updateMomentIndexes(activityGroup);
+            syncMomentSubmomentsUI(moment);
             applyTranslations();
             try { __ldApplyUnitLabelFormat(); } catch (_) {}
             updateStats();
         }
+
+
+        /* SUBMOMENT_HELPERS_V1 */
+        function syncMomentSubmomentsUI(momentEl) {
+            try {
+                if (!momentEl) return;
+                const hasSub = momentEl.querySelectorAll('.submoments-container .submoment-card').length > 0;
+                const direct = momentEl.querySelector('.moment-direct-steps');
+                if (direct) direct.classList.toggle('hidden', hasSub);
+            } catch (_) {}
+        }
+
+        function addSubmomentToMoment(btnOrEvent) {
+            try { historyCaptureNow(); } catch (_) {}
+            const btn = (btnOrEvent && (btnOrEvent.currentTarget || btnOrEvent.target)) ? (btnOrEvent.currentTarget || btnOrEvent.target) : btnOrEvent;
+            const momentEl = btn && btn.closest ? btn.closest('.moment-group') : null;
+            if (!momentEl) return;
+
+            const container = momentEl.querySelector('.submoments-container');
+            if (!container) return;
+
+            const tmpl = (typeof submomentTemplate !== 'undefined' && submomentTemplate) ? submomentTemplate : document.getElementById('submoment-template');
+            if (!tmpl) return;
+
+            const clone = tmpl.content.cloneNode(true);
+            container.appendChild(clone);
+            const subEl = container.lastElementChild;
+
+            try {
+                const idx = container.querySelectorAll('.submoment-card').length;
+                const title = subEl.querySelector('.submoment-title');
+                if (title && !title.value) title.value = `Sous-moment ${idx}`;
+            } catch (_) {}
+
+            try { initSortableSteps(subEl.querySelector('.submoment-steps')); } catch (_) {}
+
+            // If this is the first submoment, migrate any existing direct steps into it
+            try {
+                const subCount = container.querySelectorAll('.submoment-card').length;
+                if (subCount === 1) {
+                    const directSteps = momentEl.querySelectorAll('.moment-direct-steps .step-card');
+                    const subSteps = subEl.querySelector('.submoment-steps');
+                    if (subSteps && directSteps.length) directSteps.forEach(st => subSteps.appendChild(st));
+                }
+            } catch (_) {}
+
+            syncMomentSubmomentsUI(momentEl);
+            try { applyTranslations(); } catch (_) {}
+            try { __ldApplyUnitLabelFormat(); } catch (_) {}
+            try { updateStats(); } catch (_) {}
+        }
+
+        function deleteSubmoment(btnOrEvent) {
+            try { historyCaptureNow(); } catch (_) {}
+            const btn = (btnOrEvent && (btnOrEvent.currentTarget || btnOrEvent.target)) ? (btnOrEvent.currentTarget || btnOrEvent.target) : btnOrEvent;
+            const subEl = btn && btn.closest ? btn.closest('.submoment-card') : null;
+            if (!subEl) return;
+            const momentEl = subEl.closest('.moment-group');
+            const directContainer = momentEl ? momentEl.querySelector('.moment-direct-steps .activity-steps-container') : null;
+
+            // Move contained steps to moment direct container (no data loss)
+            try { if (directContainer) subEl.querySelectorAll('.step-card').forEach(st => directContainer.appendChild(st)); } catch (_) {}
+
+            try { subEl.remove(); } catch (_) {}
+
+            syncMomentSubmomentsUI(momentEl);
+            try { updateStats(); } catch (_) {}
+        }
+
+        function addStepToSubmoment(btnOrEvent) {
+            try { historyCaptureNow(); } catch (_) {}
+            const btn = (btnOrEvent && (btnOrEvent.currentTarget || btnOrEvent.target)) ? (btnOrEvent.currentTarget || btnOrEvent.target) : btnOrEvent;
+            const subEl = btn && btn.closest ? btn.closest('.submoment-card') : null;
+            if (!subEl) return;
+            const container = subEl.querySelector('.submoment-steps');
+            if (!container) return;
+
+            const tmpl = (typeof stepTemplate !== 'undefined' && stepTemplate) ? stepTemplate : document.getElementById('step-template');
+            if (!tmpl) return;
+
+            const clone = tmpl.content.cloneNode(true);
+            container.appendChild(clone);
+            const newStep = container.lastElementChild;
+
+            try { populateStepCompetencesSelect(newStep, []); } catch (_) {}
+            try { populateStepCompetencesTransversalesSelect(newStep, []); } catch (_) {}
+            try { populateStepAimsSelect(newStep, []); } catch (_) {}
+            try { populateStepOutcomesSelect(newStep, []); } catch (_) {}
+            try { populateStepToolsMaterialsSelect(newStep, []); } catch (_) {}
+
+            try { setupCompactTextareas(newStep); } catch (_) {}
+            try { const _tmD = newStep.querySelector('.step-tools-materials-wrap')?.closest('details'); if (_tmD) _tmD.open = false; } catch (_) {}
+
+            const unitSelect = newStep ? newStep.querySelector('.duration-unit') : null;
+            if (unitSelect) {
+                try { __ldEnsureUnitOption(unitSelect, 2592000, 'unit_months', 'Mois'); } catch (_) {}
+                try { unitSelect.value = String(getDefaultDurationUnitSecs()); } catch (_) {}
+                try { __ldLockUnitSelect(unitSelect); } catch (_) {}
+                try { __ldInitDurationUnitSelect(unitSelect); } catch (_) {}
+            }
+
+            const groupSize = newStep ? newStep.querySelector('.step-group-size') : null;
+            const globalSize = document.getElementById('global-class-size');
+            if (groupSize && globalSize) groupSize.value = globalSize.value;
+
+            const outLevel = newStep ? newStep.querySelector('.outcome-bloom-level') : null;
+            try { if (outLevel) renderBloomOptions(outLevel, outLevel.value || ""); } catch (_) {}
+
+            try { updateStats(); } catch (_) {}
+        }
+        /* END_SUBMOMENT_HELPERS_V1 */
+
+
+
 
         function deleteMoment(btn) {
             historyCaptureNow();
@@ -9735,6 +9895,38 @@ obs3.observe(alist, { childList: true, subtree: true });
                 modal.classList.remove('hidden');
             };
         })();
+
+        function __ldSerializeStepFromEl(stepEl) {
+            return {
+
+                                titre: stepEl.querySelector('.step-input-title').value,
+                                type: stepEl.querySelector('.learning-type-select').value,
+                                duree: stepEl.querySelector('.duration-input').value,
+                                unite: stepEl.querySelector('.duration-unit').value,
+                                regroupement: stepEl.querySelector('.step-group-mode').value,
+                                nombreGroupes: stepEl.querySelector('.step-group-count').value,
+                                tailleGroupe: stepEl.querySelector('.step-group-size').value,
+                                detailsRegroupement: (stepEl.querySelector('.step-group-details')?.value || ''),
+                                formateur: stepEl.querySelector('.trainer-select').value,
+                                lieu: stepEl.querySelector('.place-select').value,
+                                temps: stepEl.querySelector('.time-select').value,
+                                                                evaluation: (stepEl.querySelector('.evaluation-select')?.value || 'Aucune'),
+objectifActivite: stepEl.querySelector('.step-input-objective').value,
+                                aFaire: stepEl.querySelector('.step-input-tasks').value,
+                                aFaireFormateur: stepEl.querySelector('.step-input-trainer-tasks').value,
+                                notes: stepEl.querySelector('.step-input-notes').value,
+                                evaluationSuivi: (stepEl.querySelector('.step-input-eval-followup')?.value || ''),
+                                competences: getSelectedStepCompetenceIds(stepEl),
+                                competencesSujet: getSelectedStepCompetenceIds(stepEl),
+                                competencesTransversales: getSelectedStepCompetencesTransversalesIds(stepEl),
+                                objectifsCibles: (typeof getSelectedStepAims === 'function') ? getSelectedStepAims(stepEl) : [],
+                                resultatsApprentissageCibles: (typeof getSelectedStepOutcomes === 'function') ? getSelectedStepOutcomes(stepEl) : [],
+                                outilsMaterielCibles: (typeof getSelectedStepToolsMaterials === 'function') ? getSelectedStepToolsMaterials(stepEl) : []
+                            ,
+                                outilsMaterielNotes: (typeof getSelectedStepToolsMaterialsNotes === 'function') ? getSelectedStepToolsMaterialsNotes(stepEl) : {}
+            };
+        }
+
 function buildExportProjectData() {
             // Build a complete, portable representation of the current design (used for file save and autosave)
             const outcomes = [];
@@ -9811,35 +10003,29 @@ function buildExportProjectData() {
                             activites: []
                         };
                         momentEl.querySelectorAll('.step-card').forEach(stepEl => {
-                            const stepObj = {
-                                titre: stepEl.querySelector('.step-input-title').value,
-                                type: stepEl.querySelector('.learning-type-select').value,
-                                duree: stepEl.querySelector('.duration-input').value,
-                                unite: stepEl.querySelector('.duration-unit').value,
-                                regroupement: stepEl.querySelector('.step-group-mode').value,
-                                nombreGroupes: stepEl.querySelector('.step-group-count').value,
-                                tailleGroupe: stepEl.querySelector('.step-group-size').value,
-                                detailsRegroupement: (stepEl.querySelector('.step-group-details')?.value || ''),
-                                formateur: stepEl.querySelector('.trainer-select').value,
-                                lieu: stepEl.querySelector('.place-select').value,
-                                temps: stepEl.querySelector('.time-select').value,
-                                                                evaluation: (stepEl.querySelector('.evaluation-select')?.value || 'Aucune'),
-objectifActivite: stepEl.querySelector('.step-input-objective').value,
-                                aFaire: stepEl.querySelector('.step-input-tasks').value,
-                                aFaireFormateur: stepEl.querySelector('.step-input-trainer-tasks').value,
-                                notes: stepEl.querySelector('.step-input-notes').value,
-                                evaluationSuivi: (stepEl.querySelector('.step-input-eval-followup')?.value || ''),
-                                competences: getSelectedStepCompetenceIds(stepEl),
-                                competencesSujet: getSelectedStepCompetenceIds(stepEl),
-                                competencesTransversales: getSelectedStepCompetencesTransversalesIds(stepEl),
-                                objectifsCibles: (typeof getSelectedStepAims === 'function') ? getSelectedStepAims(stepEl) : [],
-                                resultatsApprentissageCibles: (typeof getSelectedStepOutcomes === 'function') ? getSelectedStepOutcomes(stepEl) : [],
-                                outilsMaterielCibles: (typeof getSelectedStepToolsMaterials === 'function') ? getSelectedStepToolsMaterials(stepEl) : []
-                            ,
-                                outilsMaterielNotes: (typeof getSelectedStepToolsMaterialsNotes === 'function') ? getSelectedStepToolsMaterialsNotes(stepEl) : {}};
+                            const stepObj = __ldSerializeStepFromEl(stepEl);
                             momentData.activites.push(stepObj);
                             moduleData.activites.push({ ...stepObj });
                         });
+                        // Sub-moments (optional, preserves structure)
+                        try {
+                            const smEls = momentEl.querySelectorAll('.submoments-container .submoment-card');
+                            if (smEls && smEls.length) {
+                                momentData.sousMoments = [];
+                                smEls.forEach(smEl => {
+                                    const smData = {
+                                        titre: smEl.querySelector('.submoment-title')?.value || "",
+                                        description: "",
+                                        activites: []
+                                    };
+                                    smEl.querySelectorAll('.step-card').forEach(stepEl => {
+                                        smData.activites.push(__ldSerializeStepFromEl(stepEl));
+                                    });
+                                    momentData.sousMoments.push(smData);
+                                });
+                            }
+                        } catch (_) {}
+
                         moduleData.moments.push(momentData);
                     });
                 } else {
@@ -11034,6 +11220,14 @@ const __chartsSuspendFn = window.__setChartsSuspended;
                 description: m?.description ?? "",
                 targetTime: m?.targetTime ?? m?.dureeCible ?? "",
                 targetUnit: m?.targetUnit ?? m?.uniteDureeCible ?? (document.getElementById('param-learning-unit')?.value || "mins"),
+                subMoments: (function(){
+                    const smRaw = Array.isArray(m?.subMoments) ? m.subMoments : (Array.isArray(m?.sousMoments) ? m.sousMoments : []);
+                    return Array.isArray(smRaw) ? smRaw.map(sm => ({
+                        title: sm?.title ?? sm?.titre ?? "",
+                        description: sm?.description ?? "",
+                        steps: Array.isArray(sm?.steps) ? sm.steps.map(normaliseStep) : (Array.isArray(sm?.activites) ? sm.activites.map(normaliseStep) : [])
+                    })) : [];
+                })(),
                 steps: Array.isArray(m?.steps) ? m.steps.map(normaliseStep) : (Array.isArray(m?.activites) ? m.activites.map(normaliseStep) : [])
             });
 
@@ -11630,11 +11824,28 @@ loadProjectFromObject(project);
                         if (mUnitSel) mUnitSel.value = mapUnitToSecs(momentData.targetUnit ?? getDefaultDurationUnitKey());
 const stepsContainer = momentEl.querySelector('.activity-steps-container');
                         initSortableSteps(stepsContainer);
-                                                try { setupCompactTextareas(momentEl); } catch (_) {}
-(momentData.steps || []).forEach(stepData => {
-                            addStepToContainerFromData(stepsContainer, stepData);
-                        });
-                    }
+                        try { setupCompactTextareas(momentEl); } catch (_) {}
+
+                        const subWrap = momentEl.querySelector('.submoments-container');
+                        if (subWrap && Array.isArray(momentData.subMoments) && momentData.subMoments.length && submomentTemplate) {
+                            subWrap.innerHTML = '';
+                            momentData.subMoments.forEach((sm, smIdx) => {
+                                const smClone = submomentTemplate.content.cloneNode(true);
+                                subWrap.appendChild(smClone);
+                                const smEl = subWrap.lastElementChild;
+                                const smTitle = smEl ? smEl.querySelector('.submoment-title') : null;
+                                if (smTitle) smTitle.value = sm.title || `Sous-moment ${smIdx + 1}`;
+                                const smSteps = smEl ? smEl.querySelector('.submoment-steps') : null;
+                                initSortableSteps(smSteps);
+                                (sm.steps || []).forEach(stepData => { addStepToContainerFromData(smSteps, stepData); });
+                            });
+                        } else {
+                            (momentData.steps || []).forEach(stepData => {
+                                addStepToContainerFromData(stepsContainer, stepData);
+                            });
+                        }
+                        syncMomentSubmomentsUI(momentEl);
+}
                 });
                 ensureDefaultMoment(actEl);
                 updateMomentIndexes(actEl);
@@ -11780,9 +11991,19 @@ if (((data.groupMode || data.regroupement) === 'groups')) stepEl.querySelector('
             ensureDefaultMoment(activityGroup);
             const moments = activityGroup.querySelectorAll('.activity-moments-container .moment-group');
             const targetMoment = moments[moments.length - 1];
-            const container = targetMoment
+            let container = targetMoment
                 ? targetMoment.querySelector('.activity-steps-container')
                 : activityGroup.querySelector('.activity-steps-container');
+
+            // If sub-moments exist, add activities into the last sub-moment by default
+            try {
+                const subs = targetMoment ? targetMoment.querySelectorAll('.submoments-container .submoment-card') : [];
+                if (subs && subs.length) {
+                    const lastSub = subs[subs.length - 1];
+                    const smCont = lastSub ? lastSub.querySelector('.submoment-steps') : null;
+                    if (smCont) container = smCont;
+                }
+            } catch (_) {}
 
             if (!container) return;
 
