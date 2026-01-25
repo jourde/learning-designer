@@ -389,7 +389,7 @@ input, select, textarea {
         }
         body.hc #timeline-ruler { color: #0f172a !important; }
         body.hc #custom-confirm-modal { background-color: rgba(15, 23, 42, 0.75) !important; }
-        body.hc #global-tooltip { background-color: #0f172a !important; border-color: #0f172a !important; }
+        body.hc #global-tooltip { background-color: #ffffff !important; border-color: #0f172a !important; color: #0f172a !important; }
         body.hc :focus-visible {
             outline-color: rgba(37, 99, 235, 0.8);
         }
@@ -1719,6 +1719,98 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
 
 })();
 </script>
+
+<style id="top-level-tabs-style">
+  body.top-tabs-enabled .top-tab-btn{
+    flex: 1 1 0%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    user-select: none;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    line-height: 1.15;
+    text-align: center;
+    background: transparent;
+  }
+  body.top-tabs-enabled .top-tab-label{
+    display: block;
+    white-space: normal;
+  }
+  body.top-tabs-enabled .top-tab-btn[aria-selected="true"]{
+    background-color: #f1f5f9;
+    color: #0f172a;
+    border-color: #cbd5e1;
+  }
+  body.top-tabs-enabled .top-tab-btn[aria-selected="false"]{
+    color: #334155;
+    background: transparent;
+    border-color: transparent;
+  }
+  body.top-tabs-enabled .top-tab-btn:focus-visible{
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+  }
+
+  body.top-tabs-enabled .top-tab-btn[aria-selected="false"]:hover{
+    border-color: #cbd5e1;
+  }
+  body.hc.top-tabs-enabled .top-tab-btn[aria-selected="false"]:hover{
+    border-color: #0f172a;
+  }
+
+  body.hc.top-tabs-enabled .top-tab-btn[aria-selected="true"]{
+    background-color: #ffffff;
+    color: #0f172a;
+    border-color: #0f172a;
+  }
+  body.hc.top-tabs-enabled .top-tab-btn[aria-selected="false"]{
+    color: #0f172a;
+    background: transparent;
+    border-color: transparent;
+  }
+
+  /* Replace accordion headers with level-1 tabs */
+  body.top-tabs-enabled button[data-panel="key-params-panel"],
+  body.top-tabs-enabled button[data-panel="timeline-panel"],
+  body.top-tabs-enabled #analysis-tabs-wrap > summary{
+    display: none !important;
+  }
+
+  /* Force the corresponding content blocks open (tabs control visibility) */
+  body.top-tabs-enabled #key-params-panel,
+  body.top-tabs-enabled #timeline-panel{
+    display: block !important;
+  }
+  body.top-tabs-enabled #timeline-panel{
+    margin-top: 0 !important;
+  }
+  body.top-tabs-enabled #key-params-panel #kpwiz-bar{
+    border-top: 0 !important;
+  }
+
+  /* Ensure collapsible panel contents are visible when top-level tabs are enabled */
+  body.top-tabs-enabled #key-params-panel,
+  body.top-tabs-enabled #timeline-panel{
+    max-height: none !important;
+    opacity: 1 !important;
+    overflow: visible !important;
+    transition: none !important;
+  }
+  body.top-tabs-enabled #key-params-panel.open,
+  body.top-tabs-enabled #timeline-panel.open{
+    max-height: none !important;
+    opacity: 1 !important;
+  }
+</style>
 </head>
 <body class="p-2 md:p-4 hide-types text-slate-900">
 <div class="max-w-7xl mx-auto">
@@ -1908,7 +2000,24 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
 </div>
 </div>
 </header>
-<div class="mb-3 bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+<div class="mb-3 no-print w-full" id="top-tabs-bar-wrap">
+  <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-1 flex gap-1" role="tablist" aria-label="Sections">
+    <button type="button" id="top-tab-btn-info" role="tab" aria-selected="false" aria-controls="key-params-wrapper" class="top-tab-btn">
+      <span class="material-icons-round text-sm">tune</span>
+      <span class="top-tab-label">INFORMATIONS ET PARAMÈTRES DE LA FORMATION</span>
+    </button>
+    <button type="button" id="top-tab-btn-visual" role="tab" aria-selected="false" aria-controls="visualisations-wrapper" class="top-tab-btn">
+      <span class="material-icons-round text-sm">insights</span>
+      <span class="top-tab-label">VISUALISATIONS DES SÉQUENCES</span>
+    </button>
+    <button type="button" id="top-tab-btn-analysis" role="tab" aria-selected="false" aria-controls="analysis-tabs-wrap" class="top-tab-btn">
+      <span class="material-icons-round text-sm">bar_chart</span>
+      <span class="top-tab-label">GRAPHIQUES D'ANALYSE</span>
+    </button>
+  </div>
+</div>
+
+<div id="key-params-wrapper" role="tabpanel" aria-labelledby="top-tab-btn-info" class="mb-3 bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
 <button class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors no-print h-[32px] rounded-lg border border-slate-200 rounded-lg border border-slate-200" data-i18n-title="title_toggle_panel" data-action="toggle-panel" data-panel="key-params-panel">
 <div class="flex items-center gap-1.5">
 <span class="material-icons-round text-slate-500 text-sm">
@@ -2379,7 +2488,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div><!-- /kpwiz-steps-wrapper -->
 </div>
 </div>
-<div class="mb-3 no-print flex flex-col gap-3 max-w-7xl mx-auto w-full">
+<div id="visualisations-wrapper" role="tabpanel" aria-labelledby="top-tab-btn-visual" class="mb-3 no-print flex flex-col gap-3 max-w-7xl mx-auto w-full">
 <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col justify-center max-w-7xl mx-auto w-full" id="timelines-wrapper">
 <button class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors no-print h-[32px] rounded-lg border border-slate-200" data-i18n-title="title_toggle_panel" data-action="toggle-panel" data-panel="timeline-panel">
 <div class="flex items-center gap-1.5">
@@ -2561,7 +2670,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <div aria-label="Défilement horizontal des visualisations" class="timeline-hscroll no-print" id="timeline-hscroll" role="scrollbar"><div id="timeline-hscroll-inner"></div><div aria-hidden="true" id="timeline-hscroll-thumb"></div></div></div>
 </div>
 </div>
-<details class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden w-full flex flex-col justify-center max-w-7xl mx-auto mt-2" id="analysis-tabs-wrap" open><summary class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 border-b border-slate-200 cursor-pointer select-none"><div class="flex items-center gap-1.5">
+<details class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden w-full flex flex-col justify-center max-w-7xl mx-auto mt-2" id="analysis-tabs-wrap" open role="tabpanel" aria-labelledby="top-tab-btn-analysis"><summary class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 border-b border-slate-200 cursor-pointer select-none"><div class="flex items-center gap-1.5">
 <span class="material-icons-round text-slate-500 text-sm">insights</span>
 <span class="font-bold text-slate-700 uppercase text-xs tracking-wide">Graphiques d'analyse</span>
 </div><span class="material-icons-round text-slate-500 text-sm analysis-chevron">expand_more</span></summary><div class="w-full"><div class="px-3 pt-2">
@@ -3054,7 +3163,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div>
 </div>
 </div>
-<div class="fixed z-[100] hidden bg-slate-800 text-white text-[10px] font-medium rounded px-2 py-1.5 pointer-events-none shadow-xl border border-slate-700 max-w-[200px] whitespace-normal leading-tight" id="global-tooltip">
+<div class="fixed z-[100] hidden bg-white text-slate-900 text-[11px] px-2 py-1 rounded-lg border border-slate-200 shadow-lg max-w-[220px] whitespace-normal leading-tight" id="global-tooltip">
 </div>
 <div aria-labelledby="module-selection-modal-title" aria-modal="true" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 z-[120] flex items-center justify-center p-4" id="module-selection-modal" role="dialog">
 <div class="bg-white rounded-lg shadow-lg p-4 max-w-lg w-full">
@@ -3074,7 +3183,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
      role="dialog">
   <div class="absolute inset-0 bg-black/30" data-role="global-search-backdrop"></div>
   <div class="relative w-full max-w-4xl bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden">
-    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
       <div class="flex items-center gap-2">
         <span class="material-icons-round text-slate-500">search</span>
         <div class="font-semibold text-sm" id="global-search-modal-title">Recherche globale</div>
@@ -3535,18 +3644,17 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <textarea class="moment-description w-full min-h-[64px] resize-y px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Description du moment..."></textarea>
 </div>
 
-<div class="mt-2 submoments-controls flex items-start justify-between gap-2">
-  <div>
-    </div>
-  <button class="no-print text-xs font-semibold text-slate-500 hover:text-indigo-700 px-2 py-1 rounded transition-colors flex items-center gap-1 hover:bg-slate-50" data-action="add-submoment" title="Ajouter un sous-moment" type="button">
-    <span class="material-icons-round text-sm">add</span>
-    <span>Ajouter un sous-moment</span>
-  </button>
-</div>
 <div class="submoments-container space-y-2 mt-2"></div>
 
 <div class="moment-direct-steps mt-2">
   <div class="activity-steps-container activity-container space-y-2 min-h-[20px]"></div>
+</div>
+
+<div class="mt-3 pt-2 submoments-controls flex justify-center gap-2 no-print border-t border-slate-100">
+  <button class="no-print text-xs font-semibold text-slate-500 hover:text-indigo-700 px-2 py-1 rounded transition-colors flex items-center gap-1 hover:bg-slate-50" data-action="add-submoment" title="Ajouter un sous-moment" type="button">
+    <span class="material-icons-round text-sm">add</span>
+    <span>Ajouter un sous-moment</span>
+  </button>
 </div>
 
 </div>
@@ -10375,6 +10483,8 @@ obs3.observe(alist, { childList: true, subtree: true });
                                 type: stepEl.querySelector('.learning-type-select').value,
                                 duree: stepEl.querySelector('.duration-input').value,
                                 unite: stepEl.querySelector('.duration-unit').value,
+                                duration: stepEl.querySelector('.duration-input').value,
+                                unit: stepEl.querySelector('.duration-unit').value,
                                 regroupement: stepEl.querySelector('.step-group-mode').value,
                                 nombreGroupes: stepEl.querySelector('.step-group-count').value,
                                 tailleGroupe: stepEl.querySelector('.step-group-size').value,
@@ -10511,32 +10621,7 @@ moduleData.moments.push(momentData);
                     });
                 } else {
                     actEl.querySelectorAll('.step-card').forEach(stepEl => {
-                        moduleData.activites.push({
-                            titre: stepEl.querySelector('.step-input-title').value,
-                            type: stepEl.querySelector('.learning-type-select').value,
-                            duree: stepEl.querySelector('.duration-input').value,
-                            unite: stepEl.querySelector('.duration-unit').value,
-                            regroupement: stepEl.querySelector('.step-group-mode').value,
-                            nombreGroupes: stepEl.querySelector('.step-group-count').value,
-                            tailleGroupe: stepEl.querySelector('.step-group-size').value,
-                                detailsRegroupement: (stepEl.querySelector('.step-group-details')?.value || ''),
-                            formateur: stepEl.querySelector('.trainer-select').value,
-                            lieu: stepEl.querySelector('.place-select').value,
-                            temps: stepEl.querySelector('.time-select').value,
-                                                            evaluation: (stepEl.querySelector('.evaluation-select')?.value || 'Aucune'),
-objectifActivite: stepEl.querySelector('.step-input-objective').value,
-                            aFaire: stepEl.querySelector('.step-input-tasks').value,
-                            aFaireFormateur: stepEl.querySelector('.step-input-trainer-tasks').value,
-                                notes: stepEl.querySelector('.step-input-notes').value,
-                                evaluationSuivi: (stepEl.querySelector('.step-input-eval-followup')?.value || ''),
-                            competences: getSelectedStepCompetenceIds(stepEl),
-                                competencesSujet: getSelectedStepCompetenceIds(stepEl),
-                                competencesTransversales: getSelectedStepCompetencesTransversalesIds(stepEl),
-                                objectifsCibles: (typeof getSelectedStepAims === 'function') ? getSelectedStepAims(stepEl) : [],
-                                resultatsApprentissageCibles: (typeof getSelectedStepOutcomes === 'function') ? getSelectedStepOutcomes(stepEl) : [],
-                                outilsMaterielCibles: (typeof getSelectedStepToolsMaterials === 'function') ? getSelectedStepToolsMaterials(stepEl) : []
-                        ,
-                                outilsMaterielNotes: (typeof getSelectedStepToolsMaterialsNotes === 'function') ? getSelectedStepToolsMaterialsNotes(stepEl) : {}});
+                        moduleData.activites.push(__ldSerializeStepFromEl(stepEl));
                     });
                 }
 
@@ -11163,12 +11248,22 @@ function _clampInt(v, min=0, max=Number.MAX_SAFE_INTEGER, fallback=0) {
     return Math.min(max, Math.max(min, n));
 }
 function _normaliseUnit(u, fallback="mins") {
+    // Returns a canonical *key* (mins/hours/days/weeks/months) for project-level units.
+    // Accepts legacy keys, French labels, and numeric seconds strings (e.g., "60").
     const raw = _trimText(u);
     if (!raw) return fallback;
     const v = raw.toLowerCase();
 
-    // Preserve numeric units (e.g., "60", "3600") used by legacy exports.
-    if (!isNaN(parseFloat(v)) && isFinite(parseFloat(v))) return raw;
+    // Numeric seconds → key
+    const n = parseFloat(v);
+    if (!isNaN(n) && isFinite(n)) {
+        if (Math.abs(n - 60) < 0.0001) return "mins";
+        if (Math.abs(n - 3600) < 0.0001) return "hours";
+        if (Math.abs(n - 86400) < 0.0001) return "days";
+        if (Math.abs(n - 604800) < 0.0001) return "weeks";
+        if (Math.abs(n - 2592000) < 0.0001) return "months";
+        return fallback;
+    }
 
     if (["mins","min","m","minutes","minute"].includes(v)) return "mins";
     if (["hours","hour","h","heures","heure","hrs","hr"].includes(v)) return "hours";
@@ -11177,6 +11272,31 @@ function _normaliseUnit(u, fallback="mins") {
     if (["months","month","mois"].includes(v)) return "months";
     return fallback;
 }
+
+function _normaliseUnitSecs(u, fallback="mins") {
+    // Returns a canonical *seconds value as string* ("60", "3600", ...).
+    // Accepts keys, labels, and numeric seconds. Uses mapUnitToSecs (app-level mapping).
+    const raw = _trimText(u);
+    const base = raw || fallback;
+    try {
+        const secs = mapUnitToSecs(base);
+        if (!isNaN(secs) && isFinite(secs) && secs > 0) return String(secs);
+    } catch (_) {}
+    return String(mapUnitToSecs("mins"));
+}
+
+function _normaliseNumberString(v, maxLen=30) {
+    // Returns a safe numeric string, normalising comma decimals to dots.
+    const raw = _trimText(v, maxLen);
+    if (!raw) return "";
+    const s = raw.replace(",", ".");
+    const n = Number(s);
+    if (!Number.isFinite(n)) return "";
+    // Avoid scientific notation for typical UI values; keep a compact decimal representation.
+    const out = (Math.abs(n - Math.round(n)) < 1e-9) ? String(Math.round(n)) : String(parseFloat(n.toFixed(6)));
+    return out;
+}
+
 function normaliseAndRepairProject(project) {
     const warnings = [];
     if (!project || typeof project !== "object") {
@@ -11232,7 +11352,11 @@ function normaliseAndRepairProject(project) {
 
     // Durations & units at project level
     p.dureeApprentissageUnite = _normaliseUnit(p.dureeApprentissageUnite, "mins");
-    p.dureeConcueUnite = _normaliseUnit(p.dureeConcueUnite ?? p.dureeApprentissageUnite, p.dureeApprentissageUnite);
+p.dureeConcueUnite = _normaliseUnit(p.dureeConcueUnite ?? p.dureeApprentissageUnite, p.dureeApprentissageUnite);
+
+// Also persist seconds equivalents to keep durations fully synchronised across exports/imports.
+p.dureeApprentissageUniteSecs = _normaliseUnitSecs(p.dureeApprentissageUnite, "mins");
+p.dureeConcueUniteSecs = _normaliseUnitSecs(p.dureeConcueUnite, p.dureeApprentissageUnite);
 
     // Keep original string fields, but ensure they are sane numeric strings
     const lt = _trimText(p.dureeApprentissageValeur, 20);
@@ -11270,8 +11394,17 @@ function normaliseAndRepairProject(project) {
             mod.title = _trimText(mod.title ?? mod.titre ?? `Module ${mi+1}`, 200);
 
             // Module target time (keep string if UI expects string)
-            mod.targetTime = _trimText(mod.targetTime ?? mod.tempsCible ?? "", 20);
-            mod.targetUnit = _normaliseUnit(mod.targetUnit ?? mod.uniteCible ?? p.dureeApprentissageUnite, p.dureeApprentissageUnite);
+            mod.targetTime = _normaliseNumberString(mod.targetTime ?? mod.tempsCible ?? mod.dureeCible ?? mod.targetTimeVal ?? "", 20);
+
+// Module unit is stored as seconds (to match UI selects), while we also keep a derived key for clarity.
+mod.targetUnit = _normaliseUnitSecs(mod.targetUnit ?? mod.uniteDureeCible ?? mod.uniteCible ?? mod.unite ?? p.dureeApprentissageUnite, p.dureeApprentissageUnite);
+mod.targetUnitKey = _normaliseUnit(mod.targetUnit, p.dureeApprentissageUnite);
+
+// Legacy mirrors (keep for round-trips across versions)
+mod.dureeCible = _trimText(mod.dureeCible ?? mod.targetTime ?? "", 20);
+mod.tempsCible = _trimText(mod.tempsCible ?? mod.targetTime ?? "", 20);
+mod.uniteDureeCible = _trimText(mod.uniteDureeCible ?? mod.targetUnit ?? "", 30);
+mod.uniteCible = _trimText(mod.uniteCible ?? mod.targetUnit ?? "", 30);
 
             // Moments
             if (!Array.isArray(mod.moments)) mod.moments = Array.isArray(mod.moments) ? mod.moments : [];
@@ -11284,22 +11417,31 @@ function normaliseAndRepairProject(project) {
                     m.title = _trimText(m.title ?? m.titre ?? `Moment ${mj+1}`, 200);
                     m.type = _trimText(m.type ?? "", 40);
 
-                    // Moment duration in seconds (canonical)
-                    if (m.targetTimeSec == null) {
-                        // Legacy might have targetTime + unit; best-effort convert
-                        const n = _asFiniteNumber(m.targetTime ?? m.tempsCible ?? "", NaN);
-                        if (Number.isFinite(n)) {
-                            const unit = _normaliseUnit(m.targetUnit ?? m.uniteCible ?? mod.targetUnit ?? p.dureeApprentissageUnite, "mins");
-                            const sec = (unit === "secs") ? n : (unit === "hrs" ? n*3600 : n*60);
-                            m.targetTimeSec = _clampInt(sec, 0, 24*3600*365, 0);
-                        } else {
-                            m.targetTimeSec = 0;
-                        }
-                    } else {
-                        m.targetTimeSec = _clampInt(m.targetTimeSec, 0, 24*3600*365, 0);
-                    }
+                    // Moment target time & unit (synchronised with UI selects)
+m.targetTime = _normaliseNumberString(m.targetTime ?? m.tempsCible ?? m.dureeCible ?? "", 20);
+m.targetUnit = _normaliseUnitSecs(m.targetUnit ?? m.uniteDureeCible ?? m.uniteCible ?? mod.targetUnit ?? p.dureeApprentissageUnite, mod.targetUnit ?? p.dureeApprentissageUnite);
+m.targetUnitKey = _normaliseUnit(m.targetUnit, p.dureeApprentissageUnite);
 
-                    // Steps / activities inside moment
+// Legacy mirrors (keep for round-trips)
+m.dureeCible = _trimText(m.dureeCible ?? m.targetTime ?? "", 20);
+m.tempsCible = _trimText(m.tempsCible ?? m.targetTime ?? "", 20);
+m.uniteDureeCible = _trimText(m.uniteDureeCible ?? m.targetUnit ?? "", 30);
+m.uniteCible = _trimText(m.uniteCible ?? m.targetUnit ?? "", 30);
+
+// Moment duration in seconds (canonical)
+if (m.targetTimeSec == null) {
+    const n = _asFiniteNumber(m.targetTime, NaN);
+    if (Number.isFinite(n)) {
+        const unitSecs = _asFiniteNumber(m.targetUnit, 60);
+        m.targetTimeSec = _clampInt(n * unitSecs, 0, 24*3600*365, 0);
+    } else {
+        m.targetTimeSec = 0;
+    }
+} else {
+    m.targetTimeSec = _clampInt(m.targetTimeSec, 0, 24*3600*365, 0);
+}
+
+// Steps / activities inside moment
                     if (!Array.isArray(m.steps)) {
                         m.steps = Array.isArray(m.activites) ? m.activites : (Array.isArray(m.activities) ? m.activities : []);
                     }
@@ -11360,9 +11502,14 @@ function normaliseAndRepairProject(project) {
                                             s.competencesSujet = Array.isArray(s.competences) ? s.competences.slice() : [];
                                             s.competencesTransversales = _normIds(s.competencesTransversales ?? s.competencesTransversalesIds ?? s.transversalCompetences ?? []);
 
-                                            // Duration fields
-                                            s.duration = _trimText(s.duration ?? s.duree ?? "", 30);
-                                            s.unit = _trimText(s.unit ?? s.unite ?? "", 30);
+                                            // Duration fields (synchronised: value + unit)
+s.duration = _normaliseNumberString(s.duration ?? s.duree ?? "", 30);
+s.unit = _normaliseUnitSecs(s.unit ?? s.unite ?? mod.targetUnit ?? p.dureeApprentissageUnite, p.dureeApprentissageUnite);
+s.unitKey = _normaliseUnit(s.unit, p.dureeApprentissageUnite);
+
+// Legacy mirrors
+s.duree = s.duration;
+s.unite = s.unit;
 
                                             // Keep any additional fields untouched
                                             return s;
@@ -11413,6 +11560,15 @@ function normaliseAndRepairProject(project) {
                             s.trainer = _trimText(s.trainer ?? s.formateur ?? "", 200);
                             s.place = _trimText(s.place ?? s.lieu ?? "", 200);
                             s.time = _trimText(s.time ?? s.temps ?? "", 50);
+
+                            // Duration fields (synchronised: value + unit)
+s.duration = _normaliseNumberString(s.duration ?? s.duree ?? "", 30);
+s.unit = _normaliseUnitSecs(s.unit ?? s.unite ?? mod.targetUnit ?? p.dureeApprentissageUnite, p.dureeApprentissageUnite);
+s.unitKey = _normaliseUnit(s.unit, p.dureeApprentissageUnite);
+
+// Legacy mirrors
+s.duree = s.duration;
+s.unite = s.unit;
 
                             // Step-level competence selections (IDs)
                             const _normIds = (raw) => {
@@ -12357,8 +12513,10 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
             const stepEl = clone.querySelector('.step-card');
             stepEl.querySelector('.step-input-title').value = data.title || "";
             stepEl.querySelector('.learning-type-select').value = data.type || "acquisition";
-            stepEl.querySelector('.duration-input').value = data.duration || 0;
-            stepEl.querySelector('.duration-unit').value = mapUnitToSecs(data.unit || getDefaultDurationUnitKey());
+            const __durRaw = (data && (data.duration ?? data.duree ?? data.durée ?? data.durationVal ?? data.dureeVal ?? data.dureeActivite ?? data.duree_activite)) ?? "";
+            stepEl.querySelector('.duration-input').value = (__durRaw === "" || __durRaw == null) ? 0 : __durRaw;
+            const __unitRaw = (data && (data.unit ?? data.unite ?? data.durationUnit ?? data.uniteDuree ?? data.unite_duree ?? data.uniteDureeActivite)) ?? getDefaultDurationUnitKey();
+            stepEl.querySelector('.duration-unit').value = mapUnitToSecs(__unitRaw);
             stepEl.querySelector('.step-group-mode').value = (data.groupMode || data.regroupement || "class");
             stepEl.querySelector('.step-group-count').value = data.groupCount || 1;
             stepEl.querySelector('.step-group-size').value = data.groupSize || 30;
@@ -21974,7 +22132,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
   </div>
 </div>
-<div id="ui-debug-hover" class="hidden fixed z-[9999] pointer-events-none px-2 py-1 rounded-lg bg-slate-900 text-white text-[11px] font-mono shadow-lg"></div>
+<div id="ui-debug-hover" class="hidden fixed z-[9999] pointer-events-none px-2 py-1 rounded-lg bg-white text-slate-900 border border-slate-200 text-[11px] font-mono shadow-lg"></div>
 </div>
 <!-- i18n : Outil de vérification des traductions -->
 <div class="hidden fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4 no-print" data-display="flex" id="i18n-audit-modal">
@@ -24272,7 +24430,7 @@ function init(){
      id="context-panel"
      role="complementary"
      aria-label="Panneau contextuel">
-  <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50">
+  <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
     <div class="flex items-center gap-2">
       <span class="material-icons-round text-slate-500">view_sidebar</span>
       <div class="font-semibold text-sm">Panneau contextuel</div>
@@ -25749,5 +25907,119 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
 </script>
 
 
+
+<script id="top-level-tabs-script">
+(function(){
+  const STORAGE_KEY = 'ld_top_tab_v1';
+  const tabs = [
+    { id: 'info',    btnId: 'top-tab-btn-info',    panelId: 'key-params-wrapper' },
+    { id: 'visual',  btnId: 'top-tab-btn-visual',  panelId: 'visualisations-wrapper' },
+    { id: 'analysis',btnId: 'top-tab-btn-analysis',panelId: 'analysis-tabs-wrap', isDetails: true }
+  ];
+
+  function setActive(tabId, save){
+    const hasTab = !!tabId;
+
+    if(hasTab){
+      document.body.dataset.topTab = tabId;
+    } else {
+      try { delete document.body.dataset.topTab; } catch(e) { document.body.dataset.topTab = ''; }
+    }
+
+    tabs.forEach(t => {
+      const btn = document.getElementById(t.btnId);
+      const panel = document.getElementById(t.panelId);
+      if(!btn || !panel) return;
+
+      const active = hasTab && (t.id === tabId);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+
+      // Accessibility: when a tab is active, roving tabindex; when none is active, allow normal Tab traversal
+      btn.tabIndex = hasTab ? (active ? 0 : -1) : 0;
+
+      if(active){
+        panel.style.display = '';
+        if(t.isDetails){
+          try { panel.open = true; } catch(e){}
+        }
+      } else {
+        panel.style.display = 'none';
+        if(t.isDetails){
+          // Keep details closed when hidden to avoid confusing state if styles change later
+          try { panel.open = false; } catch(e){}
+        }
+      }
+    });
+
+    if(save){
+      try {
+        if(hasTab) localStorage.setItem(STORAGE_KEY, tabId);
+        else localStorage.removeItem(STORAGE_KEY);
+      } catch(e){}
+    }
+  }
+
+  function focusTab(tabId){
+    const t = tabs.find(x => x.id === tabId);
+    if(!t) return;
+    const btn = document.getElementById(t.btnId);
+    if(btn) btn.focus();
+  }
+
+  function init(){
+    document.body.classList.add('top-tabs-enabled');
+
+    // Force legacy collapsible panels open so tab switching never shows an empty panel
+    try {
+      const kp = document.getElementById('key-params-panel');
+      if (kp) { kp.classList.add('open'); kp.style.display = ''; }
+    } catch(_){ }
+    try {
+      const tl = document.getElementById('timeline-panel');
+      if (tl) { tl.classList.add('open'); tl.style.display = ''; }
+    } catch(_){ }
+
+    tabs.forEach(t => {
+      const btn = document.getElementById(t.btnId);
+      if(!btn) return;
+
+      btn.addEventListener('click', () => {
+        const cur = document.body.dataset.topTab || '';
+        if(cur === t.id) setActive(null, true); // second click collapses
+        else setActive(t.id, true);
+      });
+
+      btn.addEventListener('keydown', (e) => {
+        if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        e.preventDefault();
+
+        const cur = document.body.dataset.topTab || 'visual';
+        const idx = tabs.findIndex(x => x.id === cur);
+        const startIdx = (idx >= 0) ? idx : tabs.findIndex(x => x.id === 'visual');
+        const dir = (e.key === 'ArrowRight') ? 1 : -1;
+        const nextIdx = (startIdx + dir + tabs.length) % tabs.length;
+        const next = tabs[nextIdx].id;
+
+        setActive(next, true);
+        focusTab(next);
+      });
+    });
+
+    let initial = 'visual';
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if(stored && tabs.some(t => t.id === stored)) initial = stored;
+    } catch(e){}
+
+    setActive(initial, false);
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
 </body>
 </html>
