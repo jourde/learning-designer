@@ -330,7 +330,9 @@ input, select, textarea {
         #timeline-panel [data-i18n="label_time"] { font-size: 0.95rem ; }
         #timeline-panel [data-i18n^="legend_"] { font-size: 0.82rem ; }
         #timeline-panel #timeline-activities-planned-labels,
-        #timeline-panel #timeline-activities-labels { font-size: 0.85rem ; }
+        #timeline-panel #timeline-activities-labels,
+        #timeline-panel #timeline-moments-labels,
+        #timeline-panel #timeline-submoments-labels { font-size: 0.85rem ; }
         #timeline-ruler { font-size: 0.82rem ; }
 
         body.hc {
@@ -379,6 +381,8 @@ input, select, textarea {
         body.hc .activity-type-bar { background-color: #e2e8f0 !important; border-color: #94a3b8 !important; }
         body.hc #timeline-activities-planned,
         body.hc #timeline-activities,
+        body.hc #timeline-moments,
+        body.hc #timeline-submoments,
         body.hc #timeline-steps,
         body.hc #timeline-grouping,
         body.hc #timeline-trainer,
@@ -2561,6 +2565,36 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <div class="w-full flex text-xs text-slate-600 font-medium leading-none mt-1 timeline-zoom-outer" id="timeline-activities-labels">
 <div class="timeline-inner" id="timeline-activities-labels-inner"></div>
 </div>
+</div>
+
+<div class="timeline-track bg-white rounded-xl border border-slate-200 p-1.5 flex flex-col gap-1">
+  <div class="flex items-center justify-between px-1">
+    <div class="flex items-center gap-1.5">
+      <span class="material-icons-round text-base text-slate-400">view_week</span>
+      <span class="text-xs font-bold text-slate-500 uppercase tracking-wider" data-i18n="label_timeline_moments">Moments</span>
+    </div>
+  </div>
+  <div class="w-full h-6 flex rounded-lg overflow-hidden bg-slate-100 border border-slate-200 cursor-help timeline-zoom-outer" id="timeline-moments">
+    <div class="timeline-inner" id="timeline-moments-inner"></div>
+  </div>
+  <div class="w-full flex text-xs text-slate-600 font-medium leading-none mt-1 timeline-zoom-outer" id="timeline-moments-labels">
+    <div class="timeline-inner" id="timeline-moments-labels-inner"></div>
+  </div>
+</div>
+
+<div class="timeline-track bg-white rounded-xl border border-slate-200 p-1.5 flex flex-col gap-1">
+  <div class="flex items-center justify-between px-1">
+    <div class="flex items-center gap-1.5">
+      <span class="material-icons-round text-base text-slate-400">view_list</span>
+      <span class="text-xs font-bold text-slate-500 uppercase tracking-wider" data-i18n="label_timeline_submoments">Sous-moments</span>
+    </div>
+  </div>
+  <div class="w-full h-6 flex rounded-lg overflow-hidden bg-slate-100 border border-slate-200 cursor-help timeline-zoom-outer" id="timeline-submoments">
+    <div class="timeline-inner" id="timeline-submoments-inner"></div>
+  </div>
+  <div class="w-full flex text-xs text-slate-600 font-medium leading-none mt-1 timeline-zoom-outer" id="timeline-submoments-labels">
+    <div class="timeline-inner" id="timeline-submoments-labels-inner"></div>
+  </div>
 </div>
 <div class="timeline-track bg-white rounded-xl border border-slate-200 p-1.5 flex flex-col gap-1 timeline-track-pedagogy">
 <div class="flex items-center justify-between gap-2 flex-wrap">
@@ -6792,6 +6826,11 @@ btn_export_dropdown: "Exporter...",
                 status_calculating: "",
                 label_class_size: "Taille de la cohorte",
                 label_timeline_structure: "Modules conçus",
+                label_timeline_moments: "Moments",
+                label_timeline_submoments: "Sous-moments",
+                label_out_of_moments: "Hors moments",
+                label_out_of_submoments: "Hors sous-moments",
+                label_direct_steps: "Direct",
                 label_timeline_details: "Détails",
                 label_timeline_structure_planned: "Modules prévus",
                 label_timeline_pedagogy: "Types d'apprentissage",
@@ -13753,6 +13792,11 @@ function updateStats() {
             const labelsActivitiesPlanned = getTimelineContainerForRender('timeline-activities-planned-labels');
             const containerActivities = getTimelineContainerForRender('timeline-activities');
             const labelsActivities = getTimelineContainerForRender('timeline-activities-labels');
+            const containerMoments = getTimelineContainerForRender('timeline-moments');
+            const labelsMoments = getTimelineContainerForRender('timeline-moments-labels');
+            const containerSubmoments = getTimelineContainerForRender('timeline-submoments');
+            const labelsSubmoments = getTimelineContainerForRender('timeline-submoments-labels');
+
             const containerSteps = getTimelineContainerForRender('timeline-steps');
             const containerGrouping = getTimelineContainerForRender('timeline-grouping');
             const containerTrainer = getTimelineContainerForRender('timeline-trainer');
@@ -13765,6 +13809,11 @@ function updateStats() {
             if (labelsActivitiesPlanned) labelsActivitiesPlanned.innerHTML = '';
             containerActivities.innerHTML = '';
             labelsActivities.innerHTML = '';
+            if (containerMoments) containerMoments.innerHTML = '';
+            if (labelsMoments) labelsMoments.innerHTML = '';
+            if (containerSubmoments) containerSubmoments.innerHTML = '';
+            if (labelsSubmoments) labelsSubmoments.innerHTML = '';
+
             containerSteps.innerHTML = '';
             containerGrouping.innerHTML = '';
             containerTrainer.innerHTML = '';
@@ -13933,6 +13982,322 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
                             labelEl.classList.add('text-transparent');
                         }
                         labelsActivities.appendChild(labelEl);
+                    });
+                }
+
+
+                // --- TRACK 1.5: MOMENTS (ALIGNED TO PLANNED) ---
+                if (containerMoments && labelsMoments) {
+                    const t = translations[currentLang] || translations.fr;
+                    const moduleEls = Array.from(activityGroups || document.querySelectorAll('.activity-group'));
+
+                    plannedTimeline.forEach((planned, index) => {
+                        const plannedSecs = planned && planned.secs ? planned.secs : 0;
+                        const designedSecs = (totals.detailedTimeline[index] && totals.detailedTimeline[index].duration) ? totals.detailedTimeline[index].duration : 0;
+
+                        if (plannedSecs <= 0 && designedSecs <= 0) return;
+
+                        const segmentSecsForWidth = plannedSecs > 0 ? plannedSecs : designedSecs;
+                        const actWidthPct = baseTotalSecs > 0 ? (segmentSecsForWidth / baseTotalSecs) * 100 : 0;
+                        const ratio = plannedSecs > 0 ? clamp(designedSecs / plannedSecs, 0, 1) : 1;
+
+                        const wrap = document.createElement('div');
+                        wrap.className = 'relative h-full flex overflow-hidden border-r border-slate-200/70 last:border-0';
+                        wrap.style.width = `${actWidthPct}%`;
+
+                        const missingEl = document.createElement('div');
+                        missingEl.className = 'absolute inset-0 bg-slate-200/30 timeline-missing-light pointer-events-none';
+                        if (!(plannedSecs > 0 && designedSecs < plannedSecs)) missingEl.style.display = 'none';
+
+                        const overEl = document.createElement('div');
+                        overEl.className = 'absolute inset-0 bg-red-200/35 timeline-alert-light pointer-events-none';
+                        if (!(plannedSecs > 0 && designedSecs > plannedSecs)) overEl.style.display = 'none';
+
+                        const fill = document.createElement('div');
+                        fill.className = 'absolute left-0 top-0 bottom-0 flex';
+                        fill.style.width = `${ratio * 100}%`;
+
+                        const actEl = moduleEls[index] || null;
+
+                        let segments = [];
+                        if (actEl) {
+                            const momentEls = Array.from(actEl.querySelectorAll(':scope .activity-moments-container > .moment-group'));
+
+                            momentEls.forEach((momEl, mi) => {
+                                let secs = 0;
+                                momEl.querySelectorAll('.step-card').forEach(stepEl => { secs += getStepDurationSecs(stepEl); });
+                                if (secs <= 0) return;
+
+                                const title = (momEl.querySelector('.moment-title')?.value || '').trim() || `Moment ${mi + 1}`;
+                                segments.push({ title, secs, el: momEl, isGap: false });
+                            });
+
+                            // Handle steps not contained in any moment (rare, but keeps the track consistent)
+                            const inMomSecs = segments.reduce((acc, s) => acc + (s.secs || 0), 0);
+                            const gap = designedSecs - inMomSecs;
+                            if (gap > 1) {
+                                segments.push({ title: (t.label_out_of_moments || 'Hors moments'), secs: gap, el: actEl, isGap: true });
+                            }
+
+                            if (!segments.length && designedSecs > 0) {
+                                segments.push({ title: (t.label_out_of_moments || 'Hors moments'), secs: designedSecs, el: actEl, isGap: true });
+                            }
+                        } else if (designedSecs > 0) {
+                            segments = [{ title: (t.label_out_of_moments || 'Hors moments'), secs: designedSecs, el: null, isGap: true }];
+                        }
+
+                        if (designedSecs > 0) {
+                            segments.forEach((seg, si) => {
+                                const w = (seg.secs / designedSecs) * 100;
+                                if (w <= 0) return;
+
+                                const block = document.createElement('div');
+                                const bg = seg.isGap ? 'bg-slate-300 pattern-dots' : (si % 2 === 0 ? 'bg-indigo-200' : 'bg-indigo-300');
+                                block.className = `h-full ${bg} border-r border-white/60 last:border-0 cursor-pointer`;
+                                block.style.width = `${w}%`;
+
+                                const moduleTitle = (totals.detailedTimeline[index] && totals.detailedTimeline[index].title) ? totals.detailedTimeline[index].title : `Module ${index + 1}`;
+
+                                const tooltipHtml =
+                                    `<div class="font-bold">${escapeHtml(moduleTitle)}</div>` +
+                                    `<div class="mt-0.5"><span class="font-semibold">${escapeHtml(seg.title)}</span> • <span class="text-slate-600">${escapeHtml(formatTimelineDuration(seg.secs))}</span></div>`;
+
+                                block.onmouseenter = (e) => showTooltip(e, tooltipHtml, true);
+                                block.onmousemove = (e) => updateTooltipPos(e);
+                                block.onmouseleave = () => hideTooltip();
+
+                                block.onclick = () => {
+                                    try {
+                                        if (seg.el) {
+                                            const moduleEl = moduleEls[index];
+                                            const moduleBody = moduleEl ? moduleEl.querySelector('.activity-body') : null;
+                                            if (moduleBody && moduleBody.classList.contains('collapsed')) moduleBody.classList.remove('collapsed');
+
+                                            const momentBody = seg.el.querySelector('.moment-body');
+                                            if (momentBody && momentBody.classList.contains('collapsed')) momentBody.classList.remove('collapsed');
+
+                                            seg.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                            flashHighlight(seg.el);
+                                        } else {
+                                            scrollToEditor(index);
+                                        }
+                                    } catch (err) {
+                                        console.error(err);
+                                    }
+                                };
+
+                                fill.appendChild(block);
+                            });
+                        }
+
+                        wrap.appendChild(missingEl);
+                        wrap.appendChild(fill);
+                        wrap.appendChild(overEl);
+                        containerMoments.appendChild(wrap);
+
+                        // Labels row (keeps the same module widths, shows labels only over the designed part)
+                        const lWrap = document.createElement('div');
+                        lWrap.style.width = `${actWidthPct}%`;
+                        lWrap.className = 'flex overflow-hidden border-r border-transparent last:border-0';
+
+                        const lFill = document.createElement('div');
+                        lFill.className = 'flex';
+                        lFill.style.width = `${ratio * 100}%`;
+
+                        if (designedSecs > 0) {
+                            segments.forEach((seg) => {
+                                const w = (seg.secs / designedSecs) * 100;
+                                if (w <= 0) return;
+
+                                const labelEl = document.createElement('div');
+                                labelEl.style.width = `${w}%`;
+                                labelEl.className = 'px-1 truncate text-center border-r border-transparent last:border-0';
+                                if (w > 6) {
+                                    labelEl.innerText = seg.isGap ? (t.label_out_of_moments || 'Hors') : seg.title;
+                                    labelEl.title = seg.title;
+                                } else {
+                                    labelEl.innerText = '.';
+                                    labelEl.classList.add('text-transparent');
+                                }
+                                lFill.appendChild(labelEl);
+                            });
+                        }
+
+                        lWrap.appendChild(lFill);
+                        labelsMoments.appendChild(lWrap);
+                    });
+                }
+
+                // --- TRACK 1.6: SUBMOMENTS (ALIGNED TO PLANNED) ---
+                if (containerSubmoments && labelsSubmoments) {
+                    const t = translations[currentLang] || translations.fr;
+                    const moduleEls = Array.from(activityGroups || document.querySelectorAll('.activity-group'));
+
+                    plannedTimeline.forEach((planned, index) => {
+                        const plannedSecs = planned && planned.secs ? planned.secs : 0;
+                        const designedSecs = (totals.detailedTimeline[index] && totals.detailedTimeline[index].duration) ? totals.detailedTimeline[index].duration : 0;
+
+                        if (plannedSecs <= 0 && designedSecs <= 0) return;
+
+                        const segmentSecsForWidth = plannedSecs > 0 ? plannedSecs : designedSecs;
+                        const actWidthPct = baseTotalSecs > 0 ? (segmentSecsForWidth / baseTotalSecs) * 100 : 0;
+                        const ratio = plannedSecs > 0 ? clamp(designedSecs / plannedSecs, 0, 1) : 1;
+
+                        const wrap = document.createElement('div');
+                        wrap.className = 'relative h-full flex overflow-hidden border-r border-slate-200/70 last:border-0';
+                        wrap.style.width = `${actWidthPct}%`;
+
+                        const missingEl = document.createElement('div');
+                        missingEl.className = 'absolute inset-0 bg-slate-200/30 timeline-missing-light pointer-events-none';
+                        if (!(plannedSecs > 0 && designedSecs < plannedSecs)) missingEl.style.display = 'none';
+
+                        const overEl = document.createElement('div');
+                        overEl.className = 'absolute inset-0 bg-red-200/35 timeline-alert-light pointer-events-none';
+                        if (!(plannedSecs > 0 && designedSecs > plannedSecs)) overEl.style.display = 'none';
+
+                        const fill = document.createElement('div');
+                        fill.className = 'absolute left-0 top-0 bottom-0 flex';
+                        fill.style.width = `${ratio * 100}%`;
+
+                        const actEl = moduleEls[index] || null;
+
+                        let segments = [];
+                        if (actEl) {
+                            const momentEls = Array.from(actEl.querySelectorAll(':scope .activity-moments-container > .moment-group'));
+
+                            momentEls.forEach((momEl, mi) => {
+                                const momentTitle = (momEl.querySelector('.moment-title')?.value || '').trim() || `Moment ${mi + 1}`;
+
+                                // Submoments
+                                const subEls = Array.from(momEl.querySelectorAll(':scope .submoments-container > .submoment-card'));
+                                subEls.forEach((smEl, si) => {
+                                    let secs = 0;
+                                    smEl.querySelectorAll('.step-card').forEach(stepEl => { secs += getStepDurationSecs(stepEl); });
+                                    if (secs <= 0) return;
+
+                                    const title = (smEl.querySelector('.submoment-title')?.value || '').trim() || `Sous-moment ${si + 1}`;
+                                    segments.push({ title, secs, el: smEl, momentTitle, isDirect: false, isGap: false, isMomentStart: (si === 0) });
+                                });
+
+                                // Direct steps in the moment (not inside any submoment)
+                                let directSecs = 0;
+                                momEl.querySelectorAll('.moment-direct-steps .step-card').forEach(stepEl => { directSecs += getStepDurationSecs(stepEl); });
+                                if (directSecs > 0) {
+                                    segments.push({
+                                        title: (t.label_direct_steps || 'Direct'),
+                                        secs: directSecs,
+                                        el: momEl,
+                                        momentTitle,
+                                        isDirect: true,
+                                        isGap: false,
+                                        isMomentStart: (subEls.length === 0)
+                                    });
+                                }
+                            });
+
+                            // Handle steps not contained in any moment (rare)
+                            const inSegSecs = segments.reduce((acc, s) => acc + (s.secs || 0), 0);
+                            const gap = designedSecs - inSegSecs;
+                            if (gap > 1) {
+                                segments.push({ title: (t.label_out_of_submoments || 'Hors sous-moments'), secs: gap, el: actEl, momentTitle: '', isDirect: false, isGap: true, isMomentStart: false });
+                            }
+
+                            if (!segments.length && designedSecs > 0) {
+                                segments.push({ title: (t.label_out_of_submoments || 'Hors sous-moments'), secs: designedSecs, el: actEl, momentTitle: '', isDirect: false, isGap: true, isMomentStart: false });
+                            }
+                        } else if (designedSecs > 0) {
+                            segments = [{ title: (t.label_out_of_submoments || 'Hors sous-moments'), secs: designedSecs, el: null, momentTitle: '', isDirect: false, isGap: true, isMomentStart: false }];
+                        }
+
+                        if (designedSecs > 0) {
+                            segments.forEach((seg, si) => {
+                                const w = (seg.secs / designedSecs) * 100;
+                                if (w <= 0) return;
+
+                                const block = document.createElement('div');
+                                let bg = '';
+                                if (seg.isGap) bg = 'bg-slate-300 pattern-dots';
+                                else if (seg.isDirect) bg = (si % 2 === 0 ? 'bg-slate-300 pattern-vertical' : 'bg-slate-200 pattern-vertical');
+                                else bg = (si % 2 === 0 ? 'bg-slate-300' : 'bg-slate-400');
+
+                                const momentSep = seg.isMomentStart ? 'border-l border-slate-500/40' : '';
+                                block.className = `h-full ${bg} ${momentSep} border-r border-white/60 last:border-0 cursor-pointer`;
+                                block.style.width = `${w}%`;
+
+                                const moduleTitle = (totals.detailedTimeline[index] && totals.detailedTimeline[index].title) ? totals.detailedTimeline[index].title : `Module ${index + 1}`;
+                                const segTitle = seg.isDirect ? `${seg.title} — ${seg.momentTitle}` : `${seg.title}`;
+                                const tooltipHtml =
+                                    `<div class="font-bold">${escapeHtml(moduleTitle)}</div>` +
+                                    (seg.momentTitle ? `<div class="text-slate-600 mt-0.5">${escapeHtml(seg.momentTitle)}</div>` : '') +
+                                    `<div class="mt-0.5"><span class="font-semibold">${escapeHtml(segTitle)}</span> • <span class="text-slate-600">${escapeHtml(formatTimelineDuration(seg.secs))}</span></div>`;
+
+                                block.onmouseenter = (e) => showTooltip(e, tooltipHtml, true);
+                                block.onmousemove = (e) => updateTooltipPos(e);
+                                block.onmouseleave = () => hideTooltip();
+
+                                block.onclick = () => {
+                                    try {
+                                        if (seg.el) {
+                                            const moduleEl = moduleEls[index];
+                                            const moduleBody = moduleEl ? moduleEl.querySelector('.activity-body') : null;
+                                            if (moduleBody && moduleBody.classList.contains('collapsed')) moduleBody.classList.remove('collapsed');
+
+                                            // Ensure parent moment expanded
+                                            const momentGroup = seg.el.classList.contains('moment-group') ? seg.el : seg.el.closest('.moment-group');
+                                            const momentBody = momentGroup ? momentGroup.querySelector('.moment-body') : null;
+                                            if (momentBody && momentBody.classList.contains('collapsed')) momentBody.classList.remove('collapsed');
+
+                                            seg.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                            flashHighlight(seg.el);
+                                        } else {
+                                            scrollToEditor(index);
+                                        }
+                                    } catch (err) {
+                                        console.error(err);
+                                    }
+                                };
+
+                                fill.appendChild(block);
+                            });
+                        }
+
+                        wrap.appendChild(missingEl);
+                        wrap.appendChild(fill);
+                        wrap.appendChild(overEl);
+                        containerSubmoments.appendChild(wrap);
+
+                        // Labels row
+                        const lWrap = document.createElement('div');
+                        lWrap.style.width = `${actWidthPct}%`;
+                        lWrap.className = 'flex overflow-hidden border-r border-transparent last:border-0';
+
+                        const lFill = document.createElement('div');
+                        lFill.className = 'flex';
+                        lFill.style.width = `${ratio * 100}%`;
+
+                        if (designedSecs > 0) {
+                            segments.forEach((seg) => {
+                                const w = (seg.secs / designedSecs) * 100;
+                                if (w <= 0) return;
+
+                                const labelEl = document.createElement('div');
+                                labelEl.style.width = `${w}%`;
+                                labelEl.className = 'px-1 truncate text-center border-r border-transparent last:border-0';
+                                const labelText = seg.isGap ? (t.label_out_of_submoments || 'Hors') : (seg.isDirect ? (t.label_direct_steps || 'Direct') : seg.title);
+
+                                if (w > 6) {
+                                    labelEl.innerText = labelText;
+                                    labelEl.title = seg.title;
+                                } else {
+                                    labelEl.innerText = '.';
+                                    labelEl.classList.add('text-transparent');
+                                }
+                                lFill.appendChild(labelEl);
+                            });
+                        }
+
+                        lWrap.appendChild(lFill);
+                        labelsSubmoments.appendChild(lWrap);
                     });
                 }
 
