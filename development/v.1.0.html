@@ -880,8 +880,8 @@ body[data-view-level="submoments"] [data-action="add-step-submoment"] { display:
 
 /* ===== LD_PANORAMA_VIEW_V1: Vue panoramique (tableau compact) ===== */
 #panorama-view { display: none; }
-body[data-view-level="panorama"] #panorama-view { display: block !important; }
-body[data-view-level="panorama"] #activities-root { display: none !important; }
+body[data-view-level="panorama" ] #panorama-view { display: block !important; }
+body[data-view-level="panorama" ] #activities-root { display: none !important; }
 
 /* Compacité du tableau */
 #panorama-table th, #panorama-table td { vertical-align: top; }
@@ -893,6 +893,77 @@ body[data-view-level="panorama"] #activities-root { display: none !important; }
 #panorama-table .pano-open:hover { color: rgba(67,56,202,0.95); }
 .ld-panorama-highlight { outline: 2px solid rgba(199,210,254,0.9); outline-offset: 2px; border-radius: 10px; }
 /* ===== END_LD_PANORAMA_VIEW_V1 ===== */
+
+
+/* ===== LD_PANORAMA_MARKERS_BANDING_V1: repères (couleur + forme) + banding par module ===== */
+#panorama-table .pano-cell { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+#panorama-table .pano-text { display: inline-block; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Marker base */
+#panorama-table .pano-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(226,232,240,1);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+/* Module: carré (indigo) */
+#panorama-table .pano-mark-module {
+  border-color: rgba(199,210,254,1);
+  background: rgba(224,231,255,0.95);
+  color: rgba(67,56,202,0.95);
+  border-radius: 4px;
+}
+
+/* Moment: cercle (indigo clair) */
+#panorama-table .pano-mark-moment {
+  border-color: rgba(199,210,254,1);
+  background: rgba(238,242,255,0.95);
+  color: rgba(67,56,202,0.9);
+  border-radius: 9999px;
+}
+
+/* Sous-moment: losange (slate) */
+#panorama-table .pano-mark-sub {
+  border-color: rgba(226,232,240,1);
+  background: rgba(241,245,249,0.95);
+  color: rgba(51,65,85,0.95);
+  border-radius: 3px;
+  transform: rotate(45deg);
+}
+#panorama-table .pano-mark-sub .pano-mark-inner {
+  transform: rotate(-45deg);
+  display: inline-block;
+}
+
+/* Banding par module (alternance de fond par groupe) */
+#panorama-table tbody tr.pano-band-a { background: rgba(248,250,252,0.55); }
+#panorama-table tbody tr.pano-band-b { background: rgba(255,255,255,1); }
+
+/* Hover doit rester plus visible que le banding */
+#panorama-table tbody tr:hover { background: rgba(241,245,249,0.8); }
+/* ===== END_LD_PANORAMA_MARKERS_BANDING_V1 ===== */
+
+
+/* ===== LD_PANORAMA_FIXED_TABLE_V1: colonnes harmonisées ===== */
+#panorama-table { table-layout: fixed; }
+/* ===== END_LD_PANORAMA_FIXED_TABLE_V1 ===== */
+
+
+/* ===== LD_PANORAMA_DURATION_COL_V1: colonne Durée compacte ===== */
+#panorama-table td:nth-child(6), #panorama-table th:nth-child(6) {
+  white-space: nowrap;
+}
+#panorama-table td:nth-child(6) {
+  font-variant-numeric: tabular-nums;
+}
+/* ===== END_LD_PANORAMA_DURATION_COL_V1 ===== */
 </style>
 <script>
 /* Modèles: stubs globaux disponibles dès le chargement (évite les clics "inerte" avant l'initialisation).
@@ -2821,7 +2892,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
       <button type="button" class="h-[26px] px-2 text-xs font-extrabold text-slate-600 hover:text-indigo-700 hover:bg-slate-50 border-r border-slate-200 transition-colors" data-view-level="submoments" aria-pressed="false" title="Afficher aussi les blocs sous moment">Sous-moments</button>
       <button type="button" class="h-[26px] px-2 text-xs font-extrabold text-slate-600 hover:text-indigo-700 hover:bg-slate-50 transition-colors" data-view-level="activities" aria-pressed="false" title="Afficher aussi les activités">Activités</button>
     
-      <button type="button" class="h-[26px] px-2 text-xs font-extrabold text-slate-600 hover:text-indigo-700 hover:bg-slate-50 border-l border-slate-200 transition-colors" data-view-level="panorama" aria-pressed="false" title="Vue panoramique (tableau très compact)">Panorama</button>
+      <button type="button" class="h-[26px] px-2 text-xs font-extrabold text-indigo-700 hover:text-indigo-700 hover:bg-indigo-100 border-l border-indigo-200 transition-colors bg-indigo-50" data-view-level="panorama" aria-pressed="false" title="Vue panoramique (tableau très compact)">Panorama</button>
 </div>
   </div>
 </div>
@@ -2839,15 +2910,24 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 
   <div class="border border-slate-200 rounded-lg bg-white overflow-auto">
     <table class="w-full text-[11px] leading-tight" id="panorama-table">
+<colgroup>
+  <col style="width:44px">
+  <col style="width:240px">
+  <col style="width:240px">
+  <col style="width:240px">
+  <col style="width:240px">
+  <col style="width:96px">
+  <col style="width:84px">
+</colgroup>
+
       <thead class="sticky top-0 bg-slate-50 border-b border-slate-200">
         <tr class="text-slate-600">
           <th class="text-left font-extrabold px-2 py-1 w-12">#</th>
           <th class="text-left font-extrabold px-2 py-1 min-w-[180px]">Module</th>
           <th class="text-left font-extrabold px-2 py-1 min-w-[160px]">Moment</th>
-          <th class="text-left font-extrabold px-2 py-1 min-w-[160px]">Bloc</th>
+          <th class="text-left font-extrabold px-2 py-1 min-w-[160px]">Sous-moment</th>
           <th class="text-left font-extrabold px-2 py-1 min-w-[220px]">Activité</th>
-          <th class="text-left font-extrabold px-2 py-1 w-28">Type</th>
-          <th class="text-left font-extrabold px-2 py-1 w-20">Durée</th>
+<th class="text-left font-extrabold px-2 py-1 w-20">Durée</th>
           <th class="text-left font-extrabold px-2 py-1 w-16">Ouvrir</th>
         </tr>
       </thead>
@@ -3466,7 +3546,6 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <div class="submoments-container space-y-2 mt-2"></div>
 
 <div class="moment-direct-steps mt-2">
-  <div class="compact-label">Activités (moment)</div>
   <div class="activity-steps-container activity-container space-y-2 min-h-[20px]"></div>
 </div>
 
@@ -3893,24 +3972,63 @@ function getStepDurationSecs(stepCard) {
 }
 try { window.getStepDurationSecs = getStepDurationSecs; } catch (_) {}
 
+
+// LD_ESCAPE_HTML_GLOBAL_V1
+function __esc(s){
+  const str = String(s ?? "");
+  return str.replace(/[&<>"']/g, function(c){
+    switch(c){
+      case "&": return "&amp;";
+      case "<": return "&lt;";
+      case ">": return "&gt;";
+      case "\"": return "&quot;";
+      case "'": return "&#39;";
+      default: return c;
+    }
+  });
+}
+try { window.__ldEscapeHtml = __ldEscapeHtml; } catch (_) {}
+// END_LD_ESCAPE_HTML_GLOBAL_V1
+
 // ---- View level (modules / moments / submoments / activities) ----
 function __ldUpdateViewLevelSegmentedUI(level) {
   const wrap = document.getElementById('ld-view-level-segmented');
   if (!wrap) return;
   const btns = Array.from(wrap.querySelectorAll('button[data-view-level]'));
   btns.forEach(b => {
-    const isActive = String(b.getAttribute('data-view-level')) === String(level);
+    const v = String(b.getAttribute('data-view-level') || '');
+    const isActive = v === String(level);
     b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-    // Active styling (keeps current palette / weights)
-    b.classList.toggle('bg-slate-50', isActive);
-    b.classList.toggle('text-indigo-700', isActive);
-    b.classList.toggle('text-slate-600', !isActive);
+
+
+    // LD_VIEWLEVEL_PANORAMA_ACTIVE_V1
+    const isPano = (v.trim && v.trim() === 'panorama') || (v === 'panorama');
+        if (isPano) {
+      b.classList.toggle('bg-indigo-50', isActive);
+      b.classList.toggle('text-indigo-800', isActive);
+      b.classList.toggle('bg-white', !isActive);
+    }
+
+// Reset common state
+    b.classList.remove('bg-slate-50','bg-indigo-50','bg-indigo-100','text-indigo-700','text-slate-600');
+    b.classList.add('transition-colors');
+
+    if (isActive) {
+      // Active: consistent highlight for all buttons
+      b.classList.add('bg-slate-50','text-indigo-700');
+    } else if (v === 'panorama') {
+      // Panorama: slightly more visible even when inactive
+      b.classList.add('bg-indigo-50','text-indigo-700');
+    } else {
+      b.classList.add('text-slate-600');
+    }
   });
 }
 
 function applyViewLevel(level) {
+  const _lvl = String(level || "").trim();
   const allowed = new Set(['modules','moments','submoments','activities','panorama']);
-  const v = allowed.has(level) ? level : 'activities';
+  const v = allowed.has(_lvl) ? _lvl : 'activities';
   try { document.body.setAttribute('data-view-level', v); } catch (_) {}
   try { localStorage.setItem('ld_view_level', v); } catch (_) {}
   try { __ldUpdateViewLevelSegmentedUI(v); } catch (_) {}
@@ -3951,9 +4069,6 @@ function buildPanoramaRowsFromDOM() {
           steps.forEach((stepEl, sIdx) => {
             counter += 1;
             const stTitle = (stepEl.querySelector('.step-input-title')?.value || `Activité ${sIdx+1}`).trim();
-            const ltSel = stepEl.querySelector('.learning-type-select');
-            const ltTxt = __ldGetSelectedOptionText(ltSel).trim();
-
             let durTxt = '';
             try {
               const secs = (typeof getStepDurationSecs === 'function') ? getStepDurationSecs(stepEl) : 0;
@@ -3967,9 +4082,7 @@ function buildPanoramaRowsFromDOM() {
               module: modTitle,
               moment: moTitle,
               bloc: smTitle,
-              activite: stTitle,
-              type: ltTxt,
-              duree: durTxt,
+              activite: stTitle,              duree: durTxt,
               panoId: stepEl.dataset.panoId
             });
           });
@@ -3982,9 +4095,6 @@ function buildPanoramaRowsFromDOM() {
         directSteps.forEach((stepEl, sIdx) => {
           counter += 1;
           const stTitle = (stepEl.querySelector('.step-input-title')?.value || `Activité ${sIdx+1}`).trim();
-          const ltSel = stepEl.querySelector('.learning-type-select');
-          const ltTxt = __ldGetSelectedOptionText(ltSel).trim();
-
           let durTxt = '';
           try {
             const secs = (typeof getStepDurationSecs === 'function') ? getStepDurationSecs(stepEl) : 0;
@@ -3998,9 +4108,7 @@ function buildPanoramaRowsFromDOM() {
             module: modTitle,
             moment: moTitle,
             bloc: '',
-            activite: stTitle,
-            type: ltTxt,
-            duree: durTxt,
+            activite: stTitle,            duree: durTxt,
             panoId: stepEl.dataset.panoId
           });
         });
@@ -4019,31 +4127,56 @@ function renderPanoramaView() {
   const filterVal = (document.getElementById('panorama-filter')?.value || '').trim().toLowerCase();
 
   const rows = buildPanoramaRowsFromDOM();
-  tbody.innerHTML = '';
 
-  const frag = document.createDocumentFragment();
+  const __esc = (typeof __ldEscapeHtml === 'function') ? __ldEscapeHtml : ((window && window.__ldEscapeHtml) ? window.__ldEscapeHtml : (x => String(x ?? '')));
+
+  // Banding par module : alternance très légère sur les lignes d’un même module
+  let __lastMod = null;
+  let __idxInMod = 0;
+  rows.forEach(rr => {
+    const cur = String(rr.module || '');
+    if (cur !== __lastMod) { __idxInMod = 0; __lastMod = cur; }
+    rr._band = (__idxInMod % 2 === 0) ? 'a' : 'b';
+    __idxInMod += 1;
+  });
+
+  tbody.innerHTML = '';
+const frag = document.createDocumentFragment();
   rows
     .filter(r => {
       if (!filterVal) return true;
-      const hay = `${r.module} ${r.moment} ${r.bloc} ${r.activite} ${r.type} ${r.duree}`.toLowerCase();
+      const hay = `${r.module} ${r.moment} ${r.bloc} ${r.activite} ${r.duree}`.toLowerCase();
       return hay.includes(filterVal);
     })
     .forEach(r => {
       const tr = document.createElement('tr');
-      tr.innerHTML = `
+
+      // Banding by module (alternating group background)
+      const bandClass = (r && r._band === 'a') ? 'pano-band-a' : 'pano-band-b';
+      tr.className = bandClass;
+
+      const modTxt = r.module ? __esc(r.module) : '<span class="muted">—</span>';
+      const moTxt = r.moment ? __esc(r.moment) : '<span class="muted">—</span>';
+      const smTxt = r.bloc ? __esc(r.bloc) : '<span class="muted">—</span>';
+      const actTxt = r.activite ? __esc(r.activite) : '<span class="muted">—</span>';
+      const durTxt = r.duree ? __esc(r.duree) : '<span class="muted">—</span>';
+
+      const modCell = `<span class="pano-text font-semibold">${modTxt}</span>`;
+      const moCell = `<span class="pano-text">${moTxt}</span>`;
+const smCell = r.bloc ? `<span class="pano-text">${smTxt}</span>` : `${smTxt}`;
+tr.innerHTML = `
         <td class="px-2 py-1 text-slate-500 font-semibold">${r.n}</td>
-        <td class="px-2 py-1">${r.module || '<span class="muted">—</span>'}</td>
-        <td class="px-2 py-1">${r.moment || '<span class="muted">—</span>'}</td>
-        <td class="px-2 py-1">${r.bloc || '<span class="muted">—</span>'}</td>
-        <td class="px-2 py-1">${r.activite || '<span class="muted">—</span>'}</td>
-        <td class="px-2 py-1">${r.type || '<span class="muted">—</span>'}</td>
-        <td class="px-2 py-1 font-semibold">${r.duree || '<span class="muted">—</span>'}</td>
+        <td class="px-2 py-1">${modCell}</td>
+        <td class="px-2 py-1">${moCell}</td>
+        <td class="px-2 py-1">${smCell}</td>
+        <td class="px-2 py-1">${actTxt}</td>
+        <td class="px-2 py-1 font-semibold">${durTxt}</td>
         <td class="px-2 py-1">
           <button type="button" class="pano-open text-xs font-extrabold hover:underline" data-pano-open="${r.panoId}">Aller</button>
         </td>
       `;
       frag.appendChild(tr);
-    });
+});
 
   tbody.appendChild(frag);
 }
@@ -4095,9 +4228,14 @@ function initViewLevelSegmentedUI() {
   applyViewLevel(initial);
 
   wrap.addEventListener('click', (e) => {
-    const btn = e.target && e.target.closest ? e.target.closest('button[data-view-level]') : null;
+    const _t = e.target && e.target.nodeType === 1 ? e.target : null;
+    let btn = _t && _t.closest ? _t.closest('button[data-view-level]') : null;
+    if (!btn && typeof e.composedPath === 'function') {
+      const path = e.composedPath() || [];
+      btn = path.find(el => el && el.getAttribute && el.getAttribute('data-view-level')) || null;
+    }
     if (!btn) return;
-    const lvl = btn.getAttribute('data-view-level') || 'activities';
+    const lvl = (btn.getAttribute('data-view-level') || 'activities').trim();
     applyViewLevel(lvl);
   });
 }
@@ -4123,7 +4261,7 @@ function initViewLevelSegmentedUI() {
             window.__lastImportParsedObject = null;
             window.__lastImportRawJson = null;
 
-            function __ldEscapeHtml(s){
+            function __esc(s){
                 return String(s ?? '').replace(/[&<>"']/g, function(ch){
                     return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]) || ch;
                 });
@@ -4283,10 +4421,10 @@ function initViewLevelSegmentedUI() {
                 const flags = (report && report.detected && report.detected.flags) ? report.detected.flags : {};
 
                 const parts = [];
-                parts.push(`<div class="text-sm font-semibold text-slate-800">${__ldEscapeHtml(__ldI18n('import_error_title', 'Import impossible'))}</div>`);
-                parts.push(`<div class="text-xs text-slate-500 mt-1">${__ldEscapeHtml(__ldI18n('import_error_stage', 'Étape'))}: <span class="font-semibold text-slate-700">${__ldEscapeHtml(stage)}</span></div>`);
-                if (errMsg) parts.push(`<div class="mt-2 text-sm text-red-700"><span class="font-semibold">${__ldEscapeHtml(__ldI18n('import_error_details', 'Détails'))}:</span> ${__ldEscapeHtml(errMsg)}</div>`);
-                if (keys.length) parts.push(`<div class="mt-2 text-xs text-slate-600"><span class="font-semibold">${__ldEscapeHtml(__ldI18n('import_error_detected', 'Détecté'))}:</span> ${__ldEscapeHtml(keys.join(', '))}</div>`);
+                parts.push(`<div class="text-sm font-semibold text-slate-800">${__esc(__ldI18n('import_error_title', 'Import impossible'))}</div>`);
+                parts.push(`<div class="text-xs text-slate-500 mt-1">${__esc(__ldI18n('import_error_stage', 'Étape'))}: <span class="font-semibold text-slate-700">${__esc(stage)}</span></div>`);
+                if (errMsg) parts.push(`<div class="mt-2 text-sm text-red-700"><span class="font-semibold">${__esc(__ldI18n('import_error_details', 'Détails'))}:</span> ${__esc(errMsg)}</div>`);
+                if (keys.length) parts.push(`<div class="mt-2 text-xs text-slate-600"><span class="font-semibold">${__esc(__ldI18n('import_error_detected', 'Détecté'))}:</span> ${__esc(keys.join(', '))}</div>`);
 
                 const hintBits = [];
                 try {
@@ -4297,7 +4435,7 @@ function initViewLevelSegmentedUI() {
                     if (flags.looksLikeSlides) hintBits.push('slides');
                     if (flags.looksLikeGraph) hintBits.push('graph');
                 } catch(_) {}
-                if (hintBits.length) parts.push(`<div class="mt-1 text-xs text-slate-500">${__ldEscapeHtml(__ldI18n('import_error_hints', 'Indices'))}: ${__ldEscapeHtml(hintBits.join(', '))}</div>`);
+                if (hintBits.length) parts.push(`<div class="mt-1 text-xs text-slate-500">${__esc(__ldI18n('import_error_hints', 'Indices'))}: ${__esc(hintBits.join(', '))}</div>`);
 
                 body.innerHTML = parts.join('');
 
