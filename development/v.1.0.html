@@ -2109,6 +2109,14 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
 <span class="w-1/3 text-xs text-slate-600 font-bold px-1" id="param-designed-unit-display">
           min
          </span>
+<input id="param-designed-time" type="number" class="hidden" aria-hidden="true" tabindex="-1"/>
+<select id="param-designed-unit" class="hidden" aria-hidden="true" tabindex="-1">
+  <option data-i18n="unit_mins" value="mins">min</option>
+  <option data-i18n="unit_hours" value="hours">heures</option>
+  <option data-i18n="unit_days" value="days">jours</option>
+  <option data-i18n="unit_weeks" value="weeks">semaines</option>
+  <option data-i18n="unit_months" value="months">mois</option>
+</select>
 </div>
 </div></div>
 <div class="p-3 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"><div>
@@ -3919,6 +3927,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
     <button class="step-tab" type="button" role="tab" aria-selected="true" tabindex="0" data-step-tab="flow">Déroulé</button>
     <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="alignment">Alignement</button>
     <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="resources">Ressources</button>
+    <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="notes" data-i18n="label_notes">Notes</button>
   </div>
 
   <div class="step-tabpanels">
@@ -4073,11 +4082,34 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
           <p class="text-[11px] text-slate-400 mt-1">Sélection : cochez les outils et matériels requis pour cette activité (ajoutez une remarque si nécessaire).</p>
         </div>
       </details>
+    
 
+      <details class="step-right-section border border-slate-200 rounded-lg bg-white" data-section="links-refs">
+        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5 bg-slate-50 rounded-lg">
+          <span class="material-icons-round text-[10px] text-slate-400">link</span>
+          <span data-i18n="label_step_links_refs">Liens et références</span>
+          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
+            <span>Afficher</span>
+            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
+          </span>
+        </summary>
+        <div class="px-2 pb-2 pt-2">
+          <textarea class="step-input-linksrefs w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-y bg-slate-50 text-slate-700"
+                    rows="3"
+                    data-i18n-placeholder="ph_step_links_refs"
+                    placeholder="Liens, références, bibliographie, DOI, normes, etc."></textarea>
+          <p class="text-[11px] text-slate-400 mt-1" data-i18n="hint_step_links_refs">Un lien par ligne, ou une référence courte (auteur, année, page...).</p>
+        </div>
+      </details>
+
+</div>
+
+    <!-- Notes -->
+    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="notes" hidden>
       <details class="step-right-section border border-slate-200 rounded-lg bg-white" open>
         <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
           <span class="material-icons-round text-[10px] text-slate-400">comment</span>
-          <span data-i18n="label_notes">Notes, ressources, liens</span>
+          <span data-i18n="label_notes">Notes</span>
           <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
             <span>Afficher</span>
             <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
@@ -4107,7 +4139,8 @@ function getStepDurationSecs(stepCard) {
   try {
     if (!stepCard) return 0;
     const v = Math.max(0, parseFloat(stepCard.querySelector('.duration-input')?.value) || 0);
-    const u = Math.max(0, parseFloat(stepCard.querySelector('.duration-unit')?.value) || 0);
+    const rawUnit = stepCard.querySelector('.duration-unit')?.value;
+    const u = mapUnitToSecs(rawUnit || 60);
     const secs = v * (u || 60); // unit values are seconds-per-unit
     return Number.isFinite(secs) ? secs : 0;
   } catch (_) { return 0; }
@@ -6808,7 +6841,7 @@ import_recovery_trainer: "Formateur",
 import_recovery_context: "Contexte",
 import_recovery_objective: "Objectif",
 import_recovery_tasks: "À faire",
-import_recovery_notes: "Notes, ressources, liens",
+import_recovery_notes: "Notes",
 title_ui_language_select: "Choisir la langue de l’interface",
                 opt_lang_fr: "Français",
                 opt_lang_loaded: "Langue chargée",
@@ -6868,7 +6901,7 @@ btn_export_dropdown: "Exporter...",
                 ph_tasks: "Décrivez les étapes, instructions et tâches...",
                 label_trainer_tasks: "Ce que le ou les formateurs doivent faire",
                 ph_trainer_tasks: "Décrivez les actions attendues du formateur...",
-                label_notes: "Notes, ressources, liens",
+                label_notes: "Notes",
                 ph_notes: "Notes formateur, ressources ou liens...",
                 type_none: "Aucun",
 
@@ -10536,6 +10569,8 @@ objectifActivite: stepEl.querySelector('.step-input-objective').value,
                                 aFaire: stepEl.querySelector('.step-input-tasks').value,
                                 aFaireFormateur: stepEl.querySelector('.step-input-trainer-tasks').value,
                                 notes: stepEl.querySelector('.step-input-notes').value,
+                                liensReferences: (stepEl.querySelector('.step-input-linksrefs')?.value || ''),
+                                linksReferences: (stepEl.querySelector('.step-input-linksrefs')?.value || ''),
                                 evaluationSuivi: (stepEl.querySelector('.step-input-eval-followup')?.value || ''),
                                 competences: getSelectedStepCompetenceIds(stepEl),
                                 competencesSujet: getSelectedStepCompetenceIds(stepEl),
@@ -12567,6 +12602,10 @@ stepEl.querySelector('.step-input-objective').value = data.objective || "";
             stepEl.querySelector('.step-input-tasks').value = data.tasks || "";
             stepEl.querySelector('.step-input-trainer-tasks').value = data.trainerTasks || data.aFaireFormateur || data.trainer_actions || data.trainerActions || "";
             stepEl.querySelector('.step-input-notes').value = data.notes || "";
+            try {
+              const lrEl = stepEl.querySelector('.step-input-linksrefs');
+              if (lrEl) lrEl.value = (data.liensReferences || data.linksReferences || data.links_refs || data.linksRefs || data.links || data.references || data.refs || data.referencess || "");
+            } catch (_) {}
             const __ef = stepEl.querySelector('.step-input-eval-followup'); if (__ef) __ef.value = data.evaluationSuivi || data.evaluation || data.suiviEvaluation || data.followUp || data.evalFollowUp || "";
             try { populateStepCompetencesSelect(stepEl, data.competencesSujet || data.competences || data.competenceIds || data.competencies || data.competencesCiblees || []); } catch (_) {}
             try { populateStepCompetencesTransversalesSelect(stepEl, data.competencesTransversales || data.transversalCompetences || data.competences_transversales || []); } catch (_) {}
@@ -13588,6 +13627,18 @@ function formatTimelineDuration(secs) {
                     });
                 }
 
+                // Keep hidden "designed time unit" selector aligned (used by exports/imports)
+                const designedSel = document.getElementById('param-designed-unit');
+                if (designedSel) {
+                    try {
+                        Array.from(designedSel.options || []).forEach(opt => {
+                            const k = opt.value;
+                            opt.textContent = __ldGetUnitLabelByKey(k, fmt);
+                        });
+                        if (globalSel && globalSel.value) designedSel.value = globalSel.value;
+                    } catch (_) {}
+                }
+
                 // Update all seconds-based unit selects
                 document.querySelectorAll('.activity-target-unit, .moment-target-unit, .duration-unit').forEach(sel => {
                     if (!sel) return;
@@ -13716,6 +13767,7 @@ function updateStats() {
             
             const headerDesignedUnitEl = document.getElementById('header-designed-unit');
             if (headerDesignedUnitEl) headerDesignedUnitEl.innerText = learningUnitText;
+            const unitLabelFmt = (document.getElementById('param-unit-label-format')?.value || 'short');
             
             // Update Header Target Time
             const targetVal = (document.getElementById('param-learning-val')?.value) || 0;
@@ -13734,19 +13786,23 @@ function updateStats() {
             else designedVal = parseFloat(designedVal.toFixed(1)); 
             
             designedInput.value = designedVal;
+            // Keep backward-compatible hidden fields in sync for exports/imports
+            const designedTimeHidden = document.getElementById('param-designed-time');
+            if (designedTimeHidden) designedTimeHidden.value = String(designedVal);
+            const designedUnitHidden = document.getElementById('param-designed-unit');
+            if (designedUnitHidden) designedUnitHidden.value = learningUnit;
             const headerDesignedValEl = document.getElementById('header-designed-val');
             const headerDesignedUnitEl2 = document.getElementById('header-designed-unit');
-            const adaptiveDesigned = formatAdaptiveDurationFromSecs(totals.totalSecs);
-            if (headerDesignedValEl) headerDesignedValEl.innerText = adaptiveDesigned.value;
-            if (headerDesignedUnitEl2) headerDesignedUnitEl2.innerText = adaptiveDesigned.unit;
+            if (headerDesignedValEl) headerDesignedValEl.innerText = String(designedVal);
+            if (headerDesignedUnitEl2) headerDesignedUnitEl2.innerText = learningUnitText;
             // Update designed time per moment (sum of contained activities), expressed in the moment unit
             document.querySelectorAll('.moment-group').forEach(momentEl => {
                 let secs = 0;
                 momentEl.querySelectorAll('.step-card').forEach(stepEl => { secs += getStepDurationSecs(stepEl); });
 
                 const unitSel = momentEl.querySelector('.moment-target-unit');
-                const unitSecs = parseFloat(unitSel?.value) || getDefaultDurationUnitSecs();
-                const unitText = __ldGetUnitLabelBySecs(unitSecs, 'short');
+                const unitSecs = mapUnitToSecs(unitSel?.value || getDefaultDurationUnitSecs());
+                const unitText = __ldGetUnitLabelBySecs(unitSecs, unitLabelFmt);
 
                 const label = momentEl.querySelector('.moment-total-time');
                 if (label) {
@@ -14470,8 +14526,8 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
                     if (bar && label) {
                         bar.innerHTML = '';
                         // Update label
-                        const unitSecs = parseFloat(targetUnitSel?.value) || getDefaultDurationUnitSecs();
-                        const unitText = __ldGetUnitLabelBySecs(unitSecs, 'short');
+                        const unitSecs = mapUnitToSecs(targetUnitSel?.value || getDefaultDurationUnitSecs());
+                        const unitText = __ldGetUnitLabelBySecs(unitSecs, unitLabelFmt);
                         let v = actData.duration / unitSecs;
                         if (unitSecs === 60) v = Math.round(v);
                         else v = parseFloat(v.toFixed(1));
@@ -14481,7 +14537,7 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
 	                        if (designedBadge) {
 	                          designedBadge.classList.remove('duration-alert-light');
 	                          const tv = targetVal ? parseFloat(targetVal.value) : 0;
-	                          const tu = targetUnitSel ? parseInt(targetUnitSel.value, 10) : 60;
+	                          const tu = targetUnitSel ? mapUnitToSecs(targetUnitSel.value) : 60;
 	                          const targetSecs = (isNaN(tv) ? 0 : tv) * (isNaN(tu) ? 60 : tu);
 	                          if (targetSecs > 0 && Math.round(actData.duration) !== Math.round(targetSecs)) {
 	                            designedBadge.classList.add('duration-alert-light');
@@ -19995,7 +20051,8 @@ document.addEventListener('DOMContentLoaded', setupTimelineHScroll);
   function getStepDurationSecs(stepCard) {
   if (!stepCard) return 0;
   const v = Math.max(0, parseFloat(stepCard.querySelector('.duration-input')?.value) || 0);
-  const u = Math.max(0, parseFloat(stepCard.querySelector('.duration-unit')?.value) || 0);
+  const rawUnit = stepCard.querySelector('.duration-unit')?.value;
+  const u = mapUnitToSecs(rawUnit || 60);
   // unit is stored as seconds-per-unit in option value (e.g., 60 for minutes)
   const secs = v * (u || 60);
   return Number.isFinite(secs) ? secs : 0;
@@ -22341,6 +22398,17 @@ function __ldApplyUnitLabelFormat() {
                 opt.textContent = __ldGetUnitLabelByKey(opt.value, 'long');
             });
         }
+        // Keep hidden "designed time unit" selector aligned (used by exports/imports)
+        const designedSel = document.getElementById('param-designed-unit');
+        if (designedSel) {
+            try {
+                Array.from(designedSel.options || []).forEach(opt => {
+                    opt.textContent = __ldGetUnitLabelByKey(opt.value, 'long');
+                });
+                if (globalSel && globalSel.value) designedSel.value = globalSel.value;
+            } catch (_) {}
+        }
+
         // Preferred unit selector: long
         const prefSel = document.getElementById('param-preferred-unit');
         if (prefSel) {
@@ -25902,13 +25970,33 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
         }
       }
 
+      function deactivate(keepTab, opts){
+        tabs.forEach(t => {
+          t.setAttribute('aria-selected', 'false');
+          t.tabIndex = (t === keepTab) ? 0 : -1;
+        });
+        panels.forEach(p => { p.hidden = true; });
+
+        if (opts && opts.focus && keepTab) {
+          try { keepTab.focus(); } catch(_) {}
+        }
+      }
+
+
       // Initial active tab: aria-selected="true" else first
       const initial = tabs.find(t => t.getAttribute('aria-selected') === 'true') || tabs[0];
       activate(initial, { focus: false });
 
       // Interactions: click + roving focus + activation
       tabs.forEach((tab, idx) => {
-        tab.addEventListener('click', () => activate(tab, { focus: false }));
+        tab.addEventListener('click', () => {
+          const isSelected = (tab.getAttribute('aria-selected') === 'true');
+          if (isSelected) {
+            deactivate(tab, { focus: false });
+          } else {
+            activate(tab, { focus: false });
+          }
+        });
         tab.addEventListener('keydown', (e) => {
           const k = e.key;
           const n = tabs.length;
@@ -25938,7 +26026,12 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
           }
           if (k === 'Enter' || k === ' ') {
             e.preventDefault();
-            activate(tab, { focus: true });
+            const isSelected = (tab.getAttribute('aria-selected') === 'true');
+            if (isSelected) {
+              deactivate(tab, { focus: true });
+            } else {
+              activate(tab, { focus: true });
+            }
             return;
           }
         });
