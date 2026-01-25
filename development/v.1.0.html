@@ -3707,7 +3707,10 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
   <div class="submoment-card border border-slate-200 rounded-lg bg-slate-50">
     <div class="flex items-center justify-between px-3 py-2 bg-slate-100 border-b border-slate-100 rounded-t-lg">
       <div class="flex items-center gap-2 flex-1 min-w-0">
-<input class="submoment-title w-full text-sm font-semibold bg-transparent border border-transparent focus:border-indigo-300 rounded px-2 py-1 outline-none" placeholder="Titre du sous-moment" />
+        <div class="drag-handle-submoment drag-handle text-slate-300 hover:text-slate-500 no-print flex items-center justify-center w-6 h-6 cursor-grab">
+          <span class="material-icons-round text-lg">drag_indicator</span>
+        </div>
+        <input class="submoment-title flex-1 min-w-0 text-sm font-semibold bg-transparent border border-transparent focus:border-indigo-300 rounded px-2 py-1 outline-none" placeholder="Titre du sous-moment" />
       </div>
       <div class="flex items-center gap-1">
         <button class="no-print text-slate-400 hover:text-indigo-700 transition-colors" data-action="add-step-submoment" title="Ajouter une activité au sous-moment" type="button">
@@ -7489,6 +7492,37 @@ function initSortableSteps(container) {
             });
         }
 
+
+function initSortableSubmoments(container) {
+    if (typeof Sortable === 'undefined' || !container) return;
+    // Avoid double initialisation
+    if (container.__ldSortableSubmoments) return;
+
+    container.__ldSortableSubmoments = new Sortable(container, {
+        // Keep reordering inside a moment only (no cross-moment moves)
+        group: { name: 'submoments', pull: false, put: false },
+        animation: 150,
+        handle: '.drag-handle-submoment',
+        ghostClass: 'sortable-ghost',
+        dragClass: 'sortable-drag',
+        onStart: () => { __pendingDragSnapshot = snapshotProject(); },
+        onEnd: (evt) => {
+            if (__pendingDragSnapshot) { pushUndoSnapshot(__pendingDragSnapshot); __pendingDragSnapshot = null; }
+            try {
+                const fromMoment = evt?.from?.closest?.('.moment-group');
+                const toMoment = evt?.to?.closest?.('.moment-group');
+                if (fromMoment) syncMomentSubmomentsUI(fromMoment);
+                if (toMoment && toMoment !== fromMoment) syncMomentSubmomentsUI(toMoment);
+            } catch (_) {}
+            updateStats();
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    try { document.querySelectorAll('.submoments-container').forEach(initSortableSubmoments); } catch (_) {}
+});
+
         function ensureDefaultMoment(activityGroup) {
             const momentsRoot = activityGroup.querySelector('.activity-moments-container');
             if (!momentsRoot) return null;
@@ -7500,6 +7534,7 @@ function initSortableSteps(container) {
             
             try { setupCompactTextareas(moment); } catch (_) {}
 initSortableSteps(moment.querySelector('.activity-steps-container'));
+            try { initSortableSubmoments(moment.querySelector('.submoments-container')); } catch (_) {}
             const mUnitSel = moment.querySelector('.moment-target-unit');
             if (mUnitSel) {
                 __ldEnsureUnitOption(mUnitSel, 2592000, 'unit_months', 'Mois');
@@ -7540,6 +7575,7 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             momentsRoot.appendChild(clone);
             const moment = momentsRoot.lastElementChild;
             initSortableSteps(moment.querySelector('.activity-steps-container'));
+            try { initSortableSubmoments(moment.querySelector('.submoments-container')); } catch (_) {}
             const mUnitSel = moment.querySelector('.moment-target-unit');
             if (mUnitSel) {
                 __ldEnsureUnitOption(mUnitSel, 2592000, 'unit_months', 'Mois');
@@ -7574,6 +7610,9 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
 
             const container = momentEl.querySelector('.submoments-container');
             if (!container) return;
+
+
+            try { initSortableSubmoments(container); } catch (_) {}
 
             const tmpl = (typeof submomentTemplate !== 'undefined' && submomentTemplate) ? submomentTemplate : document.getElementById('submoment-template');
             if (!tmpl) return;
@@ -12527,6 +12566,7 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
                         try { setupCompactTextareas(momentEl); } catch (_) {}
 
                         const subWrap = momentEl.querySelector('.submoments-container');
+                        try { initSortableSubmoments(subWrap); } catch (_) {}
                         if (subWrap && ((Array.isArray(momentData.subMoments) && momentData.subMoments.length) || (Array.isArray(momentData.sousMoments) && momentData.sousMoments.length)) && submomentTemplate) {
                             subWrap.innerHTML = '';
                             (momentData.subMoments || momentData.sousMoments || []).forEach((sm, smIdx) => {
