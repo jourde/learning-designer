@@ -781,6 +781,49 @@ details[data-readonly="true"] label{ cursor: default; }
         .step-card[data-status="review"] .step-header { box-shadow: inset 4px 0 0 rgba(245, 158, 11, 0.85); }
         .step-card[data-status="in_progress"] .step-header { box-shadow: inset 4px 0 0 rgba(100, 116, 139, 0.35); }
         .step-status-select { text-transform: none; }
+        .ld-hidden-by-status-filter{ display:none !important; }
+
+
+        /* ===== Status summaries (Module / Moment / Sous-moment) ===== */
+        .ld-status-summary{
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            font-size:10px;
+            line-height:1;
+            padding:2px 8px;
+            border:1px solid rgba(226,232,240,1);
+            border-radius:9999px;
+            background:#ffffff;
+            color:#475569; /* slate-600 */
+            white-space:nowrap;
+            user-select:none;
+        }
+
+        /* Module: afficher la synthèse sur 3 lignes pour économiser l'espace horizontal */
+        .ld-status-summary--module{
+            display:inline-block;
+            white-space:normal;
+            line-height:1.15;
+        }
+        .ld-status-summary--module .ld-ss-line{
+            display:block;
+        }
+
+        .ld-status-summary .ld-ss-item{ display:inline-flex; align-items:center; gap:4px; }
+        .ld-status-summary .ld-ss-item b{ font-weight:800; color:#0f172a; } /* slate-900 */
+        .ld-status-summary .ld-ss-sep{ opacity:0.55; padding:0 2px; }
+        .ld-status-summary .ld-ss-item::before{
+            content:"";
+            width:6px;
+            height:6px;
+            border-radius:9999px;
+            display:inline-block;
+        }
+        .ld-status-summary .ld-ss-done::before{ background: rgba(34, 197, 94, 0.75); }      /* green */
+        .ld-status-summary .ld-ss-review::before{ background: rgba(245, 158, 11, 0.85); }   /* amber */
+        .ld-status-summary .ld-ss-progress::before{ background: rgba(100, 116, 139, 0.40); }/* slate */
+        .ld-status-summary .ld-ss-empty{ opacity:0.75; }
 
         .step-coherence-indicator { cursor: help; }
 
@@ -966,14 +1009,18 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
 /* ===== END_LD_PANORAMA_FIXED_TABLE_V1 ===== */
 
 
-/* ===== LD_PANORAMA_DURATION_COL_V1: colonne Durée compacte ===== */
-#panorama-table td:nth-child(6), #panorama-table th:nth-child(6) {
-  white-space: nowrap;
-}
-#panorama-table td:nth-child(6) {
-  font-variant-numeric: tabular-nums;
-}
-/* ===== END_LD_PANORAMA_DURATION_COL_V1 ===== */
+/* ===== LD_PANORAMA_DURATION_COL_V2: colonne Durée compacte + tri + sélection ===== */
+#panorama-table td.pano-col-duration, #panorama-table th.pano-col-duration { white-space: nowrap; }
+#panorama-table td.pano-col-duration { font-variant-numeric: tabular-nums; }
+
+#panorama-table td.pano-col-select, #panorama-table th.pano-col-select { white-space: nowrap; }
+
+#panorama-table .pano-sortable { cursor: pointer; user-select: none; }
+#panorama-table .pano-sortable:hover { color: rgba(67,56,202,0.95); }
+#panorama-table .pano-sort-ind { margin-left: 4px; font-size: 10px; color: rgba(100,116,139,0.8); }
+
+#panorama-table td.pano-col-status, #panorama-table th.pano-col-status { white-space: nowrap; }
+/* ===== END_LD_PANORAMA_DURATION_COL_V2 ===== */
 </style>
 <script>
 /* Modèles: stubs globaux disponibles dès le chargement (évite les clics "inerte" avant l'initialisation).
@@ -1416,6 +1463,7 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
       'toggle-moment-description': ({btn}) => call('toggleMomentDescription', btn),
       'toggle-moment': ({btn}) => call('toggleMoment', btn),
       'delete-moment': ({btn}) => call('trashMoment', btn),
+      'select-all-moment': ({btn}) => { try { if (typeof window.selectAllStepsInMoment === 'function') window.selectAllStepsInMoment(btn); } catch(_){} },
       'focus-module': ({btn}) => call('toggleFocusModule', btn),
 
       // Key params helpers
@@ -3052,14 +3100,55 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
     
       <button type="button" class="h-[26px] px-2 text-xs font-extrabold text-indigo-700 hover:text-indigo-700 hover:bg-indigo-100 border-l border-indigo-200 transition-colors bg-indigo-50" data-view-level="panorama" aria-pressed="false" title="Vue panoramique (tableau très compact)">Panorama</button>
 </div>
+    <div class="flex items-center gap-2 ml-2">
+      <span class="text-xs text-slate-500 font-extrabold">Filtre :</span>
+      <select id="status-filter" class="h-[26px] px-2 text-xs border border-slate-200 rounded-md bg-white text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-200" title="Filtrer l’affichage par état">
+        <option value="all">Tous</option>
+        <option value="review">À revoir</option>
+        <option value="in_progress">En cours</option>
+        <option value="done">Finalisé</option>
+      </select>
+      <button id="status-filter-clear" type="button" class="h-[26px] px-2 rounded-md border border-slate-200 bg-white text-slate-600 text-xs font-extrabold hover:text-indigo-700 hover:bg-slate-50 transition-colors" title="Réinitialiser le filtre">Réinitialiser</button>
+    </div>
   </div>
 </div>
 </div>
 <div id="panorama-view" class="hidden mt-2">
-  <div class="flex items-center justify-between gap-2 mb-2">
-    <div class="text-xs font-extrabold text-slate-500">Vue panoramique</div>
-    <div class="flex items-center gap-2">
-      <input id="panorama-filter" class="h-[26px] w-56 px-2 rounded-md border border-slate-200 bg-white text-slate-600 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-200" placeholder="Filtrer (module, moment, activité…)"/>
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="text-xs font-extrabold text-slate-500">Vue panoramique</div>
+
+      <span class="text-xs text-slate-500 font-extrabold">État :</span>
+      <select id="panorama-status-filter" class="h-[26px] px-2 text-xs border border-slate-200 rounded-md bg-white text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-200" title="Filtrer par état">
+        <option value="all">Tous</option>
+        <option value="review">À revoir</option>
+        <option value="in_progress">En cours</option>
+        <option value="done">Finalisé</option>
+      </select>
+
+      <span class="text-slate-300 px-1 select-none">|</span>
+
+      <input id="panorama-filter" class="h-[26px] w-64 px-2 rounded-md border border-slate-200 bg-white text-slate-600 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-200" placeholder="Filtrer (module, moment, activité…)"/>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-xs text-slate-500 font-extrabold">Sélection : <span id="panorama-selected-count">0</span></span>
+
+      <span class="text-xs text-slate-500 font-extrabold">→ État :</span>
+      <select id="panorama-batch-status" class="h-[26px] px-2 text-xs border border-slate-200 rounded-md bg-white text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-200" title="Définir l’état des lignes sélectionnées">
+        <option value="review">À revoir</option>
+        <option value="in_progress">En cours</option>
+        <option value="done">Finalisé</option>
+      </select>
+
+      <button id="panorama-batch-apply" type="button" class="h-[26px] px-2 rounded-md border border-slate-200 bg-white text-slate-600 text-xs font-extrabold hover:text-indigo-700 hover:bg-slate-50 transition-colors" title="Appliquer l’état aux lignes sélectionnées">
+        Appliquer
+      </button>
+
+      <button id="panorama-batch-clear" type="button" class="h-[26px] px-2 rounded-md border border-slate-200 bg-white text-slate-600 text-xs font-extrabold hover:text-indigo-700 hover:bg-slate-50 transition-colors" title="Vider la sélection">
+        Vider
+      </button>
+
       <button id="panorama-refresh" type="button" class="h-[26px] px-2 rounded-md border border-slate-200 bg-white text-slate-600 text-xs font-extrabold hover:text-indigo-700 hover:bg-slate-50 transition-colors" title="Rafraîchir la vue panoramique">
         Rafraîchir
       </button>
@@ -3068,30 +3157,41 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 
   <div class="border border-slate-200 rounded-lg bg-white overflow-auto">
     <table class="w-full text-[11px] leading-tight" id="panorama-table">
-<colgroup>
-  <col style="width:44px">
-  <col style="width:240px">
-  <col style="width:240px">
-  <col style="width:240px">
-  <col style="width:240px">
-  <col style="width:96px">
-  <col style="width:84px">
-</colgroup>
+      <colgroup>
+        <col style="width:30px">
+        <col style="width:44px">
+        <col style="width:240px">
+        <col style="width:240px">
+        <col style="width:240px">
+        <col style="width:240px">
+        <col style="width:132px">
+        <col style="width:96px">
+        <col style="width:84px">
+      </colgroup>
 
       <thead class="sticky top-0 bg-slate-50 border-b border-slate-200">
         <tr class="text-slate-600">
-          <th class="text-left font-extrabold px-2 py-1 w-12">#</th>
-          <th class="text-left font-extrabold px-2 py-1 min-w-[180px]">Module</th>
-          <th class="text-left font-extrabold px-2 py-1 min-w-[160px]">Moment</th>
-          <th class="text-left font-extrabold px-2 py-1 min-w-[160px]">Sous-moment</th>
-          <th class="text-left font-extrabold px-2 py-1 min-w-[220px]">Activité</th>
-<th class="text-left font-extrabold px-2 py-1 w-20">Durée</th>
+          <th class="text-left font-extrabold px-2 py-1 pano-col-select">
+            <input id="panorama-select-all" type="checkbox" class="align-middle" title="Tout sélectionner (lignes visibles)"/>
+          </th>
+          <th class="text-left font-extrabold px-2 py-1 w-12 pano-sortable" data-sort-key="n"><span>#</span><span class="pano-sort-ind"></span></th>
+          <th class="text-left font-extrabold px-2 py-1 min-w-[180px] pano-sortable" data-sort-key="module"><span>Module</span><span class="pano-sort-ind"></span></th>
+          <th class="text-left font-extrabold px-2 py-1 min-w-[160px] pano-sortable" data-sort-key="moment"><span>Moment</span><span class="pano-sort-ind"></span></th>
+          <th class="text-left font-extrabold px-2 py-1 min-w-[160px] pano-sortable" data-sort-key="bloc"><span>Sous-moment</span><span class="pano-sort-ind"></span></th>
+          <th class="text-left font-extrabold px-2 py-1 min-w-[220px] pano-sortable" data-sort-key="activite"><span>Activité</span><span class="pano-sort-ind"></span></th>
+          <th class="text-left font-extrabold px-2 py-1 pano-sortable pano-col-status" data-sort-key="status"><span>État</span><span class="pano-sort-ind"></span></th>
+          <th class="text-left font-extrabold px-2 py-1 w-20 pano-sortable pano-col-duration" data-sort-key="duree"><span>Durée</span><span class="pano-sort-ind"></span></th>
           <th class="text-left font-extrabold px-2 py-1 w-16">Ouvrir</th>
         </tr>
       </thead>
       <tbody id="panorama-tbody" class="text-slate-700"></tbody>
     </table>
   </div>
+</div>
+
+<div id="status-filter-empty" class="hidden text-center py-10 bg-white rounded-xl border-2 border-dashed border-slate-300 mt-3">
+  <h3 class="mt-1 text-base font-medium text-slate-900">Aucun élément ne correspond au filtre.</h3>
+  <p class="mt-0.5 text-xs text-slate-500">Modifiez le filtre ou réinitialisez-le pour tout afficher.</p>
 </div>
 
 <div class="space-y-4" id="activities-root">
@@ -3469,6 +3569,8 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div>
 </div>
 </div>
+<div class="activity-status-summary ld-status-summary ld-status-summary--module" title="Synthèse des états des activités du module"></div>
+
 <button aria-pressed="false" class="text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-action="toggle-module-subblocks" title="Paramètres du module" type="button">
 <span class="material-icons-round text-lg">view_agenda</span>
 </button>
@@ -3678,6 +3780,11 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div>
 </div>
 </div>
+<div class="moment-status-summary ld-status-summary" title="Synthèse des états des activités du moment"></div>
+
+<button class="no-print text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-action="select-all-moment" title="Tout sélectionner / désélectionner les activités de ce moment" type="button" aria-label="Tout sélectionner dans le moment">
+  <span class="material-icons-round text-lg">done_all</span>
+</button>
 <button aria-expanded="false" class="no-print text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-action="toggle-moment-description" data-i18n-title="title_toggle_description" title="Afficher/Masquer la description" type="button"><span class="material-icons-round text-lg">description</span></button>
 <button aria-expanded="true" class="no-print text-slate-400 hover:text-slate-700 transition-colors" data-action="toggle-moment" title="Replier / déplier ce moment" type="button">
 <span class="material-icons-round text-lg rotate-icon-moment" style="transform: rotate(180deg);">expand_more</span>
@@ -3719,6 +3826,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
         </div>
         <input class="submoment-title flex-1 min-w-0 text-sm font-semibold bg-transparent border border-transparent focus:border-indigo-300 rounded px-2 py-1 outline-none" placeholder="Titre du sous-moment" />
       </div>
+      <div class="submoment-status-summary ld-status-summary" title="Synthèse des états des activités du sous-moment"></div>
       <div class="flex items-center gap-1">
         <button class="no-print text-slate-400 hover:text-indigo-700 transition-colors" data-action="add-step-submoment" title="Ajouter une activité au sous-moment" type="button">
           <span class="material-icons-round text-sm">add</span>
@@ -4235,6 +4343,134 @@ function __ldGetSelectedOptionText(sel) {
   try { return sel && sel.selectedIndex >= 0 ? (sel.options[sel.selectedIndex]?.text || '') : ''; } catch (_) { return ''; }
 }
 
+// Panorama: sélection + tri (persistés)
+let __ldPanoramaSelected = new Set();
+let __ldPanoramaVisibleIds = [];
+let __ldPanoSortKey = 'n';
+let __ldPanoSortDir = 'asc';
+
+function __ldLoadPanoramaPrefs(){
+  try {
+    const k = localStorage.getItem('ld_panorama_sort_key');
+    const d = localStorage.getItem('ld_panorama_sort_dir');
+    if (k) __ldPanoSortKey = k;
+    if (d === 'asc' || d === 'desc') __ldPanoSortDir = d;
+  } catch (_) {}
+}
+
+function __ldSavePanoramaSort(){
+  try {
+    localStorage.setItem('ld_panorama_sort_key', String(__ldPanoSortKey || 'n'));
+    localStorage.setItem('ld_panorama_sort_dir', String(__ldPanoSortDir || 'asc'));
+  } catch (_) {}
+}
+
+function __ldPanoStatusLabel(st){
+  const v = (typeof normaliseStepStatus === 'function') ? normaliseStepStatus(st) : String(st || '').trim();
+  if (v === 'done') return 'Finalisé';
+  if (v === 'review') return 'À revoir';
+  return 'En cours';
+}
+
+function __ldPanoStatusRank(st){
+  const v = (typeof normaliseStepStatus === 'function') ? normaliseStepStatus(st) : String(st || '').trim();
+  // Priorité: À revoir → En cours → Finalisé
+  if (v === 'review') return 0;
+  if (v === 'in_progress') return 1;
+  if (v === 'done') return 2;
+  return 9;
+}
+
+function __ldPanoStr(x){
+  return String(x ?? '').trim();
+}
+
+function __ldPanoCompare(a, b, key){
+  const k = String(key || 'n');
+  if (k === 'n') return (Number(a?.n || 0) - Number(b?.n || 0));
+  if (k === 'duree') return (Number(a?.dureeSecs || 0) - Number(b?.dureeSecs || 0));
+  if (k === 'status') {
+    const r = __ldPanoStatusRank(a?.status) - __ldPanoStatusRank(b?.status);
+    if (r !== 0) return r;
+    // Tie-breaker: activité
+    return __ldPanoStr(a?.activite).localeCompare(__ldPanoStr(b?.activite), 'fr', { sensitivity: 'base' });
+  }
+  if (k === 'module') return __ldPanoStr(a?.module).localeCompare(__ldPanoStr(b?.module), 'fr', { sensitivity: 'base' });
+  if (k === 'moment') return __ldPanoStr(a?.moment).localeCompare(__ldPanoStr(b?.moment), 'fr', { sensitivity: 'base' });
+  if (k === 'bloc') return __ldPanoStr(a?.bloc).localeCompare(__ldPanoStr(b?.bloc), 'fr', { sensitivity: 'base' });
+  if (k === 'activite') return __ldPanoStr(a?.activite).localeCompare(__ldPanoStr(b?.activite), 'fr', { sensitivity: 'base' });
+  return 0;
+}
+
+function __ldUpdatePanoramaSortIndicators(){
+  try {
+    document.querySelectorAll('#panorama-table th[data-sort-key]').forEach(th => {
+      const key = th.getAttribute('data-sort-key');
+      const ind = th.querySelector('.pano-sort-ind');
+      if (!ind) return;
+      if (String(key) === String(__ldPanoSortKey)) ind.textContent = (__ldPanoSortDir === 'desc') ? '▼' : '▲';
+      else ind.textContent = '';
+    });
+  } catch (_) {}
+}
+
+function __ldUpdatePanoramaBatchUI(){
+  try {
+    const countEl = document.getElementById('panorama-selected-count');
+    if (countEl) countEl.textContent = String(__ldPanoramaSelected.size);
+
+    const applyBtn = document.getElementById('panorama-batch-apply');
+    const clearBtn = document.getElementById('panorama-batch-clear');
+
+    const hasSel = __ldPanoramaSelected.size > 0;
+    if (applyBtn) applyBtn.disabled = !hasSel;
+    if (clearBtn) clearBtn.disabled = !hasSel;
+
+    // Select all checkbox (checked / indeterminate)
+    const selAll = document.getElementById('panorama-select-all');
+    if (selAll) {
+      const vis = Array.isArray(__ldPanoramaVisibleIds) ? __ldPanoramaVisibleIds : [];
+      const any = vis.some(id => __ldPanoramaSelected.has(id));
+      const all = vis.length > 0 && vis.every(id => __ldPanoramaSelected.has(id));
+      selAll.checked = all;
+      selAll.indeterminate = any && !all;
+    }
+  } catch (_) {}
+}
+
+function __ldFindStepByPanoId(panoId){
+  if (!panoId) return null;
+  try {
+    const id = String(panoId);
+    if (window.CSS && typeof CSS.escape === 'function') {
+      return document.querySelector(`.step-card[data-pano-id="${CSS.escape(id)}"]`);
+    }
+    return document.querySelector(`.step-card[data-pano-id="${id.replace(/"/g, '\"')}"]`);
+  } catch (_) {
+    return document.querySelector(`.step-card[data-pano-id="${panoId}"]`);
+  }
+}
+
+function __ldPanoramaApplyStatusToIds(ids, statusKey){
+  const st = (typeof normaliseStepStatus === 'function') ? normaliseStepStatus(statusKey) : String(statusKey || 'in_progress');
+  const arr = Array.isArray(ids) ? ids : [];
+  if (!arr.length) return;
+
+  try { historyCaptureNow(); } catch (_) {}
+
+  arr.forEach(pid => {
+    const stepEl = __ldFindStepByPanoId(pid);
+    if (!stepEl) return;
+    try { applyStepStatus(stepEl, st); } catch (_) {}
+  });
+
+  try { __ldUpdateAllStatusSummariesDebounced(); } catch (_) {}
+  try { updateStatsDebounced(); } catch (_) {}
+  try { __ldApplyStatusFilterDebounced(); } catch (_) {}
+
+  try { renderPanoramaView(); } catch (_) {}
+}
+
 function buildPanoramaRowsFromDOM() {
   const rows = [];
   const root = document.getElementById('activities-root');
@@ -4261,10 +4497,12 @@ function buildPanoramaRowsFromDOM() {
           steps.forEach((stepEl, sIdx) => {
             counter += 1;
             const stTitle = (stepEl.querySelector('.step-input-title')?.value || `Activité ${sIdx+1}`).trim();
+
             let durTxt = '';
+            let durSecs = 0;
             try {
-              const secs = (typeof getStepDurationSecs === 'function') ? getStepDurationSecs(stepEl) : 0;
-              durTxt = (typeof formatTimelineDuration === 'function') ? formatTimelineDuration(secs) : '';
+              durSecs = (typeof getStepDurationSecs === 'function') ? getStepDurationSecs(stepEl) : 0;
+              durTxt = (typeof formatTimelineDuration === 'function') ? formatTimelineDuration(durSecs) : '';
             } catch (_) {}
 
             if (!stepEl.dataset.panoId) stepEl.dataset.panoId = `pano_${Date.now()}_${Math.random().toString(16).slice(2)}`;
@@ -4274,7 +4512,10 @@ function buildPanoramaRowsFromDOM() {
               module: modTitle,
               moment: moTitle,
               bloc: smTitle,
-              activite: stTitle,              duree: durTxt,
+              activite: stTitle,
+              duree: durTxt,
+              dureeSecs: durSecs,
+              status: (typeof getStepStatus === 'function') ? getStepStatus(stepEl) : (stepEl?.dataset?.status || 'in_progress'),
               panoId: stepEl.dataset.panoId
             });
           });
@@ -4287,10 +4528,12 @@ function buildPanoramaRowsFromDOM() {
         directSteps.forEach((stepEl, sIdx) => {
           counter += 1;
           const stTitle = (stepEl.querySelector('.step-input-title')?.value || `Activité ${sIdx+1}`).trim();
+
           let durTxt = '';
+          let durSecs = 0;
           try {
-            const secs = (typeof getStepDurationSecs === 'function') ? getStepDurationSecs(stepEl) : 0;
-            durTxt = (typeof formatTimelineDuration === 'function') ? formatTimelineDuration(secs) : '';
+            durSecs = (typeof getStepDurationSecs === 'function') ? getStepDurationSecs(stepEl) : 0;
+            durTxt = (typeof formatTimelineDuration === 'function') ? formatTimelineDuration(durSecs) : '';
           } catch (_) {}
 
           if (!stepEl.dataset.panoId) stepEl.dataset.panoId = `pano_${Date.now()}_${Math.random().toString(16).slice(2)}`;
@@ -4300,7 +4543,10 @@ function buildPanoramaRowsFromDOM() {
             module: modTitle,
             moment: moTitle,
             bloc: '',
-            activite: stTitle,            duree: durTxt,
+            activite: stTitle,
+            duree: durTxt,
+            dureeSecs: durSecs,
+            status: (typeof getStepStatus === 'function') ? getStepStatus(stepEl) : (stepEl?.dataset?.status || 'in_progress'),
             panoId: stepEl.dataset.panoId
           });
         });
@@ -4316,7 +4562,14 @@ function renderPanoramaView() {
   const tbody = document.getElementById('panorama-tbody');
   if (!wrap || !tbody) return;
 
+  // Sync panorama state filter with the global status filter (one source of truth)
+  try {
+    const panoSel = document.getElementById('panorama-status-filter');
+    if (panoSel && typeof __ldGetStatusFilterValue === 'function') panoSel.value = __ldGetStatusFilterValue();
+  } catch (_) {}
+
   const filterVal = (document.getElementById('panorama-filter')?.value || '').trim().toLowerCase();
+  const statusFilter = (typeof __ldGetStatusFilterValue === 'function') ? __ldGetStatusFilterValue() : 'all';
 
   const rows = buildPanoramaRowsFromDOM();
 
@@ -4332,50 +4585,83 @@ function renderPanoramaView() {
     __idxInMod += 1;
   });
 
+  // Filter (état + texte)
+  const filtered = rows.filter(r => {
+    if (statusFilter && statusFilter !== 'all') {
+      let st = 'in_progress';
+      try { st = (typeof normaliseStepStatus === 'function') ? normaliseStepStatus(r.status) : String(r.status || '').trim(); } catch (_) {}
+      if (st !== statusFilter) return false;
+    }
+    if (!filterVal) return true;
+    const hay = `${r.module} ${r.moment} ${r.bloc} ${r.activite} ${r.duree} ${__ldPanoStatusLabel(r.status)}`.toLowerCase();
+    return hay.includes(filterVal);
+  });
+
+  // Sort
+  try {
+    const dir = (__ldPanoSortDir === 'desc') ? -1 : 1;
+    filtered.sort((a, b) => dir * __ldPanoCompare(a, b, __ldPanoSortKey));
+  } catch (_) {}
+
+  // Visible IDs (for "select all" behaviour)
+  __ldPanoramaVisibleIds = filtered.map(r => r.panoId).filter(Boolean);
+
   tbody.innerHTML = '';
-const frag = document.createDocumentFragment();
-  rows
-    .filter(r => {
-      if (!filterVal) return true;
-      const hay = `${r.module} ${r.moment} ${r.bloc} ${r.activite} ${r.duree}`.toLowerCase();
-      return hay.includes(filterVal);
-    })
-    .forEach(r => {
-      const tr = document.createElement('tr');
+  const frag = document.createDocumentFragment();
 
-      // Banding by module (alternating group background)
-      const bandClass = (r && r._band === 'a') ? 'pano-band-a' : 'pano-band-b';
-      tr.className = bandClass;
+  filtered.forEach(r => {
+    const tr = document.createElement('tr');
 
-      const modTxt = r.module ? __esc(r.module) : '<span class="muted">—</span>';
-      const moTxt = r.moment ? __esc(r.moment) : '<span class="muted">—</span>';
-      const smTxt = r.bloc ? __esc(r.bloc) : '<span class="muted">—</span>';
-      const actTxt = r.activite ? __esc(r.activite) : '<span class="muted">—</span>';
-      const durTxt = r.duree ? __esc(r.duree) : '<span class="muted">—</span>';
+    // Banding by module (alternating group background)
+    const bandClass = (r && r._band === 'a') ? 'pano-band-a' : 'pano-band-b';
+    tr.className = bandClass;
 
-      const modCell = `<span class="pano-text font-semibold">${modTxt}</span>`;
-      const moCell = `<span class="pano-text">${moTxt}</span>`;
-const smCell = r.bloc ? `<span class="pano-text">${smTxt}</span>` : `${smTxt}`;
-tr.innerHTML = `
-        <td class="px-2 py-1 text-slate-500 font-semibold">${r.n}</td>
-        <td class="px-2 py-1">${modCell}</td>
-        <td class="px-2 py-1">${moCell}</td>
-        <td class="px-2 py-1">${smCell}</td>
-        <td class="px-2 py-1">${actTxt}</td>
-        <td class="px-2 py-1 font-semibold">${durTxt}</td>
-        <td class="px-2 py-1">
-          <button type="button" class="pano-open text-xs font-extrabold hover:underline" data-pano-open="${r.panoId}">Aller</button>
-        </td>
-      `;
-      frag.appendChild(tr);
-});
+    const modTxt = r.module ? __esc(r.module) : '<span class="muted">—</span>';
+    const moTxt = r.moment ? __esc(r.moment) : '<span class="muted">—</span>';
+    const smTxt = r.bloc ? __esc(r.bloc) : '<span class="muted">—</span>';
+    const actTxt = r.activite ? __esc(r.activite) : '<span class="muted">—</span>';
+    const durTxt = r.duree ? __esc(r.duree) : '<span class="muted">—</span>';
+
+    const modCell = `<span class="pano-text font-semibold">${modTxt}</span>`;
+    const moCell = `<span class="pano-text">${moTxt}</span>`;
+    const smCell = r.bloc ? `<span class="pano-text">${smTxt}</span>` : `${smTxt}`;
+
+    const stKey = (typeof normaliseStepStatus === 'function') ? normaliseStepStatus(r.status) : String(r.status || 'in_progress');
+    const isChecked = __ldPanoramaSelected.has(r.panoId);
+
+    tr.innerHTML = `
+      <td class="px-2 py-1 pano-col-select">
+        <input type="checkbox" class="pano-select align-middle" data-pano-select="${r.panoId}" ${isChecked ? 'checked' : ''} title="Sélectionner cette ligne"/>
+      </td>
+      <td class="px-2 py-1 text-slate-500 font-semibold">${r.n}</td>
+      <td class="px-2 py-1">${modCell}</td>
+      <td class="px-2 py-1">${moCell}</td>
+      <td class="px-2 py-1">${smCell}</td>
+      <td class="px-2 py-1">${actTxt}</td>
+      <td class="px-2 py-1 pano-col-status">
+        <select class="pano-status-select h-[22px] px-1.5 text-[11px] font-semibold border border-slate-200 rounded bg-white outline-none focus:ring-2 focus:ring-indigo-200" data-pano-status="${r.panoId}" aria-label="État" title="Modifier l’état">
+          <option value="review" ${stKey==='review' ? 'selected' : ''}>À revoir</option>
+          <option value="in_progress" ${stKey==='in_progress' ? 'selected' : ''}>En cours</option>
+          <option value="done" ${stKey==='done' ? 'selected' : ''}>Finalisé</option>
+        </select>
+      </td>
+      <td class="px-2 py-1 font-semibold pano-col-duration">${durTxt}</td>
+      <td class="px-2 py-1">
+        <button type="button" class="pano-open text-xs font-extrabold hover:underline" data-pano-open="${r.panoId}">Aller</button>
+      </td>
+    `;
+    frag.appendChild(tr);
+  });
 
   tbody.appendChild(frag);
+
+  __ldUpdatePanoramaSortIndicators();
+  __ldUpdatePanoramaBatchUI();
 }
 
 function focusStepByPanoId(panoId) {
   if (!panoId) return;
-  const stepEl = document.querySelector(`.step-card[data-pano-id="${panoId}"]`);
+  const stepEl = __ldFindStepByPanoId(panoId);
   if (!stepEl) return;
 
   // switch back to detailed view for editing
@@ -4393,20 +4679,103 @@ function initPanoramaUI() {
   const wrap = document.getElementById('panorama-view');
   if (!wrap) return;
 
+  __ldLoadPanoramaPrefs();
+
   const refreshBtn = document.getElementById('panorama-refresh');
   const filterInput = document.getElementById('panorama-filter');
+  const statusSel = document.getElementById('panorama-status-filter');
+  const batchSel = document.getElementById('panorama-batch-status');
+  const batchApply = document.getElementById('panorama-batch-apply');
+  const batchClear = document.getElementById('panorama-batch-clear');
   const table = document.getElementById('panorama-table');
 
   if (refreshBtn) refreshBtn.addEventListener('click', () => renderPanoramaView());
   if (filterInput) filterInput.addEventListener('input', () => renderPanoramaView());
 
-  if (table) {
-    table.addEventListener('click', (e) => {
-      const btn = e.target && e.target.closest ? e.target.closest('[data-pano-open]') : null;
-      if (!btn) return;
-      focusStepByPanoId(btn.getAttribute('data-pano-open'));
+  // Filtrer par état depuis Panorama (agit sur le filtre global pour rester cohérent)
+  if (statusSel) {
+    statusSel.addEventListener('change', () => {
+      const v = String(statusSel.value || 'all').trim();
+      try { if (typeof __ldSetStatusFilterValue === 'function') __ldSetStatusFilterValue(v); } catch (_) {}
+      try { if (typeof __ldApplyStatusFilterDebounced === 'function') __ldApplyStatusFilterDebounced(); } catch (_) {}
+      try { renderPanoramaView(); } catch (_) {}
     });
   }
+
+  // Batch status apply / clear selection
+  if (batchApply) {
+    batchApply.addEventListener('click', () => {
+      const v = String(batchSel?.value || 'in_progress').trim();
+      __ldPanoramaApplyStatusToIds(Array.from(__ldPanoramaSelected), v);
+    });
+  }
+  if (batchClear) {
+    batchClear.addEventListener('click', () => {
+      __ldPanoramaSelected = new Set();
+      __ldUpdatePanoramaBatchUI();
+      try { renderPanoramaView(); } catch (_) {}
+    });
+  }
+
+  if (table) {
+    // Click: tri (en-têtes) + aller
+    table.addEventListener('click', (e) => {
+      // Open
+      const btn = e.target && e.target.closest ? e.target.closest('[data-pano-open]') : null;
+      if (btn) {
+        focusStepByPanoId(btn.getAttribute('data-pano-open'));
+        return;
+      }
+
+      // Sort
+      const th = e.target && e.target.closest ? e.target.closest('th[data-sort-key]') : null;
+      if (th && !e.target?.closest?.('input')) {
+        const key = String(th.getAttribute('data-sort-key') || '').trim();
+        if (!key) return;
+        if (key === __ldPanoSortKey) __ldPanoSortDir = (__ldPanoSortDir === 'asc') ? 'desc' : 'asc';
+        else { __ldPanoSortKey = key; __ldPanoSortDir = 'asc'; }
+        __ldSavePanoramaSort();
+        renderPanoramaView();
+      }
+    });
+
+    // Change: sélection + édition d’état
+    table.addEventListener('change', (e) => {
+      const t = e.target;
+
+      // Select all visible
+      if (t && t.id === 'panorama-select-all') {
+        const check = !!t.checked;
+        const vis = Array.isArray(__ldPanoramaVisibleIds) ? __ldPanoramaVisibleIds : [];
+        if (check) vis.forEach(id => __ldPanoramaSelected.add(id));
+        else vis.forEach(id => __ldPanoramaSelected.delete(id));
+        __ldUpdatePanoramaBatchUI();
+        try { renderPanoramaView(); } catch (_) {}
+        return;
+      }
+
+      // Row checkbox
+      if (t && t.classList && t.classList.contains('pano-select')) {
+        const pid = t.getAttribute('data-pano-select');
+        if (t.checked) __ldPanoramaSelected.add(pid);
+        else __ldPanoramaSelected.delete(pid);
+        __ldUpdatePanoramaBatchUI();
+        return;
+      }
+
+      // Row status select
+      if (t && t.classList && t.classList.contains('pano-status-select')) {
+        const pid = t.getAttribute('data-pano-status');
+        const v = String(t.value || 'in_progress').trim();
+        __ldPanoramaApplyStatusToIds([pid], v);
+        return;
+      }
+    });
+  }
+
+  // Init UI state
+  __ldUpdatePanoramaBatchUI();
+  try { renderPanoramaView(); } catch (_) {}
 }
 // ---- End Panorama view ----
 
@@ -7337,7 +7706,9 @@ title_new_activity: "Ajouter un nouveau module",
             // Some labels (durations) are computed dynamically; ensure they refresh after language change.
             try { updateStats();
         initViewLevelSegmentedUI();
-        initPanoramaUI();try { updateAllStepHeaderChips(); } catch (_) {}
+        initPanoramaUI();
+        try { __ldInitStatusFilterUI(); } catch (_) {}
+        try { updateAllStepHeaderChips(); } catch (_) {}
     } catch (_) {}
         }
 
@@ -12958,7 +13329,214 @@ try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closes
             const stepEl = el?.closest ? el.closest('.step-card') : null;
             if (!stepEl) return;
             applyStepStatus(stepEl, el.value);
+            try { __ldUpdateAllStatusSummariesDebounced(); } catch (_) {}
             try { updateStatsDebounced(); } catch (_) {}
+            try { __ldApplyStatusFilterDebounced(); } catch (_) {}
+        }
+
+        // --- Status filter (affichage : Tous / À revoir / En cours / Finalisé) ---
+        let __ldStatusFilterTimer = null;
+
+        function __ldGetStatusFilterValue(){
+            const sel = document.getElementById('status-filter');
+            const v = String(sel?.value || 'all').trim();
+            return (v === 'review' || v === 'done' || v === 'in_progress' || v === 'all') ? v : 'all';
+        }
+
+        function __ldSetStatusFilterValue(v){
+            const sel = document.getElementById('status-filter');
+            if (!sel) return;
+            const vv = (v === 'review' || v === 'done' || v === 'in_progress' || v === 'all') ? v : 'all';
+            sel.value = vv;
+            try { localStorage.setItem('ld_status_filter', vv); } catch (_) {}
+        }
+
+        function __ldApplyStatusFilter(){
+            const v = __ldGetStatusFilterValue();
+
+            // Filter step cards
+            document.querySelectorAll('.step-card').forEach(stepEl => {
+                let st = 'in_progress';
+                try { st = (typeof getStepStatus === 'function') ? getStepStatus(stepEl) : (stepEl?.dataset?.status || 'in_progress'); } catch (_) {}
+                st = (typeof normaliseStepStatus === 'function') ? normaliseStepStatus(st) : String(st || '').trim();
+                const show = (v === 'all') || (st === v);
+                stepEl.classList.toggle('ld-hidden-by-status-filter', !show);
+            });
+
+            // Hide empty containers (sub-moments, moments, modules)
+            document.querySelectorAll('.submoment-card').forEach(subEl => {
+                const any = !!subEl.querySelector('.step-card:not(.ld-hidden-by-status-filter)');
+                subEl.classList.toggle('ld-hidden-by-status-filter', !any);
+            });
+
+            document.querySelectorAll('.moment-group').forEach(momentEl => {
+                const any = !!momentEl.querySelector('.step-card:not(.ld-hidden-by-status-filter)');
+                momentEl.classList.toggle('ld-hidden-by-status-filter', !any);
+            });
+
+            document.querySelectorAll('.activity-group').forEach(modEl => {
+                const any = !!modEl.querySelector('.step-card:not(.ld-hidden-by-status-filter)');
+                modEl.classList.toggle('ld-hidden-by-status-filter', !any);
+            });
+
+            // Empty message (only when a filter is active)
+            const emptyEl = document.getElementById('status-filter-empty');
+            if (emptyEl){
+                const anyVisible = !!document.querySelector('.step-card:not(.ld-hidden-by-status-filter)');
+                emptyEl.classList.toggle('hidden', anyVisible || v === 'all');
+            }
+
+            // If panorama is active, refresh the table to reflect the same filter
+            try { if (document.body?.dataset?.viewLevel === 'panorama' && typeof renderPanoramaView === 'function') renderPanoramaView(); } catch (_) {}
+        }
+
+        function __ldApplyStatusFilterDebounced(){
+            try { if (__ldStatusFilterTimer) clearTimeout(__ldStatusFilterTimer); } catch (_) {}
+            __ldStatusFilterTimer = setTimeout(() => {
+                try { __ldApplyStatusFilter(); } catch (_) {}
+            }, 40);
+        }
+
+        function __ldInitStatusFilterUI(){
+            const sel = document.getElementById('status-filter');
+            const btn = document.getElementById('status-filter-clear');
+            if (!sel) return;
+            if (sel.dataset && sel.dataset.ldInited === '1') return;
+            if (sel.dataset) sel.dataset.ldInited = '1';
+
+            // Load saved value
+            try {
+                const saved = localStorage.getItem('ld_status_filter');
+                if (saved && (saved === 'all' || saved === 'review' || saved === 'done' || saved === 'in_progress')){
+                    sel.value = saved;
+                }
+            } catch (_) {}
+
+            sel.addEventListener('change', () => {
+                try { localStorage.setItem('ld_status_filter', __ldGetStatusFilterValue()); } catch (_) {}
+                __ldApplyStatusFilterDebounced();
+            });
+
+            if (btn){
+                btn.addEventListener('click', () => {
+                    __ldSetStatusFilterValue('all');
+                    __ldApplyStatusFilterDebounced();
+                });
+            }
+
+            __ldApplyStatusFilterDebounced();
+        }
+
+
+        // --- Status summaries (Module / Moment / Sous-moment) ---
+        let __ldStatusSummaryTimer = null;
+
+        function __ldComputeStatusCounts(rootEl){
+            const counts = { done: 0, review: 0, in_progress: 0, total: 0 };
+            if (!rootEl) return counts;
+            const steps = rootEl.querySelectorAll?.('.step-card') || [];
+            steps.forEach(stepEl => {
+                const st = getStepStatus(stepEl);
+                if (st === 'done') counts.done += 1;
+                else if (st === 'review') counts.review += 1;
+                else counts.in_progress += 1;
+                counts.total += 1;
+            });
+            return counts;
+        }
+
+        function __ldRenderStatusSummary(summaryEl, counts){
+            if (!summaryEl) return;
+            const total = counts?.total || 0;
+            if (total <= 0){
+                summaryEl.innerHTML = '<span class="ld-ss-empty">0 activité</span>';
+                return;
+            }
+            const isModuleSummary = !!(summaryEl.classList && (summaryEl.classList.contains('ld-status-summary--module') || summaryEl.classList.contains('activity-status-summary')));
+            if (isModuleSummary){
+                // Module: 3 lignes pour réduire l'encombrement horizontal
+                summaryEl.innerHTML =
+                    '<span class="ld-ss-line">' +
+                        '<span class="ld-ss-item ld-ss-done">Finalisé <b>' + (counts.done || 0) + '</b></span>' +
+                    '</span>' +
+                    '<span class="ld-ss-line">' +
+                        '<span class="ld-ss-item ld-ss-review">À revoir <b>' + (counts.review || 0) + '</b></span>' +
+                    '</span>' +
+                    '<span class="ld-ss-line">' +
+                        '<span class="ld-ss-item ld-ss-progress">En cours <b>' + (counts.in_progress || 0) + '</b></span>' +
+                    '</span>';
+                return;
+            }
+            summaryEl.innerHTML =
+                '<span class="ld-ss-item ld-ss-done">Finalisé <b>' + (counts.done || 0) + '</b></span>' +
+                '<span class="ld-ss-sep">•</span>' +
+                '<span class="ld-ss-item ld-ss-review">À revoir <b>' + (counts.review || 0) + '</b></span>' +
+                '<span class="ld-ss-sep">•</span>' +
+                '<span class="ld-ss-item ld-ss-progress">En cours <b>' + (counts.in_progress || 0) + '</b></span>';
+        }
+
+        function __ldEnsureModuleSummaryEl(modEl){
+            if (!modEl) return null;
+            let el = modEl.querySelector('.activity-status-summary');
+            if (el){ el.classList && el.classList.add('ld-status-summary--module'); return el; }
+            const btn = modEl.querySelector('[data-action="toggle-module-subblocks"]');
+            if (!btn || !btn.parentElement) return null;
+            el = document.createElement('div');
+            el.className = 'activity-status-summary ld-status-summary ld-status-summary--module';
+            el.title = "Synthèse des états des activités du module";
+            btn.parentElement.insertBefore(el, btn);
+            return el;
+        }
+
+        function __ldEnsureMomentSummaryEl(momentEl){
+            if (!momentEl) return null;
+            let el = momentEl.querySelector('.moment-status-summary');
+            if (el) return el;
+            const btn = momentEl.querySelector('[data-action="toggle-moment-description"]');
+            if (!btn || !btn.parentElement) return null;
+            el = document.createElement('div');
+            el.className = 'moment-status-summary ld-status-summary';
+            el.title = "Synthèse des états des activités du moment";
+            btn.parentElement.insertBefore(el, btn);
+            return el;
+        }
+
+        function __ldEnsureSubmomentSummaryEl(subEl){
+            if (!subEl) return null;
+            let el = subEl.querySelector('.submoment-status-summary');
+            if (el) return el;
+            const btn = subEl.querySelector('[data-action="add-step-submoment"]');
+            if (!btn || !btn.parentElement) return null;
+            el = document.createElement('div');
+            el.className = 'submoment-status-summary ld-status-summary';
+            el.title = "Synthèse des états des activités du sous-moment";
+            btn.parentElement.insertBefore(el, btn);
+            return el;
+        }
+
+        function __ldUpdateAllStatusSummaries(){
+            // Modules
+            document.querySelectorAll('.activity-group').forEach(modEl => {
+                const sumEl = __ldEnsureModuleSummaryEl(modEl);
+                __ldRenderStatusSummary(sumEl, __ldComputeStatusCounts(modEl));
+            });
+            // Moments
+            document.querySelectorAll('.moment-group').forEach(momentEl => {
+                const sumEl = __ldEnsureMomentSummaryEl(momentEl);
+                __ldRenderStatusSummary(sumEl, __ldComputeStatusCounts(momentEl));
+            });
+            // Sous-moments
+            document.querySelectorAll('.submoment-card').forEach(subEl => {
+                const sumEl = __ldEnsureSubmomentSummaryEl(subEl);
+                __ldRenderStatusSummary(sumEl, __ldComputeStatusCounts(subEl));
+            });
+        }
+
+        function __ldUpdateAllStatusSummariesDebounced(){
+            try { if (__ldStatusSummaryTimer) clearTimeout(__ldStatusSummaryTimer); } catch(_) {}
+            __ldStatusSummaryTimer = setTimeout(() => {
+                try { __ldUpdateAllStatusSummaries(); } catch(_) {}
+            }, 60);
         }
 
 
@@ -13816,6 +14394,7 @@ function updateStatsDebounced() {
   __updateStatsDebounceTimer = setTimeout(() => {
     __updateStatsDebounceTimer = null;
     updateStats();
+    try { __ldApplyStatusFilterDebounced(); } catch (_) {}
     try { updateAllStepHeaderChips(); } catch (_) {}
     }, delay);
 }
@@ -13837,6 +14416,8 @@ function formatAdaptiveDurationFromSecs(totalSecs) {
 
 function updateStats() {
             const totals = getTotals();
+            try { __ldUpdateAllStatusSummariesDebounced(); } catch(_) {}
+            try { __ldApplyStatusFilterDebounced(); } catch(_) {}
             let display = `0 ${translations[currentLang].unit_mins}`;
             if (totals.totalSecs >= 604800) display = `${(totals.totalSecs / 604800).toFixed(1)} ${translations[currentLang].unit_weeks}`;
             else if (totals.totalSecs >= 86400) display = `${(totals.totalSecs / 86400).toFixed(1)} ${translations[currentLang].unit_days}`;
@@ -26611,5 +27192,143 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
   }
 })();
 </script>
+
+<script>
+/* Confort de sélection : tout sélectionner dans un moment + sélection par plage (Shift+clic) */
+(function(){
+  'use strict';
+
+  function isElementVisible(el){
+    if (!el) return false;
+    try{
+      if (el.classList && el.classList.contains('hidden')) return false;
+      const cs = window.getComputedStyle ? getComputedStyle(el) : null;
+      if (cs && (cs.display === 'none' || cs.visibility === 'hidden')) return false;
+      if (typeof el.getClientRects === 'function' && el.getClientRects().length === 0) return false;
+      return true;
+    } catch(_){
+      return true;
+    }
+  }
+
+  function getStepRangeContainer(chk){
+    if (!chk || !chk.closest) return document;
+    return chk.closest('.submoment-steps')
+        || chk.closest('.activity-steps-container')
+        || chk.closest('.steps-container')
+        || chk.closest('.submoment-card')
+        || chk.closest('.moment-group')
+        || chk.closest('.activity-group')
+        || document;
+  }
+
+  function getVisibleStepBatchCheckboxes(container){
+    const root = container || document;
+    const all = Array.from(root.querySelectorAll('.step-batch-select'));
+    return all.filter(cb => {
+      const card = cb.closest ? cb.closest('.step-card') : null;
+      return isElementVisible(card || cb);
+    });
+  }
+
+  // ---- Tout sélectionner / désélectionner dans le moment ----
+  window.selectAllStepsInMoment = function(btn){
+    const momentEl = btn && btn.closest ? btn.closest('.moment-group') : null;
+    if (!momentEl) return;
+
+    const cbs = getVisibleStepBatchCheckboxes(momentEl);
+    if (!cbs.length) return;
+
+    const shouldCheck = cbs.some(cb => !cb.checked); // si au moins une non cochée => tout cocher, sinon tout décocher
+    cbs.forEach(cb => { cb.checked = shouldCheck; });
+
+    // Rafraîchir la barre d’actions groupées (updateBatchBar est interne, on déclenche donc un change synthétique)
+    try{
+      const anchor = cbs[0];
+      if (anchor) anchor.dispatchEvent(new Event('change', { bubbles: true }));
+    } catch(_) {}
+  };
+
+  // ---- Sélection par plage (Shift+clic) ----
+  let lastStepBatchCheckbox = null;
+  let lastPanoramaCheckbox = null;
+
+  function applyStepRangeSelection(current, last, container){
+    const boxes = getVisibleStepBatchCheckboxes(container);
+    const i1 = boxes.indexOf(last);
+    const i2 = boxes.indexOf(current);
+    if (i1 < 0 || i2 < 0) return;
+    const start = Math.min(i1, i2);
+    const end = Math.max(i1, i2);
+    const state = !!current.checked;
+    for (let i = start; i <= end; i++){
+      boxes[i].checked = state;
+    }
+    // Le change du checkbox cliqué déclenchera updateBatchBar() via le listener existant
+  }
+
+  function applyPanoramaRangeSelection(current, last){
+    const table = document.getElementById('panorama-table');
+    const scope = (current && current.closest) ? (current.closest('tbody') || table) : table;
+    if (!scope) return;
+
+    const boxes = Array.from(scope.querySelectorAll('.pano-select')).filter(cb => {
+      const tr = cb.closest ? cb.closest('tr') : null;
+      return isElementVisible(tr || cb);
+    });
+
+    const i1 = boxes.indexOf(last);
+    const i2 = boxes.indexOf(current);
+    if (i1 < 0 || i2 < 0) return;
+
+    const start = Math.min(i1, i2);
+    const end = Math.max(i1, i2);
+    const state = !!current.checked;
+
+    for (let i = start; i <= end; i++){
+      const cb = boxes[i];
+      cb.checked = state;
+
+      // Mettre à jour la sélection Panorama (les "change" ne se déclenchent pas sur les cases modifiées par script)
+      try{
+        const pid = cb.getAttribute('data-pano-select');
+        if (pid){
+          if (state) __ldPanoramaSelected.add(pid);
+          else __ldPanoramaSelected.delete(pid);
+        }
+      } catch(_) {}
+    }
+
+    try{ if (typeof __ldUpdatePanoramaBatchUI === 'function') __ldUpdatePanoramaBatchUI(); } catch(_) {}
+  }
+
+  // Handler : clics sur checkboxes (capture pour capter shiftKey avant d’éventuels stopPropagation)
+  document.addEventListener('click', function(e){
+    const t = e.target;
+
+    // Range sélection sur activités (actions groupées)
+    if (t && t.matches && t.matches('.step-batch-select')) {
+      if (e.shiftKey && lastStepBatchCheckbox && lastStepBatchCheckbox !== t) {
+        const c1 = getStepRangeContainer(t);
+        const c2 = getStepRangeContainer(lastStepBatchCheckbox);
+        if (c1 === c2) applyStepRangeSelection(t, lastStepBatchCheckbox, c1);
+      }
+      lastStepBatchCheckbox = t;
+      return;
+    }
+
+    // Range sélection sur Panorama
+    if (t && t.classList && t.classList.contains('pano-select')) {
+      if (e.shiftKey && lastPanoramaCheckbox && lastPanoramaCheckbox !== t) {
+        applyPanoramaRangeSelection(t, lastPanoramaCheckbox);
+      }
+      lastPanoramaCheckbox = t;
+      return;
+    }
+  }, true);
+
+})();
+</script>
+
 </body>
 </html>
