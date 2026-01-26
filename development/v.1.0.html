@@ -96,7 +96,26 @@ textarea{resize:vertical;}
         html { scrollbar-gutter: stable; }
         body { overflow-y: scroll; }
 
-        
+
+        /* Control toolbar color system */
+        :root {
+          --ld-control-text: #475569; /* slate-600 */
+          --ld-control-text-muted: #64748b; /* slate-500 */
+          --ld-control-text-hover: #4338ca; /* indigo-700 */
+          --ld-control-border: #e2e8f0; /* slate-200 */
+          --ld-control-bg: #ffffff;
+          --ld-control-bg-hover: #f8fafc; /* slate-50 */
+          --ld-control-focus-ring: #818cf8; /* indigo-400 */
+          --ld-control-group-bg: rgba(248, 250, 252, 0.5); /* slate-50/50 */
+        }
+
+        /* Mode contraste élevé */
+        body.contrast-plus {
+          --ld-control-text: #334155; /* slate-700 */
+          --ld-control-text-hover: #3730a3; /* indigo-800 */
+          --ld-control-border: #94a3b8; /* slate-400 */
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
@@ -295,8 +314,125 @@ input, select, textarea {
         .toolbar-nowrap { flex-wrap: nowrap !important; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .toolbar-nowrap > * { flex: 0 0 auto; white-space: nowrap; }
 
+        /* ========================================
+           Control Toolbar Standardized Styles
+           ======================================== */
 
-        
+        /* Bouton standard de la toolbar */
+        .ld-control-btn {
+          height: 28px;
+          padding: 0 0.5rem;
+          font-size: 0.75rem;
+          font-weight: 800;
+          line-height: 1;
+          border-radius: 0.375rem;
+          border: 1px solid var(--ld-control-border);
+          background-color: var(--ld-control-bg);
+          color: var(--ld-control-text);
+          transition: color 0.15s, background-color 0.15s, border-color 0.15s;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.25rem;
+          cursor: pointer;
+        }
+
+        .ld-control-btn:hover {
+          color: var(--ld-control-text-hover);
+          background-color: var(--ld-control-bg-hover);
+        }
+
+        .ld-control-btn:focus-visible {
+          outline: 2px solid var(--ld-control-focus-ring);
+          outline-offset: 2px;
+        }
+
+        /* Select standard de la toolbar */
+        .ld-control-select {
+          height: 28px;
+          padding: 0 0.5rem;
+          font-size: 0.75rem;
+          font-weight: 600;
+          line-height: 1;
+          border-radius: 0.375rem;
+          border: 1px solid var(--ld-control-border);
+          background-color: var(--ld-control-bg);
+          color: var(--ld-control-text);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          cursor: pointer;
+        }
+
+        .ld-control-select:focus {
+          outline: none;
+          box-shadow: 0 0 0 2px #c7d2fe; /* indigo-200 */
+        }
+
+        /* Boutons du groupe segmenté */
+        .ld-segmented-btn {
+          height: 28px;
+          padding: 0 0.5rem;
+          font-size: 0.75rem;
+          font-weight: 800;
+          line-height: 1;
+          color: var(--ld-control-text);
+          background-color: transparent;
+          border: none;
+          transition: color 0.15s, background-color 0.15s;
+          cursor: pointer;
+        }
+
+        .ld-segmented-btn:hover {
+          color: var(--ld-control-text-hover);
+          background-color: var(--ld-control-bg-hover);
+        }
+
+        .ld-segmented-btn[aria-pressed="true"] {
+          background-color: var(--ld-control-bg-hover);
+          color: var(--ld-control-text-hover);
+        }
+
+        .ld-segmented-btn:focus-visible {
+          outline: 2px solid var(--ld-control-focus-ring);
+          outline-offset: -2px;
+          z-index: 1;
+        }
+
+        /* Style spécial pour Panorama */
+        .ld-segmented-btn[data-view-level="panorama"] {
+          color: #4338ca; /* indigo-700 */
+          background-color: #eef2ff; /* indigo-50 */
+          border-left: 1px solid #c7d2fe; /* indigo-200 */
+        }
+
+        .ld-segmented-btn[data-view-level="panorama"]:hover {
+          background-color: #e0e7ff; /* indigo-100 */
+        }
+
+        .ld-segmented-btn[data-view-level="panorama"][aria-pressed="true"] {
+          background-color: #e0e7ff; /* indigo-100 */
+          color: #3730a3; /* indigo-800 - meilleur contraste */
+        }
+
+        /* Groupe de contrôles */
+        .ld-control-group {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.25rem 0.5rem;
+          background-color: var(--ld-control-group-bg);
+          border: 1px solid rgba(226, 232, 240, 0.5); /* slate-200/50 */
+          border-radius: 0.375rem;
+        }
+
+        /* Séparateur vertical */
+        .ld-separator {
+          height: 1.5rem;
+          width: 1px;
+          background-color: #cbd5e1; /* slate-300 */
+        }
+
+
         .activity-group { scroll-margin-top: 80px; }
         .step-card { box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06); }
         .step-card:hover { box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08); }
@@ -782,6 +918,12 @@ details[data-readonly="true"] label{ cursor: default; }
         .step-card[data-status="in_progress"] .step-header { box-shadow: inset 4px 0 0 rgba(100, 116, 139, 0.35); }
         .step-status-select { text-transform: none; }
         .ld-hidden-by-status-filter{ display:none !important; }
+/* --- Toggle status selectors (Activity status dropdowns) --- */
+body:not(.ld-show-status-selectors) .step-status-select{ display:none !important; }
+body:not(.ld-show-status-selectors) .step-status-select + *:has(.no-print){ margin-left: 0 !important; }
+/* --- Toggle status summaries (Module / Moment / Sous-moment) --- */
+body.ld-hide-status-summaries .ld-status-summary{ display:none !important; }
+
 
 
         /* ===== Status summaries (Module / Moment / Sous-moment) ===== */
@@ -800,13 +942,15 @@ details[data-readonly="true"] label{ cursor: default; }
             user-select:none;
         }
 
-        /* Module: afficher la synthèse sur 3 lignes pour économiser l'espace horizontal */
-        .ld-status-summary--module{
+        /* Module & Moment: afficher la synthèse sur 3 lignes pour économiser l'espace horizontal */
+        .ld-status-summary--module,
+        .ld-status-summary--moment{
             display:inline-block;
             white-space:normal;
             line-height:1.15;
         }
-        .ld-status-summary--module .ld-ss-line{
+        .ld-status-summary--module .ld-ss-line,
+        .ld-status-summary--moment .ld-ss-line{
             display:block;
         }
 
@@ -855,6 +999,14 @@ textarea.ld-ta-expanded {
   }
 }
 
+/* ===== Control Toolbar Responsive ===== */
+@media (max-width: 480px) {
+  #jump-to-select {
+    min-width: 180px !important;
+    max-width: 240px !important;
+    font-size: 0.7rem;
+  }
+}
 
 /* ===== View level (Modules / Moments / Sous-moments / Activités) ===== */
 body[data-view-level="modules"] .activity-moments-container,
@@ -1021,6 +1173,20 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
 
 #panorama-table td.pano-col-status, #panorama-table th.pano-col-status { white-space: nowrap; }
 /* ===== END_LD_PANORAMA_DURATION_COL_V2 ===== */
+
+  /* ===== LD_PAGE_WIDTH_CANONICAL ===== */
+  :root{
+    /* Tailwind max-w-7xl = 80rem (1280px) */
+    --ld-page-max-width: 80rem;
+  }
+  .ld-page{
+    max-width: var(--ld-page-max-width);
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+  }
+  /* ===== END_LD_PAGE_WIDTH_CANONICAL ===== */
+
 </style>
 <script>
 /* Modèles: stubs globaux disponibles dès le chargement (évite les clics "inerte" avant l'initialisation).
@@ -1870,9 +2036,40 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
     opacity: 1 !important;
   }
 </style>
+
+<!-- LD PATCH: Ensure all dropdowns (select) are opaque (no transparent background) -->
+<style id="ld-opaque-selects">
+  /* Global: all selects must have a non-transparent background (overrides utility classes like bg-transparent) */
+  select{
+    background-color:#ffffff !important;
+    /* Keep native arrow unless explicitly removed elsewhere; ensure the control itself is opaque */
+  }
+  select option, select optgroup{
+    background-color:#ffffff !important;
+    color: inherit;
+  }
+
+  /* In dark UI mode, keep selects consistent with the existing dark form-control palette */
+  html.ui-dark select{
+    background-color:#0b1220 !important;
+    color:#e2e8f0 !important;
+    border-color:#334155 !important;
+  }
+  html.ui-dark select option, html.ui-dark select optgroup{
+    background-color:#0b1220 !important;
+    color:#e2e8f0 !important;
+  }
+
+  /* Print: keep dropdowns opaque even when print styles strip backgrounds */
+  @media print{
+    select{ background-color:#ffffff !important; }
+    select option, select optgroup{ background-color:#ffffff !important; }
+  }
+</style>
+
 </head>
 <body class="p-2 md:p-4 hide-types text-slate-900">
-<div class="max-w-7xl mx-auto">
+<div class="ld-page">
 <header class="mb-3">
 <h1 class="text-2xl font-bold text-slate-900 leading-tight">
     Concepteur Pédagogique - Learning Designer
@@ -2173,8 +2370,14 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
   <option data-i18n="unit_months" value="months">mois</option>
 </select>
 </div>
+</div>
 </div></div>
 <div class="p-3 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"><div>
+<label class="compact-label block" data-i18n="label_topic">
+       Thème
+      </label>
+<input class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" data-i18n-placeholder="ph_topic" id="param-topic" placeholder="Entrez le thème..." type="text"/>
+</div><div>
 <label class="compact-label block" data-i18n="label_mode">
        Modalité
       </label>
@@ -2555,8 +2758,8 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div><!-- /kpwiz-steps-wrapper -->
 </div>
 </div>
-<div id="visualisations-wrapper" role="tabpanel" aria-labelledby="top-tab-btn-visual" class="mb-3 no-print flex flex-col gap-3 max-w-7xl mx-auto w-full">
-<div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col justify-center max-w-7xl mx-auto w-full" id="timelines-wrapper">
+<div id="visualisations-wrapper" role="tabpanel" aria-labelledby="top-tab-btn-visual" class="mb-3 no-print flex flex-col gap-3 ld-page">
+<div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col justify-center ld-page" id="timelines-wrapper">
 <button class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors no-print h-[32px] rounded-lg border border-slate-200" data-i18n-title="title_toggle_panel" data-action="toggle-panel" data-panel="timeline-panel">
 <div class="flex items-center gap-1.5">
 <span class="material-icons-round text-slate-500 text-sm">
@@ -2591,6 +2794,13 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <button class="px-1.5 py-0.5 rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-center" id="timeline-zoom-reset" title="Réinitialiser" type="button">
 <span class="material-icons-round text-slate-600 text-sm">restart_alt</span>
 </button>
+</div>
+<div class="flex items-center gap-2 ml-auto">
+  <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider" data-i18n="label_duration_tolerance">Tolérance (écart acceptable)</span>
+  <div class="flex items-center gap-1">
+    <input class="w-12 px-2 py-0.5 text-[11px] border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none text-right" id="param-duration-tol-rel" min="0" step="0.5" data-action-input="update-stats-debounced" placeholder="%" type="number" value="5" aria-label="Tolérance relative en pourcentage"/>
+    <span class="text-[10px] text-slate-400" data-i18n="hint_duration_tolerance_pct">%</span>
+  </div>
 </div>
 </div>
 <div class="timeline-track bg-white rounded-xl border border-slate-200 p-1.5 flex flex-col gap-1">
@@ -2767,7 +2977,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <div aria-label="Défilement horizontal des visualisations" class="timeline-hscroll no-print" id="timeline-hscroll" role="scrollbar"><div id="timeline-hscroll-inner"></div><div aria-hidden="true" id="timeline-hscroll-thumb"></div></div></div>
 </div>
 </div>
-<details class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden w-full flex flex-col justify-center max-w-7xl mx-auto mt-2" id="analysis-tabs-wrap" open role="tabpanel" aria-labelledby="top-tab-btn-analysis"><summary class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 border-b border-slate-200 cursor-pointer select-none"><div class="flex items-center gap-1.5">
+<details class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden w-full flex flex-col justify-center ld-page mt-2" id="analysis-tabs-wrap" open role="tabpanel" aria-labelledby="top-tab-btn-analysis"><summary class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 border-b border-slate-200 cursor-pointer select-none"><div class="flex items-center gap-1.5">
 <span class="material-icons-round text-slate-500 text-sm">insights</span>
 <span class="font-bold text-slate-700 uppercase text-xs tracking-wide">Graphiques d'analyse</span>
 </div><span class="material-icons-round text-slate-500 text-sm analysis-chevron">expand_more</span></summary><div class="w-full"><div class="px-3 pt-2">
@@ -3069,50 +3279,82 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div>
 </div>
 </div></div></details>
-<div class="max-w-7xl mx-auto w-full" id="view-designer">
-<div class="flex items-center justify-between mb-2 no-print gap-2">
-  <div class="flex items-center gap-2">
-    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Navigation</span>
-    <select id="jump-to-select" class="h-[30px] px-2 text-xs border border-slate-300 rounded-md bg-white focus:ring-1 focus:ring-indigo-500 outline-none min-w-[240px] max-w-[420px]">
+<div class="ld-page" id="view-designer">
+<div class="flex flex-wrap items-center justify-between mb-2 no-print gap-2" id="view-controls-toolbar">
+
+  <!-- SECTION 1: NAVIGATION -->
+  <div class="flex items-center gap-2 flex-shrink-0">
+    <span class="hidden lg:inline text-[10px] font-bold text-slate-500 uppercase tracking-wider" aria-hidden="true">Navigation</span>
+    <select id="jump-to-select" class="ld-control-select min-w-[180px] max-w-[280px] sm:min-w-[240px] sm:max-w-[360px]" aria-label="Navigation rapide vers un élément">
       <option value="">Aller à…</option>
     </select>
-    <button id="jump-to-refresh" class="h-[30px] px-2 border border-slate-300 rounded-md bg-white text-slate-500 hover:text-indigo-600 hover:border-indigo-400 text-xs font-semibold flex items-center gap-1" type="button" title="Actualiser la liste">
+    <button id="jump-to-refresh" class="ld-control-btn border-slate-300 hover:border-indigo-400" type="button" title="Actualiser la liste de navigation" aria-label="Actualiser la navigation">
       <span class="material-icons-round text-[16px]">refresh</span>
       <span class="hidden sm:inline">Actualiser</span>
     </button>
   </div>
-  <div class="flex items-center justify-end gap-2">
-<button class="text-slate-500 hover:text-indigo-600 text-xs font-medium flex items-center gap-1 transition-colors px-2 py-1 rounded hover:bg-slate-100" id="btn-toggle-all-main" data-action="toggle-all-activities">
-<span class="material-icons-round text-base" id="icon-toggle-all-main">
-       unfold_less
-      </span>
-<span data-i18n="btn_collapse_all" id="text-toggle-all-main">
-       Tout replier
-      </span>
-</button>
-    <div class="flex items-center gap-2">
-    <span class="text-xs text-slate-500 font-extrabold">Niveau :</span>
-    <div id="ld-view-level-segmented" class="inline-flex rounded-md border border-slate-200 bg-white overflow-hidden" role="group" aria-label="Niveau d'affichage">
-      <button type="button" class="h-[26px] px-2 text-xs font-extrabold text-slate-600 hover:text-indigo-700 hover:bg-slate-50 border-r border-slate-200 transition-colors" data-view-level="modules" aria-pressed="false" title="Afficher seulement les blocs modules">Modules</button>
-      <button type="button" class="h-[26px] px-2 text-xs font-extrabold text-slate-600 hover:text-indigo-700 hover:bg-slate-50 border-r border-slate-200 transition-colors" data-view-level="moments" aria-pressed="false" title="Afficher aussi les blocs moment">Moments</button>
-      <button type="button" class="h-[26px] px-2 text-xs font-extrabold text-slate-600 hover:text-indigo-700 hover:bg-slate-50 border-r border-slate-200 transition-colors" data-view-level="submoments" aria-pressed="false" title="Afficher aussi les blocs sous moment">Sous-moments</button>
-      <button type="button" class="h-[26px] px-2 text-xs font-extrabold text-slate-600 hover:text-indigo-700 hover:bg-slate-50 transition-colors" data-view-level="activities" aria-pressed="false" title="Afficher aussi les activités">Activités</button>
-    
-      <button type="button" class="h-[26px] px-2 text-xs font-extrabold text-indigo-700 hover:text-indigo-700 hover:bg-indigo-100 border-l border-indigo-200 transition-colors bg-indigo-50" data-view-level="panorama" aria-pressed="false" title="Vue panoramique (tableau très compact)">Panorama</button>
-</div>
-    <div class="flex items-center gap-2 ml-2">
-      <span class="text-xs text-slate-500 font-extrabold">Filtre :</span>
-      <select id="status-filter" class="h-[26px] px-2 text-xs border border-slate-200 rounded-md bg-white text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-200" title="Filtrer l’affichage par état">
-        <option value="all">Tous</option>
+
+  <!-- SÉPARATEUR -->
+  <div class="ld-separator hidden xl:block" role="separator" aria-hidden="true"></div>
+
+  <!-- SECTION 2: CONTRÔLES D'AFFICHAGE -->
+  <div class="flex flex-wrap items-center justify-end gap-2 flex-grow">
+
+    <!-- GROUPE: Niveau d'affichage -->
+    <div class="ld-control-group">
+      <span class="hidden md:inline text-xs text-slate-500 font-extrabold" aria-hidden="true">Niveau</span>
+
+      <div id="ld-view-level-segmented" class="inline-flex rounded-md border border-slate-200 bg-white overflow-hidden" role="group" aria-label="Sélection du niveau d'affichage">
+        <button type="button" class="ld-segmented-btn border-r border-slate-200" data-view-level="modules" aria-pressed="false" title="Afficher seulement les blocs modules">Modules</button>
+        <button type="button" class="ld-segmented-btn border-r border-slate-200" data-view-level="moments" aria-pressed="false" title="Afficher aussi les blocs moment">Moments</button>
+        <button type="button" class="ld-segmented-btn border-r border-slate-200" data-view-level="submoments" aria-pressed="false" title="Afficher aussi les blocs sous-moment">Sous-moments</button>
+        <button type="button" class="ld-segmented-btn border-r border-slate-200" data-view-level="activities" aria-pressed="false" title="Afficher aussi les activités">Activités</button>
+        <button type="button" class="ld-segmented-btn" data-view-level="panorama" aria-pressed="false" title="Vue panoramique (tableau très compact)">Panorama</button>
+      </div>
+
+      <button class="ld-control-btn ml-1" id="btn-toggle-all-main" data-action="toggle-all-activities" aria-label="Replier ou déplier tous les modules" title="Replier ou déplier tous les modules">
+        <span class="material-icons-round text-base" id="icon-toggle-all-main">unfold_less</span>
+        <span class="hidden xl:inline" data-i18n="btn_collapse_all" id="text-toggle-all-main">Tout replier</span>
+      </button>
+    </div>
+
+    <!-- SÉPARATEUR -->
+    <div class="ld-separator hidden xl:block" role="separator" aria-hidden="true"></div>
+
+    <!-- GROUPE: Filtres et états -->
+    <div class="ld-control-group">
+      <span class="hidden md:inline text-xs text-slate-500 font-extrabold" aria-hidden="true">Filtre</span>
+
+      <select id="status-filter" class="ld-control-select" title="Filtrer l'affichage par état" aria-label="Filtrer par état de réalisation">
+        <option value="all" selected>Tous</option>
         <option value="review">À revoir</option>
         <option value="in_progress">En cours</option>
         <option value="done">Finalisé</option>
       </select>
-      <button id="status-filter-clear" type="button" class="h-[26px] px-2 rounded-md border border-slate-200 bg-white text-slate-600 text-xs font-extrabold hover:text-indigo-700 hover:bg-slate-50 transition-colors" title="Réinitialiser le filtre">Réinitialiser</button>
+
+      <button id="status-filter-clear" type="button" class="ld-control-btn" title="Réinitialiser le filtre d'état" aria-label="Réinitialiser le filtre">Réinitialiser</button>
+
+      <button id="btn-toggle-status-summaries" type="button" aria-pressed="true"
+        class="ld-control-btn"
+        title="Afficher ou masquer les synthèses d'état">
+        <span class="material-icons-round text-[16px]" id="icon-toggle-status-summaries">visibility_off</span>
+        <span class="hidden lg:inline" id="text-toggle-status-summaries">Masquer synthèses</span>
+      </button>
+
+      <button id="btn-toggle-status-selectors" type="button" aria-pressed="false"
+        class="ld-control-btn"
+        data-i18n-title="title_toggle_status_selectors"
+        title="Afficher ou masquer les sélecteurs d'état dans les activités">
+        <span class="material-icons-round text-[16px]" id="icon-toggle-status-selectors">visibility</span>
+        <span class="hidden lg:inline" id="text-toggle-status-selectors" data-i18n="btn_show_status_selectors">Afficher états</span>
+      </button>
     </div>
+
   </div>
 </div>
 </div>
+<div class="ld-page" id="designer-flow">
+
 <div id="panorama-view" class="hidden mt-2">
   <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
     <div class="flex flex-wrap items-center gap-2">
@@ -3213,7 +3455,9 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </button>
 </div>
 </div>
-<div class="mt-6 mb-4 no-print flex justify-start max-w-7xl mx-auto w-full">
+
+</div>
+<div class="mt-6 mb-4 no-print flex justify-start ld-page">
 <button class="bg-white border border-slate-300 hover:border-indigo-500 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded font-bold shadow-sm flex items-center gap-1.5 transition-all text-xs" data-i18n-title="title_new_activity" data-action="add-activity">
 <span class="material-icons-round text-lg">
       add_circle
@@ -3223,7 +3467,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
      </span>
 </button>
 </div>
-<footer class="mt-8 mb-4 text-center text-[11px] text-slate-400 no-print max-w-7xl mx-auto w-full">
+<footer class="mt-8 mb-4 text-center text-[11px] text-slate-400 no-print ld-page">
 <p>
      version 1.0 - François Jourde (2026) - CC BY SA, inspiré par le
      <a class="underline hover:text-slate-500" href="https://www.ucl.ac.uk/learning-designer/" target="_blank">
@@ -3780,7 +4024,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div>
 </div>
 </div>
-<div class="moment-status-summary ld-status-summary" title="Synthèse des états des activités du moment"></div>
+<div class="moment-status-summary ld-status-summary ld-status-summary--moment" title="Synthèse des états des activités du moment"></div>
 
 <button class="no-print text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-action="select-all-moment" title="Tout sélectionner / désélectionner les activités de ce moment" type="button" aria-label="Tout sélectionner dans le moment">
   <span class="material-icons-round text-lg">done_all</span>
@@ -3905,10 +4149,10 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </select>
 </div>
 <div class="w-32">
-<select class="step-status-select w-full px-2 py-0.5 text-xs font-semibold border border-slate-200 rounded bg-white outline-none focus:ring-2 focus:ring-indigo-200 h-[22px]" data-action-change="update-step-status" aria-label="État" title="État">
-<option value="in_progress">En cours</option>
-<option value="done">Finalisé</option>
-<option value="review">À revoir</option>
+<select class="step-status-select w-full px-2 py-0.5 text-xs border border-slate-200 rounded bg-white outline-none focus:ring-2 focus:ring-indigo-200 h-[22px]" data-action-change="update-step-status" aria-label="État" title="État">
+<option value="in_progress">⚪ En cours</option>
+<option value="done">🟢 Finalisé</option>
+<option value="review">🟠 À revoir</option>
 </select>
 </div>
 <div class="flex items-center gap-0.5 no-print">
@@ -3956,7 +4200,8 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
            Individuel
           </option>
 </select>
-<div class="step-group-details hidden flex gap-1">
+<div class="step-group-details hidden">
+<div class="flex gap-1 mb-1">
 <div class="relative flex-1">
 <input class="step-group-count w-full px-2 py-0.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none h-[24px]" data-i18n-placeholder="ph_nb_groups" min="1" data-action-input="update-group-math" data-group-math="count" placeholder="Nb groupes" type="number"/>
 <span class="absolute right-1 top-1/2 -translate-y-1/2 text-[8px] text-slate-400 pointer-events-none pr-1" data-i18n="label_short_groups">
@@ -3969,6 +4214,8 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
             Pers
            </span>
 </div>
+</div>
+<textarea class="step-group-details-notes w-full px-2 py-1 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y" placeholder="Détails du regroupement (composition, critères, etc.)" rows="2"></textarea>
 </div>
 </div>
 </div>
@@ -4258,6 +4505,84 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 
 const root = document.getElementById('activities-root');
 
+// ---- Duration comparison settings ----
+const durationComparisonSettings = {
+    absoluteTolerance: 0,     // Tolérance absolue en secondes (fixée à 0)
+    relativeTolerance: 0.02,  // Tolérance relative (±2% par défaut)
+    useRounding: true,        // Arrondir à la seconde près
+    showMinorDeviations: false // Masquer les écarts < 2%
+};
+
+// ---- Duration comparison function ----
+/**
+ * Compare deux durées et détermine si elles sont conformes
+ * @param {number} designedSecs - Durée conçue en secondes
+ * @param {number} targetSecs - Durée prévue en secondes
+ * @param {object} options - Options de tolérance
+ * @returns {object} { isMatch, deviation, deviationPct, isOver, isUnder, severity }
+ */
+function compareDurations(designedSecs, targetSecs, options = {}) {
+    const {
+        absoluteTolerance = durationComparisonSettings.absoluteTolerance,
+        relativeTolerance = durationComparisonSettings.relativeTolerance,
+        useRounding = durationComparisonSettings.useRounding,
+        showMinorDeviations = durationComparisonSettings.showMinorDeviations
+    } = options;
+
+    if (targetSecs <= 0) {
+        return {
+            isMatch: true,
+            deviation: 0,
+            deviationPct: 0,
+            isOver: false,
+            isUnder: false,
+            severity: 'ok'
+        };
+    }
+
+    const designed = useRounding ? Math.round(designedSecs) : designedSecs;
+    const target = useRounding ? Math.round(targetSecs) : targetSecs;
+
+    const deviation = designed - target;
+    const deviationPct = Math.abs(deviation) / target;
+
+    // Considérer comme conforme si dans la tolérance absolue OU relative
+    const isWithinAbsolute = Math.abs(deviation) <= absoluteTolerance;
+    const isWithinRelative = deviationPct <= relativeTolerance;
+    const isMatch = isWithinAbsolute || isWithinRelative;
+
+    // Masquer les déviations mineures si configuré
+    if (showMinorDeviations === false && deviationPct < 0.02) {
+        return {
+            isMatch: true,
+            deviation,
+            deviationPct: deviationPct * 100,
+            isOver: false,
+            isUnder: false,
+            severity: 'ok'
+        };
+    }
+
+    // Déterminer la sévérité
+    let severity = 'ok';
+    if (!isMatch) {
+        const absDev = Math.abs(deviationPct) * 100;
+        if (absDev < 5) severity = 'warning';      // Écart < 5%
+        else if (absDev < 15) severity = 'moderate'; // Écart 5-15%
+        else severity = 'severe';                    // Écart > 15%
+    }
+
+    return {
+        isMatch,
+        deviation,
+        deviationPct: deviationPct * 100, // En pourcentage
+        isOver: !isMatch && deviation > 0,
+        isUnder: !isMatch && deviation < 0,
+        severity
+    };
+}
+try { window.compareDurations = compareDurations; } catch (_) {}
+
 // ---- Global step duration helper (seconds) ----
 // Used for all designed-duration aggregates (module/moment), regardless of per-step unit.
 function getStepDurationSecs(stepCard) {
@@ -4272,6 +4597,18 @@ function getStepDurationSecs(stepCard) {
 }
 try { window.getStepDurationSecs = getStepDurationSecs; } catch (_) {}
 
+
+
+// ---- Designed step-card query helper (includes steps inside submoments) ----
+// IMPORTANT: Submoment step containers use `.submoment-steps` (not `.activity-steps-container`).
+// For all "designed duration" aggregates, we must include BOTH containers.
+function __ldQueryDesignedStepCards(scopeEl) {
+  try {
+    if (!scopeEl) return [];
+    return Array.from(scopeEl.querySelectorAll('.activity-steps-container .step-card, .submoment-steps .step-card'));
+  } catch (_) { return []; }
+}
+try { window.__ldQueryDesignedStepCards = __ldQueryDesignedStepCards; } catch (_) {}
 
 // LD_ESCAPE_HTML_GLOBAL_V1
 function __esc(s){
@@ -4291,37 +4628,18 @@ try { window.__ldEscapeHtml = __ldEscapeHtml; } catch (_) {}
 // END_LD_ESCAPE_HTML_GLOBAL_V1
 
 // ---- View level (modules / moments / submoments / activities) ----
+// Simplified view level UI update - CSS handles all visual styles via [aria-pressed]
 function __ldUpdateViewLevelSegmentedUI(level) {
   const wrap = document.getElementById('ld-view-level-segmented');
   if (!wrap) return;
-  const btns = Array.from(wrap.querySelectorAll('button[data-view-level]'));
-  btns.forEach(b => {
-    const v = String(b.getAttribute('data-view-level') || '');
-    const isActive = v === String(level);
-    b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
 
+  const normalizedLevel = String(level || '').trim();
+  const buttons = wrap.querySelectorAll('button[data-view-level]');
 
-    // LD_VIEWLEVEL_PANORAMA_ACTIVE_V1
-    const isPano = (v.trim && v.trim() === 'panorama') || (v === 'panorama');
-        if (isPano) {
-      b.classList.toggle('bg-indigo-50', isActive);
-      b.classList.toggle('text-indigo-800', isActive);
-      b.classList.toggle('bg-white', !isActive);
-    }
-
-// Reset common state
-    b.classList.remove('bg-slate-50','bg-indigo-50','bg-indigo-100','text-indigo-700','text-slate-600');
-    b.classList.add('transition-colors');
-
-    if (isActive) {
-      // Active: consistent highlight for all buttons
-      b.classList.add('bg-slate-50','text-indigo-700');
-    } else if (v === 'panorama') {
-      // Panorama: slightly more visible even when inactive
-      b.classList.add('bg-indigo-50','text-indigo-700');
-    } else {
-      b.classList.add('text-slate-600');
-    }
+  buttons.forEach(btn => {
+    const btnLevel = btn.getAttribute('data-view-level') || '';
+    const isActive = btnLevel === normalizedLevel;
+    btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
   });
 }
 
@@ -4336,7 +4654,46 @@ function applyViewLevel(level) {
   try { if (v === "panorama") renderPanoramaView(); } catch (_) {}
 }
 
+// Initialize view level UI on page load and setup keyboard navigation
+document.addEventListener('DOMContentLoaded', () => {
+  // Set initial aria-pressed state based on saved or default level
+  try {
+    const savedLevel = localStorage.getItem('ld_view_level') || 'activities';
+    __ldUpdateViewLevelSegmentedUI(savedLevel);
+  } catch (_) {}
 
+  // Enhanced keyboard navigation for segmented buttons (ARIA best practices)
+  const segmentedGroup = document.getElementById('ld-view-level-segmented');
+  if (!segmentedGroup) return;
+
+  const buttons = Array.from(segmentedGroup.querySelectorAll('button[data-view-level]'));
+
+  segmentedGroup.addEventListener('keydown', (e) => {
+    const currentBtn = e.target;
+    if (!buttons.includes(currentBtn)) return;
+
+    const currentIndex = buttons.indexOf(currentBtn);
+    let targetIndex = currentIndex;
+
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      targetIndex = currentIndex > 0 ? currentIndex - 1 : buttons.length - 1;
+    } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      targetIndex = currentIndex < buttons.length - 1 ? currentIndex + 1 : 0;
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      targetIndex = 0;
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      targetIndex = buttons.length - 1;
+    } else {
+      return;
+    }
+
+    buttons[targetIndex].focus();
+  });
+}, { once: true });
 
 // ---- Panorama view (tableau compact) ----
 function __ldGetSelectedOptionText(sel) {
@@ -7327,6 +7684,8 @@ btn_export_dropdown: "Exporter...",
                 ph_course_name: "Entrez le nom de la formation...",
 label_learning_time: "Temps d'Apprentissage (Cible)",
                 label_designed_time: "Temps Conçu (Planifié)",
+                label_duration_tolerance: "Tolérance (écart acceptable)",
+                hint_duration_tolerance_pct: "%",
                 label_hours: "h",
                 label_minutes: "m",
                 label_description: "Description générale",
@@ -7337,6 +7696,8 @@ label_learning_time: "Temps d'Apprentissage (Cible)",
                 ph_authors: "Entrez le nom du/des concepteurs...",
                 label_trainers: "Formateur(s)",
                 ph_trainers: "Entrez le nom du/des formateur(s)...",
+                label_topic: "Thème",
+                ph_topic: "Entrez le thème...",
                 opt_level_unspecified: "Non spécifié",
                 opt_level_mixed: "Mixte",
                 opt_level_beginner: "Débutant",
@@ -7369,6 +7730,9 @@ label_learning_time: "Temps d'Apprentissage (Cible)",
                 title_exit_focus: "Quitter le mode focus",
                 title_duplicate_step: "Dupliquer cette activité",
                 title_delete_step: "Supprimer cette activité",
+                title_toggle_status_selectors: "Afficher ou masquer les sélecteurs d'état dans les activités",
+                btn_show_status_selectors: "Afficher états",
+                btn_hide_status_selectors: "Masquer états",
                 title_save_project: "Enregistrer le projet dans un fichier",
                 title_load_project: "Charger un projet depuis un fichier",
 title_new_activity: "Ajouter un nouveau module",
@@ -8260,12 +8624,23 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             
             const iconText = anyOpen ? 'unfold_more' : 'unfold_less';
             const labelKey = anyOpen ? 'btn_expand_all' : 'btn_collapse_all';
-            
+
             if(mainBtnIcon) mainBtnIcon.innerText = iconText;
             if(mainBtnText) {
                 mainBtnText.innerText = translations[currentLang][labelKey];
                 mainBtnText.setAttribute('data-i18n', labelKey);
             }
+
+            // Update tooltip and aria-label dynamically for better accessibility
+            const tooltipText = anyOpen
+              ? (translations[currentLang].tooltip_expand_all || 'Déplier tous les modules')
+              : (translations[currentLang].tooltip_collapse_all || 'Replier tous les modules');
+
+            if (mainBtnIcon && mainBtnIcon.parentElement) {
+              mainBtnIcon.parentElement.setAttribute('title', tooltipText);
+              mainBtnIcon.parentElement.setAttribute('aria-label', tooltipText);
+            }
+
             if(headerBtnIcon) headerBtnIcon.innerText = iconText;
         }
 
@@ -8287,6 +8662,49 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
                 mainBtnText.innerText = translations[currentLang]['btn_expand_all'];
                 mainBtnText.setAttribute('data-i18n', 'btn_expand_all');
             }
+        }
+
+        // Collapse all expandable UI sections after loading a file.
+        function collapseAllUiAfterLoad() {
+            try { collapseAllActivitiesForced(); } catch (_) {}
+
+            try {
+                document.querySelectorAll('.moment-body').forEach(b => b.classList.add('collapsed'));
+                document.querySelectorAll('.step-body').forEach(b => b.classList.add('collapsed'));
+            } catch (_) {}
+
+            try {
+                document.querySelectorAll('details[open]').forEach(d => d.removeAttribute('open'));
+            } catch (_) {}
+
+            try {
+                document.querySelectorAll('.rotate-icon.open').forEach(i => i.classList.remove('open'));
+            } catch (_) {}
+
+            try {
+                document.querySelectorAll('.panel-content').forEach(p => {
+                    if (p.classList.contains('activity-body') || p.classList.contains('step-body') || p.classList.contains('moment-body')) return;
+                    p.classList.remove('open');
+                    p.style.display = 'none';
+                });
+            } catch (_) {}
+
+            try { if (typeof selectAnalysisTab === 'function') selectAnalysisTab(null); } catch (_) {}
+
+            try {
+                document.querySelectorAll('button[data-action="toggle-panel"][data-panel]').forEach(btn => {
+                    if (typeof updateAriaForPanel === 'function') updateAriaForPanel(btn.dataset.panel);
+                });
+                document.querySelectorAll('button[data-action="toggle-module"]').forEach(btn => {
+                    if (typeof updateAriaForModule === 'function') updateAriaForModule(btn);
+                });
+                document.querySelectorAll('button[data-action="toggle-moment"]').forEach(btn => {
+                    if (typeof updateAriaForMoment === 'function') updateAriaForMoment(btn);
+                });
+                document.querySelectorAll('button[data-action="toggle-step"]').forEach(btn => {
+                    if (typeof updateAriaForStep === 'function') updateAriaForStep(btn);
+                });
+            } catch (_) {}
         }
 
         function toggleLearningTypes() {
@@ -10988,7 +11406,7 @@ obs3.observe(alist, { childList: true, subtree: true });
                                 regroupement: stepEl.querySelector('.step-group-mode').value,
                                 nombreGroupes: stepEl.querySelector('.step-group-count').value,
                                 tailleGroupe: stepEl.querySelector('.step-group-size').value,
-                                detailsRegroupement: (stepEl.querySelector('.step-group-details')?.value || ''),
+                                detailsRegroupement: (stepEl.querySelector('.step-group-details-notes')?.value || ''),
                                 formateur: stepEl.querySelector('.trainer-select').value,
                                 lieu: stepEl.querySelector('.place-select').value,
                                 temps: stepEl.querySelector('.time-select').value,
@@ -11047,6 +11465,7 @@ function buildExportProjectData() {
                     dureeApprentissageUnite: document.getElementById('param-learning-unit').value,
                     dureeConcueValeur: (document.getElementById('param-designed-val')?.value),
                     dureeConcueUnite: (document.getElementById('param-designed-unit')?.value || document.getElementById('param-learning-unit')?.value || ''),
+                    toleranceRelativePct: (document.getElementById('param-duration-tol-rel')?.value),
                     objectifs: document.getElementById('param-aims').value,
                     objectifsItems: (typeof getAimsItemsFromUI === 'function') ? getAimsItemsFromUI() : [],
                     resultatsTexte: document.getElementById('param-outcomes-text')?.value || "",
@@ -11086,7 +11505,7 @@ function buildExportProjectData() {
                             uniteDureeCible: momentEl.querySelector('.moment-target-unit')?.value || getDefaultDurationUnitSecs(),
                             activites: []
                         };
-                        momentEl.querySelectorAll('.step-card').forEach(stepEl => {
+                        momentEl.querySelectorAll('.activity-steps-container .step-card').forEach(stepEl => {
                             const stepObj = __ldSerializeStepFromEl(stepEl);
                             momentData.activites.push(stepObj);
                             moduleData.activites.push({ ...stepObj });
@@ -11543,6 +11962,7 @@ function migrateProjectToCurrentSchema(project) {
                 learningTimeUnit: pr.dureeApprentissageUnite ?? 'mins',
                 designedTimeVal: pr.dureeConcueValeur ?? '',
                 // designedTimeUnit intentionally synced with learning unit in UI
+                durationToleranceRelPct: pr.toleranceRelativePct ?? '',
                 aims: pr.objectifs ?? '',
                 outcomesText: pr.resultatsTexte ?? '',
                 description: pr.description ?? '',
@@ -12118,6 +12538,7 @@ s.unite = s.unit;
     mirror("designedTimeUnit", p.dureeConcueUnite);
     mirror("learningTimeVal", p.dureeApprentissageValeur);
     mirror("designedTimeVal", p.dureeConcueValeur);
+    mirror("durationToleranceRelPct", p.toleranceRelativePct);
 
     return { ok: true, warnings, data: project };
 }
@@ -12268,6 +12689,7 @@ const __chartsSuspendFn = window.__setChartsSuspended;
                 __setVal('param-learning-val', __pick(__kp.learningTimeVal, __pr.dureeApprentissageValeur, ""));
                 __setVal('param-learning-unit', __pick(__kp.learningTimeUnit, __pr.dureeApprentissageUnite, "mins") || "mins");
                 __setVal('param-designed-val', __pick(__kp.designedTimeVal, __pr.dureeConcueValeur, ""));
+                __setVal('param-duration-tol-rel', __pick(__kp.durationToleranceRelPct, __pr.toleranceRelativePct, "5"));
                 // Designed Time Unit is now synced with Learning Time Unit
                 __setVal('param-aims', __pick(__kp.aims, __pr.objectifs, ""));
                 try {
@@ -12336,15 +12758,24 @@ const __chartsSuspendFn = window.__setChartsSuspended;
                 groupMode: s?.groupMode ?? s?.regroupement ?? "Classe entière",
                 groupCount: s?.groupCount ?? s?.nombreGroupes ?? "",
                 groupSize: s?.groupSize ?? s?.tailleGroupe ?? "",
+                groupDetails: s?.groupDetails ?? s?.detailsRegroupement ?? "",
                 trainer: s?.trainer ?? s?.formateur ?? "",
                 place: s?.place ?? s?.lieu ?? "",
                 time: s?.time ?? s?.temps ?? "",
+                evaluation: s?.evaluation ?? "",
                 objective: s?.objective ?? s?.objectifActivite ?? "",
                 tasks: s?.tasks ?? s?.aFaire ?? "",
+                trainerTasks: s?.trainerTasks ?? s?.aFaireFormateur ?? "",
                 notes: s?.notes ?? "",
+                linksReferences: s?.linksReferences ?? s?.liensReferences ?? "",
+                evaluationSuivi: s?.evaluationSuivi ?? "",
                 status: normaliseStepStatus(s?.status ?? s?.etat ?? s?.state ?? ""),
                 competences: _normaliseStepCompetenceIds(s?.competences ?? s?.competenceIds ?? s?.competencies ?? s?.competencesCiblees ?? ""),
-                competencesTransversales: _normaliseStepCompetenceIds(s?.competencesTransversales ?? s?.competences_transversales ?? s?.transversalCompetences ?? s?.competencesTransversalesIds ?? '')
+                competencesTransversales: _normaliseStepCompetenceIds(s?.competencesTransversales ?? s?.competences_transversales ?? s?.transversalCompetences ?? s?.competencesTransversalesIds ?? ''),
+                aimsTargets: s?.aimsTargets ?? s?.objectifsCibles ?? [],
+                outcomesTargets: s?.outcomesTargets ?? s?.resultatsApprentissageCibles ?? [],
+                toolsMaterialsTargets: s?.toolsMaterialsTargets ?? s?.outilsMaterielCibles ?? [],
+                toolsMaterialsNotes: s?.toolsMaterialsNotes ?? s?.outilsMaterielNotes ?? {}
             });
 
             const normaliseMoment = (m) => ({
@@ -12885,8 +13316,8 @@ if (modal) {
             }
         });
 
-   // Default behaviour after loading: keep all modules collapsed.
-            collapseAllActivitiesForced();
+   // Default behaviour after loading: keep everything collapsed.
+            collapseAllUiAfterLoad();
 
             updateEmptyState();
             updateStats();
@@ -13027,6 +13458,8 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
             stepEl.querySelector('.step-group-mode').value = (data.groupMode || data.regroupement || "class");
             stepEl.querySelector('.step-group-count').value = data.groupCount || 1;
             stepEl.querySelector('.step-group-size').value = data.groupSize || 30;
+            const groupDetailsEl = stepEl.querySelector('.step-group-details-notes');
+            if (groupDetailsEl) groupDetailsEl.value = data.groupDetails || data.detailsRegroupement || "";
             stepEl.querySelector('.trainer-select').value = data.trainer || "present";
             stepEl.querySelector('.place-select').value = data.place || "situ";
             stepEl.querySelector('.time-select').value = data.time || "sync";
@@ -13427,6 +13860,107 @@ try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closes
             __ldApplyStatusFilterDebounced();
         }
 
+// --- Toggle status summaries (afficher/masquer) ---
+function __ldAreStatusSummariesVisible(){
+    try { return (localStorage.getItem('ld_show_status_summaries') ?? '1') !== '0'; } catch (_) { return true; }
+}
+
+function __ldUpdateStatusSummariesToggleButton(){
+    const btn = document.getElementById('btn-toggle-status-summaries');
+    if (!btn) return;
+    const icon = document.getElementById('icon-toggle-status-summaries');
+    const txt = document.getElementById('text-toggle-status-summaries');
+    const visible = !document.body.classList.contains('ld-hide-status-summaries');
+    if (icon) icon.textContent = visible ? 'visibility_off' : 'visibility';
+    if (txt) txt.textContent = visible ? 'Masquer synthèses' : 'Afficher synthèses';
+    btn.setAttribute('aria-pressed', visible ? 'true' : 'false');
+}
+
+function __ldSetStatusSummariesVisible(isVisible){
+    const v = isVisible ? '1' : '0';
+    try { localStorage.setItem('ld_show_status_summaries', v); } catch (_) {}
+    try { document.body.classList.toggle('ld-hide-status-summaries', !isVisible); } catch (_) {}
+    try { __ldUpdateStatusSummariesToggleButton(); } catch (_) {}
+    if (isVisible){
+        try { __ldUpdateAllStatusSummariesDebounced(); } catch (_) {}
+    }
+}
+
+function __ldInitStatusSummariesToggleUI(){
+    const btn = document.getElementById('btn-toggle-status-summaries');
+    if (!btn) return;
+    if (btn.dataset && btn.dataset.ldInited === '1') return;
+    if (btn.dataset) btn.dataset.ldInited = '1';
+
+    // Load saved preference (default: visible)
+    let visible = true;
+    try {
+        const saved = localStorage.getItem('ld_show_status_summaries');
+        if (saved === '0') visible = false;
+    } catch (_) {}
+
+    try { document.body.classList.toggle('ld-hide-status-summaries', !visible); } catch (_) {}
+    try { __ldUpdateStatusSummariesToggleButton(); } catch (_) {}
+
+    btn.addEventListener('click', () => {
+        const currentlyHidden = document.body.classList.contains('ld-hide-status-summaries');
+        __ldSetStatusSummariesVisible(currentlyHidden); // if hidden -> show, else hide
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => { try { __ldInitStatusSummariesToggleUI(); } catch (_) {} }, { once: true });
+
+// --- Toggle status selectors (afficher/masquer les sélecteurs d'état dans les activités) ---
+function __ldAreStatusSelectorsVisible(){
+    try { return (localStorage.getItem('ld_show_status_selectors') ?? '0') === '1'; } catch (_) { return false; }
+}
+
+function __ldUpdateStatusSelectorsToggleButton(){
+    const btn = document.getElementById('btn-toggle-status-selectors');
+    if (!btn) return;
+    const icon = document.getElementById('icon-toggle-status-selectors');
+    const txt = document.getElementById('text-toggle-status-selectors');
+    const visible = document.body.classList.contains('ld-show-status-selectors');
+    if (icon) icon.textContent = visible ? 'visibility_off' : 'visibility';
+    if (txt) {
+        const t = translations[currentLang] || translations.fr || {};
+        txt.textContent = visible ? (t.btn_hide_status_selectors || 'Masquer états') : (t.btn_show_status_selectors || 'Afficher états');
+        txt.setAttribute('data-i18n', visible ? 'btn_hide_status_selectors' : 'btn_show_status_selectors');
+    }
+    btn.setAttribute('aria-pressed', visible ? 'true' : 'false');
+}
+
+function __ldSetStatusSelectorsVisible(isVisible){
+    const v = isVisible ? '1' : '0';
+    try { localStorage.setItem('ld_show_status_selectors', v); } catch (_) {}
+    try { document.body.classList.toggle('ld-show-status-selectors', isVisible); } catch (_) {}
+    try { __ldUpdateStatusSelectorsToggleButton(); } catch (_) {}
+}
+
+function __ldInitStatusSelectorsToggleUI(){
+    const btn = document.getElementById('btn-toggle-status-selectors');
+    if (!btn) return;
+    if (btn.dataset && btn.dataset.ldInited === '1') return;
+    if (btn.dataset) btn.dataset.ldInited = '1';
+
+    // Load saved preference (default: hidden)
+    let visible = false;
+    try {
+        const saved = localStorage.getItem('ld_show_status_selectors');
+        if (saved === '1') visible = true;
+    } catch (_) {}
+
+    try { document.body.classList.toggle('ld-show-status-selectors', visible); } catch (_) {}
+    try { __ldUpdateStatusSelectorsToggleButton(); } catch (_) {}
+
+    btn.addEventListener('click', () => {
+        const currentlyVisible = document.body.classList.contains('ld-show-status-selectors');
+        __ldSetStatusSelectorsVisible(!currentlyVisible); // toggle
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => { try { __ldInitStatusSelectorsToggleUI(); } catch (_) {} }, { once: true });
+
 
         // --- Status summaries (Module / Moment / Sous-moment) ---
         let __ldStatusSummaryTimer = null;
@@ -13452,9 +13986,13 @@ try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closes
                 summaryEl.innerHTML = '<span class="ld-ss-empty">0 activité</span>';
                 return;
             }
-            const isModuleSummary = !!(summaryEl.classList && (summaryEl.classList.contains('ld-status-summary--module') || summaryEl.classList.contains('activity-status-summary')));
-            if (isModuleSummary){
-                // Module: 3 lignes pour réduire l'encombrement horizontal
+            const isMultilineSummary = !!(summaryEl.classList && (
+                summaryEl.classList.contains('ld-status-summary--module') ||
+                summaryEl.classList.contains('ld-status-summary--moment') ||
+                summaryEl.classList.contains('activity-status-summary')
+            ));
+            if (isMultilineSummary){
+                // Module / Moment: 3 lignes pour réduire l'encombrement horizontal
                 summaryEl.innerHTML =
                     '<span class="ld-ss-line">' +
                         '<span class="ld-ss-item ld-ss-done">Finalisé <b>' + (counts.done || 0) + '</b></span>' +
@@ -13491,11 +14029,11 @@ try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closes
         function __ldEnsureMomentSummaryEl(momentEl){
             if (!momentEl) return null;
             let el = momentEl.querySelector('.moment-status-summary');
-            if (el) return el;
+            if (el){ el.classList && el.classList.add('ld-status-summary--moment'); return el; }
             const btn = momentEl.querySelector('[data-action="toggle-moment-description"]');
             if (!btn || !btn.parentElement) return null;
             el = document.createElement('div');
-            el.className = 'moment-status-summary ld-status-summary';
+            el.className = 'moment-status-summary ld-status-summary ld-status-summary--moment';
             el.title = "Synthèse des états des activités du moment";
             btn.parentElement.insertBefore(el, btn);
             return el;
@@ -13553,8 +14091,7 @@ try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closes
                 const title = act.querySelector('.activity-title').value || `${translations[currentLang].md_untitled_activity} ${idx+1}`;
                 let actSecs = 0;
                 const activitySteps = [];
-                const steps = act.querySelectorAll('.step-card');
-                
+                const steps = __ldQueryDesignedStepCards(act);
                 steps.forEach(step => {
                     const secs = getStepDurationSecs(step);
                     const type = step.querySelector('.learning-type-select').value;
@@ -14416,6 +14953,13 @@ function formatAdaptiveDurationFromSecs(totalSecs) {
 
 function updateStats() {
             const totals = getTotals();
+            // Sync user-defined duration tolerance (% only)
+            try {
+                const relEl = document.getElementById('param-duration-tol-rel');
+                const relVal = relEl ? parseFloat(relEl.value) : NaN;
+                durationComparisonSettings.absoluteTolerance = 0;
+                if (Number.isFinite(relVal) && relVal >= 0) durationComparisonSettings.relativeTolerance = relVal / 100;
+            } catch (_) {}
             try { __ldUpdateAllStatusSummariesDebounced(); } catch(_) {}
             try { __ldApplyStatusFilterDebounced(); } catch(_) {}
             let display = `0 ${translations[currentLang].unit_mins}`;
@@ -14482,9 +15026,10 @@ function updateStats() {
             // Update designed time per moment (sum of contained activities), expressed in the moment unit
             document.querySelectorAll('.moment-group').forEach(momentEl => {
                 let secs = 0;
-                momentEl.querySelectorAll('.step-card').forEach(stepEl => { secs += getStepDurationSecs(stepEl); });
+                __ldQueryDesignedStepCards(momentEl).forEach(stepEl => { secs += getStepDurationSecs(stepEl); });
 
-                const unitSel = momentEl.querySelector('.moment-target-unit');
+                try { momentEl.dataset.designedSecs = String(secs); } catch (_) {}
+const unitSel = momentEl.querySelector('.moment-target-unit');
                 const unitSecs = mapUnitToSecs(unitSel?.value || getDefaultDurationUnitSecs());
                 const unitText = __ldGetUnitLabelBySecs(unitSecs, unitLabelFmt);
 
@@ -14507,21 +15052,20 @@ function updateStats() {
                     const tv = targetVal ? parseFloat(targetVal.value) : 0;
                     const targetSecs = (isNaN(tv) ? 0 : tv) * (isNaN(unitSecs) ? 60 : unitSecs);
 
-                    if (targetSecs > 0 && Math.round(secs) !== Math.round(targetSecs)) {
-                        if (designedBadge) designedBadge.classList.add('duration-alert-light');
-                    }
+                    if (targetSecs > 0) {
+                        const cmp = (typeof compareDurations === 'function')
+                            ? compareDurations(secs, targetSecs)
+                            : { isMatch: Math.round(secs) === Math.round(targetSecs), deviation: secs - targetSecs };
+                        if (!cmp.isMatch && designedBadge) designedBadge.classList.add('duration-alert-light');
 
-                    if (compareEl) {
-                        if (targetSecs > 0) {
-                            const a = Math.round(targetSecs);
-                            const b = Math.round(secs);
-                            const sym = (a === b) ? '=' : (a < b ? '<' : '>');
+                        if (compareEl) {
+                            const sym = cmp.isMatch ? '=' : (cmp.deviation > 0 ? '>' : '<');
                             compareEl.textContent = sym;
-                            compareEl.classList.toggle('text-red-600', sym === '<' || sym === '>');
-                        } else {
-                            compareEl.textContent = '=';
-                            compareEl.classList.remove('text-red-600');
+                            compareEl.classList.toggle('text-red-600', !cmp.isMatch);
                         }
+                    } else if (compareEl) {
+                        compareEl.textContent = '=';
+                        compareEl.classList.remove('text-red-600');
                     }
                 } catch (_) {}
 
@@ -14671,10 +15215,14 @@ function updateStats() {
                         actEl.className = 'h-full border-r border-white last:border-0 relative group box-border flex items-center justify-center cursor-pointer';
                         actEl.style.width = `${actWidthPct}%`;
 
+                        const cmp = (typeof compareDurations === 'function')
+                            ? compareDurations(designedSecs, plannedSecs)
+                            : { isMatch: designedSecs === plannedSecs, isUnder: designedSecs < plannedSecs, isOver: designedSecs > plannedSecs };
+
                         // Missing part (only when a target is set and designed < planned)
                         const missingEl = document.createElement('div');
                         missingEl.className = 'absolute inset-0 timeline-missing-light';
-                        if (!(plannedSecs > 0 && designedSecs < plannedSecs)) {
+                        if (!(plannedSecs > 0 && cmp.isUnder)) {
                             missingEl.style.display = 'none';
                         }
 
@@ -14686,7 +15234,7 @@ function updateStats() {
                         // Overrun alert (designed > planned)
                         const overEl = document.createElement('div');
                         overEl.className = 'absolute inset-0 timeline-alert-light pointer-events-none';
-                        if (!(plannedSecs > 0 && designedSecs > plannedSecs)) {
+                        if (!(plannedSecs > 0 && cmp.isOver)) {
                             overEl.style.display = 'none';
                         }
 
@@ -14745,13 +15293,17 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
                         wrap.className = 'relative h-full flex overflow-hidden border-r border-slate-200/70 last:border-0';
                         wrap.style.width = `${actWidthPct}%`;
 
+                        const cmp = (typeof compareDurations === 'function')
+                            ? compareDurations(designedSecs, plannedSecs)
+                            : { isMatch: designedSecs === plannedSecs, isUnder: designedSecs < plannedSecs, isOver: designedSecs > plannedSecs };
+
                         const missingEl = document.createElement('div');
                         missingEl.className = 'absolute inset-0 bg-slate-200/30 timeline-missing-light pointer-events-none';
-                        if (!(plannedSecs > 0 && designedSecs < plannedSecs)) missingEl.style.display = 'none';
+                        if (!(plannedSecs > 0 && cmp.isUnder)) missingEl.style.display = 'none';
 
                         const overEl = document.createElement('div');
                         overEl.className = 'absolute inset-0 bg-red-200/35 timeline-alert-light pointer-events-none';
-                        if (!(plannedSecs > 0 && designedSecs > plannedSecs)) overEl.style.display = 'none';
+                        if (!(plannedSecs > 0 && cmp.isOver)) overEl.style.display = 'none';
 
                         const fill = document.createElement('div');
                         fill.className = 'absolute left-0 top-0 bottom-0 flex';
@@ -14887,13 +15439,17 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
                         wrap.className = 'relative h-full flex overflow-hidden border-r border-slate-200/70 last:border-0';
                         wrap.style.width = `${actWidthPct}%`;
 
+                        const cmp = (typeof compareDurations === 'function')
+                            ? compareDurations(designedSecs, plannedSecs)
+                            : { isMatch: designedSecs === plannedSecs, isUnder: designedSecs < plannedSecs, isOver: designedSecs > plannedSecs };
+
                         const missingEl = document.createElement('div');
                         missingEl.className = 'absolute inset-0 bg-slate-200/30 timeline-missing-light pointer-events-none';
-                        if (!(plannedSecs > 0 && designedSecs < plannedSecs)) missingEl.style.display = 'none';
+                        if (!(plannedSecs > 0 && cmp.isUnder)) missingEl.style.display = 'none';
 
                         const overEl = document.createElement('div');
                         overEl.className = 'absolute inset-0 bg-red-200/35 timeline-alert-light pointer-events-none';
-                        if (!(plannedSecs > 0 && designedSecs > plannedSecs)) overEl.style.display = 'none';
+                        if (!(plannedSecs > 0 && cmp.isOver)) overEl.style.display = 'none';
 
                         const fill = document.createElement('div');
                         fill.className = 'absolute left-0 top-0 bottom-0 flex';
@@ -15099,22 +15655,34 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
                     const timeWrap = makeModuleWrapper(moduleWidthPct);
 
                     // Alerts on Track 2 (Learning types) – same behaviour as Track 1
+                    const cmp = (typeof compareDurations === 'function')
+                        ? compareDurations(designedSecs, plannedSecs)
+                        : { isMatch: designedSecs === plannedSecs, isUnder: designedSecs < plannedSecs, isOver: designedSecs > plannedSecs, deviation: designedSecs - plannedSecs };
+
                     const missingEl = document.createElement('div');
                     missingEl.className = 'absolute inset-0 timeline-missing-light';
-                    if (!(plannedSecs > 0 && designedSecs < plannedSecs)) {
+                    if (!(plannedSecs > 0 && cmp.isUnder)) {
                         missingEl.style.display = 'none';
                     }
 
                     const overEl = document.createElement('div');
                     overEl.className = 'absolute inset-0 timeline-alert-light pointer-events-none';
-                    if (!(plannedSecs > 0 && designedSecs > plannedSecs)) {
+                    if (!(plannedSecs > 0 && cmp.isOver)) {
                         overEl.style.display = 'none';
                     }
 
                     const iconsEl = document.createElement('div');
                     iconsEl.className = 'timeline-alert-icons';
-                    if (plannedSecs > 0 && designedSecs !== plannedSecs) {
-                        iconsEl.style.display = 'none';
+                    if (plannedSecs > 0 && !cmp.isMatch) {
+                        const deviationMins = Math.round(Math.abs(cmp.deviation || 0) / 60);
+                        if (deviationMins > 0) {
+                            iconsEl.textContent = (cmp.deviation > 0)
+                                ? `Trop long +${deviationMins}m`
+                                : `Trop court -${deviationMins}m`;
+                            iconsEl.style.display = 'flex';
+                        } else {
+                            iconsEl.style.display = 'none';
+                        }
                     } else {
                         iconsEl.style.display = 'none';
                     }
@@ -15206,13 +15774,26 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
 	                    const targetVal = group.querySelector('.activity-target-time');
 	                    const targetUnitSel = group.querySelector('.activity-target-unit');
 	                    const compareEl = group.querySelector('.module-time-compare');
+
+                    // Designed duration for this module (seconds) = sum of ACTIVITY durations only.
+                    // This intentionally ignores MODULE/MOMENT target fields to avoid any double-counting.
+                    const moduleDesignedSecs = (() => {
+                        let secs = 0;
+                        try {
+                            __ldQueryDesignedStepCards(group).forEach(stepEl => { secs += getStepDurationSecs(stepEl); });
+                        } catch (_) {}
+                        secs = Number.isFinite(secs) ? secs : 0;
+                        try { group.dataset.designedSecs = String(secs); } catch (_) {}
+                        return secs;
+                    })();
+
                     
                     if (bar && label) {
                         bar.innerHTML = '';
                         // Update label
                         const unitSecs = mapUnitToSecs(targetUnitSel?.value || getDefaultDurationUnitSecs());
                         const unitText = __ldGetUnitLabelBySecs(unitSecs, unitLabelFmt);
-                        let v = actData.duration / unitSecs;
+                        let v = moduleDesignedSecs / unitSecs;
                         if (unitSecs === 60) v = Math.round(v);
                         else v = parseFloat(v.toFixed(1));
                         label.innerText = `${v} ${unitText}`;
@@ -15223,29 +15804,28 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
 	                          const tv = targetVal ? parseFloat(targetVal.value) : 0;
 	                          const tu = targetUnitSel ? mapUnitToSecs(targetUnitSel.value) : 60;
 	                          const targetSecs = (isNaN(tv) ? 0 : tv) * (isNaN(tu) ? 60 : tu);
-	                          if (targetSecs > 0 && Math.round(actData.duration) !== Math.round(targetSecs)) {
-	                            designedBadge.classList.add('duration-alert-light');
-	                          }
-	                          // Comparison symbol between target and designed at module level
-	                          if (compareEl) {
-	                            if (targetSecs > 0) {
-	                              const a = Math.round(targetSecs);
-	                              const b = Math.round(actData.duration);
-	                              const sym = (a === b) ? '=' : (a < b ? '<' : '>');
-				      compareEl.textContent = sym;
-				      compareEl.classList.toggle('text-red-600', sym === '<' || sym === '>');
-				    } else {
-				      compareEl.textContent = '';
-				      compareEl.classList.remove('text-red-600');
-				    }
+	                          if (targetSecs > 0) {
+	                            const cmp = (typeof compareDurations === 'function')
+	                                ? compareDurations(moduleDesignedSecs, targetSecs)
+	                                : { isMatch: Math.round(moduleDesignedSecs) === Math.round(targetSecs), deviation: moduleDesignedSecs - targetSecs };
+	                            if (!cmp.isMatch) designedBadge.classList.add('duration-alert-light');
+	                            // Comparison symbol between target and designed at module level
+	                            if (compareEl) {
+	                              const sym = cmp.isMatch ? '=' : (cmp.deviation > 0 ? '>' : '<');
+	                              compareEl.textContent = sym;
+	                              compareEl.classList.toggle('text-red-600', !cmp.isMatch);
+	                            }
+	                          } else if (compareEl) {
+	                            compareEl.textContent = '';
+	                            compareEl.classList.remove('text-red-600');
 	                          }
 	                        }
 
                         // Update bar
-                        if (actData.duration > 0) {
+                        if (moduleDesignedSecs > 0) {
                             actData.steps.forEach(step => {
                                 if (step.duration > 0) {
-                                    const pct = (step.duration / actData.duration) * 100;
+                                    const pct = (step.duration / moduleDesignedSecs) * 100;
                                     const el = document.createElement('div');
                                     el.style.width = `${pct}%`;
                                     el.style.backgroundColor = TYPE_COLORS[step.type];
@@ -15838,7 +16418,7 @@ function __deprecated__exportCSV_1() {
         const modeTxt = getSelectedText(modeEl);
         const modeVal = modeEl ? modeEl.value : '';
         const sizeVal = (stepEl.querySelector('.step-group-size')?.value || '').toString().trim();
-        const detailsVal = (stepEl.querySelector('.step-group-details')?.value || '').toString().trim();
+        const detailsVal = (stepEl.querySelector('.step-group-details-notes')?.value || '').toString().trim();
         let txt = modeTxt;
         if (modeVal === 'groups' && sizeVal) txt = `${modeTxt} (${sizeVal})`;
         if (detailsVal) txt = txt ? `${txt} — ${detailsVal}` : detailsVal;
@@ -15868,7 +16448,7 @@ function __deprecated__exportCSV_1() {
                 const momentDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
                 const momentTarget = fmtTarget(momentEl.querySelector('.moment-target-time'), momentEl.querySelector('.moment-target-unit'));
 
-                const steps = momentEl.querySelectorAll('.step-card');
+                const steps = momentEl.querySelectorAll('.activity-steps-container .step-card');
                 let activityIdx = 0;
 
                 if (steps && steps.length) {
@@ -16306,7 +16886,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const groupModeTxt = groupModeEl && groupModeEl.selectedOptions[0] ? (groupModeEl.selectedOptions[0].innerText || '').trim() : '';
                         const groupSizeVal = (step.querySelector('.step-group-size')?.value || '').toString().trim();
                         const groupCountVal = (step.querySelector('.step-group-count')?.value || '').toString().trim();
-                        const groupDetailsVal = (step.querySelector('.step-group-details')?.value || '').toString().trim();
+                        const groupDetailsVal = (step.querySelector('.step-group-details-notes')?.value || '').toString().trim();
                         let groupInfo = groupModeTxt;
                         if (groupModeVal === 'groups') {
                             const bits = [];
@@ -16380,7 +16960,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 if (hasMoments) {
                     momentEls.forEach((momentEl, mIdx) => {
                         const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
-                        const stepCards = momentEl.querySelectorAll('.step-card');
+                        const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
                         const momentSecs = calcMomentSecs(stepCards);
 
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
@@ -16481,7 +17061,7 @@ function __deprecated__exportCSV_2() {
         const modeTxt = getSelectedText(modeEl);
         const modeVal = modeEl ? modeEl.value : '';
         const sizeVal = (stepEl.querySelector('.step-group-size')?.value || '').toString().trim();
-        const detailsVal = (stepEl.querySelector('.step-group-details')?.value || '').toString().trim();
+        const detailsVal = (stepEl.querySelector('.step-group-details-notes')?.value || '').toString().trim();
         let txt = modeTxt;
         if (modeVal === 'groups' && sizeVal) txt = `${modeTxt} (${sizeVal})`;
         if (detailsVal) txt = txt ? `${txt} — ${detailsVal}` : detailsVal;
@@ -16511,7 +17091,7 @@ function __deprecated__exportCSV_2() {
                 const momentDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
                 const momentTarget = fmtTarget(momentEl.querySelector('.moment-target-time'), momentEl.querySelector('.moment-target-unit'));
 
-                const steps = momentEl.querySelectorAll('.step-card');
+                const steps = momentEl.querySelectorAll('.activity-steps-container .step-card');
                 let activityIdx = 0;
 
                 if (steps && steps.length) {
@@ -16762,7 +17342,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const groupModeTxt = groupModeEl && groupModeEl.selectedOptions[0] ? (groupModeEl.selectedOptions[0].innerText || '').trim() : '';
                         const groupSizeVal = (step.querySelector('.step-group-size')?.value || '').toString().trim();
                         const groupCountVal = (step.querySelector('.step-group-count')?.value || '').toString().trim();
-                        const groupDetailsVal = (step.querySelector('.step-group-details')?.value || '').toString().trim();
+                        const groupDetailsVal = (step.querySelector('.step-group-details-notes')?.value || '').toString().trim();
                         let groupInfo = groupModeTxt;
                         if (groupModeVal === 'groups') {
                             const bits = [];
@@ -16830,7 +17410,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 if (hasMoments) {
                     momentEls.forEach((momentEl, mIdx) => {
                         const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
-                        const stepCards = momentEl.querySelectorAll('.step-card');
+                        const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
                         const momentSecs = calcMomentSecs(stepCards);
 
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
@@ -16901,7 +17481,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 const modeTxt = selText(modeEl);
                 const modeVal = modeEl ? modeEl.value : '';
                 const sizeVal = (stepEl.querySelector('.step-group-size')?.value || '').toString().trim();
-                const detailsVal = (stepEl.querySelector('.step-group-details')?.value || '').toString().trim();
+                const detailsVal = (stepEl.querySelector('.step-group-details-notes')?.value || '').toString().trim();
                 let txt = modeTxt;
                 if (modeVal === 'groups' && sizeVal) txt = `${modeTxt} (${sizeVal})`;
                 if (detailsVal) txt = txt ? `${txt} — ${detailsVal}` : detailsVal;
@@ -16960,7 +17540,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     if (momentDesc) rtf += `Description: ${esc(momentDesc)}\\par\n`;
                     rtf += '\\par\n';
 
-                    const steps = momentEl.querySelectorAll('.step-card');
+                    const steps = momentEl.querySelectorAll('.activity-steps-container .step-card');
                     if (!steps || steps.length === 0) {
                         rtf += `(Aucune activité)\\par\n\\par\n`;
                         return;
@@ -17049,7 +17629,7 @@ function __deprecated__exportCSV_3() {
         const modeTxt = getSelectedText(modeEl);
         const modeVal = modeEl ? modeEl.value : '';
         const sizeVal = (stepEl.querySelector('.step-group-size')?.value || '').toString().trim();
-        const detailsVal = (stepEl.querySelector('.step-group-details')?.value || '').toString().trim();
+        const detailsVal = (stepEl.querySelector('.step-group-details-notes')?.value || '').toString().trim();
         let txt = modeTxt;
         if (modeVal === 'groups' && sizeVal) txt = `${modeTxt} (${sizeVal})`;
         if (detailsVal) txt = txt ? `${txt} — ${detailsVal}` : detailsVal;
@@ -17079,7 +17659,7 @@ function __deprecated__exportCSV_3() {
                 const momentDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
                 const momentTarget = fmtTarget(momentEl.querySelector('.moment-target-time'), momentEl.querySelector('.moment-target-unit'));
 
-                const steps = momentEl.querySelectorAll('.step-card');
+                const steps = momentEl.querySelectorAll('.activity-steps-container .step-card');
                 let activityIdx = 0;
 
                 if (steps && steps.length) {
@@ -17330,7 +17910,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const groupModeTxt = groupModeEl && groupModeEl.selectedOptions[0] ? (groupModeEl.selectedOptions[0].innerText || '').trim() : '';
                         const groupSizeVal = (step.querySelector('.step-group-size')?.value || '').toString().trim();
                         const groupCountVal = (step.querySelector('.step-group-count')?.value || '').toString().trim();
-                        const groupDetailsVal = (step.querySelector('.step-group-details')?.value || '').toString().trim();
+                        const groupDetailsVal = (step.querySelector('.step-group-details-notes')?.value || '').toString().trim();
                         let groupInfo = groupModeTxt;
                         if (groupModeVal === 'groups') {
                             const bits = [];
@@ -17398,7 +17978,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 if (hasMoments) {
                     momentEls.forEach((momentEl, mIdx) => {
                         const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
-                        const stepCards = momentEl.querySelectorAll('.step-card');
+                        const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
                         const momentSecs = calcMomentSecs(stepCards);
 
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
@@ -17494,7 +18074,7 @@ function __deprecated__exportCSV_4() {
         const modeTxt = getSelectedText(modeEl);
         const modeVal = modeEl ? modeEl.value : '';
         const sizeVal = (stepEl.querySelector('.step-group-size')?.value || '').toString().trim();
-        const detailsVal = (stepEl.querySelector('.step-group-details')?.value || '').toString().trim();
+        const detailsVal = (stepEl.querySelector('.step-group-details-notes')?.value || '').toString().trim();
         let txt = modeTxt;
         if (modeVal === 'groups' && sizeVal) txt = `${modeTxt} (${sizeVal})`;
         if (detailsVal) txt = txt ? `${txt} — ${detailsVal}` : detailsVal;
@@ -17524,7 +18104,7 @@ function __deprecated__exportCSV_4() {
                 const momentDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
                 const momentTarget = fmtTarget(momentEl.querySelector('.moment-target-time'), momentEl.querySelector('.moment-target-unit'));
 
-                const steps = momentEl.querySelectorAll('.step-card');
+                const steps = momentEl.querySelectorAll('.activity-steps-container .step-card');
                 let activityIdx = 0;
 
                 if (steps && steps.length) {
@@ -17775,7 +18355,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const groupModeTxt = groupModeEl && groupModeEl.selectedOptions[0] ? (groupModeEl.selectedOptions[0].innerText || '').trim() : '';
                         const groupSizeVal = (step.querySelector('.step-group-size')?.value || '').toString().trim();
                         const groupCountVal = (step.querySelector('.step-group-count')?.value || '').toString().trim();
-                        const groupDetailsVal = (step.querySelector('.step-group-details')?.value || '').toString().trim();
+                        const groupDetailsVal = (step.querySelector('.step-group-details-notes')?.value || '').toString().trim();
                         let groupInfo = groupModeTxt;
                         if (groupModeVal === 'groups') {
                             const bits = [];
@@ -17843,7 +18423,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 if (hasMoments) {
                     momentEls.forEach((momentEl, mIdx) => {
                         const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
-                        const stepCards = momentEl.querySelectorAll('.step-card');
+                        const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
                         const momentSecs = calcMomentSecs(stepCards);
 
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
@@ -18174,7 +18754,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const __modeTxt = (__modeEl && __modeEl.selectedOptions && __modeEl.selectedOptions[0]) ? ((__modeEl.selectedOptions[0].innerText || '').trim()) : '';
                         const __sizeVal = (step.querySelector('.step-group-size')?.value || '').toString().trim();
                         const __countVal = (step.querySelector('.step-group-count')?.value || '').toString().trim();
-                        const __detailsVal = (step.querySelector('.step-group-details')?.value || '').toString().trim();
+                        const __detailsVal = (step.querySelector('.step-group-details-notes')?.value || '').toString().trim();
                         let groupInfo = __modeTxt || __modeVal;
                         if (__modeVal === 'groups') {
                             const bits = [];
@@ -18242,7 +18822,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 if (hasMoments) {
                     momentEls.forEach((momentEl, mIdx) => {
                         const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
-                        const stepCards = momentEl.querySelectorAll('.step-card');
+                        const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
                         const momentSecs = calcMomentSecs(stepCards);
 
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
@@ -18436,7 +19016,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 const modeTxt = selText(modeEl);
                 const modeVal = modeEl ? modeEl.value : '';
                 const sizeVal = (stepEl.querySelector('.step-group-size')?.value || '').toString().trim();
-                const detailsVal = (stepEl.querySelector('.step-group-details')?.value || '').toString().trim();
+                const detailsVal = (stepEl.querySelector('.step-group-details-notes')?.value || '').toString().trim();
                 let txt = modeTxt;
                 if (modeVal === 'groups' && sizeVal) txt = `${modeTxt} (${sizeVal})`;
                 if (detailsVal) txt = txt ? `${txt} — ${detailsVal}` : detailsVal;
@@ -18495,7 +19075,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     if (momentDesc) md += `- **Description :** ${momentDesc}\n`;
                     md += `\n`;
 
-                    const steps = momentEl.querySelectorAll('.step-card');
+                    const steps = momentEl.querySelectorAll('.activity-steps-container .step-card');
                     if (!steps || steps.length === 0) {
                         md += `*(Aucune activité)*\n\n`;
                         return;
@@ -18699,7 +19279,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const groupModeTxt = groupModeEl && groupModeEl.selectedOptions[0] ? (groupModeEl.selectedOptions[0].innerText || '').trim() : '';
                         const groupSizeVal = (step.querySelector('.step-group-size')?.value || '').toString().trim();
                         const groupCountVal = (step.querySelector('.step-group-count')?.value || '').toString().trim();
-                        const groupDetailsVal = (step.querySelector('.step-group-details')?.value || '').toString().trim();
+                        const groupDetailsVal = (step.querySelector('.step-group-details-notes')?.value || '').toString().trim();
                         let groupInfo = groupModeTxt;
                         if (groupModeVal === 'groups') {
                             const bits = [];
@@ -18767,7 +19347,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 if (hasMoments) {
                     momentEls.forEach((momentEl, mIdx) => {
                         const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
-                        const stepCards = momentEl.querySelectorAll('.step-card');
+                        const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
                         const momentSecs = calcMomentSecs(stepCards);
 
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
@@ -19001,7 +19581,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const groupModeTxt = groupModeEl && groupModeEl.selectedOptions[0] ? (groupModeEl.selectedOptions[0].innerText || '').trim() : '';
                         const groupSizeVal = (step.querySelector('.step-group-size')?.value || '').toString().trim();
                         const groupCountVal = (step.querySelector('.step-group-count')?.value || '').toString().trim();
-                        const groupDetailsVal = (step.querySelector('.step-group-details')?.value || '').toString().trim();
+                        const groupDetailsVal = (step.querySelector('.step-group-details-notes')?.value || '').toString().trim();
                         let groupInfo = groupModeTxt;
                         if (groupModeVal === 'groups') {
                             const bits = [];
@@ -19069,7 +19649,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 if (hasMoments) {
                     momentEls.forEach((momentEl, mIdx) => {
                         const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
-                        const stepCards = momentEl.querySelectorAll('.step-card');
+                        const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
                         const momentSecs = calcMomentSecs(stepCards);
 
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
@@ -19466,7 +20046,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             : '';
                         const groupSizeVal = (step.querySelector('.step-group-size')?.value || '').toString().trim();
                         const groupCountVal = (step.querySelector('.step-group-count')?.value || '').toString().trim();
-                        const groupDetailsVal = (step.querySelector('.step-group-details')?.value || '').toString().trim();
+                        const groupDetailsVal = (step.querySelector('.step-group-details-notes')?.value || '').toString().trim();
                         let groupInfo = groupModeTxt;
                         if (groupModeVal === 'groups') {
                             const bits = [];
@@ -19539,7 +20119,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 if (hasMoments) {
                     momentEls.forEach((momentEl, mIdx) => {
                         const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
-                        const stepCards = momentEl.querySelectorAll('.step-card');
+                        const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
                         const momentSecs = calcMomentSecs(stepCards);
 
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
@@ -19616,7 +20196,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 const modeTxt = getSelectedText(modeEl);
                 const sizeVal = (stepEl.querySelector('.step-group-size')?.value || '').toString().trim();
                 const countVal = (stepEl.querySelector('.step-group-count')?.value || '').toString().trim();
-                const detailsVal = (stepEl.querySelector('.step-group-details')?.value || '').toString().trim();
+                const detailsVal = (stepEl.querySelector('.step-group-details-notes')?.value || '').toString().trim();
 
                 let txt = modeTxt;
                 if (modeVal === 'groups') {
@@ -19745,7 +20325,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const momentDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
                         const momentTarget = fmtTarget(momentEl.querySelector('.moment-target-time'), momentEl.querySelector('.moment-target-unit'));
 
-                        const stepCards = momentEl.querySelectorAll('.step-card');
+                        const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
                         const momentSecs = sumStepsToSecs(stepCards);
                         const momentPrefix = `${moduleIdx}.${moIdx + 1}`;
 
@@ -19890,7 +20470,7 @@ md += `- **Horodatage d'export :** ${new Date().toISOString()}\n\n`;
                         const groupModeTxt = (groupModeEl && groupModeEl.selectedOptions && groupModeEl.selectedOptions[0]) ? ((groupModeEl.selectedOptions[0].innerText || '').trim()) : groupModeVal;
                         const groupSizeVal = (step.querySelector('.step-group-size')?.value || '').toString().trim();
                         const groupCountVal = (step.querySelector('.step-group-count')?.value || '').toString().trim();
-                        const groupDetailsVal = (step.querySelector('.step-group-details')?.value || '').toString().trim();
+                        const groupDetailsVal = (step.querySelector('.step-group-details-notes')?.value || '').toString().trim();
 
                         let groupInfo = groupModeTxt || groupModeVal;
                         if (groupModeVal === 'groups') {
@@ -19973,7 +20553,7 @@ ${notes}
                 if (hasMoments) {
                     momentEls.forEach((momentEl, mIdx) => {
                         const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
-                        const stepCards = momentEl.querySelectorAll('.step-card');
+                        const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
                         const momentSecs = calcMomentSecs(stepCards);
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
 
@@ -22853,8 +23433,8 @@ function updateCharts() {
     reader.readAsText(file);
   }
 function insertModule(payload, position, refIndex) {
-  if (typeof addActivityFromData !== 'function') throw new Error("Fonction d'ajout de module introuvable.");
-  addActivityFromData(payload);
+  if (typeof window.App?.Data?.addActivityFromData !== 'function') throw new Error("Fonction d'ajout de module introuvable.");
+  window.App.Data.addActivityFromData(payload);
   const newEl = root?.lastElementChild;
   if (!newEl) return;
 
@@ -22898,7 +23478,7 @@ function insertMoment(payload, moduleIndex, position, refMomentIndex) {
     stepsContainer.innerHTML = '';
     if (Array.isArray(payload.steps)) {
       payload.steps.forEach(s => {
-        if (typeof addStepToContainerFromData === 'function') addStepToContainerFromData(stepsContainer, s);
+        if (typeof window.App?.Data?.addStepToContainerFromData === 'function') window.App.Data.addStepToContainerFromData(stepsContainer, s);
       });
     }
     if (typeof initSortableSteps === 'function') initSortableSteps(stepsContainer);
@@ -25653,7 +26233,7 @@ function init(){
 
 <!-- Barre : Actions groupées -->
 <div id="batch-actions-bar" class="fixed bottom-0 left-0 right-0 hidden no-print z-[105]">
-  <div class="max-w-6xl mx-auto p-2">
+  <div class="ld-page p-2">
     <div class="batch-actions-inner bg-white border border-slate-200 rounded-xl shadow-lg p-2 flex flex-wrap items-center gap-2">
       <div class="flex items-center gap-2">
         <span class="material-icons-round text-slate-400 text-[18px]">done_all</span>
