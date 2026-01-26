@@ -776,6 +776,12 @@ details[data-readonly="true"] label{ cursor: default; }
 
 
         body.has-batch-bar { padding-bottom: 90px; }
+        /* --- Step status (signalisation) --- */
+        .step-card[data-status="done"] .step-header { box-shadow: inset 4px 0 0 rgba(34, 197, 94, 0.75); }
+        .step-card[data-status="review"] .step-header { box-shadow: inset 4px 0 0 rgba(245, 158, 11, 0.85); }
+        .step-card[data-status="in_progress"] .step-header { box-shadow: inset 4px 0 0 rgba(100, 116, 139, 0.35); }
+        .step-status-select { text-transform: none; }
+
         .step-coherence-indicator { cursor: help; }
 
 /* --- UI: make batch actions bar more visible --- */
@@ -1564,6 +1570,7 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
       'handle-ui-theme-change': ({el}) => call('handleUiThemeChange', el),
       'update-stats': () => call('updateStats'),
       'update-step-type': ({el}) => call('updateStepType', el),
+      'update-step-status': ({el}) => call('updateStepStatus', el),
       'toggle-group-mode': ({el}) => call('toggleGroupMode', el)
     });
 
@@ -3729,7 +3736,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 
 <template id="step-template">
 <div class="step-card bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative group flex flex-col">
-<div class="flex items-center gap-2 p-2 bg-slate-50 border-b border-slate-100 transition-colors">
+<div class="step-header flex items-center gap-2 p-2 bg-slate-50 border-b border-slate-100 transition-colors">
 <div class="drag-handle-step drag-handle flex items-center justify-center text-slate-300 hover:text-slate-500 cursor-grab">
 <span class="material-icons-round text-base">
        drag_indicator
@@ -3787,6 +3794,13 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <option data-i18n="type_production" value="production">
         Production
        </option>
+</select>
+</div>
+<div class="w-32">
+<select class="step-status-select w-full px-2 py-0.5 text-xs font-semibold border border-slate-200 rounded bg-white outline-none focus:ring-2 focus:ring-indigo-200 h-[22px]" data-action-change="update-step-status" aria-label="État" title="État">
+<option value="in_progress">En cours</option>
+<option value="done">Finalisé</option>
+<option value="review">À revoir</option>
 </select>
 </div>
 <div class="flex items-center gap-0.5 no-print">
@@ -7670,6 +7684,8 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             container.appendChild(clone);
             const newStep = container.lastElementChild;
 
+            try { applyStepStatus(newStep, 'in_progress'); } catch(_) {}
+
             try { populateStepCompetencesSelect(newStep, []); } catch (_) {}
             try { populateStepCompetencesTransversalesSelect(newStep, []); } catch (_) {}
             try { populateStepAimsSelect(newStep, []); } catch (_) {}
@@ -10596,6 +10612,8 @@ obs3.observe(alist, { childList: true, subtree: true });
                                 unite: stepEl.querySelector('.duration-unit').value,
                                 duration: stepEl.querySelector('.duration-input').value,
                                 unit: stepEl.querySelector('.duration-unit').value,
+                                status: getStepStatus(stepEl),
+                                etat: getStepStatus(stepEl),
                                 regroupement: stepEl.querySelector('.step-group-mode').value,
                                 nombreGroupes: stepEl.querySelector('.step-group-count').value,
                                 tailleGroupe: stepEl.querySelector('.step-group-size').value,
@@ -11264,6 +11282,7 @@ objective: asStr(s?.objective ?? s?.objectifActivite ?? ""),
         tasks: asStr(s?.tasks ?? s?.aFaire ?? ""),
         trainerTasks: asStr(s?.trainerTasks ?? s?.aFaireFormateur ?? s?.trainer_actions ?? s?.trainerActions ?? ''),
         notes: asStr(s?.notes ?? ""),
+        status: normaliseStepStatus(s?.status ?? s?.etat ?? s?.state ?? ''),
         evaluationSuivi: asStr(s?.evaluationSuivi ?? s?.evaluation ?? s?.suiviEvaluation ?? s?.followUp ?? s?.evalFollowUp ?? ''),
         detailsRegroupement: asStr(s?.detailsRegroupement ?? s?.groupDetails ?? ''),
         objectifsCibles: Array.isArray(s?.objectifsCibles) ? s.objectifsCibles : (Array.isArray(s?.aimsTargeted) ? s.aimsTargeted : []),
@@ -11604,6 +11623,7 @@ if (m.targetTimeSec == null) {
                                             s.trainer = _trimText(s.trainer ?? s.formateur ?? "", 200);
                                             s.place = _trimText(s.place ?? s.lieu ?? "", 200);
                                             s.time = _trimText(s.time ?? s.temps ?? "", 50);
+                                            s.status = normaliseStepStatus(s.status ?? s.etat ?? s.state ?? "");
 
                                             const _normIds = (raw) => {
                                                 if (!raw) return [];
@@ -11673,6 +11693,7 @@ s.unite = s.unit;
                             s.trainer = _trimText(s.trainer ?? s.formateur ?? "", 200);
                             s.place = _trimText(s.place ?? s.lieu ?? "", 200);
                             s.time = _trimText(s.time ?? s.temps ?? "", 50);
+                                            s.status = normaliseStepStatus(s.status ?? s.etat ?? s.state ?? "");
 
                             // Duration fields (synchronised: value + unit)
 s.duration = _normaliseNumberString(s.duration ?? s.duree ?? "", 30);
@@ -11950,6 +11971,7 @@ const __chartsSuspendFn = window.__setChartsSuspended;
                 objective: s?.objective ?? s?.objectifActivite ?? "",
                 tasks: s?.tasks ?? s?.aFaire ?? "",
                 notes: s?.notes ?? "",
+                status: normaliseStepStatus(s?.status ?? s?.etat ?? s?.state ?? ""),
                 competences: _normaliseStepCompetenceIds(s?.competences ?? s?.competenceIds ?? s?.competencies ?? s?.competencesCiblees ?? ""),
                 competencesTransversales: _normaliseStepCompetenceIds(s?.competencesTransversales ?? s?.competences_transversales ?? s?.transversalCompetences ?? s?.competencesTransversalesIds ?? '')
             });
@@ -12638,6 +12660,7 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
             stepEl.querySelector('.place-select').value = data.place || "situ";
             stepEl.querySelector('.time-select').value = data.time || "sync";
                         stepEl.querySelector('.evaluation-select').value = data.evaluation || "Aucune";
+            try { applyStepStatus(stepEl, (data.status ?? data.etat ?? data.state ?? 'in_progress')); } catch(_) {}
 stepEl.querySelector('.step-input-objective').value = data.objective || "";
             stepEl.querySelector('.step-input-tasks').value = data.tasks || "";
             stepEl.querySelector('.step-input-trainer-tasks').value = data.trainerTasks || data.aFaireFormateur || data.trainer_actions || data.trainerActions || "";
@@ -12757,6 +12780,8 @@ if (((data.groupMode || data.regroupement) === 'groups')) stepEl.querySelector('
             container.appendChild(clone);
 
             const newStep = container.lastElementChild;
+
+            try { applyStepStatus(newStep, 'in_progress'); } catch(_) {}
 
             
             try { populateStepCompetencesSelect(newStep, []); } catch (_) {}
@@ -12898,6 +12923,44 @@ try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closes
             select.classList.add(`select-${type}`);
             updateStats();
         }
+
+        // --- Step status (Finalisé / À revoir / En cours) ---
+        function normaliseStepStatus(v) {
+            const raw = String(v ?? '').trim().toLowerCase();
+            if (!raw) return 'in_progress';
+            // Common synonyms (FR/EN)
+            if (['done','final','finalised','finalized','finalise','finalisé','termine','terminé','ok','validé','valide'].includes(raw)) return 'done';
+            if (['review','to_review','a_revoir','a revoir','à revoir','revoir','rework','needs_review','à valider','a valider'].includes(raw)) return 'review';
+            if (['in_progress','progress','en_cours','en cours','draft','brouillon','todo','à faire','a faire'].includes(raw)) return 'in_progress';
+            return 'in_progress';
+        }
+
+        function getStepStatus(stepEl) {
+            try {
+                const ds = stepEl?.dataset?.status;
+                if (ds) return normaliseStepStatus(ds);
+                const sel = stepEl?.querySelector?.('.step-status-select');
+                if (sel) return normaliseStepStatus(sel.value);
+            } catch (_) {}
+            return 'in_progress';
+        }
+
+        function applyStepStatus(stepEl, statusKey) {
+            if (!stepEl) return;
+            const st = normaliseStepStatus(statusKey);
+            try { stepEl.dataset.status = st; } catch (_) {}
+            const sel = stepEl.querySelector?.('.step-status-select');
+            if (sel && sel.value !== st) sel.value = st;
+        }
+
+        function updateStepStatus(el) {
+            try { historyCaptureNow(); } catch (_) {}
+            const stepEl = el?.closest ? el.closest('.step-card') : null;
+            if (!stepEl) return;
+            applyStepStatus(stepEl, el.value);
+            try { updateStatsDebounced(); } catch (_) {}
+        }
+
 
         function getTotals() {
             const activities = document.querySelectorAll('.activity-group');
@@ -21923,7 +21986,8 @@ function updateCharts() {
       title: stepEl.querySelector('.step-input-title')?.value || "",
       type: stepEl.querySelector('.learning-type-select')?.value || "acquisition",
       duration: parseFloat(stepEl.querySelector('.duration-input')?.value || "0") || 0,
-      unit: stepEl.querySelector('.duration-unit')?.value || getDefaultDurationUnitKey?.() || "60"
+      unit: stepEl.querySelector('.duration-unit')?.value || getDefaultDurationUnitKey?.() || "60",
+      status: getStepStatus(stepEl)
     };
   }
 
@@ -25030,6 +25094,18 @@ function init(){
         <button id="batch-apply-evaluation" type="button" class="px-2 py-1 rounded-md bg-slate-800 text-white text-xs hover:bg-slate-900">Appliquer</button>
       </div>
 
+      <div class="flex items-center gap-1">
+        <span class="text-[10px] font-bold text-slate-500 uppercase">État</span>
+        <select id="batch-status" class="w-40 px-2 py-1 text-xs border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-200">
+          <option value="">— choisir —</option>
+          <option value="in_progress">En cours</option>
+          <option value="done">Finalisé</option>
+          <option value="review">À revoir</option>
+        </select>
+        <button id="batch-apply-status" type="button" class="px-2 py-1 rounded-md bg-slate-800 text-white text-xs hover:bg-slate-900">Appliquer</button>
+      </div>
+
+
       <div class="h-6 w-px bg-slate-200 mx-1 hidden md:block"></div>
 
       <div class="flex items-center gap-1">
@@ -25494,6 +25570,21 @@ function init(){
     });
   }
 
+  function batchApplyStatus(){
+    const v = (Q('#batch-status')?.value || '').trim();
+    if (!v) return;
+    selectedSteps().forEach(stepEl => {
+      const sel = Q('.step-status-select', stepEl);
+      if (sel){
+        sel.value = v;
+        try{ sel.dispatchEvent(new Event('change', {bubbles:true})); }catch(_){}
+      } else {
+        try { if (typeof applyStepStatus === 'function') applyStepStatus(stepEl, v); } catch(_) {}
+      }
+    });
+  }
+
+
   function promptToolChoice(){
     let options = [];
     try{
@@ -25662,6 +25753,7 @@ function init(){
 
   // Wiring
   Q('#batch-apply-evaluation')?.addEventListener('click', batchApplyEvaluation);
+  Q('#batch-apply-status')?.addEventListener('click', batchApplyStatus);
   Q('#batch-add-tool')?.addEventListener('click', batchAddTool);
   Q('#batch-remove-tool')?.addEventListener('click', batchRemoveTool);
   Q('#batch-add-alignment')?.addEventListener('click', batchAddAlignment);
