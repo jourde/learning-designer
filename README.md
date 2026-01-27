@@ -21,6 +21,4 @@ Le concepteur pédagogique (_learning designer_) est une application web monopag
 
 ## Développements envisagés
 ### Taxonomies des résultats d'apprentissage
-- Chargement de multiples taxonomies.
-- Utilisation des taxonomies aux différents niveaux de la conception d'apprentissage (module, moment, activité)
 - ...
