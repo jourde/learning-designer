@@ -2982,10 +2982,10 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <span class="font-bold text-slate-700 uppercase text-xs tracking-wide">Graphiques d'analyse</span>
 </div><span class="material-icons-round text-slate-500 text-sm analysis-chevron">expand_more</span></summary><div class="w-full"><div class="px-3 pt-2">
 <div aria-label="Graphiques d'analyse" class="analysis-tabbar" role="tablist">
-<button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="modalites" id="analysis-tab-modalites" role="tab" type="button">Modalités</button>
-<button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="competences" id="analysis-tab-competences" role="tab" type="button">Compétences</button>
-<button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="aims" id="analysis-tab-aims" role="tab" type="button">Objectifs</button>
-<button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="outcomes" id="analysis-tab-outcomes" role="tab" type="button">Résultats</button>
+<button aria-selected="true" class="analysis-tab-btn is-active" data-analysis-tab="modalites" id="analysis-tab-modalites" role="tab" type="button" onclick="selectAnalysisTab('modalites')">Modalités</button>
+<button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="competences" id="analysis-tab-competences" role="tab" type="button" onclick="selectAnalysisTab('competences')">Compétences</button>
+<button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="aims" id="analysis-tab-aims" role="tab" type="button" onclick="selectAnalysisTab('aims')">Objectifs</button>
+<button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="outcomes" id="analysis-tab-outcomes" role="tab" type="button" onclick="selectAnalysisTab('outcomes')">Résultats</button>
 </div>
 </div><div class="p-2 pt-1" id="analysis-tabs-content">
 <div class="analysis-tab-pane" data-analysis-pane="competences" id="analysis-pane-competences">
@@ -3228,7 +3228,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <div class="mt-1 text-[11px] text-slate-500">Ces graphiques analysent les résultats sélectionnés dans les activités. La liste de référence provient de « Informations et paramètres → 3. Objectifs et résultats ».</div>
 </div>
 </div>
-<div class="analysis-tab-pane" data-analysis-pane="modalites" id="analysis-pane-modalites">
+<div class="analysis-tab-pane is-active" data-analysis-pane="modalites" id="analysis-pane-modalites">
 <div class="panel-content w-full flex flex-col gap-1 mt-1 p-1 rounded-lg border border-slate-200 bg-slate-50" id="modalites-charts-panel">
 <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
 <div class="bg-white rounded-xl border border-slate-200 p-2">
@@ -8558,19 +8558,52 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             panes.forEach(p => {
                 const active = p.getAttribute('data-analysis-pane') === key;
                 p.classList.toggle('is-active', active);
+                if (active) {
+                    try {
+                        p.querySelectorAll('.panel-content').forEach(pc => {
+                            pc.style.display = '';
+                            pc.classList.add('open');
+                        });
+                    } catch (_) {}
+                }
             });
             try { localStorage.setItem('analysis_tab', key); } catch (e) {}
+            try {
+                if (typeof requestUpdateCharts === 'function') requestUpdateCharts();
+                else if (typeof updateCharts === 'function') updateCharts();
+            } catch (_) {}
         }
 
-        document.addEventListener('click', (e) => {
-            const btn = e.target.closest('[data-analysis-tab]');
-            if (!btn) return;
-            selectAnalysisTab(btn.getAttribute('data-analysis-tab'));
-        });
+        function bindAnalysisTabs() {
+            const wrap = document.getElementById('analysis-tabs-wrap');
+            if (!wrap) return;
+            const buttons = wrap.querySelectorAll('[data-analysis-tab]');
+
+            const handler = (e) => {
+                const btn = e.target && e.target.closest ? e.target.closest('[data-analysis-tab]') : null;
+                if (!btn) return;
+                try { e.preventDefault(); } catch(_) {}
+                try { e.stopPropagation(); } catch(_) {}
+                selectAnalysisTab(btn.getAttribute('data-analysis-tab'));
+            };
+
+            // Capture early to avoid other global handlers hijacking the click.
+            wrap.addEventListener('pointerdown', handler, true);
+            wrap.addEventListener('mousedown', handler, true);
+            wrap.addEventListener('click', handler, true);
+
+            // Fallback: direct listeners on buttons for safety.
+            buttons.forEach((btn) => {
+                btn.addEventListener('click', handler);
+            });
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Show the tabs bar, but keep panes folded until the user clicks a tab.
-            selectAnalysisTab(null);
+            bindAnalysisTabs();
+            // Restore last tab or default to "modalites" so charts are visible.
+            let saved = null;
+            try { saved = localStorage.getItem('analysis_tab'); } catch (_) {}
+            selectAnalysisTab(saved || 'modalites');
         });
 
 
@@ -8684,6 +8717,7 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             try {
                 document.querySelectorAll('.panel-content').forEach(p => {
                     if (p.classList.contains('activity-body') || p.classList.contains('step-body') || p.classList.contains('moment-body')) return;
+                    if (p.closest && p.closest('#analysis-tabs-wrap')) return;
                     p.classList.remove('open');
                     p.style.display = 'none';
                 });
@@ -12015,6 +12049,11 @@ function migrateProjectToCurrentSchema(project) {
 function forceCanonicalImport(payload) {
     if (!payload || typeof payload !== "object") throw new Error("invalid_payload");
     const p0 = payload.project || payload.data || payload.conception || payload.learningDesign || payload;
+    const warnings = [];
+    const rawModules = Array.isArray(p0?.activities) ? p0.activities
+        : (Array.isArray(p0?.modules) ? p0.modules
+            : (Array.isArray(p0?.activites) ? p0.activites : []));
+    const baseProject = (p0 && typeof p0 === "object") ? { ...p0 } : {};
 
     // Params
     const pr = (p0 && typeof p0 === "object" && p0.parametres && typeof p0.parametres === "object") ? p0.parametres : {};
@@ -12125,7 +12164,7 @@ objective: asStr(s?.objective ?? s?.objectifActivite ?? ""),
                 };
             };
 
-            const normalised = { ...p };
+            const normalised = { ...baseProject, keyParams: canonicalKeyParams, parametres: pr };
             normalised.activities = rawModules.map(normModule);
 
             // Ensure key params shape exists (loadProjectFromObject handles both, but we keep consistent)
@@ -12541,6 +12580,16 @@ s.unite = s.unit;
     mirror("durationToleranceRelPct", p.toleranceRelativePct);
 
     return { ok: true, warnings, data: project };
+}
+
+// Legacy helper alias expected by older loader paths
+function validateAndNormaliseProjectPayload(project) {
+    try {
+        const migrated = migrateProjectToCurrentSchema(project);
+        return normaliseAndRepairProject(migrated && migrated.project ? migrated.project : project);
+    } catch (e) {
+        return { ok: false, warnings: ["validation_exception"], data: null, error: e };
+    }
 }
 
 
@@ -27692,6 +27741,12 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
         panel.style.display = '';
         if(t.isDetails){
           try { panel.open = true; } catch(e){}
+        }
+        if (t.id === 'analysis') {
+          try {
+            if (typeof requestUpdateCharts === 'function') requestUpdateCharts();
+            else if (typeof updateCharts === 'function') updateCharts();
+          } catch (_) {}
         }
       } else {
         panel.style.display = 'none';
