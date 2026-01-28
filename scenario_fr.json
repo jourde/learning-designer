@@ -1,0 +1,1602 @@
+{
+  "version": "1.8",
+  "schemaVersion": 2,
+  "exportedAt": "2026-01-11T10:30:00Z",
+  "i18n": {
+    "defaultLang": "fr",
+    "currentLang": "fr",
+    "packs": {}
+  },
+  "parametres": {
+    "nom": "Atelier en ligne — Prise en main du Learning Designer",
+    "theme": "Utiliser le Learning Designer pour concevoir, analyser et exporter une séquence pédagogique",
+    "auteurs": "Équipe PD (fictif)",
+    "niveau": "intermediate",
+    "publicCible": "Enseignants (K12) — développement professionnel",
+    "prerequis": "Exigences techniques : une bonne connexion internet haut débit et un ordinateur portable, un PC de bureau ou une tablette (avec la dernière version de Chrome, Firefox ou Safari installée). Accès autorisé au téléchargement et à l’import de fichiers .json.",
+    "modalite": "online",
+    "tailleCohorte": "20",
+    "dureeApprentissageValeur": "90",
+    "dureeApprentissageUnite": "mins",
+    "dureeConcueValeur": "90",
+    "dureeConcueUnite": "mins",
+    "objectifs": "Principe d’andragogie (atelier en ligne, enseignants) :\n- Favoriser l’autonomie et l’auto-direction.\n- Mobiliser l’expérience professionnelle et l’intégrer aux nouveaux apports.\n- Développer la réflexivité (retour sur pratique).\n- Stimuler la motivation intrinsèque et l’application immédiate.\n- Résoudre des problèmes pratiques et co-construire du sens en situation.\n\nLe contenu du cours inclut :\n- Repères d’interface : Projet, Vue, Plus…\n- Panneau Informations : métadonnées et temps cible/conçu\n- Hiérarchie Modules ➔ Moments ➔ Activités\n- Types d’apprentissage (D. Laurillard) et impact sur l’analyse\n- Modalités (présentiel/distanciel, synchrone/asynchrone, regroupement)\n- Lecture de la timeline et des Graphiques d’analyse\n- Sauvegarde JSON, imports tolérants et récupération en cas d’échec\n- Exports (Markdown IA, PDF, CSV, RTF, page web HTML si disponible)",
+    "resultatsTexte": "À la fin de cette formation, les participants seront capables de :\n- Décrire les principes d’andragogie appliqués à un atelier en ligne.\n- Structurer une conception en Modules, Moments et Activités dans l’outil.\n- Paramétrer les informations clés d’une formation (public, durée, prérequis, objectifs, résultats d’apprentissage).\n- Renseigner des activités avec un type d’apprentissage (Laurillard), des modalités et une durée.\n- Analyser l’équilibre pédagogique via la chronologie et les graphiques.\n- Exporter une conception (Markdown, PDF, CSV, RTF) selon le besoin.\n- Diagnostiquer un import échoué et récupérer une version texte du projet si nécessaire.",
+    "resultats": [
+      {
+        "texte": "Structurer une conception dans l’outil (Modules, Moments, Activités).",
+        "niveau": "Appliquer",
+        "sousNiveau": "Exécuter"
+      },
+      {
+        "texte": "Analyser une conception via timeline et graphiques.",
+        "niveau": "Analyser",
+        "sousNiveau": "Examiner"
+      },
+      {
+        "texte": "Exporter une conception dans un format adapté.",
+        "niveau": "Appliquer",
+        "sousNiveau": "Mettre en œuvre"
+      }
+    ],
+    "description": "Atelier de développement professionnel en ligne (90 minutes) : prise en main du Learning Designer.\n\n### Déroulé de session (90 minutes)\n\n| Durée | Objectifs d’apprentissage | Activités | Approches pédagogiques | Type d’apprentissage (Laurillard) |\n|---:|---|---|---|---|\n| 5 min | Poser le cadre et créer un climat de travail | Accueil, objectifs, règles de participation | Contractualisation, engagement, ancrage dans les besoins | Discussion |\n| 10 min | Relier l’atelier à la pratique professionnelle | Andragogie : principes + lien avec situations de classe | Déclencheur par problème, questionnement guidé | Acquisition |\n| 10 min | Identifier les zones clés de l’outil | Visite guidée (Projet/Vue/Plus…, panneaux) | Démonstration commentée, repérage visuel | Acquisition |\n| 10 min | Réaliser une première manipulation | Démo : créer Module/Moment/Activité, paramétrer une activité | “Do-along” (les participants reproduisent) | Practice |\n| 10 min | Co-construire une structure | En binômes : esquisser une mini-séquence (plan) | Apprentissage par problème, co-construction | Collaboration |\n| 10 min | Produire une séquence saisie dans l’outil | Remplissage guidé (durées, modalités, objectifs, tâches) | Production contextualisée, feedback rapide | Production |\n| 15 min | Ajuster et expliciter les choix | Partage, discussion des arbitrages (types, modalités, durées) | Réflexivité, pair-feedback | Discussion |\n| 8 min | Interpréter les visualisations | Lecture timeline + graphiques : repérer un déséquilibre | Analyse de données de conception, questionnement | Investigation |\n| 7 min | Sélectionner un export adapté | Export Markdown/PDF/CSV/RTF + cas d’usage | Choix outillé, transfert | Practice |\n| 5 min | Consolider et planifier la suite | Exit ticket, synthèse, prochaines étapes | Évaluation formative, plan d’action | Discussion |\n\n### Activités post-session\n- Finaliser votre propre séquence (au moins 1 module, 2 moments, 6 activités) et sauvegarder en JSON.\n- Exporter en Markdown (IA) et vérifier que la structure est lisible et exploitable.\n- Partager un extrait (ou le Markdown) avec un pair et recueillir un retour ciblé (cohérence, charge, types).\n- Tester un pack de langue (ou le modèle) et lancer l’audit de traduction.\n\n### Évaluation\n- Auto-évaluation (check-list) : hiérarchie, durées, modalités, types Laurillard, cohérence des objectifs.\n- Exit ticket (1 minute) : un usage concret dès demain + un point de vigilance.\n- Relecture par un pair : identification d’un déséquilibre via graphiques + proposition d’ajustement.\n- Validation technique : sauvegarde JSON importable + export Markdown généré sans erreurs.",
+    "competences": [
+      {
+        "id": "COMP_DP_01",
+        "label": "Analyser les besoins d'apprentissage d'un public cible",
+        "categorie": "Analyse et conception",
+        "sousCategorie": "Analyse des besoins"
+      },
+      {
+        "id": "COMP_DP_02",
+        "label": "Concevoir une séquence pédagogique structurée",
+        "categorie": "Analyse et conception",
+        "sousCategorie": "Structuration"
+      },
+      {
+        "id": "COMP_DP_03",
+        "label": "Sélectionner des types d'apprentissage adaptés aux objectifs",
+        "categorie": "Analyse et conception",
+        "sousCategorie": "Alignement pédagogique"
+      },
+      {
+        "id": "COMP_DP_04",
+        "label": "Équilibrer les modalités pédagogiques (synchrone/asynchrone)",
+        "categorie": "Ingénierie de formation",
+        "sousCategorie": "Modalités"
+      },
+      {
+        "id": "COMP_DP_05",
+        "label": "Analyser l'équilibre d'une conception via des indicateurs visuels",
+        "categorie": "Évaluation et amélioration",
+        "sousCategorie": "Analyse réflexive"
+      },
+      {
+        "id": "COMP_DP_06",
+        "label": "Utiliser des outils numériques de conception pédagogique",
+        "categorie": "Ingénierie de formation",
+        "sousCategorie": "Outils et technologies"
+      }
+    ],
+    "competencesTransversales": [
+      {
+        "id": "COMP_TR_01",
+        "label": "Collaborer efficacement en contexte professionnel",
+        "categorie": "Collaboration",
+        "sousCategorie": ""
+      },
+      {
+        "id": "COMP_TR_02",
+        "label": "Développer une posture réflexive sur sa pratique",
+        "categorie": "Réflexivité",
+        "sousCategorie": ""
+      },
+      {
+        "id": "COMP_TR_03",
+        "label": "Communiquer des choix pédagogiques de manière argumentée",
+        "categorie": "Communication",
+        "sousCategorie": ""
+      }
+    ],
+    "objectifsItems": [
+      "Identifier les principes d'andragogie applicables en formation d'adultes",
+      "Naviguer dans l'interface du Learning Designer",
+      "Créer la hiérarchie Modules → Moments → Activités",
+      "Paramétrer les métadonnées d'un projet (public, durée, prérequis)",
+      "Renseigner une activité avec type d'apprentissage et modalités",
+      "Interpréter la timeline et les graphiques d'analyse",
+      "Repérer un déséquilibre pédagogique dans une conception",
+      "Choisir un format d'export adapté à un besoin",
+      "Sauvegarder et restaurer un projet au format JSON",
+      "Appliquer les principes d'alignement pédagogique"
+    ],
+    "outilsMaterielItems": [
+      "Learning Designer (application web)",
+      "Navigateur web à jour (Chrome, Firefox, Safari)",
+      "Connexion internet haut débit",
+      "Support de présentation (diapositives)",
+      "Document de synthèse (PDF)",
+      "Modèle de séquence pédagogique",
+      "Outil de visioconférence (Zoom, Teams, etc.)",
+      "Chat pour interactions synchrones",
+      "Espace de partage de documents (Drive, OneDrive)",
+      "Grille d'auto-évaluation",
+      "Exemples de séquences exportées"
+    ]
+  },
+  "modules": [
+    {
+      "id": "c076f302",
+      "titre": "1) Ouverture et cadrage",
+      "description": "Accueil, objectifs, principes d’andragogie et organisation de la session.",
+      "dureeCible": "15",
+      "uniteDureeCible": "60",
+      "moments": [
+        {
+          "id": "27c16378",
+          "titre": "Accueil",
+          "description": "Brise-glace et cadrage.",
+          "dureeCible": "5",
+          "uniteDureeCible": "60",
+          "activites": [
+            {
+              "id": "df828ec7",
+              "titre": "Accueil et objectifs",
+              "type": "discussion",
+              "duree": "5",
+              "unite": "60",
+              "regroupement": "class",
+              "nombreGroupes": "",
+              "tailleGroupe": "",
+              "formateur": "present",
+              "lieu": "online",
+              "temps": "sync",
+              "objectifActivite": "Clarifier le but de l’atelier et les attentes des participants.",
+              "aFaire": "Se présenter (nom, niveau enseigné, un besoin). Noter une attente dans le chat.",
+              "notes": "Approche andragogique : partir des besoins, valoriser l’expérience.",
+              "objectifsCibles": [
+                "Identifier les principes d'andragogie applicables en formation d'adultes"
+              ],
+              "outilsMaterielCibles": [
+                "Outil de visioconférence (Zoom, Teams, etc.)",
+                "Chat pour interactions synchrones"
+              ],
+              "competences": [
+                "COMP_TR_03"
+              ],
+              "competencesTransversales": [
+                "COMP_TR_01"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "e84b81eb",
+          "titre": "Cadre andragogique",
+          "description": "Lien explicite avec la pratique et les besoins.",
+          "dureeCible": "10",
+          "uniteDureeCible": "60",
+          "activites": [
+            {
+              "id": "1e91700c",
+              "titre": "Andragogie et contrat d’apprentissage",
+              "type": "acquisition",
+              "duree": "10",
+              "unite": "60",
+              "regroupement": "class",
+              "nombreGroupes": "",
+              "tailleGroupe": "",
+              "formateur": "present",
+              "lieu": "online",
+              "temps": "sync",
+              "objectifActivite": "Relier l’atelier à des problèmes concrets de conception.",
+              "aFaire": "Identifier 1 problème récurrent (temps, engagement, différenciation) que l’outil peut aider à traiter.",
+              "notes": "Résolution de problème, motivation intrinsèque, transfert immédiat.",
+              "objectifsCibles": [
+                "Identifier les principes d'andragogie applicables en formation d'adultes",
+                "Appliquer les principes d'alignement pédagogique"
+              ],
+              "outilsMaterielCibles": [
+                "Support de présentation (diapositives)",
+                "Modèle de séquence pédagogique"
+              ],
+              "competences": [
+                "COMP_DP_01"
+              ],
+              "competencesTransversales": [
+                "COMP_TR_02"
+              ]
+            }
+          ]
+        }
+      ],
+      "activites": [
+        {
+          "id": "df828ec7",
+          "titre": "Accueil et objectifs",
+          "type": "discussion",
+          "duree": "5",
+          "unite": "60",
+          "regroupement": "class",
+          "nombreGroupes": "",
+          "tailleGroupe": "",
+          "formateur": "present",
+          "lieu": "online",
+          "temps": "sync",
+          "objectifActivite": "Clarifier le but de l’atelier et les attentes des participants.",
+          "aFaire": "Se présenter (nom, niveau enseigné, un besoin). Noter une attente dans le chat.",
+          "notes": "Approche andragogique : partir des besoins, valoriser l’expérience.",
+          "objectifsCibles": [
+            "Identifier les principes d'andragogie applicables en formation d'adultes"
+          ],
+          "outilsMaterielCibles": [
+            "Outil de visioconférence (Zoom, Teams, etc.)",
+            "Chat pour interactions synchrones"
+          ],
+          "competences": [
+            "COMP_TR_03"
+          ],
+          "competencesTransversales": [
+            "COMP_TR_01"
+          ]
+        },
+        {
+          "id": "1e91700c",
+          "titre": "Andragogie et contrat d’apprentissage",
+          "type": "acquisition",
+          "duree": "10",
+          "unite": "60",
+          "regroupement": "class",
+          "nombreGroupes": "",
+          "tailleGroupe": "",
+          "formateur": "present",
+          "lieu": "online",
+          "temps": "sync",
+          "objectifActivite": "Relier l’atelier à des problèmes concrets de conception.",
+          "aFaire": "Identifier 1 problème récurrent (temps, engagement, différenciation) que l’outil peut aider à traiter.",
+          "notes": "Résolution de problème, motivation intrinsèque, transfert immédiat.",
+          "objectifsCibles": [
+            "Identifier les principes d'andragogie applicables en formation d'adultes",
+            "Appliquer les principes d'alignement pédagogique"
+          ],
+          "outilsMaterielCibles": [
+            "Support de présentation (diapositives)",
+            "Modèle de séquence pédagogique"
+          ],
+          "competences": [
+            "COMP_DP_01"
+          ],
+          "competencesTransversales": [
+            "COMP_TR_02"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "48f64e5e",
+      "titre": "2) Prise en main de l’outil",
+      "description": "Repères d’interface et première manipulation guidée.",
+      "dureeCible": "20",
+      "uniteDureeCible": "60",
+      "moments": [
+        {
+          "id": "6b2b2fd0",
+          "titre": "Repères d’interface",
+          "description": "Se repérer rapidement.",
+          "dureeCible": "10",
+          "uniteDureeCible": "60",
+          "activites": [
+            {
+              "id": "475ca1ce",
+              "titre": "Tour guidé de l’interface",
+              "type": "acquisition",
+              "duree": "10",
+              "unite": "60",
+              "regroupement": "class",
+              "nombreGroupes": "",
+              "tailleGroupe": "",
+              "formateur": "present",
+              "lieu": "online",
+              "temps": "sync",
+              "objectifActivite": "Identifier les zones clés (Projet, Vue, Plus…) et les panneaux.",
+              "aFaire": "Repérer où : sauvegarder/charger, exporter, afficher les informations, lancer l’audit i18n.",
+              "notes": "Démonstration commentée + questions rapides.",
+              "objectifsCibles": [
+                "Naviguer dans l'interface du Learning Designer"
+              ],
+              "outilsMaterielCibles": [
+                "Learning Designer (application web)",
+                "Navigateur web à jour (Chrome, Firefox, Safari)",
+                "Support de présentation (diapositives)"
+              ],
+              "competences": [
+                "COMP_DP_06"
+              ],
+              "competencesTransversales": []
+            }
+          ]
+        },
+        {
+          "id": "e6859b03",
+          "titre": "Création guidée",
+          "description": "Construire un premier exemple.",
+          "dureeCible": "10",
+          "uniteDureeCible": "60",
+          "activites": [
+            {
+              "id": "41461cec",
+              "titre": "Démonstration pas-à-pas : créer une structure",
+              "type": "practice",
+              "duree": "10",
+              "unite": "60",
+              "regroupement": "class",
+              "nombreGroupes": "",
+              "tailleGroupe": "",
+              "formateur": "present",
+              "lieu": "online",
+              "temps": "sync",
+              "objectifActivite": "Réaliser une première saisie conforme (Module ➔ Moment ➔ Activité).",
+              "aFaire": "Reproduire la démonstration : créer 1 module, 1 moment, 2 activités ; renseigner durée et type Laurillard.",
+              "notes": "Do-along : autonomie guidée, feedback immédiat.",
+              "objectifsCibles": [
+                "Créer la hiérarchie Modules → Moments → Activités",
+                "Renseigner une activité avec type d'apprentissage et modalités"
+              ],
+              "outilsMaterielCibles": [
+                "Learning Designer (application web)",
+                "Modèle de séquence pédagogique"
+              ],
+              "competences": [
+                "COMP_DP_02",
+                "COMP_DP_03",
+                "COMP_DP_06"
+              ],
+              "competencesTransversales": []
+            }
+          ]
+        }
+      ],
+      "activites": [
+        {
+          "id": "475ca1ce",
+          "titre": "Tour guidé de l’interface",
+          "type": "acquisition",
+          "duree": "10",
+          "unite": "60",
+          "regroupement": "class",
+          "nombreGroupes": "",
+          "tailleGroupe": "",
+          "formateur": "present",
+          "lieu": "online",
+          "temps": "sync",
+          "objectifActivite": "Identifier les zones clés (Projet, Vue, Plus…) et les panneaux.",
+          "aFaire": "Repérer où : sauvegarder/charger, exporter, afficher les informations, lancer l’audit i18n.",
+          "notes": "Démonstration commentée + questions rapides.",
+          "objectifsCibles": [
+            "Naviguer dans l'interface du Learning Designer"
+          ],
+          "outilsMaterielCibles": [
+            "Learning Designer (application web)",
+            "Navigateur web à jour (Chrome, Firefox, Safari)",
+            "Support de présentation (diapositives)"
+          ],
+          "competences": [
+            "COMP_DP_06"
+          ],
+          "competencesTransversales": []
+        },
+        {
+          "id": "41461cec",
+          "titre": "Démonstration pas-à-pas : créer une structure",
+          "type": "practice",
+          "duree": "10",
+          "unite": "60",
+          "regroupement": "class",
+          "nombreGroupes": "",
+          "tailleGroupe": "",
+          "formateur": "present",
+          "lieu": "online",
+          "temps": "sync",
+          "objectifActivite": "Réaliser une première saisie conforme (Module ➔ Moment ➔ Activité).",
+          "aFaire": "Reproduire la démonstration : créer 1 module, 1 moment, 2 activités ; renseigner durée et type Laurillard.",
+          "notes": "Do-along : autonomie guidée, feedback immédiat.",
+          "objectifsCibles": [
+            "Créer la hiérarchie Modules → Moments → Activités",
+            "Renseigner une activité avec type d'apprentissage et modalités"
+          ],
+          "outilsMaterielCibles": [
+            "Learning Designer (application web)",
+            "Modèle de séquence pédagogique"
+          ],
+          "competences": [
+            "COMP_DP_02",
+            "COMP_DP_03",
+            "COMP_DP_06"
+          ],
+          "competencesTransversales": []
+        }
+      ]
+    },
+    {
+      "id": "410fca80",
+      "titre": "3) Conception guidée et co-construction",
+      "description": "Co-construire une mini-séquence et la saisir dans l’outil.",
+      "dureeCible": "35",
+      "uniteDureeCible": "60",
+      "moments": [
+        {
+          "id": "b1d51323",
+          "titre": "Co-construction",
+          "description": "Défi court en binômes.",
+          "dureeCible": "10",
+          "uniteDureeCible": "60",
+          "activites": [
+            {
+              "id": "00dda6a1",
+              "titre": "Mini-défi en binômes : esquisser une séquence",
+              "type": "collaboration",
+              "duree": "10",
+              "unite": "60",
+              "regroupement": "class",
+              "nombreGroupes": "",
+              "tailleGroupe": "",
+              "formateur": "present",
+              "lieu": "online",
+              "temps": "sync",
+              "objectifActivite": "Co-construire une structure de séquence répondant à un problème réel.",
+              "aFaire": "En binômes, choisir un problème (ex. participation, différenciation) et proposer un plan en 3 moments.",
+              "notes": "Co-construction, mobilisation de l’expérience.",
+              "objectifsCibles": [
+                "Créer la hiérarchie Modules → Moments → Activités",
+                "Appliquer les principes d'alignement pédagogique"
+              ],
+              "outilsMaterielCibles": [
+                "Modèle de séquence pédagogique",
+                "Espace de partage de documents (Drive, OneDrive)"
+              ],
+              "competences": [
+                "COMP_DP_01",
+                "COMP_DP_02"
+              ],
+              "competencesTransversales": [
+                "COMP_TR_01"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "f8268063",
+          "titre": "Production",
+          "description": "Saisie structurée et contextualisée.",
+          "dureeCible": "10",
+          "uniteDureeCible": "60",
+          "activites": [
+            {
+              "id": "04068a00",
+              "titre": "Saisie guidée dans l’outil",
+              "type": "production",
+              "duree": "10",
+              "unite": "60",
+              "regroupement": "class",
+              "nombreGroupes": "",
+              "tailleGroupe": "",
+              "formateur": "present",
+              "lieu": "online",
+              "temps": "sync",
+              "objectifActivite": "Produire une séquence saisie (durées, modalités, objectifs, tâches).",
+              "aFaire": "Renseigner au moins 4 activités : titre, objectif, tâches, type Laurillard, durée, regroupement.",
+              "notes": "Production contextualisée, transfert immédiat.",
+              "objectifsCibles": [
+                "Créer la hiérarchie Modules → Moments → Activités",
+                "Paramétrer les métadonnées d'un projet (public, durée, prérequis)",
+                "Renseigner une activité avec type d'apprentissage et modalités"
+              ],
+              "outilsMaterielCibles": [
+                "Learning Designer (application web)",
+                "Modèle de séquence pédagogique"
+              ],
+              "competences": [
+                "COMP_DP_02",
+                "COMP_DP_03",
+                "COMP_DP_04",
+                "COMP_DP_06"
+              ],
+              "competencesTransversales": []
+            }
+          ]
+        },
+        {
+          "id": "45248076",
+          "titre": "Réflexivité",
+          "description": "Partage, discussion, améliorations.",
+          "dureeCible": "15",
+          "uniteDureeCible": "60",
+          "activites": [
+            {
+              "id": "6b310ce9",
+              "titre": "Partage et ajustements",
+              "type": "discussion",
+              "duree": "15",
+              "unite": "60",
+              "regroupement": "class",
+              "nombreGroupes": "",
+              "tailleGroupe": "",
+              "formateur": "present",
+              "lieu": "online",
+              "temps": "sync",
+              "objectifActivite": "Expliciter les choix de conception et ajuster l’équilibre.",
+              "aFaire": "Chaque binôme partage 1 choix de type d’apprentissage et 1 difficulté rencontrée ; ajustements en direct.",
+              "notes": "Réflexivité et pair-feedback.",
+              "objectifsCibles": [
+                "Repérer un déséquilibre pédagogique dans une conception"
+              ],
+              "outilsMaterielCibles": [
+                "Outil de visioconférence (Zoom, Teams, etc.)",
+                "Chat pour interactions synchrones"
+              ],
+              "competences": [
+                "COMP_DP_05"
+              ],
+              "competencesTransversales": [
+                "COMP_TR_02",
+                "COMP_TR_03"
+              ]
+            }
+          ]
+        }
+      ],
+      "activites": [
+        {
+          "id": "00dda6a1",
+          "titre": "Mini-défi en binômes : esquisser une séquence",
+          "type": "collaboration",
+          "duree": "10",
+          "unite": "60",
+          "regroupement": "class",
+          "nombreGroupes": "",
+          "tailleGroupe": "",
+          "formateur": "present",
+          "lieu": "online",
+          "temps": "sync",
+          "objectifActivite": "Co-construire une structure de séquence répondant à un problème réel.",
+          "aFaire": "En binômes, choisir un problème (ex. participation, différenciation) et proposer un plan en 3 moments.",
+          "notes": "Co-construction, mobilisation de l’expérience.",
+          "objectifsCibles": [
+            "Créer la hiérarchie Modules → Moments → Activités",
+            "Appliquer les principes d'alignement pédagogique"
+          ],
+          "outilsMaterielCibles": [
+            "Modèle de séquence pédagogique",
+            "Espace de partage de documents (Drive, OneDrive)"
+          ],
+          "competences": [
+            "COMP_DP_01",
+            "COMP_DP_02"
+          ],
+          "competencesTransversales": [
+            "COMP_TR_01"
+          ]
+        },
+        {
+          "id": "04068a00",
+          "titre": "Saisie guidée dans l’outil",
+          "type": "production",
+          "duree": "10",
+          "unite": "60",
+          "regroupement": "class",
+          "nombreGroupes": "",
+          "tailleGroupe": "",
+          "formateur": "present",
+          "lieu": "online",
+          "temps": "sync",
+          "objectifActivite": "Produire une séquence saisie (durées, modalités, objectifs, tâches).",
+          "aFaire": "Renseigner au moins 4 activités : titre, objectif, tâches, type Laurillard, durée, regroupement.",
+          "notes": "Production contextualisée, transfert immédiat.",
+          "objectifsCibles": [
+            "Créer la hiérarchie Modules → Moments → Activités",
+            "Paramétrer les métadonnées d'un projet (public, durée, prérequis)",
+            "Renseigner une activité avec type d'apprentissage et modalités"
+          ],
+          "outilsMaterielCibles": [
+            "Learning Designer (application web)",
+            "Modèle de séquence pédagogique"
+          ],
+          "competences": [
+            "COMP_DP_02",
+            "COMP_DP_03",
+            "COMP_DP_04",
+            "COMP_DP_06"
+          ],
+          "competencesTransversales": []
+        },
+        {
+          "id": "6b310ce9",
+          "titre": "Partage et ajustements",
+          "type": "discussion",
+          "duree": "15",
+          "unite": "60",
+          "regroupement": "class",
+          "nombreGroupes": "",
+          "tailleGroupe": "",
+          "formateur": "present",
+          "lieu": "online",
+          "temps": "sync",
+          "objectifActivite": "Expliciter les choix de conception et ajuster l’équilibre.",
+          "aFaire": "Chaque binôme partage 1 choix de type d’apprentissage et 1 difficulté rencontrée ; ajustements en direct.",
+          "notes": "Réflexivité et pair-feedback.",
+          "objectifsCibles": [
+            "Repérer un déséquilibre pédagogique dans une conception"
+          ],
+          "outilsMaterielCibles": [
+            "Outil de visioconférence (Zoom, Teams, etc.)",
+            "Chat pour interactions synchrones"
+          ],
+          "competences": [
+            "COMP_DP_05"
+          ],
+          "competencesTransversales": [
+            "COMP_TR_02",
+            "COMP_TR_03"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ec69a60c",
+      "titre": "4) Analyse et export",
+      "description": "Exploiter les visualisations et exporter la conception.",
+      "dureeCible": "15",
+      "uniteDureeCible": "60",
+      "moments": [
+        {
+          "id": "6cedf78b",
+          "titre": "Analyse",
+          "description": "Lecture de la timeline et des graphiques.",
+          "dureeCible": "8",
+          "uniteDureeCible": "60",
+          "activites": [
+            {
+              "id": "478dfd82",
+              "titre": "Lire la timeline et les graphiques",
+              "type": "investigation",
+              "duree": "8",
+              "unite": "60",
+              "regroupement": "class",
+              "nombreGroupes": "",
+              "tailleGroupe": "",
+              "formateur": "present",
+              "lieu": "online",
+              "temps": "sync",
+              "objectifActivite": "Interpréter les visualisations pour repérer un déséquilibre pédagogique.",
+              "aFaire": "Observer la timeline : repérer une surreprésentation d’un type (ex. Acquisition) et proposer un rééquilibrage.",
+              "notes": "Analyse guidée, questionnement.",
+              "objectifsCibles": [
+                "Interpréter la timeline et les graphiques d'analyse",
+                "Repérer un déséquilibre pédagogique dans une conception"
+              ],
+              "outilsMaterielCibles": [
+                "Learning Designer (application web)",
+                "Support de présentation (diapositives)",
+                "Exemples de séquences exportées"
+              ],
+              "competences": [
+                "COMP_DP_05"
+              ],
+              "competencesTransversales": []
+            }
+          ]
+        },
+        {
+          "id": "f292d031",
+          "titre": "Exports",
+          "description": "Choix et génération d’exports.",
+          "dureeCible": "7",
+          "uniteDureeCible": "60",
+          "activites": [
+            {
+              "id": "f7ac302e",
+              "titre": "Exporter selon le besoin",
+              "type": "practice",
+              "duree": "7",
+              "unite": "60",
+              "regroupement": "class",
+              "nombreGroupes": "",
+              "tailleGroupe": "",
+              "formateur": "present",
+              "lieu": "online",
+              "temps": "sync",
+              "objectifActivite": "Choisir un format d’export adapté à un usage.",
+              "aFaire": "Générer un export Markdown (IA) et identifier ce qu’il faut vérifier (structure, lisibilité).",
+              "notes": "Approche orientée tâche (problème ↔ format).",
+              "objectifsCibles": [
+                "Choisir un format d'export adapté à un besoin",
+                "Sauvegarder et restaurer un projet au format JSON"
+              ],
+              "outilsMaterielCibles": [
+                "Learning Designer (application web)",
+                "Document de synthèse (PDF)"
+              ],
+              "competences": [
+                "COMP_DP_06"
+              ],
+              "competencesTransversales": []
+            }
+          ]
+        }
+      ],
+      "activites": [
+        {
+          "id": "478dfd82",
+          "titre": "Lire la timeline et les graphiques",
+          "type": "investigation",
+          "duree": "8",
+          "unite": "60",
+          "regroupement": "class",
+          "nombreGroupes": "",
+          "tailleGroupe": "",
+          "formateur": "present",
+          "lieu": "online",
+          "temps": "sync",
+          "objectifActivite": "Interpréter les visualisations pour repérer un déséquilibre pédagogique.",
+          "aFaire": "Observer la timeline : repérer une surreprésentation d’un type (ex. Acquisition) et proposer un rééquilibrage.",
+          "notes": "Analyse guidée, questionnement.",
+          "objectifsCibles": [
+            "Interpréter la timeline et les graphiques d'analyse",
+            "Repérer un déséquilibre pédagogique dans une conception"
+          ],
+          "outilsMaterielCibles": [
+            "Learning Designer (application web)",
+            "Support de présentation (diapositives)",
+            "Exemples de séquences exportées"
+          ],
+          "competences": [
+            "COMP_DP_05"
+          ],
+          "competencesTransversales": []
+        },
+        {
+          "id": "f7ac302e",
+          "titre": "Exporter selon le besoin",
+          "type": "practice",
+          "duree": "7",
+          "unite": "60",
+          "regroupement": "class",
+          "nombreGroupes": "",
+          "tailleGroupe": "",
+          "formateur": "present",
+          "lieu": "online",
+          "temps": "sync",
+          "objectifActivite": "Choisir un format d’export adapté à un usage.",
+          "aFaire": "Générer un export Markdown (IA) et identifier ce qu’il faut vérifier (structure, lisibilité).",
+          "notes": "Approche orientée tâche (problème ↔ format).",
+          "objectifsCibles": [
+            "Choisir un format d'export adapté à un besoin",
+            "Sauvegarder et restaurer un projet au format JSON"
+          ],
+          "outilsMaterielCibles": [
+            "Learning Designer (application web)",
+            "Document de synthèse (PDF)"
+          ],
+          "competences": [
+            "COMP_DP_06"
+          ],
+          "competencesTransversales": []
+        }
+      ]
+    },
+    {
+      "id": "3bf09f5c",
+      "titre": "5) Évaluation et clôture",
+      "description": "Synthèse, évaluation formative et plan d’action.",
+      "dureeCible": "5",
+      "uniteDureeCible": "60",
+      "moments": [
+        {
+          "id": "9d17cc6a",
+          "titre": "Synthèse",
+          "description": "Finalisation et transfert.",
+          "dureeCible": "5",
+          "uniteDureeCible": "60",
+          "activites": [
+            {
+              "id": "d0759a1d",
+              "titre": "Clôture : exit ticket et prochaines étapes",
+              "type": "discussion",
+              "duree": "5",
+              "unite": "60",
+              "regroupement": "class",
+              "nombreGroupes": "",
+              "tailleGroupe": "",
+              "formateur": "present",
+              "lieu": "online",
+              "temps": "sync",
+              "objectifActivite": "Consolider, évaluer, planifier un transfert en situation.",
+              "aFaire": "Rédiger un exit ticket : 1 action concrète + 1 point à surveiller. Sauvegarder le projet.",
+              "notes": "Évaluation formative, plan d’action.",
+              "objectifsCibles": [
+                "Appliquer les principes d'alignement pédagogique"
+              ],
+              "outilsMaterielCibles": [
+                "Grille d'auto-évaluation",
+                "Espace de partage de documents (Drive, OneDrive)"
+              ],
+              "competences": [],
+              "competencesTransversales": [
+                "COMP_TR_02",
+                "COMP_TR_03"
+              ]
+            }
+          ]
+        }
+      ],
+      "activites": [
+        {
+          "id": "d0759a1d",
+          "titre": "Clôture : exit ticket et prochaines étapes",
+          "type": "discussion",
+          "duree": "5",
+          "unite": "60",
+          "regroupement": "class",
+          "nombreGroupes": "",
+          "tailleGroupe": "",
+          "formateur": "present",
+          "lieu": "online",
+          "temps": "sync",
+          "objectifActivite": "Consolider, évaluer, planifier un transfert en situation.",
+          "aFaire": "Rédiger un exit ticket : 1 action concrète + 1 point à surveiller. Sauvegarder le projet.",
+          "notes": "Évaluation formative, plan d’action.",
+          "objectifsCibles": [
+            "Appliquer les principes d'alignement pédagogique"
+          ],
+          "outilsMaterielCibles": [
+            "Grille d'auto-évaluation",
+            "Espace de partage de documents (Drive, OneDrive)"
+          ],
+          "competences": [],
+          "competencesTransversales": [
+            "COMP_TR_02",
+            "COMP_TR_03"
+          ]
+        }
+      ]
+    }
+  ],
+  "activities": [
+    {
+      "id": "c076f302",
+      "titre": "1) Ouverture et cadrage",
+      "description": "Accueil, objectifs, principes d’andragogie et organisation de la session.",
+      "dureeCible": "15",
+      "uniteDureeCible": "60",
+      "moments": [
+        {
+          "id": "27c16378",
+          "titre": "Accueil",
+          "description": "Brise-glace et cadrage.",
+          "dureeCible": "5",
+          "uniteDureeCible": "60",
+          "activites": [
+            {
+              "id": "df828ec7",
+              "titre": "Accueil et objectifs",
+              "type": "discussion",
+              "duree": "5",
+              "unite": "60",
+              "regroupement": "class",
+              "nombreGroupes": "",
+              "tailleGroupe": "",
+              "formateur": "present",
+              "lieu": "online",
+              "temps": "sync",
+              "objectifActivite": "Clarifier le but de l’atelier et les attentes des participants.",
+              "aFaire": "Se présenter (nom, niveau enseigné, un besoin). Noter une attente dans le chat.",
+              "notes": "Approche andragogique : partir des besoins, valoriser l’expérience.",
+              "objectifsCibles": [
+                "Identifier les principes d'andragogie applicables en formation d'adultes"
+              ],
+              "outilsMaterielCibles": [
+                "Outil de visioconférence (Zoom, Teams, etc.)",
+                "Chat pour interactions synchrones"
+              ],
+              "competences": [
+                "COMP_TR_03"
+              ],
+              "competencesTransversales": [
+                "COMP_TR_01"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "e84b81eb",
+          "titre": "Cadre andragogique",
+          "description": "Lien explicite avec la pratique et les besoins.",
+          "dureeCible": "10",
+          "uniteDureeCible": "60",
+          "activites": [
+            {
+              "id": "1e91700c",
+              "titre": "Andragogie et contrat d’apprentissage",
+              "type": "acquisition",
+              "duree": "10",
+              "unite": "60",
+              "regroupement": "class",
+              "nombreGroupes": "",
+              "tailleGroupe": "",
+              "formateur": "present",
+              "lieu": "online",
+              "temps": "sync",
+              "objectifActivite": "Relier l’atelier à des problèmes concrets de conception.",
+              "aFaire": "Identifier 1 problème récurrent (temps, engagement, différenciation) que l’outil peut aider à traiter.",
+              "notes": "Résolution de problème, motivation intrinsèque, transfert immédiat.",
+              "objectifsCibles": [
+                "Identifier les principes d'andragogie applicables en formation d'adultes",
+                "Appliquer les principes d'alignement pédagogique"
+              ],
+              "outilsMaterielCibles": [
+                "Support de présentation (diapositives)",
+                "Modèle de séquence pédagogique"
+              ],
+              "competences": [
+                "COMP_DP_01"
+              ],
+              "competencesTransversales": [
+                "COMP_TR_02"
+              ]
+            }
+          ]
+        }
+      ],
+      "activites": [
+        {
+          "id": "df828ec7",
+          "titre": "Accueil et objectifs",
+          "type": "discussion",
+          "duree": "5",
+          "unite": "60",
+          "regroupement": "class",
+          "nombreGroupes": "",
+          "tailleGroupe": "",
+          "formateur": "present",
+          "lieu": "online",
+          "temps": "sync",
+          "objectifActivite": "Clarifier le but de l’atelier et les attentes des participants.",
+          "aFaire": "Se présenter (nom, niveau enseigné, un besoin). Noter une attente dans le chat.",
+          "notes": "Approche andragogique : partir des besoins, valoriser l’expérience.",
+          "objectifsCibles": [
+            "Identifier les principes d'andragogie applicables en formation d'adultes"
+          ],
+          "outilsMaterielCibles": [
+            "Outil de visioconférence (Zoom, Teams, etc.)",
+            "Chat pour interactions synchrones"
+          ],
+          "competences": [
+            "COMP_TR_03"
+          ],
+          "competencesTransversales": [
+            "COMP_TR_01"
+          ]
+        },
+        {
+          "id": "1e91700c",
+          "titre": "Andragogie et contrat d’apprentissage",
+          "type": "acquisition",
+          "duree": "10",
+          "unite": "60",
+          "regroupement": "class",
+          "nombreGroupes": "",
+          "tailleGroupe": "",
+          "formateur": "present",
+          "lieu": "online",
+          "temps": "sync",
+          "objectifActivite": "Relier l’atelier à des problèmes concrets de conception.",
+          "aFaire": "Identifier 1 problème récurrent (temps, engagement, différenciation) que l’outil peut aider à traiter.",
+          "notes": "Résolution de problème, motivation intrinsèque, transfert immédiat.",
+          "objectifsCibles": [
+            "Identifier les principes d'andragogie applicables en formation d'adultes",
+            "Appliquer les principes d'alignement pédagogique"
+          ],
+          "outilsMaterielCibles": [
+            "Support de présentation (diapositives)",
+            "Modèle de séquence pédagogique"
+          ],
+          "competences": [
+            "COMP_DP_01"
+          ],
+          "competencesTransversales": [
+            "COMP_TR_02"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "48f64e5e",
+      "titre": "2) Prise en main de l’outil",
+      "description": "Repères d’interface et première manipulation guidée.",
+      "dureeCible": "20",
+      "uniteDureeCible": "60",
+      "moments": [
+        {
+          "id": "6b2b2fd0",
+          "titre": "Repères d’interface",
+          "description": "Se repérer rapidement.",
+          "dureeCible": "10",
+          "uniteDureeCible": "60",
+          "activites": [
+            {
+              "id": "475ca1ce",
+              "titre": "Tour guidé de l’interface",
+              "type": "acquisition",
+              "duree": "10",
+              "unite": "60",
+              "regroupement": "class",
+              "nombreGroupes": "",
+              "tailleGroupe": "",
+              "formateur": "present",
+              "lieu": "online",
+              "temps": "sync",
+              "objectifActivite": "Identifier les zones clés (Projet, Vue, Plus…) et les panneaux.",
+              "aFaire": "Repérer où : sauvegarder/charger, exporter, afficher les informations, lancer l’audit i18n.",
+              "notes": "Démonstration commentée + questions rapides.",
+              "objectifsCibles": [
+                "Naviguer dans l'interface du Learning Designer"
+              ],
+              "outilsMaterielCibles": [
+                "Learning Designer (application web)",
+                "Navigateur web à jour (Chrome, Firefox, Safari)",
+                "Support de présentation (diapositives)"
+              ],
+              "competences": [
+                "COMP_DP_06"
+              ],
+              "competencesTransversales": []
+            }
+          ]
+        },
+        {
+          "id": "e6859b03",
+          "titre": "Création guidée",
+          "description": "Construire un premier exemple.",
+          "dureeCible": "10",
+          "uniteDureeCible": "60",
+          "activites": [
+            {
+              "id": "41461cec",
+              "titre": "Démonstration pas-à-pas : créer une structure",
+              "type": "practice",
+              "duree": "10",
+              "unite": "60",
+              "regroupement": "class",
+              "nombreGroupes": "",
+              "tailleGroupe": "",
+              "formateur": "present",
+              "lieu": "online",
+              "temps": "sync",
+              "objectifActivite": "Réaliser une première saisie conforme (Module ➔ Moment ➔ Activité).",
+              "aFaire": "Reproduire la démonstration : créer 1 module, 1 moment, 2 activités ; renseigner durée et type Laurillard.",
+              "notes": "Do-along : autonomie guidée, feedback immédiat.",
+              "objectifsCibles": [
+                "Créer la hiérarchie Modules → Moments → Activités",
+                "Renseigner une activité avec type d'apprentissage et modalités"
+              ],
+              "outilsMaterielCibles": [
+                "Learning Designer (application web)",
+                "Modèle de séquence pédagogique"
+              ],
+              "competences": [
+                "COMP_DP_02",
+                "COMP_DP_03",
+                "COMP_DP_06"
+              ],
+              "competencesTransversales": []
+            }
+          ]
+        }
+      ],
+      "activites": [
+        {
+          "id": "475ca1ce",
+          "titre": "Tour guidé de l’interface",
+          "type": "acquisition",
+          "duree": "10",
+          "unite": "60",
+          "regroupement": "class",
+          "nombreGroupes": "",
+          "tailleGroupe": "",
+          "formateur": "present",
+          "lieu": "online",
+          "temps": "sync",
+          "objectifActivite": "Identifier les zones clés (Projet, Vue, Plus…) et les panneaux.",
+          "aFaire": "Repérer où : sauvegarder/charger, exporter, afficher les informations, lancer l’audit i18n.",
+          "notes": "Démonstration commentée + questions rapides.",
+          "objectifsCibles": [
+            "Naviguer dans l'interface du Learning Designer"
+          ],
+          "outilsMaterielCibles": [
+            "Learning Designer (application web)",
+            "Navigateur web à jour (Chrome, Firefox, Safari)",
+            "Support de présentation (diapositives)"
+          ],
+          "competences": [
+            "COMP_DP_06"
+          ],
+          "competencesTransversales": []
+        },
+        {
+          "id": "41461cec",
+          "titre": "Démonstration pas-à-pas : créer une structure",
+          "type": "practice",
+          "duree": "10",
+          "unite": "60",
+          "regroupement": "class",
+          "nombreGroupes": "",
+          "tailleGroupe": "",
+          "formateur": "present",
+          "lieu": "online",
+          "temps": "sync",
+          "objectifActivite": "Réaliser une première saisie conforme (Module ➔ Moment ➔ Activité).",
+          "aFaire": "Reproduire la démonstration : créer 1 module, 1 moment, 2 activités ; renseigner durée et type Laurillard.",
+          "notes": "Do-along : autonomie guidée, feedback immédiat.",
+          "objectifsCibles": [
+            "Créer la hiérarchie Modules → Moments → Activités",
+            "Renseigner une activité avec type d'apprentissage et modalités"
+          ],
+          "outilsMaterielCibles": [
+            "Learning Designer (application web)",
+            "Modèle de séquence pédagogique"
+          ],
+          "competences": [
+            "COMP_DP_02",
+            "COMP_DP_03",
+            "COMP_DP_06"
+          ],
+          "competencesTransversales": []
+        }
+      ]
+    },
+    {
+      "id": "410fca80",
+      "titre": "3) Conception guidée et co-construction",
+      "description": "Co-construire une mini-séquence et la saisir dans l’outil.",
+      "dureeCible": "35",
+      "uniteDureeCible": "60",
+      "moments": [
+        {
+          "id": "b1d51323",
+          "titre": "Co-construction",
+          "description": "Défi court en binômes.",
+          "dureeCible": "10",
+          "uniteDureeCible": "60",
+          "activites": [
+            {
+              "id": "00dda6a1",
+              "titre": "Mini-défi en binômes : esquisser une séquence",
+              "type": "collaboration",
+              "duree": "10",
+              "unite": "60",
+              "regroupement": "class",
+              "nombreGroupes": "",
+              "tailleGroupe": "",
+              "formateur": "present",
+              "lieu": "online",
+              "temps": "sync",
+              "objectifActivite": "Co-construire une structure de séquence répondant à un problème réel.",
+              "aFaire": "En binômes, choisir un problème (ex. participation, différenciation) et proposer un plan en 3 moments.",
+              "notes": "Co-construction, mobilisation de l’expérience.",
+              "objectifsCibles": [
+                "Créer la hiérarchie Modules → Moments → Activités",
+                "Appliquer les principes d'alignement pédagogique"
+              ],
+              "outilsMaterielCibles": [
+                "Modèle de séquence pédagogique",
+                "Espace de partage de documents (Drive, OneDrive)"
+              ],
+              "competences": [
+                "COMP_DP_01",
+                "COMP_DP_02"
+              ],
+              "competencesTransversales": [
+                "COMP_TR_01"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "f8268063",
+          "titre": "Production",
+          "description": "Saisie structurée et contextualisée.",
+          "dureeCible": "10",
+          "uniteDureeCible": "60",
+          "activites": [
+            {
+              "id": "04068a00",
+              "titre": "Saisie guidée dans l’outil",
+              "type": "production",
+              "duree": "10",
+              "unite": "60",
+              "regroupement": "class",
+              "nombreGroupes": "",
+              "tailleGroupe": "",
+              "formateur": "present",
+              "lieu": "online",
+              "temps": "sync",
+              "objectifActivite": "Produire une séquence saisie (durées, modalités, objectifs, tâches).",
+              "aFaire": "Renseigner au moins 4 activités : titre, objectif, tâches, type Laurillard, durée, regroupement.",
+              "notes": "Production contextualisée, transfert immédiat.",
+              "objectifsCibles": [
+                "Créer la hiérarchie Modules → Moments → Activités",
+                "Paramétrer les métadonnées d'un projet (public, durée, prérequis)",
+                "Renseigner une activité avec type d'apprentissage et modalités"
+              ],
+              "outilsMaterielCibles": [
+                "Learning Designer (application web)",
+                "Modèle de séquence pédagogique"
+              ],
+              "competences": [
+                "COMP_DP_02",
+                "COMP_DP_03",
+                "COMP_DP_04",
+                "COMP_DP_06"
+              ],
+              "competencesTransversales": []
+            }
+          ]
+        },
+        {
+          "id": "45248076",
+          "titre": "Réflexivité",
+          "description": "Partage, discussion, améliorations.",
+          "dureeCible": "15",
+          "uniteDureeCible": "60",
+          "activites": [
+            {
+              "id": "6b310ce9",
+              "titre": "Partage et ajustements",
+              "type": "discussion",
+              "duree": "15",
+              "unite": "60",
+              "regroupement": "class",
+              "nombreGroupes": "",
+              "tailleGroupe": "",
+              "formateur": "present",
+              "lieu": "online",
+              "temps": "sync",
+              "objectifActivite": "Expliciter les choix de conception et ajuster l’équilibre.",
+              "aFaire": "Chaque binôme partage 1 choix de type d’apprentissage et 1 difficulté rencontrée ; ajustements en direct.",
+              "notes": "Réflexivité et pair-feedback.",
+              "objectifsCibles": [
+                "Repérer un déséquilibre pédagogique dans une conception"
+              ],
+              "outilsMaterielCibles": [
+                "Outil de visioconférence (Zoom, Teams, etc.)",
+                "Chat pour interactions synchrones"
+              ],
+              "competences": [
+                "COMP_DP_05"
+              ],
+              "competencesTransversales": [
+                "COMP_TR_02",
+                "COMP_TR_03"
+              ]
+            }
+          ]
+        }
+      ],
+      "activites": [
+        {
+          "id": "00dda6a1",
+          "titre": "Mini-défi en binômes : esquisser une séquence",
+          "type": "collaboration",
+          "duree": "10",
+          "unite": "60",
+          "regroupement": "class",
+          "nombreGroupes": "",
+          "tailleGroupe": "",
+          "formateur": "present",
+          "lieu": "online",
+          "temps": "sync",
+          "objectifActivite": "Co-construire une structure de séquence répondant à un problème réel.",
+          "aFaire": "En binômes, choisir un problème (ex. participation, différenciation) et proposer un plan en 3 moments.",
+          "notes": "Co-construction, mobilisation de l’expérience.",
+          "objectifsCibles": [
+            "Créer la hiérarchie Modules → Moments → Activités",
+            "Appliquer les principes d'alignement pédagogique"
+          ],
+          "outilsMaterielCibles": [
+            "Modèle de séquence pédagogique",
+            "Espace de partage de documents (Drive, OneDrive)"
+          ],
+          "competences": [
+            "COMP_DP_01",
+            "COMP_DP_02"
+          ],
+          "competencesTransversales": [
+            "COMP_TR_01"
+          ]
+        },
+        {
+          "id": "04068a00",
+          "titre": "Saisie guidée dans l’outil",
+          "type": "production",
+          "duree": "10",
+          "unite": "60",
+          "regroupement": "class",
+          "nombreGroupes": "",
+          "tailleGroupe": "",
+          "formateur": "present",
+          "lieu": "online",
+          "temps": "sync",
+          "objectifActivite": "Produire une séquence saisie (durées, modalités, objectifs, tâches).",
+          "aFaire": "Renseigner au moins 4 activités : titre, objectif, tâches, type Laurillard, durée, regroupement.",
+          "notes": "Production contextualisée, transfert immédiat.",
+          "objectifsCibles": [
+            "Créer la hiérarchie Modules → Moments → Activités",
+            "Paramétrer les métadonnées d'un projet (public, durée, prérequis)",
+            "Renseigner une activité avec type d'apprentissage et modalités"
+          ],
+          "outilsMaterielCibles": [
+            "Learning Designer (application web)",
+            "Modèle de séquence pédagogique"
+          ],
+          "competences": [
+            "COMP_DP_02",
+            "COMP_DP_03",
+            "COMP_DP_04",
+            "COMP_DP_06"
+          ],
+          "competencesTransversales": []
+        },
+        {
+          "id": "6b310ce9",
+          "titre": "Partage et ajustements",
+          "type": "discussion",
+          "duree": "15",
+          "unite": "60",
+          "regroupement": "class",
+          "nombreGroupes": "",
+          "tailleGroupe": "",
+          "formateur": "present",
+          "lieu": "online",
+          "temps": "sync",
+          "objectifActivite": "Expliciter les choix de conception et ajuster l’équilibre.",
+          "aFaire": "Chaque binôme partage 1 choix de type d’apprentissage et 1 difficulté rencontrée ; ajustements en direct.",
+          "notes": "Réflexivité et pair-feedback.",
+          "objectifsCibles": [
+            "Repérer un déséquilibre pédagogique dans une conception"
+          ],
+          "outilsMaterielCibles": [
+            "Outil de visioconférence (Zoom, Teams, etc.)",
+            "Chat pour interactions synchrones"
+          ],
+          "competences": [
+            "COMP_DP_05"
+          ],
+          "competencesTransversales": [
+            "COMP_TR_02",
+            "COMP_TR_03"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ec69a60c",
+      "titre": "4) Analyse et export",
+      "description": "Exploiter les visualisations et exporter la conception.",
+      "dureeCible": "15",
+      "uniteDureeCible": "60",
+      "moments": [
+        {
+          "id": "6cedf78b",
+          "titre": "Analyse",
+          "description": "Lecture de la timeline et des graphiques.",
+          "dureeCible": "8",
+          "uniteDureeCible": "60",
+          "activites": [
+            {
+              "id": "478dfd82",
+              "titre": "Lire la timeline et les graphiques",
+              "type": "investigation",
+              "duree": "8",
+              "unite": "60",
+              "regroupement": "class",
+              "nombreGroupes": "",
+              "tailleGroupe": "",
+              "formateur": "present",
+              "lieu": "online",
+              "temps": "sync",
+              "objectifActivite": "Interpréter les visualisations pour repérer un déséquilibre pédagogique.",
+              "aFaire": "Observer la timeline : repérer une surreprésentation d’un type (ex. Acquisition) et proposer un rééquilibrage.",
+              "notes": "Analyse guidée, questionnement.",
+              "objectifsCibles": [
+                "Interpréter la timeline et les graphiques d'analyse",
+                "Repérer un déséquilibre pédagogique dans une conception"
+              ],
+              "outilsMaterielCibles": [
+                "Learning Designer (application web)",
+                "Support de présentation (diapositives)",
+                "Exemples de séquences exportées"
+              ],
+              "competences": [
+                "COMP_DP_05"
+              ],
+              "competencesTransversales": []
+            }
+          ]
+        },
+        {
+          "id": "f292d031",
+          "titre": "Exports",
+          "description": "Choix et génération d’exports.",
+          "dureeCible": "7",
+          "uniteDureeCible": "60",
+          "activites": [
+            {
+              "id": "f7ac302e",
+              "titre": "Exporter selon le besoin",
+              "type": "practice",
+              "duree": "7",
+              "unite": "60",
+              "regroupement": "class",
+              "nombreGroupes": "",
+              "tailleGroupe": "",
+              "formateur": "present",
+              "lieu": "online",
+              "temps": "sync",
+              "objectifActivite": "Choisir un format d’export adapté à un usage.",
+              "aFaire": "Générer un export Markdown (IA) et identifier ce qu’il faut vérifier (structure, lisibilité).",
+              "notes": "Approche orientée tâche (problème ↔ format).",
+              "objectifsCibles": [
+                "Choisir un format d'export adapté à un besoin",
+                "Sauvegarder et restaurer un projet au format JSON"
+              ],
+              "outilsMaterielCibles": [
+                "Learning Designer (application web)",
+                "Document de synthèse (PDF)"
+              ],
+              "competences": [
+                "COMP_DP_06"
+              ],
+              "competencesTransversales": []
+            }
+          ]
+        }
+      ],
+      "activites": [
+        {
+          "id": "478dfd82",
+          "titre": "Lire la timeline et les graphiques",
+          "type": "investigation",
+          "duree": "8",
+          "unite": "60",
+          "regroupement": "class",
+          "nombreGroupes": "",
+          "tailleGroupe": "",
+          "formateur": "present",
+          "lieu": "online",
+          "temps": "sync",
+          "objectifActivite": "Interpréter les visualisations pour repérer un déséquilibre pédagogique.",
+          "aFaire": "Observer la timeline : repérer une surreprésentation d’un type (ex. Acquisition) et proposer un rééquilibrage.",
+          "notes": "Analyse guidée, questionnement.",
+          "objectifsCibles": [
+            "Interpréter la timeline et les graphiques d'analyse",
+            "Repérer un déséquilibre pédagogique dans une conception"
+          ],
+          "outilsMaterielCibles": [
+            "Learning Designer (application web)",
+            "Support de présentation (diapositives)",
+            "Exemples de séquences exportées"
+          ],
+          "competences": [
+            "COMP_DP_05"
+          ],
+          "competencesTransversales": []
+        },
+        {
+          "id": "f7ac302e",
+          "titre": "Exporter selon le besoin",
+          "type": "practice",
+          "duree": "7",
+          "unite": "60",
+          "regroupement": "class",
+          "nombreGroupes": "",
+          "tailleGroupe": "",
+          "formateur": "present",
+          "lieu": "online",
+          "temps": "sync",
+          "objectifActivite": "Choisir un format d’export adapté à un usage.",
+          "aFaire": "Générer un export Markdown (IA) et identifier ce qu’il faut vérifier (structure, lisibilité).",
+          "notes": "Approche orientée tâche (problème ↔ format).",
+          "objectifsCibles": [
+            "Choisir un format d'export adapté à un besoin",
+            "Sauvegarder et restaurer un projet au format JSON"
+          ],
+          "outilsMaterielCibles": [
+            "Learning Designer (application web)",
+            "Document de synthèse (PDF)"
+          ],
+          "competences": [
+            "COMP_DP_06"
+          ],
+          "competencesTransversales": []
+        }
+      ]
+    },
+    {
+      "id": "3bf09f5c",
+      "titre": "5) Évaluation et clôture",
+      "description": "Synthèse, évaluation formative et plan d’action.",
+      "dureeCible": "5",
+      "uniteDureeCible": "60",
+      "moments": [
+        {
+          "id": "9d17cc6a",
+          "titre": "Synthèse",
+          "description": "Finalisation et transfert.",
+          "dureeCible": "5",
+          "uniteDureeCible": "60",
+          "activites": [
+            {
+              "id": "d0759a1d",
+              "titre": "Clôture : exit ticket et prochaines étapes",
+              "type": "discussion",
+              "duree": "5",
+              "unite": "60",
+              "regroupement": "class",
+              "nombreGroupes": "",
+              "tailleGroupe": "",
+              "formateur": "present",
+              "lieu": "online",
+              "temps": "sync",
+              "objectifActivite": "Consolider, évaluer, planifier un transfert en situation.",
+              "aFaire": "Rédiger un exit ticket : 1 action concrète + 1 point à surveiller. Sauvegarder le projet.",
+              "notes": "Évaluation formative, plan d’action.",
+              "objectifsCibles": [
+                "Appliquer les principes d'alignement pédagogique"
+              ],
+              "outilsMaterielCibles": [
+                "Grille d'auto-évaluation",
+                "Espace de partage de documents (Drive, OneDrive)"
+              ],
+              "competences": [],
+              "competencesTransversales": [
+                "COMP_TR_02",
+                "COMP_TR_03"
+              ]
+            }
+          ]
+        }
+      ],
+      "activites": [
+        {
+          "id": "d0759a1d",
+          "titre": "Clôture : exit ticket et prochaines étapes",
+          "type": "discussion",
+          "duree": "5",
+          "unite": "60",
+          "regroupement": "class",
+          "nombreGroupes": "",
+          "tailleGroupe": "",
+          "formateur": "present",
+          "lieu": "online",
+          "temps": "sync",
+          "objectifActivite": "Consolider, évaluer, planifier un transfert en situation.",
+          "aFaire": "Rédiger un exit ticket : 1 action concrète + 1 point à surveiller. Sauvegarder le projet.",
+          "notes": "Évaluation formative, plan d’action.",
+          "objectifsCibles": [
+            "Appliquer les principes d'alignement pédagogique"
+          ],
+          "outilsMaterielCibles": [
+            "Grille d'auto-évaluation",
+            "Espace de partage de documents (Drive, OneDrive)"
+          ],
+          "competences": [],
+          "competencesTransversales": [
+            "COMP_TR_02",
+            "COMP_TR_03"
+          ]
+        }
+      ]
+    }
+  ],
+  "keyParams": {}
+}
