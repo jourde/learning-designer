@@ -22,3 +22,6 @@ Le concepteur pédagogique (_learning designer_) est une application web monopag
 ## Développements envisagés
 ### Taxonomies des résultats d'apprentissage
 - ...
+
+## Infographie de la démarche
+![](https://github.com/jourde/learning-designer/blob/main/images/infographie.png)
