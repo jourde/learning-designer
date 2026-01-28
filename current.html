@@ -2136,7 +2136,7 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
         title="Aperçu export"
         type="button">
   <span class="material-icons-round text-[16px]">visibility</span>
-  <span class="text-xs font-medium hidden md:inline">Aperçu</span>
+  <span class="text-xs font-medium hidden md:inline" data-i18n="label_preview">Aperçu</span>
 </button>
 <button id="open-global-search-btn"
         class="text-slate-600 hover:text-indigo-700 hover:bg-indigo-50 rounded px-2 py-1 flex items-center gap-1"
@@ -2149,14 +2149,14 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
 </div>
 </div>
 <div class="flex flex-col relative gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
-<span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider pl-1">Plus</span>
+<span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider pl-1" data-i18n="label_more">Plus</span>
 <div class="flex items-center bg-white border border-slate-200 rounded-md p-0.5 gap-0.5 shadow-sm h-[30px] min-w-max relative">
 <button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors flex items-center gap-1.5" id="btn-more" data-action="toggle-more-menu" title="Plus d'actions" type="button">
 <span class="material-icons-round text-lg">more_horiz</span>
 <span class="text-xs font-medium hidden md:inline">Plus…</span>
 </button>
 <div class="hidden absolute right-0 top-[34px] w-72 bg-white border border-slate-200 rounded-md shadow-lg z-50 p-1" id="more-menu">
-<div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 py-1">Modèles</div>
+<div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 py-1" data-i18n="label_templates">Modèles</div>
 <button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-action="open-template-export-modal" type="button">
 <span class="material-icons-round text-base text-slate-500">upload_file</span>
 <span class="text-sm">Exporter un modèle</span>
@@ -2213,17 +2213,17 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
 </div>
 <div class="relative">
 <select class="appearance-none bg-white border border-slate-200 text-slate-700 pl-2 pr-7 h-[26px] rounded-md outline-none cursor-pointer text-[11px] font-extrabold tracking-wide" id="view-style-select" data-action-change="handle-view-style-change" title="Style d'affichage">
-<option value="std">STD</option>
-<option value="hc">HC</option>
-<option value="contrast">Contraste+</option>
-<option value="transparent">Transparent</option>
+<option value="std" data-i18n="opt_chart_style_std">STD</option>
+<option value="hc" data-i18n="opt_chart_style_hc">HC</option>
+<option value="contrast" data-i18n="opt_chart_style_contrast">Contraste+</option>
+<option value="transparent" data-i18n="opt_chart_style_transparent">Transparent</option>
 </select>
 <span class="material-icons-round pointer-events-none text-slate-500 text-base absolute right-1 top-1/2 -translate-y-1/2">expand_more</span>
 </div>
 <div class="relative">
 <select class="appearance-none bg-white border border-slate-200 text-slate-700 pl-2 pr-7 h-[26px] rounded-md outline-none cursor-pointer text-[11px] font-extrabold tracking-wide" id="ui-theme-select" data-action-change="handle-ui-theme-change" title="Thème interface">
-<option value="light">Clair</option>
-<option value="dark">Sombre</option>
+<option value="light" data-i18n="opt_chart_style_light">Clair</option>
+<option value="dark" data-i18n="opt_chart_style_dark">Sombre</option>
 </select>
 <span class="material-icons-round pointer-events-none text-slate-500 text-base absolute right-1 top-1/2 -translate-y-1/2">expand_more</span>
 </div>
@@ -2260,15 +2260,15 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
   <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-1 flex gap-1" role="tablist" aria-label="Sections">
     <button type="button" id="top-tab-btn-info" role="tab" aria-selected="false" aria-controls="key-params-wrapper" class="top-tab-btn">
       <span class="material-icons-round text-sm">tune</span>
-      <span class="top-tab-label">INFORMATIONS ET PARAMÈTRES DE LA FORMATION</span>
+      <span class="top-tab-label" data-i18n="tab_info">INFORMATIONS ET PARAMÈTRES DE LA FORMATION</span>
     </button>
     <button type="button" id="top-tab-btn-visual" role="tab" aria-selected="false" aria-controls="visualisations-wrapper" class="top-tab-btn">
       <span class="material-icons-round text-sm">insights</span>
-      <span class="top-tab-label">VISUALISATIONS DES SÉQUENCES</span>
+      <span class="top-tab-label" data-i18n="tab_visual">VISUALISATIONS DES SÉQUENCES</span>
     </button>
     <button type="button" id="top-tab-btn-analysis" role="tab" aria-selected="false" aria-controls="analysis-tabs-wrap" class="top-tab-btn">
       <span class="material-icons-round text-sm">bar_chart</span>
-      <span class="top-tab-label">GRAPHIQUES D'ANALYSE</span>
+      <span class="top-tab-label" data-i18n="tab_analysis">GRAPHIQUES D'ANALYSE</span>
     </button>
   </div>
 </div>
@@ -2290,19 +2290,19 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
 <!-- Key parameters wizard (Option 6) -->
 <div class="px-3 py-2 border-t border-slate-100 bg-white flex items-center justify-between gap-2 flex-wrap" id="kpwiz-bar">
 <div class="flex items-center gap-2">
-<span class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Parcours</span>
+<span class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider" data-i18n="label_path">Parcours</span>
 <div class="flex items-center gap-1 flex-wrap" id="kpwiz-steps">
-<button class="kpwiz-step-btn px-2 h-[26px] rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[10px] font-bold" data-kpwiz-step="1" type="button">1. Identité</button>
-<button class="kpwiz-step-btn px-2 h-[26px] rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[10px] font-bold" data-kpwiz-step="2" type="button">2. Public</button>
-<button class="kpwiz-step-btn px-2 h-[26px] rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[10px] font-bold" data-kpwiz-step="3" type="button">3. Objectifs et résultats</button>
-<button class="kpwiz-step-btn px-2 h-[26px] rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[10px] font-bold" data-kpwiz-step="4" type="button">4. Compétences</button>
-<button class="kpwiz-step-btn px-2 h-[26px] rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[10px] font-bold" data-kpwiz-step="5" type="button">5. Outils et matériel</button>
+<button class="kpwiz-step-btn px-2 h-[26px] rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[10px] font-bold" data-kpwiz-step="1" type="button" data-i18n="btn_wizard_identity">1. Identité</button>
+<button class="kpwiz-step-btn px-2 h-[26px] rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[10px] font-bold" data-kpwiz-step="2" type="button" data-i18n="btn_wizard_audience">2. Public</button>
+<button class="kpwiz-step-btn px-2 h-[26px] rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[10px] font-bold" data-kpwiz-step="3" type="button" data-i18n="btn_wizard_objectives">3. Objectifs et résultats</button>
+<button class="kpwiz-step-btn px-2 h-[26px] rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[10px] font-bold" data-kpwiz-step="4" type="button" data-i18n="btn_wizard_competences">4. Compétences</button>
+<button class="kpwiz-step-btn px-2 h-[26px] rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[10px] font-bold" data-kpwiz-step="5" type="button" data-i18n="btn_wizard_tools">5. Outils et matériel</button>
 </div>
 </div>
 <div class="flex items-center gap-1">
-<button class="px-2 h-[26px] rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-[10px] font-extrabold" data-kpwiz-action="prev" type="button">Précédent</button>
-<button class="px-2 h-[26px] rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-[10px] font-extrabold" data-kpwiz-action="next" type="button">Suivant</button>
-<button class="px-2 h-[26px] rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[10px] font-extrabold" data-kpwiz-action="showall" type="button">Tout afficher</button>
+<button class="px-2 h-[26px] rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-[10px] font-extrabold" data-kpwiz-action="prev" type="button" data-i18n="btn_wizard_prev">Précédent</button>
+<button class="px-2 h-[26px] rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-[10px] font-extrabold" data-kpwiz-action="next" type="button" data-i18n="btn_wizard_next">Suivant</button>
+<button class="px-2 h-[26px] rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[10px] font-extrabold" data-kpwiz-action="showall" type="button" data-i18n="btn_wizard_showall">Tout afficher</button>
 </div>
 </div>
 <div id="kpwiz-steps-wrapper">
@@ -2461,7 +2461,7 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
 <span class="font-bold">Ajout depuis :</span>
 <span class="text-slate-600" id="aims-origin-label"></span>
 </div>
-<button class="text-[10px] font-bold text-indigo-700 bg-white border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-100 transition-colors" data-action="back-to-aims-origin" title="Revenir à l'activité" type="button">Retour à l'activité</button>
+<button class="text-[10px] font-bold text-indigo-700 bg-white border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-100 transition-colors" data-action="back-to-aims-origin" data-i18n="btn_back_to_activity">Retour à l'activité</button>
 </div>
 <div class="flex items-center gap-2 mb-2 flex-wrap no-print">
 <button class="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-slate-200 transition-colors flex items-center gap-1" id="btn-load-aims-csv" title="Charger une liste d'objectifs (CSV/TSV/TXT)" type="button">
@@ -2683,7 +2683,7 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
 <div class="md:col-span-2 lg:col-span-3">
 <details open class="group border border-slate-200 rounded-lg bg-white/0">
 <summary class="px-3 py-2 cursor-pointer select-none flex items-center justify-between">
-<span class="compact-label">Outils et matériel</span>
+<span class="compact-label" data-i18n="label_tools_materials">Outils et matériel</span>
 <span class="material-icons-round text-slate-400 text-sm transition-transform group-open:rotate-180">expand_more</span>
 </summary>
 <div class="px-3 pb-3">
@@ -2724,13 +2724,13 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
     <div class="sm:w-48">
       <label class="compact-label">Catégorie</label>
       <select id="tools-materials-filter-cat" class="w-full px-2 py-1 border border-slate-200 rounded bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
-        <option value="">Toutes</option>
+        <option value="" data-i18n="opt_all_categories">Toutes</option>
       </select>
     </div>
     <div class="sm:w-56">
       <label class="compact-label">Sous-catégorie</label>
       <select id="tools-materials-filter-subcat" class="w-full px-2 py-1 border border-slate-200 rounded bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
-        <option value="">Toutes</option>
+        <option value="" data-i18n="opt_all_categories">Toutes</option>
       </select>
     </div>
     <button id="tools-materials-filter-reset" type="button" class="px-2 py-1 rounded bg-white border border-slate-200 text-slate-600 hover:text-slate-800 hover:border-slate-300">
@@ -2982,10 +2982,10 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <span class="font-bold text-slate-700 uppercase text-xs tracking-wide">Graphiques d'analyse</span>
 </div><span class="material-icons-round text-slate-500 text-sm analysis-chevron">expand_more</span></summary><div class="w-full"><div class="px-3 pt-2">
 <div aria-label="Graphiques d'analyse" class="analysis-tabbar" role="tablist">
-<button aria-selected="true" class="analysis-tab-btn is-active" data-analysis-tab="modalites" id="analysis-tab-modalites" role="tab" type="button" onclick="selectAnalysisTab('modalites')">Modalités</button>
-<button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="competences" id="analysis-tab-competences" role="tab" type="button" onclick="selectAnalysisTab('competences')">Compétences</button>
-<button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="aims" id="analysis-tab-aims" role="tab" type="button" onclick="selectAnalysisTab('aims')">Objectifs</button>
-<button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="outcomes" id="analysis-tab-outcomes" role="tab" type="button" onclick="selectAnalysisTab('outcomes')">Résultats</button>
+<button aria-selected="true" class="analysis-tab-btn is-active" data-analysis-tab="modalites" data-i18n="tab_modalities">Modalités</button>
+<button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="competences" data-i18n="tab_competences">Compétences</button>
+<button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="aims" data-i18n="tab_aims">Objectifs</button>
+<button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="outcomes" data-i18n="tab_outcomes">Résultats</button>
 </div>
 </div><div class="p-2 pt-1" id="analysis-tabs-content">
 <div class="analysis-tab-pane" data-analysis-pane="competences" id="analysis-pane-competences">
@@ -3286,7 +3286,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
   <div class="flex items-center gap-2 flex-shrink-0">
     <span class="hidden lg:inline text-[10px] font-bold text-slate-500 uppercase tracking-wider" aria-hidden="true">Navigation</span>
     <select id="jump-to-select" class="ld-control-select min-w-[180px] max-w-[280px] sm:min-w-[240px] sm:max-w-[360px]" aria-label="Navigation rapide vers un élément">
-      <option value="">Aller à…</option>
+      <option value="" data-i18n="opt_goto">Aller à…</option>
     </select>
     <button id="jump-to-refresh" class="ld-control-btn border-slate-300 hover:border-indigo-400" type="button" title="Actualiser la liste de navigation" aria-label="Actualiser la navigation">
       <span class="material-icons-round text-[16px]">refresh</span>
@@ -3305,11 +3305,11 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
       <span class="hidden md:inline text-xs text-slate-500 font-extrabold" aria-hidden="true">Niveau</span>
 
       <div id="ld-view-level-segmented" class="inline-flex rounded-md border border-slate-200 bg-white overflow-hidden" role="group" aria-label="Sélection du niveau d'affichage">
-        <button type="button" class="ld-segmented-btn border-r border-slate-200" data-view-level="modules" aria-pressed="false" title="Afficher seulement les blocs modules">Modules</button>
-        <button type="button" class="ld-segmented-btn border-r border-slate-200" data-view-level="moments" aria-pressed="false" title="Afficher aussi les blocs moment">Moments</button>
-        <button type="button" class="ld-segmented-btn border-r border-slate-200" data-view-level="submoments" aria-pressed="false" title="Afficher aussi les blocs sous-moment">Sous-moments</button>
-        <button type="button" class="ld-segmented-btn border-r border-slate-200" data-view-level="activities" aria-pressed="false" title="Afficher aussi les activités">Activités</button>
-        <button type="button" class="ld-segmented-btn" data-view-level="panorama" aria-pressed="false" title="Vue panoramique (tableau très compact)">Panorama</button>
+        <button type="button" class="ld-segmented-btn border-r border-slate-200" data-view-level="modules" data-i18n="btn_view_modules">Modules</button>
+        <button type="button" class="ld-segmented-btn border-r border-slate-200" data-view-level="moments" data-i18n="btn_view_moments">Moments</button>
+        <button type="button" class="ld-segmented-btn border-r border-slate-200" data-view-level="submoments" data-i18n="btn_view_submoments">Sous-moments</button>
+        <button type="button" class="ld-segmented-btn border-r border-slate-200" data-view-level="activities" data-i18n="btn_view_activities">Activités</button>
+        <button type="button" class="ld-segmented-btn" data-view-level="panorama" data-i18n="btn_view_panorama">Panorama</button>
       </div>
 
       <button class="ld-control-btn ml-1" id="btn-toggle-all-main" data-action="toggle-all-activities" aria-label="Replier ou déplier tous les modules" title="Replier ou déplier tous les modules">
@@ -3326,13 +3326,13 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
       <span class="hidden md:inline text-xs text-slate-500 font-extrabold" aria-hidden="true">Filtre</span>
 
       <select id="status-filter" class="ld-control-select" title="Filtrer l'affichage par état" aria-label="Filtrer par état de réalisation">
-        <option value="all" selected>Tous</option>
-        <option value="review">À revoir</option>
-        <option value="in_progress">En cours</option>
-        <option value="done">Finalisé</option>
+        <option value="all" selected data-i18n="opt_all_statuses">Tous</option>
+        <option value="review" data-i18n="opt_status_review">À revoir</option>
+        <option value="in_progress" data-i18n="opt_status_inprogress">En cours</option>
+        <option value="done" data-i18n="opt_status_completed">Finalisé</option>
       </select>
 
-      <button id="status-filter-clear" type="button" class="ld-control-btn" title="Réinitialiser le filtre d'état" aria-label="Réinitialiser le filtre">Réinitialiser</button>
+      <button id="status-filter-clear" data-i18n="btn_reset">Réinitialiser</button>
 
       <button id="btn-toggle-status-summaries" type="button" aria-pressed="true"
         class="ld-control-btn"
@@ -3362,15 +3362,15 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 
       <span class="text-xs text-slate-500 font-extrabold">État :</span>
       <select id="panorama-status-filter" class="h-[26px] px-2 text-xs border border-slate-200 rounded-md bg-white text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-200" title="Filtrer par état">
-        <option value="all">Tous</option>
-        <option value="review">À revoir</option>
-        <option value="in_progress">En cours</option>
-        <option value="done">Finalisé</option>
+        <option value="all" data-i18n="opt_all_statuses">Tous</option>
+        <option value="review" data-i18n="opt_status_review">À revoir</option>
+        <option value="in_progress" data-i18n="opt_status_inprogress">En cours</option>
+        <option value="done" data-i18n="opt_status_completed">Finalisé</option>
       </select>
 
       <span class="text-slate-300 px-1 select-none">|</span>
 
-      <input id="panorama-filter" class="h-[26px] w-64 px-2 rounded-md border border-slate-200 bg-white text-slate-600 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-200" placeholder="Filtrer (module, moment, activité…)"/>
+      <input id="panorama-filter" class="h-[26px] w-64 px-2 rounded-md border border-slate-200 bg-white text-slate-600 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-200" placeholder="Filtrer (module, moment, activité…)" data-i18n-placeholder="ph_panorama_filter"/>
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
@@ -3378,9 +3378,9 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 
       <span class="text-xs text-slate-500 font-extrabold">→ État :</span>
       <select id="panorama-batch-status" class="h-[26px] px-2 text-xs border border-slate-200 rounded-md bg-white text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-200" title="Définir l’état des lignes sélectionnées">
-        <option value="review">À revoir</option>
-        <option value="in_progress">En cours</option>
-        <option value="done">Finalisé</option>
+        <option value="review" data-i18n="opt_status_review">À revoir</option>
+        <option value="in_progress" data-i18n="opt_status_inprogress">En cours</option>
+        <option value="done" data-i18n="opt_status_completed">Finalisé</option>
       </select>
 
       <button id="panorama-batch-apply" type="button" class="h-[26px] px-2 rounded-md border border-slate-200 bg-white text-slate-600 text-xs font-extrabold hover:text-indigo-700 hover:bg-slate-50 transition-colors" title="Appliquer l’état aux lignes sélectionnées">
@@ -3432,7 +3432,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div>
 
 <div id="status-filter-empty" class="hidden text-center py-10 bg-white rounded-xl border-2 border-dashed border-slate-300 mt-3">
-  <h3 class="mt-1 text-base font-medium text-slate-900">Aucun élément ne correspond au filtre.</h3>
+  <h3 class="mt-1 text-base font-medium text-slate-900" data-i18n="msg_no_filter_match">Aucun élément ne correspond au filtre.</h3>
   <p class="mt-0.5 text-xs text-slate-500">Modifiez le filtre ou réinitialisez-le pour tout afficher.</p>
 </div>
 
@@ -3560,11 +3560,11 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div>
 <div aria-labelledby="module-selection-modal-title" aria-modal="true" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 z-[120] flex items-center justify-center p-4" id="module-selection-modal" role="dialog">
 <div class="bg-white rounded-lg shadow-lg p-4 max-w-lg w-full">
-<h3 class="text-sm font-bold text-slate-800 mb-2" id="module-selection-modal-title">Sélection</h3>
+<h3 class="text-sm font-bold text-slate-800 mb-2" id="module-selection-modal-title" data-i18n="heading_selection">Sélection</h3>
 <div class="text-xs text-slate-700" id="module-selection-modal-body"></div>
 <div class="flex justify-end gap-2 mt-4">
-<button class="px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded text-xs font-medium transition-colors" id="module-selection-modal-cancel" type="button">Annuler</button>
-<button class="px-3 py-1.5 bg-slate-700 text-white hover:bg-slate-800 rounded text-xs font-medium transition-colors" id="module-selection-modal-apply" type="button">Appliquer</button>
+<button class="px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded text-xs font-medium transition-colors" id="module-selection-modal-cancel" data-i18n="btn_cancel">Annuler</button>
+<button class="px-3 py-1.5 bg-slate-700 text-white hover:bg-slate-800 rounded text-xs font-medium transition-colors" id="module-selection-modal-apply" data-i18n="btn_apply">Appliquer</button>
 </div>
 </div>
 </div>
@@ -3594,7 +3594,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
       <div class="flex flex-col md:flex-row md:items-center gap-2">
         <input class="flex-1 w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none"
                id="global-search-input"
-               placeholder="Rechercher dans les modules, activités, contenus…"
+               placeholder="Rechercher dans les modules, activités, contenus…" data-i18n-placeholder="ph_global_search"
                type="text" />
         <button class="px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white hover:bg-slate-50"
                 id="global-search-refresh-btn"
@@ -3629,7 +3629,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
     <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
       <div class="flex items-center gap-2">
         <span class="material-icons-round text-slate-600">visibility</span>
-        <h3 class="text-sm font-bold text-slate-800" id="export-preview-modal-title">Aperçu export</h3>
+        <h3 class="text-sm font-bold text-slate-800" id="export-preview-modal-title" data-i18n="heading_export_preview">Aperçu export</h3>
       </div>
       <button class="text-slate-500 hover:text-slate-800 p-1 rounded hover:bg-slate-100"
               data-action="close-export-preview"
@@ -3683,7 +3683,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
               <div class="flex gap-2">
                 <input class="flex-1 px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none"
                        id="export-preview-activity-filter"
-                       placeholder="Filtrer… (titre module/moment/activité)"
+                       placeholder="Filtrer… (titre module/moment/activité)" data-i18n-placeholder="ph_timeline_filter"
                        type="text"
                        disabled/>
                 <button class="px-2 py-1.5 text-xs rounded bg-slate-100 text-slate-700 hover:bg-slate-200"
@@ -4040,8 +4040,8 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div>
 <div class="moment-body px-3 pb-3">
 <div class="moment-description-wrap hidden mt-2">
-<div class="compact-label">Description</div>
-<textarea class="moment-description w-full min-h-[64px] resize-y px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Description du moment..."></textarea>
+<div class="compact-label" data-i18n="label_description_compact">Description</div>
+<textarea class="moment-description w-full min-h-[64px] resize-y px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Description du moment..." data-i18n-placeholder="ph_moment_description"></textarea>
 </div>
 
 <div class="submoments-container space-y-2 mt-2"></div>
@@ -4215,7 +4215,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
            </span>
 </div>
 </div>
-<textarea class="step-group-details-notes w-full px-2 py-1 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y" placeholder="Détails du regroupement (composition, critères, etc.)" rows="2"></textarea>
+<textarea class="step-group-details-notes w-full px-2 py-1 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y" placeholder="Détails du regroupement (composition, critères, etc.)" data-i18n-placeholder="ph_grouping_details" rows="2"></textarea>
 </div>
 </div>
 </div>
@@ -4296,9 +4296,9 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <div class="lg:flex-1 step-right-col">
   <!-- Onglets : Déroulé / Alignement / Ressources -->
   <div class="step-tabs" role="tablist" aria-label="Panneaux de l'activité">
-    <button class="step-tab" type="button" role="tab" aria-selected="true" tabindex="0" data-step-tab="flow">Déroulé</button>
-    <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="alignment">Alignement</button>
-    <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="resources">Ressources</button>
+    <button class="step-tab" type="button" role="tab" aria-selected="true" tabindex="0" data-step-tab="flow" data-i18n="tab_flow">Déroulé</button>
+    <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="alignment" data-i18n="tab_alignment">Alignement</button>
+    <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="resources" data-i18n="tab_resources">Ressources</button>
     <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="notes" data-i18n="label_notes">Notes</button>
   </div>
 
@@ -7957,7 +7957,75 @@ title_new_activity: "Ajouter un nouveau module",
                 bloom_sub_rewrite: "Réécrire",
                 bloom_sub_specify: "Spécifier",
                 bloom_sub_synthesize: "Synthétiser",
-                bloom_sub_write: "Écrire"
+                bloom_sub_write: "Écrire",
+                btn_apply: "Appliquer",
+                btn_back_to_activity: "Retour à l'activité",
+                btn_cancel: "Annuler",
+                btn_clear: "Effacer",
+                btn_copy_report: "Copier rapport",
+                btn_download: "Télécharger",
+                btn_go: "Aller",
+                btn_refresh_view: "Actualiser",
+                btn_reset: "Réinitialiser",
+                btn_view_activities: "Activités",
+                btn_view_modules: "Modules",
+                btn_view_moments: "Moments",
+                btn_view_panorama: "Panorama",
+                btn_view_submoments: "Sous-moments",
+                btn_wizard_audience: "2. Public",
+                btn_wizard_competences: "4. Compétences",
+                btn_wizard_identity: "1. Identité",
+                btn_wizard_next: "Suivant",
+                btn_wizard_objectives: "3. Objectifs et résultats",
+                btn_wizard_prev: "Précédent",
+                btn_wizard_showall: "Tout afficher",
+                btn_wizard_tools: "5. Outils et matériel",
+                chart_group_modes: "Modes de groupes",
+                chart_learning_types: "Types d'apprentissage",
+                chart_place_modes: "Modes de lieu",
+                chart_time_modes: "Modes de temps",
+                chart_trainer_presence: "Présence du formateur",
+                heading_analysis_charts: "Graphiques d'analyse",
+                heading_export_preview: "Aperçu export",
+                heading_metadata: "Métadonnées",
+                heading_selection: "Sélection",
+                label_description_compact: "Description",
+                label_more: "Plus",
+                label_path: "Parcours",
+                label_preview: "Aperçu",
+                label_search: "Rechercher",
+                label_templates: "Modèles",
+                label_theme_colon: "Thème:",
+                label_tools_materials: "Outils et matériel",
+                msg_no_filter_match: "Aucun élément ne correspond au filtre.",
+                opt_all_categories: "Toutes",
+                opt_all_statuses: "Tous",
+                opt_chart_style_contrast: "Contraste+",
+                opt_chart_style_dark: "Sombre",
+                opt_chart_style_hc: "HC",
+                opt_chart_style_light: "Clair",
+                opt_chart_style_std: "STD",
+                opt_chart_style_transparent: "Transparent",
+                opt_goto: "Aller à…",
+                opt_status_completed: "Finalisé",
+                opt_status_inprogress: "En cours",
+                opt_status_review: "À revoir",
+                ph_global_search: "Rechercher dans les modules, activités, contenus…",
+                ph_grouping_details: "Détails du regroupement (composition, critères, etc.)",
+                ph_links_references: "Liens, références, bibliographie, DOI, normes, etc.",
+                ph_moment_description: "Description du moment...",
+                ph_panorama_filter: "Filtrer (module, moment, activité…)",
+                ph_timeline_filter: "Filtrer… (titre module/moment/activité)",
+                tab_aims: "Objectifs",
+                tab_alignment: "Alignement",
+                tab_analysis: "GRAPHIQUES D'ANALYSE",
+                tab_competences: "Compétences",
+                tab_flow: "Déroulé",
+                tab_info: "INFORMATIONS ET PARAMÈTRES DE LA FORMATION",
+                tab_modalities: "Modalités",
+                tab_outcomes: "Résultats",
+                tab_resources: "Ressources",
+                tab_visual: "VISUALISATIONS DES SÉQUENCES"
             }
         };
 
@@ -16738,17 +16806,17 @@ function __deprecated__exportRichText_1() {
             <body>
                 <h1>${t.rtf_title}</h1>
                 
-                <h2>Métadonnées</h2>
+                <h2 data-i18n="heading_metadata">Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
-                <div class="meta-item"><span class="meta-label">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
+                <div class="meta-item"><span class="meta-label" data-i18n="label_theme_colon">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-designed-unit'))}</div>
-                <h2>Graphiques d'analyse</h2>
+                <h2 data-i18n="heading_analysis_charts">Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
                         <h3 style="margin: 10px 0 6px 0;">Types d'apprentissage</h3>
@@ -16778,7 +16846,7 @@ function __deprecated__exportRichText_1() {
                 </div>
 
                 
-                <h2>Graphiques d'analyse</h2>
+                <h2 data-i18n="heading_analysis_charts">Graphiques d'analyse</h2>
                 <div style="margin: 14px 0 18px 0;">
                     ${(__charts['chart-learning-types'] ? `<div style="margin-bottom:16px;">
                         <h3 style="margin-bottom:8px;">Types d'apprentissage</h3>
@@ -16847,7 +16915,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             
 
             // --- Analysis charts section ---
-            html += `<h2>Graphiques d'analyse</h2>`;
+            html += `<h2 data-i18n="heading_analysis_charts">Graphiques d'analyse</h2>`;
 
             // Learning types pie + legend
             if (__charts['chart-learning-types']) {
@@ -17268,17 +17336,17 @@ function __deprecated__exportCSV_2() {
             <body>
                 <h1>${t.rtf_title}</h1>
                 
-                <h2>Métadonnées</h2>
+                <h2 data-i18n="heading_metadata">Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
-                <div class="meta-item"><span class="meta-label">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
+                <div class="meta-item"><span class="meta-label" data-i18n="label_theme_colon">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-designed-unit'))}</div>
-                <h2>Graphiques d'analyse</h2>
+                <h2 data-i18n="heading_analysis_charts">Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
                         <h3 style="margin: 10px 0 6px 0;">Types d'apprentissage</h3>
@@ -17836,17 +17904,17 @@ function __deprecated__exportCSV_3() {
             <body>
                 <h1>${t.rtf_title}</h1>
                 
-                <h2>Métadonnées</h2>
+                <h2 data-i18n="heading_metadata">Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
-                <div class="meta-item"><span class="meta-label">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
+                <div class="meta-item"><span class="meta-label" data-i18n="label_theme_colon">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-designed-unit'))}</div>
-                <h2>Graphiques d'analyse</h2>
+                <h2 data-i18n="heading_analysis_charts">Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
                         <h3 style="margin: 10px 0 6px 0;">Types d'apprentissage</h3>
@@ -18281,17 +18349,17 @@ function __deprecated__exportCSV_4() {
             <body>
                 <h1>${t.rtf_title}</h1>
                 
-                <h2>Métadonnées</h2>
+                <h2 data-i18n="heading_metadata">Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
-                <div class="meta-item"><span class="meta-label">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
+                <div class="meta-item"><span class="meta-label" data-i18n="label_theme_colon">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-designed-unit'))}</div>
-                <h2>Graphiques d'analyse</h2>
+                <h2 data-i18n="heading_analysis_charts">Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
                         <h3 style="margin: 10px 0 6px 0;">Types d'apprentissage</h3>
@@ -18681,17 +18749,17 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             <body>
                 <h1>${t.rtf_title}</h1>
                 
-                <h2>Métadonnées</h2>
+                <h2 data-i18n="heading_metadata">Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
-                <div class="meta-item"><span class="meta-label">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
+                <div class="meta-item"><span class="meta-label" data-i18n="label_theme_colon">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-designed-unit'))}</div>
-                <h2>Graphiques d'analyse</h2>
+                <h2 data-i18n="heading_analysis_charts">Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
                         <h3 style="margin: 10px 0 6px 0;">Types d'apprentissage</h3>
@@ -19205,17 +19273,17 @@ function __deprecated__exportRichText_6() {
             <body>
                 <h1>${t.rtf_title}</h1>
                 
-                <h2>Métadonnées</h2>
+                <h2 data-i18n="heading_metadata">Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
-                <div class="meta-item"><span class="meta-label">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
+                <div class="meta-item"><span class="meta-label" data-i18n="label_theme_colon">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-designed-unit'))}</div>
-                <h2>Graphiques d'analyse</h2>
+                <h2 data-i18n="heading_analysis_charts">Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
                         <h3 style="margin: 10px 0 6px 0;">Types d'apprentissage</h3>
@@ -19507,17 +19575,17 @@ function exportCSV() {
             <body>
                 <h1>${t.rtf_title}</h1>
                 
-                <h2>Métadonnées</h2>
+                <h2 data-i18n="heading_metadata">Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
-                <div class="meta-item"><span class="meta-label">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
+                <div class="meta-item"><span class="meta-label" data-i18n="label_theme_colon">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-designed-unit'))}</div>
-                <h2>Graphiques d'analyse</h2>
+                <h2 data-i18n="heading_analysis_charts">Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
                         <h3 style="margin: 10px 0 6px 0;">Types d'apprentissage</h3>
@@ -19969,17 +20037,17 @@ let html = `
             <body>
                 <h1>${t.rtf_title}</h1>
                 
-                <h2>Métadonnées</h2>
+                <h2 data-i18n="heading_metadata">Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
-                <div class="meta-item"><span class="meta-label">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
+                <div class="meta-item"><span class="meta-label" data-i18n="label_theme_colon">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_total_time}:</span> ${totalDuration}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_learning_time}:</span> ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_designed_time}:</span> ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-designed-unit'))}</div>
-                <h2>Graphiques d'analyse</h2>
+                <h2 data-i18n="heading_analysis_charts">Graphiques d'analyse</h2>
                 <div>
                     ${(__charts['chart-learning-types'] ? `<div style="margin: 10px 0 16px 0;">
                         <h3 style="margin: 10px 0 6px 0;">Types d'apprentissage</h3>
@@ -23857,9 +23925,9 @@ document.addEventListener('DOMContentLoaded', () => {
   <div class="flex items-center justify-between px-3 py-2 border-b border-slate-200">
     <div class="text-sm font-semibold text-slate-800">Diagnostic UI</div>
     <div class="flex items-center gap-2">
-      <button class="text-xs font-semibold px-2 py-1 rounded bg-slate-50 hover:bg-slate-100 border border-slate-200" data-action="copy-debug-report" type="button">Copier rapport</button>
-      <button class="text-xs font-semibold px-2 py-1 rounded bg-slate-50 hover:bg-slate-100 border border-slate-200" data-action="download-debug-report" type="button">Télécharger</button>
-      <button class="text-xs font-semibold px-2 py-1 rounded bg-slate-50 hover:bg-slate-100 border border-slate-200" data-action="clear-debug-log" type="button">Effacer</button>
+      <button class="text-xs font-semibold px-2 py-1 rounded bg-slate-50 hover:bg-slate-100 border border-slate-200" data-action="copy-debug-report" data-i18n="btn_copy_report">Copier rapport</button>
+      <button class="text-xs font-semibold px-2 py-1 rounded bg-slate-50 hover:bg-slate-100 border border-slate-200" data-action="download-debug-report" data-i18n="btn_download">Télécharger</button>
+      <button class="text-xs font-semibold px-2 py-1 rounded bg-slate-50 hover:bg-slate-100 border border-slate-200" data-action="clear-debug-log" data-i18n="btn_clear">Effacer</button>
       <button class="text-slate-500 hover:text-slate-800 px-2 py-1 rounded" data-action="toggle-debug-ui" type="button">✕</button>
     </div>
   </div>
@@ -24290,7 +24358,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Rebuild category options
             const catArr = Array.from(cats).sort((a,b) => a.localeCompare(b, 'fr'));
-            catSel.innerHTML = '<option value="">Toutes</option>' + catArr.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+            catSel.innerHTML = '<option value="" data-i18n="opt_all_categories">Toutes</option>' + catArr.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
             if (catArr.includes(prevCat)) catSel.value = prevCat;
 
             // Rebuild sub-category options based on selected category (or all)
@@ -24303,7 +24371,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 subsByCat.forEach(set => set.forEach(v => subSet.add(v)));
             }
             const subArr = Array.from(subSet).sort((a,b) => a.localeCompare(b, 'fr'));
-            subSel.innerHTML = '<option value="">Toutes</option>' + subArr.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+            subSel.innerHTML = '<option value="" data-i18n="opt_all_categories">Toutes</option>' + subArr.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
             if (subArr.includes(prevSub)) subSel.value = prevSub;
 
             try { applyToolsMaterialsListFilters(); } catch (_) {}
@@ -24876,7 +24944,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let html = '';
     html += `<h1>${__escapeHtml2(title)}</h1>`;
 
-    html += `<h2>Métadonnées</h2><ul>`;
+    html += `<h2 data-i18n="heading_metadata">Métadonnées</h2><ul>`;
     function li(label, val){
       const v = __trim(val);
       if (!v && !opts.includeEmpty) return;
@@ -26308,9 +26376,9 @@ function init(){
         <span class="text-[10px] font-bold text-slate-500 uppercase">État</span>
         <select id="batch-status" class="w-40 px-2 py-1 text-xs border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-200">
           <option value="">— choisir —</option>
-          <option value="in_progress">En cours</option>
-          <option value="done">Finalisé</option>
-          <option value="review">À revoir</option>
+          <option value="in_progress" data-i18n="opt_status_inprogress">En cours</option>
+          <option value="done" data-i18n="opt_status_completed">Finalisé</option>
+          <option value="review" data-i18n="opt_status_review">À revoir</option>
         </select>
         <button id="batch-apply-status" type="button" class="px-2 py-1 rounded-md bg-slate-800 text-white text-xs hover:bg-slate-900">Appliquer</button>
       </div>
