@@ -149,11 +149,24 @@ textarea{resize:vertical;}
         }
 
         
-        body.hide-types .learning-type-container,
-        body.hide-types .timeline-track-pedagogy,
-        body.hide-types .activity-type-bar {
+body.hide-types .learning-type-container,
+body.hide-types .timeline-track-pedagogy,
+body.hide-types .activity-type-bar {
             display: none !important;
         }
+
+/* Simplified view: hide target durations (keep designed durations) */
+body.hide-target-durations .activity-target-wrap,
+body.hide-target-durations .moment-target-wrap,
+body.hide-target-durations .submoment-target-wrap,
+body.hide-target-durations .module-time-compare,
+body.hide-target-durations .moment-time-compare,
+body.hide-target-durations .submoment-time-compare,
+body.hide-target-durations .timeline-track-planned,
+body.hide-target-durations #timeline-activities-planned,
+body.hide-target-durations #timeline-activities-planned-labels {
+  display: none !important;
+}
 
         .activity-container {
             border-left: 3px solid #cbd5e1; 
@@ -1716,6 +1729,7 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
       'open-i18n-audit': () => { call('openI18nAudit'); call('closeMoreMenu'); },
       'toggle-all-activities': () => call('toggleAllActivities'),
       'toggle-learning-types': () => call('toggleLearningTypes'),
+      'toggle-target-durations': () => call('toggleTargetDurations'),
       'toggle-panel': ({btn}) => {
         const pid = btn && btn.dataset ? btn.dataset.panel : null;
         if (pid) call('togglePanel', pid);
@@ -2803,7 +2817,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
   </div>
 </div>
 </div>
-<div class="timeline-track bg-white rounded-xl border border-slate-200 p-1.5 flex flex-col gap-1">
+<div class="timeline-track timeline-track-planned bg-white rounded-xl border border-slate-200 p-1.5 flex flex-col gap-1">
 <div class="flex items-center justify-between gap-2 flex-wrap">
 <div class="flex items-center gap-1.5">
 <span aria-hidden="true" class="material-icons-round text-slate-500 text-base">
@@ -3335,6 +3349,16 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
         <span class="material-icons-round text-[16px]">restart_alt</span>
       </button>
 
+      <button id="btn-toggle-target-durations"
+              class="ld-control-btn"
+              data-action="toggle-target-durations"
+              aria-pressed="false"
+              title="Masquer les durées cibles"
+              aria-label="Masquer les durées cibles">
+        <span class="material-icons-round text-[16px]" id="icon-toggle-target-durations">visibility</span>
+        <span class="hidden xl:inline" id="text-toggle-target-durations">Cibles</span>
+      </button>
+
       <details class="relative">
         <summary class="ld-control-btn list-none select-none">
           <span class="material-icons-round text-[16px]">tune</span>
@@ -3785,7 +3809,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div>
 <div class="flex items-center gap-1 no-print">
 <div class="flex items-center gap-3 mr-2">
-<div class="flex flex-col items-end">
+<div class="activity-target-wrap flex flex-col items-end">
 <span class="text-[9px] text-slate-400 uppercase font-bold tracking-wider leading-none mb-0.5" data-i18n="label_target">
          Cible
         </span>
@@ -4080,8 +4104,8 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
         <input class="submoment-title flex-1 min-w-0 text-sm font-semibold bg-transparent border border-transparent focus:border-indigo-300 rounded px-2 py-1 outline-none" placeholder="Titre du sous-moment" />
       </div>
       <div class="flex items-center gap-2">
-        <div class="flex items-center gap-1">
-          <div class="flex flex-col items-end">
+          <div class="flex items-center gap-1">
+          <div class="submoment-target-wrap flex flex-col items-end">
             <span class="text-[8px] text-slate-400 uppercase font-bold tracking-wider leading-none mb-0.5" data-i18n="label_target">Cible</span>
             <div class="flex items-center gap-1">
               <input class="submoment-target-time w-12 px-1 py-0.5 text-[11px] text-right border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none h-[20px]" min="0" data-action-input="update-stats-debounced" placeholder="0" type="number"/>
@@ -8825,6 +8849,35 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
                 icon.innerText = 'visibility';
             }
         }
+
+        const TARGET_DURATIONS_STORAGE_KEY = 'ld_hide_target_durations';
+
+        function setTargetDurationsHidden(hidden) {
+            const isHidden = !!hidden;
+            document.body.classList.toggle('hide-target-durations', isHidden);
+
+            const btn = document.getElementById('btn-toggle-target-durations');
+            const icon = document.getElementById('icon-toggle-target-durations');
+            if (btn) btn.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+            if (icon) icon.innerText = isHidden ? 'visibility_off' : 'visibility';
+            if (btn) {
+                btn.title = isHidden ? 'Afficher les durées cibles' : 'Masquer les durées cibles';
+                btn.setAttribute('aria-label', btn.title);
+            }
+        }
+
+        function toggleTargetDurations() {
+            const next = !document.body.classList.contains('hide-target-durations');
+            setTargetDurationsHidden(next);
+            try { localStorage.setItem(TARGET_DURATIONS_STORAGE_KEY, next ? '1' : '0'); } catch (_) {}
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const saved = localStorage.getItem(TARGET_DURATIONS_STORAGE_KEY);
+                if (saved === '1') setTargetDurationsHidden(true);
+            } catch (_) {}
+        });
 
         
         function toggleActivity(btn) {
