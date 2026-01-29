@@ -1635,11 +1635,9 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
       'add-step-submoment': ({btn}) => call('addStepToSubmoment', btn),
       'open-export-preview': ({event}) => call('openExportPreview', event),
       'close-export-preview': ({event}) => call('closeExportPreview', event),
-      'collapse-module-contents': ({btn}) => call('collapseModuleContents', btn),
       'toggle-module-description': ({btn}) => call('toggleDescription', btn),
       'toggle-module': ({btn}) => call('toggleActivity', btn),
       'toggle-step': ({btn}) => call('toggleStep', btn),
-      'toggle-step-sections': ({btn}) => call('toggleStepSections', btn),
       'toggle-moment-description': ({btn}) => call('toggleMomentDescription', btn),
       'toggle-moment': ({btn}) => call('toggleMoment', btn),
       'delete-moment': ({btn}) => call('trashMoment', btn),
@@ -3859,9 +3857,6 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
         expand_more
        </span>
 </button>
-<button class="text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-action="collapse-module-contents" title="Replier tous les moments et activités de ce module" type="button">
-<span class="material-icons-round text-lg">unfold_less</span>
-</button>
 <button class="text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-action="duplicate-module" data-i18n-title="title_duplicate_activity" title="Dupliquer ce module" type="button">
 <span class="material-icons-round text-lg">
         content_copy
@@ -4064,8 +4059,8 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
   <span class="material-icons-round text-lg">done_all</span>
 </button>
 <button aria-expanded="false" class="no-print text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-action="toggle-moment-description" data-i18n-title="title_toggle_description" title="Afficher/Masquer la description" type="button"><span class="material-icons-round text-lg">description</span></button>
-<button aria-expanded="true" class="no-print text-slate-400 hover:text-slate-700 transition-colors" data-action="toggle-moment" title="Replier / déplier ce moment" type="button">
-<span class="material-icons-round text-lg rotate-icon-moment" style="transform: rotate(180deg);">expand_more</span>
+<button aria-expanded="true" class="no-print text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-action="toggle-moment" title="Replier / déplier ce moment" type="button">
+<span class="material-icons-round text-lg rotate-icon" style="transform: rotate(180deg);">expand_more</span>
 </button>
 <button class="no-print text-slate-400 hover:text-rose-600 transition-colors" data-action="delete-moment" title="Supprimer ce moment" type="button">
 <span class="material-icons-round text-lg">delete_outline</span>
@@ -4218,9 +4213,6 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <span class="material-icons-round text-base rotate-icon">
         expand_more
        </span>
-</button>
-<button class="text-slate-400 hover:text-indigo-500 p-0.5" data-action="toggle-step-sections" title="Tout déplier / tout replier (colonne droite)" type="button">
-<span class="material-icons-round text-base" data-role="toggle-step-sections-icon">unfold_more</span>
 </button>
 <button class="text-slate-300 hover:text-indigo-500 p-0.5" data-action="duplicate-step" data-i18n-title="title_duplicate_step" title="Dupliquer cette activité" type="button">
 <span class="material-icons-round text-base">
@@ -8887,17 +8879,44 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             const icon = btn.querySelector('.rotate-icon');
 
             if (body.classList.contains('collapsed')) {
+                // Expand module body + all moments
                 body.classList.remove('collapsed');
                 icon.style.transform = 'rotate(180deg)';
+
+                activityGroup.querySelectorAll('.moment-body').forEach(mb => {
+                    mb.classList.remove('collapsed');
+                });
+                activityGroup.querySelectorAll('button[data-action="toggle-moment"]').forEach(b => {
+                    b.setAttribute('aria-expanded', 'true');
+                    const mi = b.querySelector('.rotate-icon');
+                    if (mi) mi.style.transform = 'rotate(180deg)';
+                });
             } else {
+                // Collapse module body + all moments + all steps
                 body.classList.add('collapsed');
                 icon.style.transform = 'rotate(0deg)';
+
+                activityGroup.querySelectorAll('.moment-body').forEach(mb => {
+                    mb.classList.add('collapsed');
+                });
+                activityGroup.querySelectorAll('button[data-action="toggle-moment"]').forEach(b => {
+                    b.setAttribute('aria-expanded', 'false');
+                    const mi = b.querySelector('.rotate-icon');
+                    if (mi) mi.style.transform = 'rotate(0deg)';
+                });
+                activityGroup.querySelectorAll('.step-body').forEach(sb => {
+                    sb.classList.add('collapsed');
+                });
+                activityGroup.querySelectorAll('button[data-action="toggle-step"]').forEach(b => {
+                    const si = b.querySelector('.rotate-icon');
+                    if (si) si.style.transform = 'rotate(0deg)';
+                });
             }
         }
         function toggleMoment(btn) {
             const momentGroup = btn.closest('.moment-group');
             const body = momentGroup.querySelector('.moment-body');
-            const icon = btn.querySelector('.rotate-icon-moment');
+            const icon = btn.querySelector('.rotate-icon');
 
             if (!body) return;
 
@@ -8912,63 +8931,6 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             }
         }
 
-        
-                function collapseModuleContents(btn) {
-                    const moduleGroup = btn.closest('.activity-group');
-                    if (!moduleGroup) return;
-        
-                    const momentBodies = Array.from(moduleGroup.querySelectorAll('.moment-body'));
-                    const stepBodies = Array.from(moduleGroup.querySelectorAll('.step-body'));
-        
-                    // Toggle behaviour: if all moments are collapsed, expand moments; otherwise collapse moments + steps.
-                    const allMomentsCollapsed = momentBodies.length ? momentBodies.every(b => b.classList.contains('collapsed')) : true;
-                    const shouldExpand = allMomentsCollapsed;
-        
-                    if (shouldExpand) {
-                        // Expand all moments (only)
-                        momentBodies.forEach((body) => {
-                            body.classList.remove('collapsed');
-                        });
-        
-                        const momentToggleButtons = moduleGroup.querySelectorAll('button[data-action="toggle-moment"]');
-                        momentToggleButtons.forEach((b) => {
-                            b.setAttribute('aria-expanded', 'true');
-                            const icon = b.querySelector('.rotate-icon-moment');
-                            if (icon) icon.style.transform = 'rotate(180deg)';
-                        });
-        
-                        const iconEl = btn.querySelector('.material-icons-round');
-                        if (iconEl) iconEl.innerText = 'unfold_less';
-                        btn.title = 'Replier tous les moments et activités de ce module';
-                    } else {
-                        // Collapse all moments
-                        momentBodies.forEach((body) => {
-                            body.classList.add('collapsed');
-                        });
-        
-                        const momentToggleButtons = moduleGroup.querySelectorAll('button[data-action="toggle-moment"]');
-                        momentToggleButtons.forEach((b) => {
-                            b.setAttribute('aria-expanded', 'false');
-                            const icon = b.querySelector('.rotate-icon-moment');
-                            if (icon) icon.style.transform = 'rotate(0deg)';
-                        });
-        
-                        // Collapse all steps
-                        stepBodies.forEach((body) => {
-                            body.classList.add('collapsed');
-                        });
-        
-                        const stepToggleButtons = moduleGroup.querySelectorAll('button[data-action="toggle-step"]');
-                        stepToggleButtons.forEach((b) => {
-                            const icon = b.querySelector('.rotate-icon');
-                            if (icon) icon.style.transform = 'rotate(0deg)';
-                        });
-        
-                        const iconEl = btn.querySelector('.material-icons-round');
-                        if (iconEl) iconEl.innerText = 'unfold_more';
-                        btn.title = 'Déplier tous les moments de ce module';
-                    }
-                }
 
 function toggleMomentDescription(btn) {
             const momentGroup = btn.closest('.moment-group');
@@ -9087,52 +9049,24 @@ function toggleMomentDescription(btn) {
             const icon = btn.querySelector('.rotate-icon');
 
             if (body.classList.contains('collapsed')) {
+                // Expand step body + all right-column sections
                 body.classList.remove('collapsed');
                 icon.style.transform = 'rotate(180deg)';
-            } else {
-                body.classList.add('collapsed');
-                icon.style.transform = 'rotate(0deg)';
-            }
-        }
-        
-        function toggleStepSections(btn) {
-            try {
-                const stepCard = btn.closest('.step-card');
-                if (!stepCard) return;
-
-                // Ensure the step body is visible so the user sees the sections opening.
-                const body = stepCard.querySelector('.step-body');
-                if (body && body.classList.contains('collapsed')) {
-                    body.classList.remove('collapsed');
-                    const mainToggleBtn = stepCard.querySelector('button[data-action="toggle-step"]');
-                    const mainIcon = mainToggleBtn ? mainToggleBtn.querySelector('.rotate-icon') : null;
-                    if (mainIcon) mainIcon.style.transform = 'rotate(180deg)';
-                }
 
                 const hasTabs = !!stepCard.querySelector('.step-tabs');
                 const activePanel = hasTabs ? (stepCard.querySelector('.step-tabpanel:not([hidden])') || stepCard) : stepCard;
+                activePanel.querySelectorAll('details.step-right-section').forEach(s => { s.open = true; });
+                activePanel.querySelectorAll('details.step-right-group').forEach(g => { g.open = true; });
+            } else {
+                // Collapse step body + all right-column sections
+                body.classList.add('collapsed');
+                icon.style.transform = 'rotate(0deg)';
 
-                // Prefer sections in the currently visible tab panel (if tabs exist).
-                let sections = Array.from(activePanel.querySelectorAll('details.step-right-section'));
-                if (!sections.length) sections = Array.from(stepCard.querySelectorAll('details.step-right-section'));
-                if (!sections.length) return;
-
-                const anyClosed = sections.some(s => !s.open);
-
-                // Toggle all sections in scope
-                sections.forEach(s => { s.open = anyClosed; });
-
-                // Backward compatibility: also toggle legacy groups if present
-                const groups = Array.from(activePanel.querySelectorAll('details.step-right-group'));
-                if (groups.length) groups.forEach(g => { g.open = anyClosed; });
-
-                const ico = btn.querySelector('[data-role="toggle-step-sections-icon"]');
-                if (ico) ico.textContent = anyClosed ? 'unfold_less' : 'unfold_more';
-                btn.setAttribute('aria-expanded', anyClosed ? 'true' : 'false');
-            } catch (err) {
-                console.error('toggleStepSections failed', err);
+                stepCard.querySelectorAll('details.step-right-section').forEach(s => { s.open = false; });
+                stepCard.querySelectorAll('details.step-right-group').forEach(g => { g.open = false; });
             }
         }
+        
 
 
         function toggleDescription(btn) {
