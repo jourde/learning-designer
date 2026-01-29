@@ -4159,27 +4159,6 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <input class="step-input-title w-full px-1 py-0.5 text-sm font-semibold text-slate-800 border-none bg-transparent focus:ring-0 outline-none" data-i18n-placeholder="ph_step_title" placeholder="Titre de l'activité..." type="text"/>
 
 </div>
-<div class="flex items-center gap-1">
-<input class="duration-input w-16 px-2 py-0.5 text-xs font-semibold border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none h-[22px] text-right text-slate-600" min="0" data-action-input="update-stats-debounced" placeholder="0" type="number"/>
-<select class="duration-unit w-24 px-2 py-0.5 text-xs border border-slate-200 rounded bg-slate-50 focus:ring-1 focus:ring-indigo-500 outline-none h-[22px]" data-action-change="update-stats">
-<option data-i18n="unit_mins" value="60">
-        min
-       </option>
-<option data-i18n="unit_hours" value="3600">
-        Heures
-       </option>
-<option data-i18n="unit_days" value="86400">
-        Jours
-       </option>
-<option data-i18n="unit_weeks" value="604800">
-        Semaines
-       </option>
-
-<option data-i18n="unit_months" value="2592000">
-           Mois
-          </option>
-</select>
-</div>
 <div class="w-24 learning-type-container">
 <select class="learning-type-select w-full px-2 py-0.5 text-xs font-semibold border rounded focus:ring-1 focus:ring-indigo-500 outline-none transition-all select-acquisition h-[22px]" data-action-change="update-step-type">
 <option data-i18n="type_none" value="none" class="ld-opt-none" style="background-color:#f1f5f9;color:#64748b;">
@@ -4203,6 +4182,27 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <option data-i18n="type_production" value="production">
         Production
        </option>
+</select>
+</div>
+<div class="flex items-center gap-1">
+<input class="duration-input w-16 px-2 py-0.5 text-xs font-semibold border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none h-[22px] text-right text-slate-600" min="0" data-action-input="update-stats-debounced" placeholder="0" type="number"/>
+<select class="duration-unit w-24 px-2 py-0.5 text-xs border border-slate-200 rounded bg-slate-50 focus:ring-1 focus:ring-indigo-500 outline-none h-[22px]" data-action-change="update-stats">
+<option data-i18n="unit_mins" value="60">
+        min
+       </option>
+<option data-i18n="unit_hours" value="3600">
+        Heures
+       </option>
+<option data-i18n="unit_days" value="86400">
+        Jours
+       </option>
+<option data-i18n="unit_weeks" value="604800">
+        Semaines
+       </option>
+
+<option data-i18n="unit_months" value="2592000">
+           Mois
+          </option>
 </select>
 </div>
 <div class="w-32">
