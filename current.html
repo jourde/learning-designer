@@ -3285,12 +3285,11 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
   <!-- SECTION 1: NAVIGATION -->
   <div class="flex items-center gap-2 flex-shrink-0">
     <span class="hidden lg:inline text-[10px] font-bold text-slate-500 uppercase tracking-wider" aria-hidden="true">Navigation</span>
-    <select id="jump-to-select" class="ld-control-select min-w-[180px] max-w-[280px] sm:min-w-[240px] sm:max-w-[360px]" aria-label="Navigation rapide vers un élément">
+    <select id="jump-to-select" class="ld-control-select min-w-[140px] max-w-[220px] sm:min-w-[200px] sm:max-w-[300px]" aria-label="Navigation rapide vers un élément">
       <option value="" data-i18n="opt_goto">Aller à…</option>
     </select>
     <button id="jump-to-refresh" class="ld-control-btn border-slate-300 hover:border-indigo-400" type="button" title="Actualiser la liste de navigation" aria-label="Actualiser la navigation">
       <span class="material-icons-round text-[16px]">refresh</span>
-      <span class="hidden sm:inline">Actualiser</span>
     </button>
   </div>
 
@@ -3332,22 +3331,32 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
         <option value="done" data-i18n="opt_status_completed">Finalisé</option>
       </select>
 
-      <button id="status-filter-clear" data-i18n="btn_reset">Réinitialiser</button>
-
-      <button id="btn-toggle-status-summaries" type="button" aria-pressed="true"
-        class="ld-control-btn"
-        title="Afficher ou masquer les synthèses d'état">
-        <span class="material-icons-round text-[16px]" id="icon-toggle-status-summaries">visibility_off</span>
-        <span class="hidden lg:inline" id="text-toggle-status-summaries">Masquer synthèses</span>
+      <button id="status-filter-clear" class="ld-control-btn px-1.5" title="RÃ©initialiser le filtre" aria-label="RÃ©initialiser le filtre">
+        <span class="material-icons-round text-[16px]">restart_alt</span>
       </button>
 
-      <button id="btn-toggle-status-selectors" type="button" aria-pressed="false"
-        class="ld-control-btn"
-        data-i18n-title="title_toggle_status_selectors"
-        title="Afficher ou masquer les sélecteurs d'état dans les activités">
-        <span class="material-icons-round text-[16px]" id="icon-toggle-status-selectors">visibility</span>
-        <span class="hidden lg:inline" id="text-toggle-status-selectors" data-i18n="btn_show_status_selectors">Afficher états</span>
-      </button>
+      <details class="relative">
+        <summary class="ld-control-btn list-none select-none">
+          <span class="material-icons-round text-[16px]">tune</span>
+          <span class="hidden lg:inline">Affichage des états</span>
+        </summary>
+        <div class="absolute right-0 mt-1 w-56 bg-white border border-slate-200 rounded-md shadow-lg z-50 p-1">
+          <button id="btn-toggle-status-summaries" type="button" aria-pressed="true"
+            class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2"
+            title="Afficher ou masquer les synthÃ¨ses d'Ã©tat">
+            <span class="material-icons-round text-[16px]" id="icon-toggle-status-summaries">visibility_off</span>
+            <span id="text-toggle-status-summaries">Masquer synthÃ¨ses</span>
+          </button>
+
+          <button id="btn-toggle-status-selectors" type="button" aria-pressed="false"
+            class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2"
+            data-i18n-title="title_toggle_status_selectors"
+            title="Afficher ou masquer les sÃ©lecteurs d'Ã©tat dans les activitÃ©s">
+            <span class="material-icons-round text-[16px]" id="icon-toggle-status-selectors">visibility</span>
+            <span id="text-toggle-status-selectors" data-i18n="btn_show_status_selectors">Afficher Ã©tats</span>
+          </button>
+        </div>
+      </details>
     </div>
 
   </div>
@@ -28071,3 +28080,4 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
 
 </body>
 </html>
+
