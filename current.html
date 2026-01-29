@@ -282,6 +282,17 @@ body.hide-target-durations #timeline-activities-planned-labels {
             max-height: 0;
             opacity: 0;
         }
+
+        .submoment-body {
+            transition: max-height 0.2s ease-out, opacity 0.2s ease-out;
+            max-height: 5000px;
+            opacity: 1;
+            overflow: hidden;
+        }
+        .submoment-body.collapsed {
+            max-height: 0;
+            opacity: 0;
+        }
 input, select, textarea {
             font-size: 0.9rem;
         }
@@ -357,6 +368,14 @@ input, select, textarea {
         .ld-control-btn:focus-visible {
           outline: 2px solid var(--ld-control-focus-ring);
           outline-offset: 2px;
+        }
+
+        /* Force white background for the "Affichage des états" summary button */
+        #view-controls-toolbar details > summary.ld-control-btn{
+          background-color: #ffffff !important;
+        }
+        #view-controls-toolbar details > summary.ld-control-btn:hover{
+          background-color: var(--ld-control-bg-hover) !important;
         }
 
         /* Select standard de la toolbar */
@@ -1633,6 +1652,7 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
       'add-submoment': ({btn}) => call('addSubmomentToMoment', btn),
       'delete-submoment': ({btn}) => call('deleteSubmoment', btn),
       'add-step-submoment': ({btn}) => call('addStepToSubmoment', btn),
+      'toggle-submoment': ({btn}) => call('toggleSubmoment', btn),
       'open-export-preview': ({event}) => call('openExportPreview', event),
       'close-export-preview': ({event}) => call('closeExportPreview', event),
       'toggle-module-description': ({btn}) => call('toggleDescription', btn),
@@ -3359,7 +3379,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
       </button>
 
       <details class="relative">
-        <summary class="ld-control-btn list-none select-none">
+        <summary class="ld-control-btn list-none select-none bg-white">
           <span class="material-icons-round text-[16px]">tune</span>
           <span class="hidden lg:inline">Affichage des états</span>
         </summary>
@@ -3372,7 +3392,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
           </button>
 
           <button id="btn-toggle-status-selectors" type="button" aria-pressed="false"
-            class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2"
+            class="w-full text-left px-2 py-1.5 rounded bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-2"
             data-i18n-title="title_toggle_status_selectors"
             title="Afficher ou masquer les sÃ©lecteurs d'Ã©tat dans les activitÃ©s">
             <span class="material-icons-round text-[16px]" id="icon-toggle-status-selectors">visibility</span>
@@ -4127,6 +4147,9 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
       <div class="flex items-center gap-1">
         <button class="no-print text-slate-400 hover:text-indigo-700 transition-colors" data-action="add-step-submoment" title="Ajouter une activité au sous-moment" type="button">
           <span class="material-icons-round text-sm">add</span>
+        </button>
+        <button aria-expanded="true" class="no-print text-slate-400 hover:text-indigo-700 transition-colors" data-action="toggle-submoment" title="Replier / déplier ce sous-moment" type="button">
+          <span class="material-icons-round text-sm rotate-icon" style="transform: rotate(180deg);">expand_more</span>
         </button>
         <button class="no-print text-slate-400 hover:text-rose-600 transition-colors" data-action="delete-submoment" title="Supprimer ce sous-moment" type="button">
           <span class="material-icons-round text-sm">delete_outline</span>
@@ -8891,6 +8914,14 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
                     const mi = b.querySelector('.rotate-icon');
                     if (mi) mi.style.transform = 'rotate(180deg)';
                 });
+                activityGroup.querySelectorAll('.submoment-body').forEach(sb => {
+                    sb.classList.remove('collapsed');
+                });
+                activityGroup.querySelectorAll('button[data-action="toggle-submoment"]').forEach(b => {
+                    b.setAttribute('aria-expanded', 'true');
+                    const si = b.querySelector('.rotate-icon');
+                    if (si) si.style.transform = 'rotate(180deg)';
+                });
             } else {
                 // Collapse module body + all moments + all steps
                 body.classList.add('collapsed');
@@ -8904,6 +8935,14 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
                     const mi = b.querySelector('.rotate-icon');
                     if (mi) mi.style.transform = 'rotate(0deg)';
                 });
+                activityGroup.querySelectorAll('.submoment-body').forEach(sb => {
+                    sb.classList.add('collapsed');
+                });
+                activityGroup.querySelectorAll('button[data-action="toggle-submoment"]').forEach(b => {
+                    b.setAttribute('aria-expanded', 'false');
+                    const si = b.querySelector('.rotate-icon');
+                    if (si) si.style.transform = 'rotate(0deg)';
+                });
                 activityGroup.querySelectorAll('.step-body').forEach(sb => {
                     sb.classList.add('collapsed');
                 });
@@ -8916,6 +8955,24 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
         function toggleMoment(btn) {
             const momentGroup = btn.closest('.moment-group');
             const body = momentGroup.querySelector('.moment-body');
+            const icon = btn.querySelector('.rotate-icon');
+
+            if (!body) return;
+
+            if (body.classList.contains('collapsed')) {
+                body.classList.remove('collapsed');
+                if (icon) icon.style.transform = 'rotate(180deg)';
+                btn.setAttribute('aria-expanded', 'true');
+            } else {
+                body.classList.add('collapsed');
+                if (icon) icon.style.transform = 'rotate(0deg)';
+                btn.setAttribute('aria-expanded', 'false');
+            }
+        }
+
+        function toggleSubmoment(btn) {
+            const submomentCard = btn.closest('.submoment-card');
+            const body = submomentCard ? submomentCard.querySelector('.submoment-body') : null;
             const icon = btn.querySelector('.rotate-icon');
 
             if (!body) return;
