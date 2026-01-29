@@ -4070,7 +4070,31 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
         </div>
         <input class="submoment-title flex-1 min-w-0 text-sm font-semibold bg-transparent border border-transparent focus:border-indigo-300 rounded px-2 py-1 outline-none" placeholder="Titre du sous-moment" />
       </div>
-      <div class="submoment-status-summary ld-status-summary" title="Synthèse des états des activités du sous-moment"></div>
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1">
+          <div class="flex flex-col items-end">
+            <span class="text-[8px] text-slate-400 uppercase font-bold tracking-wider leading-none mb-0.5" data-i18n="label_target">Cible</span>
+            <div class="flex items-center gap-1">
+              <input class="submoment-target-time w-12 px-1 py-0.5 text-[11px] text-right border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none h-[20px]" min="0" data-action-input="update-stats-debounced" placeholder="0" type="number"/>
+              <select class="submoment-target-unit w-16 px-0 py-0.5 text-[10px] border border-slate-200 rounded bg-slate-50 focus:ring-1 focus:ring-indigo-500 outline-none h-[20px]" data-action-change="update-stats">
+                <option data-i18n="unit_mins" value="60">min</option>
+                <option data-i18n="unit_hours" value="3600">Heures</option>
+                <option data-i18n="unit_days" value="86400">Jours</option>
+                <option data-i18n="unit_weeks" value="604800">Semaines</option>
+                <option data-i18n="unit_months" value="2592000">Mois</option>
+              </select>
+            </div>
+          </div>
+          <span aria-hidden="true" class="submoment-time-compare text-[11px] font-bold bg-transparent mx-1 select-none self-center">=</span>
+          <div class="flex flex-col items-end">
+            <span class="text-[8px] text-slate-400 uppercase font-bold tracking-wider leading-none mb-0.5" data-i18n="label_designed">Conçu</span>
+            <div class="bg-indigo-50 border border-indigo-100 rounded px-2 py-0.5 h-[20px] flex items-center min-w-[3rem] justify-end submoment-designed-badge">
+              <span class="submoment-total-time text-[11px] font-bold text-indigo-700 font-mono">0m</span>
+            </div>
+          </div>
+        </div>
+        <div class="submoment-status-summary ld-status-summary" title="Synthèse des états des activités du sous-moment"></div>
+      </div>
       <div class="flex items-center gap-1">
         <button class="no-print text-slate-400 hover:text-indigo-700 transition-colors" data-action="add-step-submoment" title="Ajouter une activité au sous-moment" type="button">
           <span class="material-icons-round text-sm">add</span>
@@ -15150,6 +15174,17 @@ const unitSel = momentEl.querySelector('.moment-target-unit');
                 const unitSecs = mapUnitToSecs(unitSel?.value || getDefaultDurationUnitSecs());
                 const unitText = __ldGetUnitLabelBySecs(unitSecs, unitLabelFmt);
 
+                // Auto-compute moment target from contained activities (steps)
+                try {
+                    const targetInput = momentEl.querySelector('.moment-target-time');
+                    if (targetInput) {
+                        let v = secs / unitSecs;
+                        if (unitSecs === 60) v = Math.round(v);
+                        else v = parseFloat(v.toFixed(1));
+                        targetInput.value = String(v);
+                    }
+                } catch (_) {}
+
                 const label = momentEl.querySelector('.moment-total-time');
                 if (label) {
                     let v = secs / unitSecs;
@@ -15158,6 +15193,49 @@ const unitSel = momentEl.querySelector('.moment-target-unit');
                     else v = parseFloat(v.toFixed(1));
                     label.innerText = `${v} ${unitText}`;
                 }
+
+                // Submoment designed duration from contained activities (steps)
+                try {
+                    const subEls = momentEl.querySelectorAll('.submoments-container .submoment-card');
+                    subEls.forEach(smEl => {
+                        let smSecs = 0;
+                        smEl.querySelectorAll('.submoment-steps .step-card').forEach(stepEl => { smSecs += getStepDurationSecs(stepEl); });
+                        try { smEl.dataset.designedSecs = String(smSecs); } catch (_) {}
+
+                        const smUnitSel = smEl.querySelector('.submoment-target-unit');
+                        const smUnitSecs = mapUnitToSecs(smUnitSel?.value || unitSecs || getDefaultDurationUnitSecs());
+                        const smUnitText = __ldGetUnitLabelBySecs(smUnitSecs, unitLabelFmt);
+
+                        let v = smSecs / smUnitSecs;
+                        if (smUnitSecs === 60) v = Math.round(v);
+                        else v = parseFloat(v.toFixed(1));
+
+                        const designedEl = smEl.querySelector('.submoment-total-time');
+                        if (designedEl) designedEl.innerText = `${v} ${smUnitText}`;
+
+                        const targetValEl = smEl.querySelector('.submoment-target-time');
+                        const designedBadge = smEl.querySelector('.submoment-designed-badge');
+                        const compareEl = smEl.querySelector('.submoment-time-compare');
+
+                        if (designedBadge) designedBadge.classList.remove('duration-alert-light');
+                        const tv = targetValEl ? parseFloat(targetValEl.value) : 0;
+                        const targetSecs = (isNaN(tv) ? 0 : tv) * (isNaN(smUnitSecs) ? 60 : smUnitSecs);
+                        if (targetSecs > 0) {
+                            const cmp = (typeof compareDurations === 'function')
+                                ? compareDurations(smSecs, targetSecs)
+                                : { isMatch: Math.round(smSecs) === Math.round(targetSecs), deviation: smSecs - targetSecs };
+                            if (!cmp.isMatch && designedBadge) designedBadge.classList.add('duration-alert-light');
+                            if (compareEl) {
+                                const sym = cmp.isMatch ? '=' : (cmp.deviation > 0 ? '<' : '>');
+                                compareEl.textContent = sym;
+                                compareEl.classList.toggle('text-red-600', !cmp.isMatch);
+                            }
+                        } else if (compareEl) {
+                            compareEl.textContent = '=';
+                            compareEl.classList.remove('text-red-600');
+                        }
+                    });
+                } catch (_) {}
                 // Moment designed duration alert + comparison (target vs designed)
                 try {
                     const targetVal = momentEl.querySelector('.moment-target-time');
@@ -15176,7 +15254,9 @@ const unitSel = momentEl.querySelector('.moment-target-unit');
                         if (!cmp.isMatch && designedBadge) designedBadge.classList.add('duration-alert-light');
 
                         if (compareEl) {
-                            const sym = cmp.isMatch ? '=' : (cmp.deviation > 0 ? '>' : '<');
+                            // Comparison symbol is rendered between Target (left) and Designed (right)
+                            // so direction must reflect target vs designed, not designed vs target.
+                            const sym = cmp.isMatch ? '=' : (cmp.deviation > 0 ? '<' : '>');
                             compareEl.textContent = sym;
                             compareEl.classList.toggle('text-red-600', !cmp.isMatch);
                         }
@@ -15928,7 +16008,9 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
 	                            if (!cmp.isMatch) designedBadge.classList.add('duration-alert-light');
 	                            // Comparison symbol between target and designed at module level
 	                            if (compareEl) {
-	                              const sym = cmp.isMatch ? '=' : (cmp.deviation > 0 ? '>' : '<');
+	                              // Comparison symbol is rendered between Target (left) and Designed (right)
+	                              // so direction must reflect target vs designed, not designed vs target.
+	                              const sym = cmp.isMatch ? '=' : (cmp.deviation > 0 ? '<' : '>');
 	                              compareEl.textContent = sym;
 	                              compareEl.classList.toggle('text-red-600', !cmp.isMatch);
 	                            }
