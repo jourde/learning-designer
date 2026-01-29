@@ -484,7 +484,7 @@ input, select, textarea {
         .compact-label-lg { font-size: 0.74rem; }
 
         
-        .step-body label [data-i18n="label_grouping"] { font-size: 10px; }
+        .step-body label [data-i18n="label_grouping"] { font-size: 0.75rem; }
         #timeline-panel { gap: 0.75rem ; }
         #timeline-panel .timeline-track-pedagogy,
         #timeline-panel .flex.flex-col.gap-0\.5 { gap: 0.35rem ; }
@@ -576,12 +576,11 @@ input, select, textarea {
 #timeline-details [data-i18n="label_grouping"],
 #timeline-details [data-i18n="label_trainer"],
 #timeline-details [data-i18n="label_place"],
-#timeline-details [data-i18n="label_time"],
-.step-card [data-i18n="label_grouping"],
-.step-card [data-i18n="label_trainer"],
-.step-card [data-i18n="label_place"],
-.step-card [data-i18n="label_time"]{
+#timeline-details [data-i18n="label_time"]{
   font-size: 10px !important;
+}
+.step-card .step-left-label{
+  font-size: 0.75rem !important;
 }
 
 .step-card .step-group-mode,
@@ -4257,7 +4256,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <span class="material-icons-round text-[10px] text-slate-400">
           groups
          </span>
-<span data-i18n="label_grouping">
+<span class="step-left-label" data-i18n="label_grouping">
           Regroupement
          </span>
 </label>
@@ -4295,7 +4294,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <div class="space-y-1 pt-1 border-t border-slate-100">
 
 <div class="space-y-0.5">
-<span class="text-[10px] w-12 text-slate-400 font-bold uppercase flex items-center gap-0.5 relative z-10">
+<span class="step-left-label text-[10px] w-12 text-slate-400 font-bold uppercase flex items-center gap-0.5 relative z-10">
 <span class="material-icons-round text-[10px]">
            face
           </span>
@@ -4313,7 +4312,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </select>
 </div>
 <div class="space-y-0.5">
-<span class="text-[10px] w-12 text-slate-400 font-bold uppercase flex items-center gap-0.5 relative z-10">
+<span class="step-left-label text-[10px] w-12 text-slate-400 font-bold uppercase flex items-center gap-0.5 relative z-10">
 <span class="material-icons-round text-[10px]">
            place
           </span>
@@ -4334,7 +4333,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </select>
 </div>
 <div class="space-y-0.5">
-<span class="text-[10px] w-12 text-slate-400 font-bold uppercase flex items-center gap-0.5 relative z-10">
+<span class="step-left-label text-[10px] w-12 text-slate-400 font-bold uppercase flex items-center gap-0.5 relative z-10">
 <span class="material-icons-round text-[10px]">
            event
           </span>
@@ -4352,7 +4351,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </select>
 </div>
 <div class="space-y-0.5">
-  <span class="text-[10px] w-12 text-slate-400 font-bold uppercase flex items-center gap-0.5 relative z-10">
+  <span class="step-left-label text-[10px] w-12 text-slate-400 font-bold uppercase flex items-center gap-0.5 relative z-10">
     <span class="material-icons-round text-[10px]">fact_check</span>
     <span>Évaluation</span>
   </span>
