@@ -198,15 +198,15 @@ body.hide-target-durations #timeline-activities-planned-labels {
         .type-practice { border-left: 5px solid #bb98dc; } 
         .type-production { border-left: 5px solid #bdea75; } 
 
-        .select-none { background-color: #e5e7eb; color: #000; border-color: #d1d5db; }
- 
+        .select-none { background-color: #e5e7eb !important; color: #000 !important; border-color: #d1d5db !important; }
 
-        .select-acquisition { background-color: #a1f5ed; color: #000; border-color: #7dded6; }
-        .select-collaboration { background-color: #ffd966; color: #000; border-color: #f0c953; }
-        .select-discussion { background-color: #7aaeea; color: #000; border-color: #6a9bd6; }
-        .select-investigation { background-color: #f8807f; color: #000; border-color: #e06e6d; }
-        .select-practice { background-color: #bb98dc; color: #000; border-color: #a582c6; }
-        .select-production { background-color: #bdea75; color: #000; border-color: #a6d15e; }
+
+        .select-acquisition { background-color: #a1f5ed !important; color: #000 !important; border-color: #7dded6 !important; }
+        .select-collaboration { background-color: #ffd966 !important; color: #000 !important; border-color: #f0c953 !important; }
+        .select-discussion { background-color: #7aaeea !important; color: #000 !important; border-color: #6a9bd6 !important; }
+        .select-investigation { background-color: #f8807f !important; color: #000 !important; border-color: #e06e6d !important; }
+        .select-practice { background-color: #bb98dc !important; color: #000 !important; border-color: #a582c6 !important; }
+        .select-production { background-color: #bdea75 !important; color: #000 !important; border-color: #a6d15e !important; }
 
         .drag-handle {
             cursor: grab;
@@ -940,6 +940,7 @@ body.ld-hide-status-summaries .ld-status-summary{ display:none !important; }
 
 
         /* ===== Status summaries (Module / Moment / Sous-moment) ===== */
+        .ld-status-summary:empty{ display:none !important; }
         .ld-status-summary{
             display:inline-flex;
             align-items:center;
