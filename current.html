@@ -2010,28 +2010,28 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
     display: none !important;
   }
 
-  /* Force the corresponding content blocks open (tabs control visibility) */
-  body.top-tabs-enabled #key-params-panel,
-  body.top-tabs-enabled #timeline-panel{
+  /* Force the corresponding content blocks open only when their tab is active */
+  body.top-tabs-enabled[data-top-tab="info"] #key-params-panel{
     display: block !important;
   }
-  body.top-tabs-enabled #timeline-panel{
+  body.top-tabs-enabled[data-top-tab="visual"] #timeline-panel{
+    display: block !important;
     margin-top: 0 !important;
   }
-  body.top-tabs-enabled #key-params-panel #kpwiz-bar{
+  body.top-tabs-enabled[data-top-tab="info"] #key-params-panel #kpwiz-bar{
     border-top: 0 !important;
   }
 
-  /* Ensure collapsible panel contents are visible when top-level tabs are enabled */
-  body.top-tabs-enabled #key-params-panel,
-  body.top-tabs-enabled #timeline-panel{
+  /* Ensure collapsible panel contents are visible only for the active tab */
+  body.top-tabs-enabled[data-top-tab="info"] #key-params-panel,
+  body.top-tabs-enabled[data-top-tab="visual"] #timeline-panel{
     max-height: none !important;
     opacity: 1 !important;
     overflow: visible !important;
     transition: none !important;
   }
-  body.top-tabs-enabled #key-params-panel.open,
-  body.top-tabs-enabled #timeline-panel.open{
+  body.top-tabs-enabled[data-top-tab="info"] #key-params-panel.open,
+  body.top-tabs-enabled[data-top-tab="visual"] #timeline-panel.open{
     max-height: none !important;
     opacity: 1 !important;
   }
@@ -2977,7 +2977,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <div aria-label="Défilement horizontal des visualisations" class="timeline-hscroll no-print" id="timeline-hscroll" role="scrollbar"><div id="timeline-hscroll-inner"></div><div aria-hidden="true" id="timeline-hscroll-thumb"></div></div></div>
 </div>
 </div>
-<details class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden w-full flex flex-col justify-center ld-page mt-2" id="analysis-tabs-wrap" open role="tabpanel" aria-labelledby="top-tab-btn-analysis"><summary class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 border-b border-slate-200 cursor-pointer select-none"><div class="flex items-center gap-1.5">
+<details class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden w-full flex flex-col justify-center ld-page mt-2" id="analysis-tabs-wrap" role="tabpanel" aria-labelledby="top-tab-btn-analysis"><summary class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 border-b border-slate-200 cursor-pointer select-none"><div class="flex items-center gap-1.5">
 <span class="material-icons-round text-slate-500 text-sm">insights</span>
 <span class="font-bold text-slate-700 uppercase text-xs tracking-wide">Graphiques d'analyse</span>
 </div><span class="material-icons-round text-slate-500 text-sm analysis-chevron">expand_more</span></summary><div class="w-full"><div class="px-3 pt-2">
@@ -8655,10 +8655,30 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
 
         document.addEventListener('DOMContentLoaded', () => {
             bindAnalysisTabs();
-            // Restore last tab or default to "modalites" so charts are visible.
-            let saved = null;
-            try { saved = localStorage.getItem('analysis_tab'); } catch (_) {}
-            selectAnalysisTab(saved || 'modalites');
+
+            const wrap = document.getElementById('analysis-tabs-wrap');
+            const getSavedTab = () => {
+                let saved = null;
+                try { saved = localStorage.getItem('analysis_tab'); } catch (_) {}
+                return saved;
+            };
+
+            // Start with no selection unless the panel is already open.
+            if (wrap && wrap.open) {
+                selectAnalysisTab(getSavedTab() || 'modalites');
+            } else {
+                selectAnalysisTab(null);
+            }
+
+            // When the panel is opened later, restore the last tab (or default).
+            if (wrap) {
+                wrap.addEventListener('toggle', () => {
+                    if (!wrap.open) return;
+                    const hasActive = !!wrap.querySelector('.analysis-tab-btn.is-active');
+                    if (hasActive) return;
+                    selectAnalysisTab(getSavedTab() || 'modalites');
+                });
+            }
         });
 
 
@@ -27888,16 +27908,6 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
   function init(){
     document.body.classList.add('top-tabs-enabled');
 
-    // Force legacy collapsible panels open so tab switching never shows an empty panel
-    try {
-      const kp = document.getElementById('key-params-panel');
-      if (kp) { kp.classList.add('open'); kp.style.display = ''; }
-    } catch(_){ }
-    try {
-      const tl = document.getElementById('timeline-panel');
-      if (tl) { tl.classList.add('open'); tl.style.display = ''; }
-    } catch(_){ }
-
     tabs.forEach(t => {
       const btn = document.getElementById(t.btnId);
       if(!btn) return;
@@ -27924,13 +27934,8 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
       });
     });
 
-    let initial = 'visual';
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if(stored && tabs.some(t => t.id === stored)) initial = stored;
-    } catch(e){}
-
-    setActive(initial, false);
+    // Start with all top-level panels collapsed.
+    setActive(null, false);
   }
 
   if(document.readyState === 'loading'){
