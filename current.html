@@ -3302,15 +3302,15 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 
     <!-- GROUPE: Niveau d'affichage -->
     <div class="ld-control-group">
-      <span class="hidden md:inline text-xs text-slate-500 font-extrabold" aria-hidden="true">Niveau</span>
+      <span class="hidden md:inline text-xs text-slate-500 font-extrabold" aria-hidden="true">Niveau d'affichage</span>
 
-      <div id="ld-view-level-segmented" class="inline-flex rounded-md border border-slate-200 bg-white overflow-hidden" role="group" aria-label="Sélection du niveau d'affichage">
-        <button type="button" class="ld-segmented-btn border-r border-slate-200" data-view-level="modules" data-i18n="btn_view_modules">Modules</button>
-        <button type="button" class="ld-segmented-btn border-r border-slate-200" data-view-level="moments" data-i18n="btn_view_moments">Moments</button>
-        <button type="button" class="ld-segmented-btn border-r border-slate-200" data-view-level="submoments" data-i18n="btn_view_submoments">Sous-moments</button>
-        <button type="button" class="ld-segmented-btn border-r border-slate-200" data-view-level="activities" data-i18n="btn_view_activities">Activités</button>
-        <button type="button" class="ld-segmented-btn" data-view-level="panorama" data-i18n="btn_view_panorama">Panorama</button>
-      </div>
+      <select id="ld-view-level-select" class="ld-control-select" aria-label="Sélection du niveau d'affichage">
+        <option value="modules" data-i18n="btn_view_modules">Modules</option>
+        <option value="moments" data-i18n="btn_view_moments">Moments</option>
+        <option value="submoments" data-i18n="btn_view_submoments">Sous-moments</option>
+        <option value="activities" data-i18n="btn_view_activities">Activités</option>
+        <option value="panorama" data-i18n="btn_view_panorama">Panorama</option>
+      </select>
 
       <button class="ld-control-btn ml-1" id="btn-toggle-all-main" data-action="toggle-all-activities" aria-label="Replier ou déplier tous les modules" title="Replier ou déplier tous les modules">
         <span class="material-icons-round text-base" id="icon-toggle-all-main">unfold_less</span>
@@ -4654,17 +4654,10 @@ try { window.__ldEscapeHtml = __ldEscapeHtml; } catch (_) {}
 // ---- View level (modules / moments / submoments / activities) ----
 // Simplified view level UI update - CSS handles all visual styles via [aria-pressed]
 function __ldUpdateViewLevelSegmentedUI(level) {
-  const wrap = document.getElementById('ld-view-level-segmented');
-  if (!wrap) return;
-
+  const sel = document.getElementById('ld-view-level-select');
+  if (!sel) return;
   const normalizedLevel = String(level || '').trim();
-  const buttons = wrap.querySelectorAll('button[data-view-level]');
-
-  buttons.forEach(btn => {
-    const btnLevel = btn.getAttribute('data-view-level') || '';
-    const isActive = btnLevel === normalizedLevel;
-    btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-  });
+  try { sel.value = normalizedLevel; } catch (_) {}
 }
 
 function applyViewLevel(level) {
@@ -4678,45 +4671,13 @@ function applyViewLevel(level) {
   try { if (v === "panorama") renderPanoramaView(); } catch (_) {}
 }
 
-// Initialize view level UI on page load and setup keyboard navigation
+// Initialize view level UI on page load
 document.addEventListener('DOMContentLoaded', () => {
-  // Set initial aria-pressed state based on saved or default level
+  // Set initial select state based on saved or default level
   try {
     const savedLevel = localStorage.getItem('ld_view_level') || 'activities';
     __ldUpdateViewLevelSegmentedUI(savedLevel);
   } catch (_) {}
-
-  // Enhanced keyboard navigation for segmented buttons (ARIA best practices)
-  const segmentedGroup = document.getElementById('ld-view-level-segmented');
-  if (!segmentedGroup) return;
-
-  const buttons = Array.from(segmentedGroup.querySelectorAll('button[data-view-level]'));
-
-  segmentedGroup.addEventListener('keydown', (e) => {
-    const currentBtn = e.target;
-    if (!buttons.includes(currentBtn)) return;
-
-    const currentIndex = buttons.indexOf(currentBtn);
-    let targetIndex = currentIndex;
-
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      targetIndex = currentIndex > 0 ? currentIndex - 1 : buttons.length - 1;
-    } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-      e.preventDefault();
-      targetIndex = currentIndex < buttons.length - 1 ? currentIndex + 1 : 0;
-    } else if (e.key === 'Home') {
-      e.preventDefault();
-      targetIndex = 0;
-    } else if (e.key === 'End') {
-      e.preventDefault();
-      targetIndex = buttons.length - 1;
-    } else {
-      return;
-    }
-
-    buttons[targetIndex].focus();
-  });
 }, { once: true });
 
 // ---- Panorama view (tableau compact) ----
@@ -5161,23 +5122,16 @@ function initPanoramaUI() {
 // ---- End Panorama view ----
 
 function initViewLevelSegmentedUI() {
-  const wrap = document.getElementById('ld-view-level-segmented');
-  if (!wrap) return;
+  const sel = document.getElementById('ld-view-level-select');
+  if (!sel) return;
 
   let saved = null;
   try { saved = localStorage.getItem('ld_view_level'); } catch (_) {}
   const initial = saved || 'activities';
   applyViewLevel(initial);
 
-  wrap.addEventListener('click', (e) => {
-    const _t = e.target && e.target.nodeType === 1 ? e.target : null;
-    let btn = _t && _t.closest ? _t.closest('button[data-view-level]') : null;
-    if (!btn && typeof e.composedPath === 'function') {
-      const path = e.composedPath() || [];
-      btn = path.find(el => el && el.getAttribute && el.getAttribute('data-view-level')) || null;
-    }
-    if (!btn) return;
-    const lvl = (btn.getAttribute('data-view-level') || 'activities').trim();
+  sel.addEventListener('change', () => {
+    const lvl = String(sel.value || 'activities').trim();
     applyViewLevel(lvl);
   });
 }
