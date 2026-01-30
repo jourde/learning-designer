@@ -5202,7 +5202,12 @@ function initViewLevelSegmentedUI() {
         const momentTemplate = document.getElementById('moment-template');
         const stepTemplate = document.getElementById('step-template');
         const submomentTemplate = document.getElementById('submoment-template');
-        const tooltipEl = document.getElementById('global-tooltip');
+        let tooltipEl = null;
+        function getTooltipEl() {
+            if (tooltipEl && tooltipEl.nodeType === 1) return tooltipEl;
+            tooltipEl = document.getElementById('global-tooltip');
+            return tooltipEl;
+        }
         const DEFAULT_LANG = 'fr';
         let currentLang = DEFAULT_LANG;
         let loadedLangCode = null;
@@ -7098,25 +7103,31 @@ function sanitizeBasicHtml(unsafeHtml) {
 }
 
 function showTooltip(e, content, isHtml = false) {
+    const el = getTooltipEl();
+    if (!el) return;
     if (isHtml) {
-        tooltipEl.innerHTML = sanitizeTooltipHtml(content);
+        el.innerHTML = sanitizeTooltipHtml(content);
     } else {
-        tooltipEl.textContent = content;
+        el.textContent = content;
     }
-    tooltipEl.classList.remove('hidden');
+    el.classList.remove('hidden');
     updateTooltipPos(e);
 }
 
         function hideTooltip() {
-            tooltipEl.classList.add('hidden');
+            const el = getTooltipEl();
+            if (!el) return;
+            el.classList.add('hidden');
         }
 
         function updateTooltipPos(e) {
+            const el = getTooltipEl();
+            if (!el) return;
             const x = e.clientX + 15;
             const y = e.clientY + 15;
             
             
-            const rect = tooltipEl.getBoundingClientRect();
+            const rect = el.getBoundingClientRect();
             const winW = window.innerWidth;
             const winH = window.innerHeight;
             
@@ -7126,8 +7137,8 @@ function showTooltip(e, content, isHtml = false) {
             if (x + rect.width > winW) finalX = e.clientX - rect.width - 10;
             if (y + rect.height > winH) finalY = e.clientY - rect.height - 10;
 
-            tooltipEl.style.left = `${finalX}px`;
-            tooltipEl.style.top = `${finalY}px`;
+            el.style.left = `${finalX}px`;
+            el.style.top = `${finalY}px`;
         }
 
         
@@ -8627,15 +8638,17 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             const content = document.getElementById(panelId);
             const icon = document.getElementById(panelId + '-icon');
 
+            if (!content) return;
+
             if (content.classList.contains('open')) {
                 content.classList.remove('open');
-                icon.classList.remove('open');
+                if (icon) icon.classList.remove('open');
                 setTimeout(() => content.style.display = 'none', 300); 
             } else {
                 content.style.display = getPanelDisplay(content); 
                 setTimeout(() => {
                     content.classList.add('open');
-                    icon.classList.add('open');
+                    if (icon) icon.classList.add('open');
                     setTimeout(updateTimelineHScroll, 0);
                 }, 10);
             }
@@ -8911,13 +8924,15 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
         
         function toggleActivity(btn) {
             const activityGroup = btn.closest('.activity-group');
+            if (!activityGroup) return;
             const body = activityGroup.querySelector('.activity-body');
             const icon = btn.querySelector('.rotate-icon');
+            if (!body) return;
 
             if (body.classList.contains('collapsed')) {
                 // Expand module body + all moments
                 body.classList.remove('collapsed');
-                icon.style.transform = 'rotate(180deg)';
+                if (icon) icon.style.transform = 'rotate(180deg)';
 
                 activityGroup.querySelectorAll('.moment-body').forEach(mb => {
                     mb.classList.remove('collapsed');
@@ -8938,7 +8953,7 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             } else {
                 // Collapse module body + all moments + all steps
                 body.classList.add('collapsed');
-                icon.style.transform = 'rotate(0deg)';
+                if (icon) icon.style.transform = 'rotate(0deg)';
 
                 activityGroup.querySelectorAll('.moment-body').forEach(mb => {
                     mb.classList.add('collapsed');
@@ -9134,13 +9149,15 @@ function toggleMomentDescription(btn) {
 
         function toggleStep(btn) {
             const stepCard = btn.closest('.step-card');
+            if (!stepCard) return;
             const body = stepCard.querySelector('.step-body');
             const icon = btn.querySelector('.rotate-icon');
+            if (!body) return;
 
             if (body.classList.contains('collapsed')) {
                 // Expand step body + all right-column sections
                 body.classList.remove('collapsed');
-                icon.style.transform = 'rotate(180deg)';
+                if (icon) icon.style.transform = 'rotate(180deg)';
 
                 const hasTabs = !!stepCard.querySelector('.step-tabs');
                 const activePanel = hasTabs ? (stepCard.querySelector('.step-tabpanel:not([hidden])') || stepCard) : stepCard;
@@ -9149,7 +9166,7 @@ function toggleMomentDescription(btn) {
             } else {
                 // Collapse step body + all right-column sections
                 body.classList.add('collapsed');
-                icon.style.transform = 'rotate(0deg)';
+                if (icon) icon.style.transform = 'rotate(0deg)';
 
                 stepCard.querySelectorAll('details.step-right-section').forEach(s => { s.open = false; });
                 stepCard.querySelectorAll('details.step-right-group').forEach(g => { g.open = false; });
