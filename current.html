@@ -297,6 +297,14 @@ input, select, textarea {
             font-size: 0.9rem;
         }
 
+        /* Uniform field sizing: inputs + textareas (exclude non-text inputs) */
+        input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="hidden"]),
+        textarea {
+            min-height: 32px;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+
         input::placeholder, textarea::placeholder {
             color: #94a3b8;
         }
@@ -315,7 +323,7 @@ input, select, textarea {
             font-weight: 700;
             color: #64748b;
             letter-spacing: 0.04em;
-            margin-bottom: 4px;
+            margin-bottom: 12px;
         }
 
         .compact-label-lg {
@@ -472,16 +480,18 @@ input, select, textarea {
         .activity-container { border-left-color: #cbd5e1; }
 
         
-        header { margin-bottom: 0.5rem ; }
-        .activity-group { padding: 0.5rem ; }
-        .activity-group > .flex { margin-bottom: 0.5rem ; gap: 0.5rem ; }
+        header { margin-bottom: 0.75rem ; }
+        .activity-group { padding: 0.5rem ; margin-bottom: 0.75rem ; }
+        .moment-group { margin-bottom: 0.5rem ; }
+        .step-card { margin-bottom: 0.5rem ; }
+        .activity-group > .flex { margin-bottom: 0.75rem ; gap: 0.5rem ; }
         .step-card > .flex.items-center { padding: 6px 8px ; gap: 0.5rem ; }
         .step-body.panel-content { padding: 0.5rem ; padding-top: 0.35rem ; }
         .activity-description { padding: 0.35rem 0.5rem ; font-size: 0.85rem ; }
         .activity-steps-container { padding-top: 0.25rem; }
         input, select, textarea { font-size: 0.88rem; }
-        .compact-label { font-size: 0.68rem; margin-bottom: 2px; }
-        .compact-label-lg { font-size: 0.74rem; }
+        .compact-label { font-size: 0.78rem; margin-bottom: 10px; }
+        .compact-label-lg { font-size: 0.86rem; }
 
         
         .step-body label [data-i18n="label_grouping"] { font-size: 0.75rem; }
