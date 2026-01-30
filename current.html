@@ -27532,6 +27532,11 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
         panels.forEach(p => {
           const isActive = (p.getAttribute('data-step-panel') === name);
           p.hidden = !isActive;
+          if (isActive && name === 'notes') {
+            try {
+              p.querySelectorAll('details.step-right-section').forEach(d => { d.open = true; });
+            } catch (_) {}
+          }
         });
 
         if (opts && opts.focus) {
