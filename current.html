@@ -1662,6 +1662,7 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
       'delete-submoment': ({btn}) => call('deleteSubmoment', btn),
       'add-step-submoment': ({btn}) => call('addStepToSubmoment', btn),
       'toggle-submoment': ({btn}) => call('toggleSubmoment', btn),
+      'toggle-submoment-notes': ({btn}) => call('toggleSubmomentNotes', btn),
       'open-export-preview': ({event}) => call('openExportPreview', event),
       'close-export-preview': ({event}) => call('closeExportPreview', event),
       'toggle-module-description': ({btn}) => call('toggleDescription', btn),
@@ -4149,7 +4150,10 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
         </div>
         <div class="submoment-status-summary ld-status-summary" title="Synthèse des états des activités du sous-moment"></div>
       </div>
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-1 ml-2">
+        <button aria-expanded="false" class="no-print text-slate-400 hover:text-indigo-700 transition-colors" data-action="toggle-submoment-notes" title="Notes du sous-moment" type="button">
+          <span class="material-icons-round text-sm">description</span>
+        </button>
         <button class="no-print text-slate-400 hover:text-indigo-700 transition-colors" data-action="add-step-submoment" title="Ajouter une activité au sous-moment" type="button">
           <span class="material-icons-round text-sm">add</span>
         </button>
@@ -4162,6 +4166,10 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
       </div>
     </div>
     <div class="submoment-body px-3 py-2">
+      <div class="submoment-notes-wrap hidden mb-2">
+        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Notes</label>
+        <textarea class="submoment-notes w-full mt-1 px-2 py-1 text-xs text-slate-700 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y bg-white" placeholder="Notes du sous-moment..."></textarea>
+      </div>
       <div class="submoment-steps steps-container space-y-2 min-h-[20px]"></div>
     </div>
   </div>
@@ -8991,6 +8999,25 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
                 if (icon) icon.style.transform = 'rotate(0deg)';
                 btn.setAttribute('aria-expanded', 'false');
             }
+        }
+
+        function toggleSubmomentNotes(btn) {
+            const submomentCard = btn.closest('.submoment-card');
+            if (!submomentCard) return;
+            const body = submomentCard.querySelector('.submoment-body');
+            if (body && body.classList.contains('collapsed')) {
+                body.classList.remove('collapsed');
+                const toggleBtn = submomentCard.querySelector('button[data-action="toggle-submoment"]');
+                const icon = toggleBtn ? toggleBtn.querySelector('.rotate-icon') : null;
+                if (icon) icon.style.transform = 'rotate(180deg)';
+                if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'true');
+            }
+            const wrap = submomentCard.querySelector('.submoment-notes-wrap');
+            if (!wrap) return;
+
+            const willOpen = wrap.classList.contains('hidden');
+            wrap.classList.toggle('hidden', !willOpen);
+            btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
         }
 
 
