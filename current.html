@@ -1252,6 +1252,72 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
   }
   /* ===== END_LD_PAGE_WIDTH_CANONICAL ===== */
 
+
+/* =========================================================
+   Vertical cumulative timeline rail (right sidebar)
+   ========================================================= */
+/* Ligne de temps verticale cumulative */
+#vertical-time-rail {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 65px;
+    background: rgba(248, 250, 252, 0.9);
+    border-left: 1px solid #e2e8f0;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    pointer-events: none; /* Permet de cliquer à travers la zone vide */
+}
+
+.time-marker {
+    position: absolute;
+    right: 0;
+    width: 100%;
+    border-top: 1px solid #cbd5e1;
+    pointer-events: auto; /* Rend les marqueurs cliquables */
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.time-marker:hover {
+    background: rgba(99, 102, 241, 0.1);
+    border-top: 2px solid #6366f1;
+}
+
+.time-marker-label {
+    position: absolute;
+    top: -18px;
+    right: 8px;
+    font-size: 10px;
+    font-weight: 800;
+    color: #475569;
+    font-family: 'Inter', monospace;
+    white-space: nowrap;
+}
+
+.time-marker-title {
+    position: absolute;
+    top: 2px;
+    right: 8px;
+    font-size: 9px;
+    font-weight: 500;
+    color: #94a3b8;
+    max-width: 50px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: right;
+}
+
+/* Cache la ligne lors de l'impression */
+@media print {
+    #vertical-time-rail { display: none !important; }
+}
+
 </style>
 <script>
 /* Modèles: stubs globaux disponibles dès le chargement (évite les clics "inerte" avant l'initialisation).
@@ -1686,8 +1752,6 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
       'add-step-submoment': ({btn}) => call('addStepToSubmoment', btn),
       'toggle-submoment': ({btn}) => call('toggleSubmoment', btn),
       'toggle-submoment-notes': ({btn}) => call('toggleSubmomentNotes', btn),
-      'open-export-preview': ({event}) => call('openExportPreview', event),
-      'close-export-preview': ({event}) => call('closeExportPreview', event),
       'toggle-module-description': ({btn}) => call('toggleDescription', btn),
       'toggle-module': ({btn}) => call('toggleActivity', btn),
       'toggle-step': ({btn}) => call('toggleStep', btn),
@@ -2197,13 +2261,6 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
          </span>
 </div>
 </div>
-<button class="text-slate-600 hover:text-indigo-700 hover:bg-indigo-50 rounded px-2 py-1 flex items-center gap-1"
-        data-action="open-export-preview"
-        title="Aperçu export"
-        type="button">
-  <span class="material-icons-round text-[16px]">visibility</span>
-  <span class="text-xs font-medium hidden md:inline" data-i18n="label_preview">Aperçu</span>
-</button>
 <button id="open-global-search-btn"
         class="text-slate-600 hover:text-indigo-700 hover:bg-indigo-50 rounded px-2 py-1 flex items-center gap-1"
         title="Recherche globale (Ctrl+K)"
@@ -3697,140 +3754,6 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
     <div class="max-h-[65vh] overflow-auto">
       <div class="divide-y divide-slate-100" id="global-search-results"></div>
       <div class="hidden p-4 text-sm text-slate-500" id="global-search-empty">Aucun résultat.</div>
-    </div>
-  </div>
-</div>
-
-<div aria-labelledby="export-preview-modal-title"
-     aria-modal="true"
-     class="fixed inset-0 hidden items-center justify-center p-4 bg-black/40 z-[100]"
-     id="export-preview-modal"
-     role="dialog">
-  <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-6xl overflow-hidden">
-    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
-      <div class="flex items-center gap-2">
-        <span class="material-icons-round text-slate-600">visibility</span>
-        <h3 class="text-sm font-bold text-slate-800" id="export-preview-modal-title" data-i18n="heading_export_preview">Aperçu export</h3>
-      </div>
-      <button class="text-slate-500 hover:text-slate-800 p-1 rounded hover:bg-slate-100"
-              data-action="close-export-preview"
-              title="Fermer"
-              type="button">
-        <span class="material-icons-round text-[18px]">close</span>
-      </button>
-    </div>
-
-    <div class="flex flex-col lg:flex-row gap-0">
-      <!-- Controls -->
-      <div class="w-full lg:w-[360px] border-b lg:border-b-0 lg:border-r border-slate-200 p-4 space-y-4">
-        <div>
-          <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Format</label>
-          <select class="mt-1 w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none"
-                  id="export-preview-format">
-            <option value="markdown">Markdown</option>
-            <option value="richtext">HTML</option>
-            <option value="rtf">RTF</option>
-            <option value="docx">DOCX</option>
-            <option value="xlsx">XLSX</option>
-          </select>
-          <div class="mt-1 text-[11px] text-slate-500">L’aperçu s’affiche en Markdown/HTML. Les autres formats restent exportables.</div>
-        </div>
-
-        <div>
-          <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Périmètre</label>
-          <div class="mt-2 space-y-2 text-xs text-slate-700">
-            <label class="flex items-center gap-2">
-              <input checked name="export-scope" type="radio" value="all"/>
-              <span>Formation entière</span>
-            </label>
-
-            <label class="flex items-center gap-2">
-              <input name="export-scope" type="radio" value="module"/>
-              <span>Un module</span>
-            </label>
-            <div class="pl-6">
-              <select class="w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none"
-                      id="export-preview-scope-module"
-                      disabled>
-              </select>
-            </div>
-
-            <label class="flex items-center gap-2">
-              <input name="export-scope" type="radio" value="activities"/>
-              <span>Activités sélectionnées</span>
-            </label>
-
-            <div class="pl-6 space-y-2">
-              <div class="flex gap-2">
-                <input class="flex-1 px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none"
-                       id="export-preview-activity-filter"
-                       placeholder="Filtrer… (titre module/moment/activité)" data-i18n-placeholder="ph_timeline_filter"
-                       type="text"
-                       disabled/>
-                <button class="px-2 py-1.5 text-xs rounded bg-slate-100 text-slate-700 hover:bg-slate-200"
-                        id="export-preview-activities-clear"
-                        type="button"
-                        disabled>Tout décocher</button>
-              </div>
-
-              <div class="max-h-[220px] overflow-auto border border-slate-200 rounded p-2 bg-slate-50"
-                   id="export-preview-activities"
-                   aria-label="Liste des activités"
-                   data-empty="true">
-                <div class="text-[11px] text-slate-500">Aucune activité.</div>
-              </div>
-
-              <div class="text-[11px] text-slate-500" id="export-preview-activities-count"></div>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Options</label>
-          <div class="mt-2 space-y-2 text-xs text-slate-700">
-            <label class="flex items-center gap-2">
-              <input checked id="export-opt-align" type="checkbox"/>
-              <span>Inclure alignement</span>
-            </label>
-            <label class="flex items-center gap-2">
-              <input checked id="export-opt-tools" type="checkbox"/>
-              <span>Inclure outils & matériel</span>
-            </label>
-            <label class="flex items-center gap-2 pl-6">
-              <input checked id="export-opt-toolnotes" type="checkbox"/>
-              <span>Inclure remarques outils</span>
-            </label>
-            <label class="flex items-center gap-2">
-              <input id="export-opt-empty" type="checkbox"/>
-              <span>Inclure sections vides</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
-          <button class="px-3 py-1.5 text-xs rounded bg-slate-100 text-slate-700 hover:bg-slate-200"
-                  data-action="close-export-preview"
-                  type="button">Fermer</button>
-          <button class="px-3 py-1.5 text-xs rounded bg-slate-700 text-white hover:bg-slate-800"
-                  id="export-preview-run"
-                  type="button">Exporter</button>
-        </div>
-      </div>
-
-      <!-- Preview -->
-      <div class="flex-1 p-4 bg-white">
-        <div class="flex items-center justify-between mb-2">
-          <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Aperçu</div>
-          <div class="text-[11px] text-slate-500" id="export-preview-hint"></div>
-        </div>
-
-        <div class="border border-slate-200 rounded-lg overflow-auto max-h-[70vh] bg-slate-50">
-          <pre class="p-3 text-[12px] leading-relaxed whitespace-pre-wrap text-slate-800"
-               id="export-preview-text"></pre>
-          <div class="hidden p-3 text-sm leading-relaxed text-slate-800"
-               id="export-preview-html"></div>
-        </div>
-      </div>
     </div>
   </div>
 </div>
@@ -5789,7 +5712,7 @@ function initViewLevelSegmentedUI() {
                 const counts = {
                     '	': (s.match(/	/g) || []).length,
                     ';' : (s.match(/;/g) || []).length,
-                    ',' : (s.match(/,/g) || []).length,
+                    ',' : (s.match(/,/g) || []).length
                 };
                 // Prefer tab if present (TSV), otherwise pick the most frequent.
                 if (counts['	'] > 0) return '	';
@@ -6686,7 +6609,7 @@ function addAimItem(textValue = null) {
                 stepIndex: stepIndex,
                 moduleTitle: moduleTitle,
                 momentTitle: momentTitle,
-                stepTitle: stepTitle,
+                stepTitle: stepTitle
             };
         }
 
@@ -6771,7 +6694,7 @@ function addAimItem(textValue = null) {
                 kind: k,
                 categorie: String(cat == null ? '' : cat).trim(),
                 sousCategorie: String(sub == null ? '' : sub).trim(),
-                item: it,
+                item: it
             };
         }
 function openAimsFromStep(btn) {
@@ -8059,14 +7982,12 @@ title_new_activity: "Ajouter un nouveau module",
                 chart_time_modes: "Modes de temps",
                 chart_trainer_presence: "Présence du formateur",
                 heading_analysis_charts: "Graphiques d'analyse",
-                heading_export_preview: "Aperçu export",
-                heading_metadata: "Métadonnées",
+heading_metadata: "Métadonnées",
                 heading_selection: "Sélection",
                 label_description_compact: "Description",
                 label_more: "Plus",
                 label_path: "Parcours",
-                label_preview: "Aperçu",
-                label_search: "Rechercher",
+label_search: "Rechercher",
                 label_templates: "Modèles",
                 label_theme_colon: "Thème:",
                 label_tools_materials: "Outils et matériel",
@@ -9139,8 +9060,10 @@ function toggleMomentDescription(btn) {
             try { updateAllModuleCompetenceSummaries(); } catch (e) { console.error('updateAllModuleCompetenceSummaries failed', e); }
             try { updateAllModuleLearningTargetsSummaries(); } catch (e) { console.error('updateAllModuleLearningTargetsSummaries failed', e); }
 
+            try { updateVerticalTimeline(); } catch (_) {}
+
             updateFocusButtons();
-        }
+}
 
         function toggleFocusModule(btn) {
             const moduleEl = btn.closest('.activity-group');
@@ -9419,7 +9342,7 @@ function updateOutcomeBloom(levelSelect) {
                     id: ensureId('comp'),
                     label: String(parsed.item || '').trim(),
                     categorie: String(parsed.categorie || '').trim(),
-                    sousCategorie: String(parsed.sousCategorie || '').trim(),
+                    sousCategorie: String(parsed.sousCategorie || '').trim()
                 };
             }
 
@@ -9444,7 +9367,7 @@ function updateOutcomeBloom(levelSelect) {
                     id,
                     label: String(parsed.item || labelRaw).trim(),
                     categorie: cat || String(parsed.categorie || '').trim(),
-                    sousCategorie: sub || String(parsed.sousCategorie || '').trim(),
+                    sousCategorie: sub || String(parsed.sousCategorie || '').trim()
                 };
             }
 
@@ -9465,7 +9388,7 @@ function updateOutcomeBloom(levelSelect) {
                     id: (typeof _genId === 'function' ? _genId('comp') : ('comp_' + Date.now())),
                     label: item,
                     categorie: String(catIn ? catIn.value : '').trim(),
-                    sousCategorie: String(subIn ? subIn.value : '').trim(),
+                    sousCategorie: String(subIn ? subIn.value : '').trim()
                 };
             } else {
                 norm = _normaliseCompetenceItem(data);
@@ -9621,7 +9544,7 @@ function updateOutcomeBloom(levelSelect) {
                     id: (typeof _genId === 'function' ? _genId('compT') : ('compT_' + Date.now())),
                     label: item,
                     categorie: String(catIn ? catIn.value : '').trim(),
-                    sousCategorie: String(subIn ? subIn.value : '').trim(),
+                    sousCategorie: String(subIn ? subIn.value : '').trim()
                 };
             } else {
                 norm = _normaliseCompetenceItem(Object.assign({}, (typeof data === 'object' ? data : {}), { isTransversal: true }));
@@ -9978,7 +9901,7 @@ function updateOutcomeBloom(levelSelect) {
             if (Array.isArray(raw)) return raw.map(String).map(s => s.trim()).filter(Boolean);
             if (typeof raw === 'string') {
                 // Accept CSV / semicolon separated strings from legacy exports
-                return raw.split(/[;,]/).map(s => s.trim()).filter(Boolean);
+                return raw.split(/[;,\n\r]+/).map(s => s.trim()).filter(Boolean);
             }
             return [];
         }
@@ -12668,7 +12591,7 @@ if (m.targetTimeSec == null) {
                                             const _normIds = (raw) => {
                                                 if (!raw) return [];
                                                 if (Array.isArray(raw)) return raw.map(String).map(s=>s.trim()).filter(Boolean);
-                                                if (typeof raw === 'string') return raw.split(/[;,]/).map(s=>s.trim()).filter(Boolean);
+                                                if (typeof raw === 'string') return raw.split(/[;,\n\r]+/).map(s=>s.trim()).filter(Boolean);
                                                 return [];
                                             };
                                             s.competences = _normIds(s.competences ?? s.competenceIds ?? s.competencies ?? s.competencesCiblees ?? []);
@@ -12750,7 +12673,7 @@ s.unite = s.unit;
                             const _normIds = (raw) => {
                                 if (!raw) return [];
                                 if (Array.isArray(raw)) return raw.map(String).map(s=>s.trim()).filter(Boolean);
-                                if (typeof raw === 'string') return raw.split(/[;,]/).map(s=>s.trim()).filter(Boolean);
+                                if (typeof raw === 'string') return raw.split(/[;,\n\r]+/).map(s=>s.trim()).filter(Boolean);
                                 return [];
                             };
                             s.competences = _normIds(s.competences ?? s.competencesSujet ?? s.competenceIds ?? s.competencies ?? s.competencesCiblees ?? []);
@@ -15260,6 +15183,78 @@ function formatAdaptiveDurationFromSecs(totalSecs) {
             return { value: parseFloat(months.toFixed(1)), unit: translations[currentLang].unit_months };
         }
 
+
+/* =========================================================
+   Vertical cumulative timeline rail (right sidebar)
+   ========================================================= */
+function updateVerticalTimeline() {
+    const rail = document.getElementById('vertical-time-rail');
+    if (!rail) return;
+    rail.innerHTML = '';
+
+    let totalSecs = 0;
+    try { totalSecs = (typeof getTotals === 'function') ? (getTotals().totalSecs || 0) : 0; } catch (_) { totalSecs = 0; }
+    totalSecs = Math.max(0, parseFloat(totalSecs) || 0);
+    if (totalSecs <= 0) return;
+
+    const modules = document.querySelectorAll('.activity-group');
+    let cumulativeSecs = 0;
+
+    modules.forEach((mod, idx) => {
+        const marker = document.createElement('div');
+        marker.className = 'time-marker';
+
+        const topPos = (cumulativeSecs / totalSecs) * 95;
+        marker.style.top = topPos + '%';
+
+        const label = document.createElement('span');
+        label.className = 'time-marker-label';
+        try { label.innerText = (typeof formatTimelineDuration === 'function') ? formatTimelineDuration(cumulativeSecs) : ''; } catch (_) {}
+
+        const title = document.createElement('span');
+        title.className = 'time-marker-title';
+        title.innerText = (mod.querySelector('.activity-title')?.value || `M${idx+1}`);
+
+        marker.appendChild(label);
+        marker.appendChild(title);
+
+        marker.onclick = () => {
+            try {
+                const body = mod.querySelector('.activity-body');
+                if (body && body.classList.contains('collapsed')) {
+                    const toggleBtn = mod.querySelector('button[data-action="toggle-module"]');
+                    if (toggleBtn) toggleBtn.click();
+                }
+                mod.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                if (typeof flashHighlight === 'function') flashHighlight(mod);
+            } catch (_) {}
+        };
+
+        rail.appendChild(marker);
+
+        const steps = (typeof __ldQueryDesignedStepCards === 'function') ? __ldQueryDesignedStepCards(mod) : Array.from(mod.querySelectorAll('.step-card'));
+        steps.forEach(step => {
+            try { cumulativeSecs += (typeof getStepDurationSecs === 'function') ? getStepDurationSecs(step) : 0; } catch (_) {}
+        });
+    });
+
+    const finalMarker = document.createElement('div');
+    finalMarker.className = 'time-marker';
+    finalMarker.style.top = '98%';
+    finalMarker.style.borderTop = '2px solid #1e293b';
+
+    const finalLabel = document.createElement('span');
+    finalLabel.className = 'time-marker-label';
+    finalLabel.style.color = '#0f172a';
+    try { finalLabel.innerText = (typeof formatTimelineDuration === 'function') ? formatTimelineDuration(totalSecs) : ''; } catch (_) {}
+
+    finalMarker.appendChild(finalLabel);
+    rail.appendChild(finalMarker);
+}
+try { window.updateVerticalTimeline = updateVerticalTimeline; } catch (_) {}
+
+
+
 function updateStats() {
             const totals = getTotals();
             // Sync user-defined duration tolerance (% only)
@@ -16207,6 +16202,8 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
             });
             try { updateAllModuleCompetenceSummaries(); } catch (e) { console.error('updateAllModuleCompetenceSummaries failed', e); }
             try { updateAllModuleLearningTargetsSummaries(); } catch (e) { console.error('updateAllModuleLearningTargetsSummaries failed', e); }
+
+            try { updateVerticalTimeline(); } catch (_) {}
 
             updateFocusButtons();
         }
@@ -17430,6 +17427,8 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
 
 
 
+
+  <div id="vertical-time-rail" aria-hidden="true"></div>
 </body></html>`;
 
             const blob = new Blob([html], { type: 'text/html' });
@@ -25037,7 +25036,6 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ===========================
    v12 – Productivité & Exports
    - Duplication d’activité (options)
-   - Aperçu export + périmètre + options (modal uniquement)
    =========================== */
 
 (function(){
@@ -25067,943 +25065,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const t = __asText(s);
     return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
-
-  function __ensureExportPreviewModal(){
-    const modal = __qs('#export-preview-modal');
-    if (!modal) return null;
-
-    if (modal.__initDone) return modal;
-    modal.__initDone = true;
-
-    // Click outside closes
-    modal.addEventListener('click', function(e){
-      try {
-        if (e.target === modal) { window.closeExportPreview(); }
-      } catch(_){}
-    });
-
-    // Escape closes
-    document.addEventListener('keydown', function(e){
-      try {
-        if (e.key !== 'Escape') return;
-        if (!__isOpenModal(modal)) return;
-        window.closeExportPreview();
-      } catch(_){}
-    });
-
-    // Wire controls
-    const formatSel = __qs('#export-preview-format', modal);
-    const modSel = __qs('#export-preview-scope-module', modal);
-    const actFilter = __qs('#export-preview-activity-filter', modal);
-    const actWrap = __qs('#export-preview-activities', modal);
-    const actClear = __qs('#export-preview-activities-clear', modal);
-
-    const optAlign = __qs('#export-opt-align', modal);
-    const optTools = __qs('#export-opt-tools', modal);
-    const optToolNotes = __qs('#export-opt-toolnotes', modal);
-    const optEmpty = __qs('#export-opt-empty', modal);
-
-    const runBtn = __qs('#export-preview-run', modal);
-
-    function onAnyChange(){
-      try { __refreshExportPreview(); } catch(err){ try { window.reportError(err, { action: 'export-preview-refresh' }); } catch(_) {} }
-    }
-
-    __qsa('input[name="export-scope"]', modal).forEach(r => r.addEventListener('change', onAnyChange));
-    [formatSel, modSel, optAlign, optTools, optToolNotes, optEmpty].forEach(el => el && el.addEventListener('change', onAnyChange));
-    if (actFilter) actFilter.addEventListener('input', onAnyChange);
-    if (actWrap) actWrap.addEventListener('change', function(e){
-      const cb = e.target && e.target.matches ? (e.target.matches('input[type="checkbox"][data-activity-key]') ? e.target : null) : null;
-      if (!cb) return;
-      onAnyChange();
-    });
-
-    if (actClear) actClear.addEventListener('click', function(){
-      try {
-        __qsa('input[type="checkbox"][data-activity-key]', actWrap).forEach(cb => cb.checked = false);
-        onAnyChange();
-      } catch(_){}
-    });
-
-    if (optTools && optToolNotes) {
-      optTools.addEventListener('change', function(){
-        try {
-          optToolNotes.disabled = !optTools.checked;
-          if (!optTools.checked) optToolNotes.checked = false;
-          onAnyChange();
-        } catch(_){}
-      });
-    }
-
-    if (runBtn) runBtn.addEventListener('click', function(){
-      try { __runExportFromPreview(); } catch(err){ try { window.reportError(err, { action: 'export-preview-export' }); } catch(_) {} }
-    });
-
-    return modal;
-  }
-
-  function __getExportPreviewState(){
-    const modal = __qs('#export-preview-modal');
-    if (!modal) return null;
-
-    const scope = (__qs('input[name="export-scope"]:checked', modal) || {}).value || 'all';
-    const moduleIndex = parseInt((__qs('#export-preview-scope-module', modal) || {}).value || '0', 10);
-
-    const actKeys = __qsa('#export-preview-activities input[type="checkbox"][data-activity-key]:checked', modal)
-      .map(cb => cb.getAttribute('data-activity-key'));
-
-    const opts = {
-      includeAlignment: !!(__qs('#export-opt-align', modal) || {}).checked,
-      includeTools: !!(__qs('#export-opt-tools', modal) || {}).checked,
-      includeToolNotes: !!(__qs('#export-opt-toolnotes', modal) || {}).checked,
-      includeEmpty: !!(__qs('#export-opt-empty', modal) || {}).checked
-    };
-
-    const format = (__qs('#export-preview-format', modal) || {}).value || 'markdown';
-
-    const filterTxt = __trim((__qs('#export-preview-activity-filter', modal) || {}).value || '');
-
-    return { modal, scope, moduleIndex: isNaN(moduleIndex) ? 0 : moduleIndex, actKeys, opts, format, filterTxt };
-  }
-
-  function __buildActivityKey(mi, moi, ai){
-    return `m${mi}__mo${moi}__a${ai}`;
-  }
-
-  function __parseActivityKey(k){
-    const m = /^m(\d+)__mo(\d+)__a(\d+)$/.exec(__asText(k));
-    if (!m) return null;
-    return { mi: parseInt(m[1],10), moi: parseInt(m[2],10), ai: parseInt(m[3],10) };
-  }
-
-  function __buildFilteredModel(baseModel, state){
-    if (!baseModel || !baseModel.modules) return baseModel;
-
-    if (state.scope === 'all') return baseModel;
-
-    if (state.scope === 'module') {
-      const m = baseModel.modules[state.moduleIndex];
-      return { meta: baseModel.meta, modules: m ? [m] : [] };
-    }
-
-    // activities
-    const selected = new Set((state.actKeys || []).filter(Boolean));
-    const outModules = [];
-    baseModel.modules.forEach((m, mi) => {
-      const outMoments = [];
-      (m.moments || []).forEach((mo, moi) => {
-        const outActs = [];
-        (mo.activities || []).forEach((a, ai) => {
-          const key = __buildActivityKey(mi, moi, ai);
-          if (selected.has(key)) outActs.push(a);
-        });
-        if (outActs.length) outMoments.push(Object.assign({}, mo, { activities: outActs }));
-      });
-      if (outMoments.length) outModules.push(Object.assign({}, m, { moments: outMoments }));
-    });
-    return { meta: baseModel.meta, modules: outModules };
-  }
-
-  function __renderToolsList(activity, opts){
-    const tools = __safeList(activity.toolsMaterialsTargets);
-    if (!opts.includeTools) return '';
-    if (!tools.length && !opts.includeEmpty) return '';
-
-    const notesMap = (opts.includeToolNotes ? (activity.toolsMaterialsNotes || {}) : {});
-    const lines = tools.map(t => {
-      const note = opts.includeToolNotes ? __trim(notesMap[t] || '') : '';
-      return note ? `${t} — ${__oneLine(note)}` : t;
-    });
-    return lines.join('\n');
-  }
-
-  function __renderAlignmentBlock(activity, opts){
-    if (!opts.includeAlignment) return '';
-    const parts = [];
-    const cs = __trim(activity.competencesSujetText || '');
-    const ct = __trim(activity.competencesTransversalesText || '');
-    const aims = __safeList(activity.aimsTargets);
-    const outs = __safeList(activity.outcomesTargets);
-
-    if (__has(cs) || opts.includeEmpty) parts.push(`- Compétences (Sujet): ${cs || '—'}`);
-    if (__has(ct) || opts.includeEmpty) parts.push(`- Compétences (Transversales): ${ct || '—'}`);
-    if (aims.length || opts.includeEmpty) parts.push(`- Objectifs ciblés: ${aims.length ? aims.join('; ') : '—'}`);
-    if (outs.length || opts.includeEmpty) parts.push(`- Résultats ciblés: ${outs.length ? outs.join('; ') : '—'}`);
-
-    if (!parts.length) return '';
-    return parts.join('\n');
-  }
-
-  function __renderMarkdownFromModel(model, opts){
-    const meta = model && model.meta ? model.meta : {};
-    let md = '';
-    const title = __trim(meta.courseName) || 'Formation';
-    md += `# ${__escapeMd(title)}\n\n`;
-
-    md += `## Métadonnées\n`;
-    const metaLines = [];
-    function mline(label, val){
-      const v = __trim(val);
-      if (!v && !opts.includeEmpty) return;
-      metaLines.push(`- **${__escapeMd(label)}:** ${__escapeMd(v || '—')}`);
-    }
-    mline('Thème', meta.topic);
-    mline('Auteur(s)', meta.authors);
-    mline('Formateur(s)', meta.trainers);
-    mline('Niveau', meta.level);
-    mline('Public cible', meta.targetAudience);
-    mline('Prérequis', meta.prerequisites);
-    mline('Modalité', meta.mode);
-    mline('Taille cohorte', meta.cohortSize);
-    mline('Durée apprentissage', meta.learningTime);
-    mline('Durée conçue', meta.designedTime);
-    mline('Objectifs (formation)', meta.aims);
-    mline('Résultats (formation)', meta.outcomesText);
-    mline('Description', meta.description);
-    mline('Généré le', meta.generatedOn);
-
-    md += metaLines.join('\n') + '\n\n';
-
-    const modules = (model && model.modules) ? model.modules : [];
-    modules.forEach((m, mi) => {
-      const mt = __trim(m.title) || `Module ${mi+1}`;
-      md += `## Module ${mi+1} — ${__escapeMd(mt)}\n\n`;
-      if (__has(m.description) || opts.includeEmpty) {
-        md += `**Description :** ${__escapeMd(__trim(m.description) || '—')}\n\n`;
-      }
-      if (__has(m.target) || opts.includeEmpty) {
-        md += `**Cible :** ${__escapeMd(__trim(m.target) || '—')}\n\n`;
-      }
-
-      if (opts.includeAlignment) {
-        const mAims = __safeList(m.aimsTargets);
-        const mOuts = __safeList(m.outcomesTargets);
-        const mCs = __trim(m.competencesSujetText || '');
-        const mCt = __trim(m.competencesTransversalesText || '');
-
-        if (mCs || opts.includeEmpty) md += `- **Compétences (Sujet) :** ${__escapeMd(mCs || '—')}\n`;
-        if (mCt || opts.includeEmpty) md += `- **Compétences (Transversales) :** ${__escapeMd(mCt || '—')}\n`;
-        if (mAims.length || opts.includeEmpty) md += `- **Objectifs (module) :** ${__escapeMd(mAims.length ? mAims.join('; ') : '—')}\n`;
-        if (mOuts.length || opts.includeEmpty) md += `- **Résultats (module) :** ${__escapeMd(mOuts.length ? mOuts.join('; ') : '—')}\n`;
-        md += '\n';
-      }
-
-      (m.moments || []).forEach((mo, moi) => {
-        const mot = __trim(mo.title) || `Moment ${moi+1}`;
-        md += `### Moment ${moi+1} — ${__escapeMd(mot)}\n\n`;
-        if (__has(mo.description) || opts.includeEmpty) md += `**Description :** ${__escapeMd(__trim(mo.description) || '—')}\n\n`;
-        if (__has(mo.target) || opts.includeEmpty) md += `**Cible :** ${__escapeMd(__trim(mo.target) || '—')}\n\n`;
-
-        (mo.activities || []).forEach((a, ai) => {
-          const at = __trim(a.title) || `Activité ${ai+1}`;
-          md += `#### Activité ${ai+1} — ${__escapeMd(at)}\n\n`;
-
-          // Left-column logistical fields
-          function aline(label, val){
-            const v = __trim(val);
-            if (!v && !opts.includeEmpty) return;
-            md += `- **${__escapeMd(label)} :** ${__escapeMd(v || '—')}\n`;
-          }
-
-          aline('Type', a.typeLabel);
-          aline('Regroupement', a.groupingLabel);
-          aline('Nombre de groupes', a.groupCount);
-          aline('Taille groupe', a.groupSize);
-          aline('Détails regroupement', a.groupDetails);
-          aline('Formateur', a.trainerLabel);
-          aline('Lieu', a.placeLabel);
-          aline('Temps', a.timeLabel);
-          aline('Durée', a.durationLabel);
-          aline('Évaluation', a.evaluationLabel);
-
-          md += '\n';
-
-          // Content fields
-          if (__has(a.objective) || opts.includeEmpty) md += `**Objectif :** ${__escapeMd(__trim(a.objective) || '—')}\n\n`;
-          if (__has(a.tasks) || opts.includeEmpty) md += `**À faire :** ${__escapeMd(__trim(a.tasks) || '—')}\n\n`;
-          if (__has(a.trainerTasks) || opts.includeEmpty) md += `**À faire (formateur) :** ${__escapeMd(__trim(a.trainerTasks) || '—')}\n\n`;
-          if (__has(a.notes) || opts.includeEmpty) md += `**Notes :** ${__escapeMd(__trim(a.notes) || '—')}\n\n`;
-
-          const alignBlock = __renderAlignmentBlock(a, opts);
-          if (alignBlock) {
-            md += `**Alignement :**\n${alignBlock.split('\n').map(l => l ? l : '').join('\n')}\n\n`;
-          } else if (opts.includeAlignment && opts.includeEmpty) {
-            md += `**Alignement :**\n- —\n\n`;
-          }
-
-          if (opts.includeTools) {
-            const toolsTxt = __renderToolsList(a, opts);
-            if (toolsTxt || opts.includeEmpty) {
-              md += `**Outils et matériel :**\n`;
-              if (toolsTxt) {
-                md += toolsTxt.split('\n').map(l => `- ${__escapeMd(l)}`).join('\n') + '\n\n';
-              } else {
-                md += `- —\n\n`;
-              }
-            }
-          }
-        });
-      });
-    });
-
-    return md.trim() + '\n';
-  }
-
-  function __renderHTMLFromModel(model, opts){
-    const meta = model && model.meta ? model.meta : {};
-    const title = __trim(meta.courseName) || 'Formation';
-    let html = '';
-    html += `<h1>${__escapeHtml2(title)}</h1>`;
-
-    html += `<h2 data-i18n="heading_metadata">Métadonnées</h2><ul>`;
-    function li(label, val){
-      const v = __trim(val);
-      if (!v && !opts.includeEmpty) return;
-      html += `<li><strong>${__escapeHtml2(label)} :</strong> ${__escapeHtml2(v || '—')}</li>`;
-    }
-    li('Thème', meta.topic);
-    li('Auteur(s)', meta.authors);
-    li('Formateur(s)', meta.trainers);
-    li('Niveau', meta.level);
-    li('Public cible', meta.targetAudience);
-    li('Prérequis', meta.prerequisites);
-    li('Modalité', meta.mode);
-    li('Taille cohorte', meta.cohortSize);
-    li('Durée apprentissage', meta.learningTime);
-    li('Durée conçue', meta.designedTime);
-    li('Objectifs (formation)', meta.aims);
-    li('Résultats (formation)', meta.outcomesText);
-    li('Description', meta.description);
-    li('Généré le', meta.generatedOn);
-    html += `</ul>`;
-
-    const modules = (model && model.modules) ? model.modules : [];
-    modules.forEach((m, mi) => {
-      const mt = __trim(m.title) || `Module ${mi+1}`;
-      html += `<h2>Module ${mi+1} — ${__escapeHtml2(mt)}</h2>`;
-
-      if (__has(m.description) || opts.includeEmpty) html += `<p><strong>Description :</strong> ${__escapeHtml2(__trim(m.description) || '—')}</p>`;
-      if (__has(m.target) || opts.includeEmpty) html += `<p><strong>Cible :</strong> ${__escapeHtml2(__trim(m.target) || '—')}</p>`;
-
-      if (opts.includeAlignment) {
-        html += `<ul>`;
-        const mCs = __trim(m.competencesSujetText || '');
-        const mCt = __trim(m.competencesTransversalesText || '');
-        const mAims = __safeList(m.aimsTargets);
-        const mOuts = __safeList(m.outcomesTargets);
-
-        if (mCs || opts.includeEmpty) html += `<li><strong>Compétences (Sujet) :</strong> ${__escapeHtml2(mCs || '—')}</li>`;
-        if (mCt || opts.includeEmpty) html += `<li><strong>Compétences (Transversales) :</strong> ${__escapeHtml2(mCt || '—')}</li>`;
-        if (mAims.length || opts.includeEmpty) html += `<li><strong>Objectifs (module) :</strong> ${__escapeHtml2(mAims.length ? mAims.join('; ') : '—')}</li>`;
-        if (mOuts.length || opts.includeEmpty) html += `<li><strong>Résultats (module) :</strong> ${__escapeHtml2(mOuts.length ? mOuts.join('; ') : '—')}</li>`;
-        html += `</ul>`;
-      }
-
-      (m.moments || []).forEach((mo, moi) => {
-        const mot = __trim(mo.title) || `Moment ${moi+1}`;
-        html += `<h3>Moment ${moi+1} — ${__escapeHtml2(mot)}</h3>`;
-        if (__has(mo.description) || opts.includeEmpty) html += `<p><strong>Description :</strong> ${__escapeHtml2(__trim(mo.description) || '—')}</p>`;
-        if (__has(mo.target) || opts.includeEmpty) html += `<p><strong>Cible :</strong> ${__escapeHtml2(__trim(mo.target) || '—')}</p>`;
-
-        (mo.activities || []).forEach((a, ai) => {
-          const at = __trim(a.title) || `Activité ${ai+1}`;
-          html += `<h4>Activité ${ai+1} — ${__escapeHtml2(at)}</h4>`;
-
-          html += `<ul>`;
-          function li2(label, val){
-            const v = __trim(val);
-            if (!v && !opts.includeEmpty) return;
-            html += `<li><strong>${__escapeHtml2(label)} :</strong> ${__escapeHtml2(v || '—')}</li>`;
-          }
-          li2('Type', a.typeLabel);
-          li2('Regroupement', a.groupingLabel);
-          li2('Nombre de groupes', a.groupCount);
-          li2('Taille groupe', a.groupSize);
-          li2('Détails regroupement', a.groupDetails);
-          li2('Formateur', a.trainerLabel);
-          li2('Lieu', a.placeLabel);
-          li2('Temps', a.timeLabel);
-          li2('Durée', a.durationLabel);
-          li2('Évaluation', a.evaluationLabel);
-          html += `</ul>`;
-
-          if (__has(a.objective) || opts.includeEmpty) html += `<p><strong>Objectif :</strong><br>${__escapeHtml2(__trim(a.objective) || '—')}</p>`;
-          if (__has(a.tasks) || opts.includeEmpty) html += `<p><strong>À faire :</strong><br>${__escapeHtml2(__trim(a.tasks) || '—')}</p>`;
-          if (__has(a.trainerTasks) || opts.includeEmpty) html += `<p><strong>À faire (formateur) :</strong><br>${__escapeHtml2(__trim(a.trainerTasks) || '—')}</p>`;
-          if (__has(a.notes) || opts.includeEmpty) html += `<p><strong>Notes :</strong><br>${__escapeHtml2(__trim(a.notes) || '—')}</p>`;
-
-          if (opts.includeAlignment) {
-            const ab = __renderAlignmentBlock(a, opts);
-            if (ab || opts.includeEmpty) {
-              html += `<p><strong>Alignement :</strong></p><ul>`;
-              if (ab) {
-                ab.split('\n').forEach(l => {
-                  const t = __trim(l).replace(/^- /,'');
-                  if (!t && !opts.includeEmpty) return;
-                  html += `<li>${__escapeHtml2(t || '—')}</li>`;
-                });
-              } else {
-                html += `<li>—</li>`;
-              }
-              html += `</ul>`;
-            }
-          }
-
-          if (opts.includeTools) {
-            const tt = __renderToolsList(a, opts);
-            if (tt || opts.includeEmpty) {
-              html += `<p><strong>Outils et matériel :</strong></p><ul>`;
-              if (tt) {
-                tt.split('\n').forEach(l => html += `<li>${__escapeHtml2(l)}</li>`);
-              } else {
-                html += `<li>—</li>`;
-              }
-              html += `</ul>`;
-            }
-          }
-        });
-      });
-    });
-
-    return `<!doctype html><html><head><meta charset="utf-8"><title>${__escapeHtml2(title)}</title></head><body>${html}</body></html>`;
-  }
-
-  function __renderRTFFromModel(model, opts){
-    // Basic RTF rendering (headings bold, paragraphs separated).
-    const esc = (typeof escapeRtf === 'function') ? escapeRtf : (s => __asText(s));
-    const meta = model && model.meta ? model.meta : {};
-    let rtf = '{\\rtf1\\ansi\\deff0\n';
-    const title = __trim(meta.courseName) || 'Formation';
-    rtf += '\\b ' + esc(title) + '\\b0\\par\\par\n';
-
-    rtf += '\\b Métadonnées\\b0\\par\n';
-    function mline(label, val){
-      const v = __trim(val);
-      if (!v && !opts.includeEmpty) return;
-      rtf += esc(label + ' : ') + esc(v || '—') + '\\par\n';
-    }
-    mline('Thème', meta.topic);
-    mline('Auteur(s)', meta.authors);
-    mline('Formateur(s)', meta.trainers);
-    mline('Niveau', meta.level);
-    mline('Public cible', meta.targetAudience);
-    mline('Prérequis', meta.prerequisites);
-    mline('Modalité', meta.mode);
-    mline('Taille cohorte', meta.cohortSize);
-    mline('Durée apprentissage', meta.learningTime);
-    mline('Durée conçue', meta.designedTime);
-    mline('Objectifs (formation)', meta.aims);
-    mline('Résultats (formation)', meta.outcomesText);
-    mline('Description', meta.description);
-    mline('Généré le', meta.generatedOn);
-    rtf += '\\par\n';
-
-    const modules = (model && model.modules) ? model.modules : [];
-    modules.forEach((m, mi) => {
-      const mt = __trim(m.title) || `Module ${mi+1}`;
-      rtf += '\\b ' + esc(`Module ${mi+1} — ${mt}`) + '\\b0\\par\n';
-      if (__has(m.description) || opts.includeEmpty) rtf += esc('Description : ') + esc(__trim(m.description) || '—') + '\\par\n';
-      if (__has(m.target) || opts.includeEmpty) rtf += esc('Cible : ') + esc(__trim(m.target) || '—') + '\\par\n';
-
-      if (opts.includeAlignment) {
-        const mCs = __trim(m.competencesSujetText || '');
-        const mCt = __trim(m.competencesTransversalesText || '');
-        const mAims = __safeList(m.aimsTargets);
-        const mOuts = __safeList(m.outcomesTargets);
-        if (mCs || opts.includeEmpty) rtf += esc('Compétences (Sujet) : ') + esc(mCs || '—') + '\\par\n';
-        if (mCt || opts.includeEmpty) rtf += esc('Compétences (Transversales) : ') + esc(mCt || '—') + '\\par\n';
-        if (mAims.length || opts.includeEmpty) rtf += esc('Objectifs (module) : ') + esc(mAims.length ? mAims.join('; ') : '—') + '\\par\n';
-        if (mOuts.length || opts.includeEmpty) rtf += esc('Résultats (module) : ') + esc(mOuts.length ? mOuts.join('; ') : '—') + '\\par\n';
-      }
-
-      (m.moments || []).forEach((mo, moi) => {
-        const mot = __trim(mo.title) || `Moment ${moi+1}`;
-        rtf += '\\par\\b ' + esc(`Moment ${moi+1} — ${mot}`) + '\\b0\\par\n';
-        if (__has(mo.description) || opts.includeEmpty) rtf += esc('Description : ') + esc(__trim(mo.description) || '—') + '\\par\n';
-        if (__has(mo.target) || opts.includeEmpty) rtf += esc('Cible : ') + esc(__trim(mo.target) || '—') + '\\par\n';
-
-        (mo.activities || []).forEach((a, ai) => {
-          const at = __trim(a.title) || `Activité ${ai+1}`;
-          rtf += '\\par\\b ' + esc(`Activité ${ai+1} — ${at}`) + '\\b0\\par\n';
-          function aline(label, val){
-            const v = __trim(val);
-            if (!v && !opts.includeEmpty) return;
-            rtf += esc(label + ' : ') + esc(v || '—') + '\\par\n';
-          }
-          aline('Type', a.typeLabel);
-          aline('Regroupement', a.groupingLabel);
-          aline('Nombre de groupes', a.groupCount);
-          aline('Taille groupe', a.groupSize);
-          aline('Détails regroupement', a.groupDetails);
-          aline('Formateur', a.trainerLabel);
-          aline('Lieu', a.placeLabel);
-          aline('Temps', a.timeLabel);
-          aline('Durée', a.durationLabel);
-          aline('Évaluation', a.evaluationLabel);
-
-          if (__has(a.objective) || opts.includeEmpty) rtf += esc('Objectif : ') + esc(__trim(a.objective) || '—') + '\\par\n';
-          if (__has(a.tasks) || opts.includeEmpty) rtf += esc('À faire : ') + esc(__trim(a.tasks) || '—') + '\\par\n';
-          if (__has(a.trainerTasks) || opts.includeEmpty) rtf += esc('À faire (formateur) : ') + esc(__trim(a.trainerTasks) || '—') + '\\par\n';
-          if (__has(a.notes) || opts.includeEmpty) rtf += esc('Notes : ') + esc(__trim(a.notes) || '—') + '\\par\n';
-
-          if (opts.includeAlignment) {
-            const ab = __renderAlignmentBlock(a, opts);
-            if (ab || opts.includeEmpty) {
-              rtf += esc('Alignement :') + '\\par\n';
-              if (ab) ab.split('\n').forEach(l => rtf += esc('  ' + l.replace(/^- /,'')) + '\\par\n');
-              else rtf += esc('  —') + '\\par\n';
-            }
-          }
-
-          if (opts.includeTools) {
-            const tt = __renderToolsList(a, opts);
-            if (tt || opts.includeEmpty) {
-              rtf += esc('Outils et matériel :') + '\\par\n';
-              if (tt) tt.split('\n').forEach(l => rtf += esc('  ' + l) + '\\par\n');
-              else rtf += esc('  —') + '\\par\n';
-            }
-          }
-        });
-      });
-
-      rtf += '\\par\n';
-    });
-
-    rtf += '}';
-    return rtf;
-  }
-
-  async function __exportDOCXFromModel(model, opts){
-    if (!window.docx || !window.docx.Document) {
-      alert("La bibliothèque d’export DOCX n’est pas disponible.");
-      return;
-    }
-    const { Document, Packer, Paragraph, TextRun, HeadingLevel } = window.docx;
-
-    function para(text, heading){
-      const p = new Paragraph({ children: [new TextRun({ text: __asText(text) })] });
-      if (heading) p.heading = heading;
-      return p;
-    }
-
-    function addKeyVal(children, label, val){
-      const v = __trim(val);
-      if (!v && !opts.includeEmpty) return;
-      children.push(new Paragraph({
-        children: [
-          new TextRun({ text: label + ': ', bold: true }),
-          new TextRun({ text: v || '—' })
-        ]
-      }));
-    }
-
-    const children = [];
-    const meta = model && model.meta ? model.meta : {};
-    const title = __trim(meta.courseName) || 'Formation';
-    children.push(new Paragraph({ text: title, heading: HeadingLevel.TITLE }));
-
-    children.push(new Paragraph({ text: 'Métadonnées', heading: HeadingLevel.HEADING_1 }));
-    addKeyVal(children, 'Thème', meta.topic);
-    addKeyVal(children, 'Auteur(s)', meta.authors);
-    addKeyVal(children, 'Formateur(s)', meta.trainers);
-    addKeyVal(children, 'Niveau', meta.level);
-    addKeyVal(children, 'Public cible', meta.targetAudience);
-    addKeyVal(children, 'Prérequis', meta.prerequisites);
-    addKeyVal(children, 'Modalité', meta.mode);
-    addKeyVal(children, 'Taille cohorte', meta.cohortSize);
-    addKeyVal(children, 'Durée apprentissage', meta.learningTime);
-    addKeyVal(children, 'Durée conçue', meta.designedTime);
-    addKeyVal(children, 'Objectifs (formation)', meta.aims);
-    addKeyVal(children, 'Résultats (formation)', meta.outcomesText);
-    addKeyVal(children, 'Description', meta.description);
-    addKeyVal(children, 'Généré le', meta.generatedOn);
-
-    const modules = (model && model.modules) ? model.modules : [];
-    modules.forEach((m, mi) => {
-      const mt = __trim(m.title) || `Module ${mi+1}`;
-      children.push(new Paragraph({ text: `Module ${mi+1} — ${mt}`, heading: HeadingLevel.HEADING_1 }));
-
-      addKeyVal(children, 'Description', m.description);
-      addKeyVal(children, 'Cible', m.target);
-
-      if (opts.includeAlignment) {
-        addKeyVal(children, 'Compétences (Sujet)', m.competencesSujetText);
-        addKeyVal(children, 'Compétences (Transversales)', m.competencesTransversalesText);
-        addKeyVal(children, 'Objectifs (module)', __safeList(m.aimsTargets).join('; '));
-        addKeyVal(children, 'Résultats (module)', __safeList(m.outcomesTargets).join('; '));
-      }
-
-      (m.moments || []).forEach((mo, moi) => {
-        const mot = __trim(mo.title) || `Moment ${moi+1}`;
-        children.push(new Paragraph({ text: `Moment ${moi+1} — ${mot}`, heading: HeadingLevel.HEADING_2 }));
-        addKeyVal(children, 'Description', mo.description);
-        addKeyVal(children, 'Cible', mo.target);
-
-        (mo.activities || []).forEach((a, ai) => {
-          const at = __trim(a.title) || `Activité ${ai+1}`;
-          children.push(new Paragraph({ text: `Activité ${ai+1} — ${at}`, heading: HeadingLevel.HEADING_3 }));
-
-          addKeyVal(children, 'Type', a.typeLabel);
-          addKeyVal(children, 'Regroupement', a.groupingLabel);
-          addKeyVal(children, 'Nombre de groupes', a.groupCount);
-          addKeyVal(children, 'Taille groupe', a.groupSize);
-          addKeyVal(children, 'Détails regroupement', a.groupDetails);
-          addKeyVal(children, 'Formateur', a.trainerLabel);
-          addKeyVal(children, 'Lieu', a.placeLabel);
-          addKeyVal(children, 'Temps', a.timeLabel);
-          addKeyVal(children, 'Durée', a.durationLabel);
-          addKeyVal(children, 'Évaluation', a.evaluationLabel);
-
-          addKeyVal(children, 'Objectif', a.objective);
-          addKeyVal(children, 'À faire', a.tasks);
-          addKeyVal(children, 'À faire (formateur)', a.trainerTasks);
-          addKeyVal(children, 'Notes', a.notes);
-
-          if (opts.includeAlignment) {
-            addKeyVal(children, 'Compétences (Sujet)', a.competencesSujetText);
-            addKeyVal(children, 'Compétences (Transversales)', a.competencesTransversalesText);
-            addKeyVal(children, 'Objectifs ciblés', __safeList(a.aimsTargets).join('; '));
-            addKeyVal(children, 'Résultats ciblés', __safeList(a.outcomesTargets).join('; '));
-          }
-
-          if (opts.includeTools) {
-            const tools = __safeList(a.toolsMaterialsTargets);
-            if (tools.length || opts.includeEmpty) {
-              const notesMap = opts.includeToolNotes ? (a.toolsMaterialsNotes || {}) : {};
-              const line = tools.map(t => {
-                const note = opts.includeToolNotes ? __trim(notesMap[t] || '') : '';
-                return note ? `${t} — ${__oneLine(note)}` : t;
-              }).join('; ');
-              addKeyVal(children, 'Outils et matériel', line);
-            }
-          }
-        });
-      });
-    });
-
-    const doc = new Document({
-      sections: [{ children }]
-    });
-
-    const blob = await Packer.toBlob(doc);
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = window.__ldBuildExportFilename('docx');
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(()=>{ try { a.remove(); URL.revokeObjectURL(url);} catch(_){} }, 0);
-  }
-
-  function __exportXLSXFromModel(model, opts){
-    if (!window.XLSX || !window.XLSX.utils) {
-      alert("La bibliothèque d’export Excel n’est pas disponible.");
-      return;
-    }
-
-    // Build a lightweight clone to respect options for tabular columns.
-    const out = { meta: model.meta, modules: [] };
-    (model.modules || []).forEach(m => {
-      const m2 = Object.assign({}, m);
-      if (!opts.includeAlignment) {
-        m2.aimsTargets = [];
-        m2.outcomesTargets = [];
-        m2.competencesSujetText = '';
-        m2.competencesTransversalesText = '';
-      }
-      const moments = (m.moments || []).map(mo => {
-        const mo2 = Object.assign({}, mo);
-        mo2.activities = (mo.activities || []).map(a => {
-          const a2 = Object.assign({}, a);
-          if (!opts.includeAlignment) {
-            a2.aimsTargets = [];
-            a2.outcomesTargets = [];
-            a2.aimsTargetsText = '';
-            a2.outcomesTargetsText = '';
-            a2.competencesSujetText = '';
-            a2.competencesTransversalesText = '';
-          }
-          if (!opts.includeTools) {
-            a2.toolsMaterialsTargets = [];
-            a2.toolsMaterialsTargetsText = '';
-            a2.toolsMaterialsTargetsWithNotesText = '';
-            a2.toolsMaterialsNotes = {};
-          } else if (!opts.includeToolNotes) {
-            a2.toolsMaterialsTargetsWithNotesText = __safeList(a2.toolsMaterialsTargets).join('; ');
-            a2.toolsMaterialsNotes = {};
-          }
-          return a2;
-        });
-        return mo2;
-      });
-      m2.moments = moments;
-      out.modules.push(m2);
-    });
-
-    const rows = (typeof buildTabularExportRows === 'function') ? buildTabularExportRows(out) : [];
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Learning design');
-    const filename = window.__ldBuildExportFilename('xlsx');
-    XLSX.writeFile(wb, filename);
-  }
-
-  function __refreshExportPreview(){
-    const st = __getExportPreviewState();
-    if (!st) return;
-
-    const modal = __ensureExportPreviewModal();
-    if (!modal) return;
-
-    // Build model
-    let baseModel;
-    try {
-      baseModel = (typeof buildExportModel === 'function') ? buildExportModel() : null;
-    } catch(err) {
-      baseModel = null;
-      try { window.reportError(err, { action: 'export-preview-build-model' }); } catch(_){}
-    }
-    if (!baseModel) baseModel = { meta: {}, modules: [] };
-
-    // Populate module select & activities list (once per open or when model size changes)
-    const modSel = __qs('#export-preview-scope-module', modal);
-    const actWrap = __qs('#export-preview-activities', modal);
-    const actCount = __qs('#export-preview-activities-count', modal);
-
-    // Enable/disable scope-specific controls
-    const scopeVal = st.scope;
-    const moduleScope = (scopeVal === 'module');
-    const actScope = (scopeVal === 'activities');
-
-    if (modSel) modSel.disabled = !moduleScope;
-    const actFilter = __qs('#export-preview-activity-filter', modal);
-    const actClear = __qs('#export-preview-activities-clear', modal);
-    if (actFilter) actFilter.disabled = !actScope;
-    if (actClear) actClear.disabled = !actScope;
-
-    // Fill module selector
-    if (modSel && !modSel.__filled) {
-      modSel.innerHTML = '';
-      (baseModel.modules || []).forEach((m, mi) => {
-        const opt = document.createElement('option');
-        const mt = __trim(m.title) || `Module ${mi+1}`;
-        opt.value = String(mi);
-        opt.textContent = `Module ${mi+1} — ${mt}`;
-        modSel.appendChild(opt);
-      });
-      modSel.__filled = true;
-      if (modSel.options.length) {
-        const safeIdx = Math.max(0, Math.min(st.moduleIndex, modSel.options.length-1));
-        modSel.value = String(safeIdx);
-      }
-    }
-
-    // Fill activities list (only once per open)
-    if (actWrap && !actWrap.__filled) {
-      actWrap.innerHTML = '';
-      let total = 0;
-      (baseModel.modules || []).forEach((m, mi) => {
-        const mt = __trim(m.title) || `Module ${mi+1}`;
-        const h = document.createElement('div');
-        h.className = 'text-[11px] font-bold text-slate-600 mt-1';
-        h.textContent = `Module ${mi+1} — ${mt}`;
-        actWrap.appendChild(h);
-
-        (m.moments || []).forEach((mo, moi) => {
-          const mot = __trim(mo.title) || `Moment ${moi+1}`;
-          const hh = document.createElement('div');
-          hh.className = 'text-[11px] font-semibold text-slate-500 mt-1 ml-2';
-          hh.textContent = `Moment ${moi+1} — ${mot}`;
-          actWrap.appendChild(hh);
-
-          (mo.activities || []).forEach((a, ai) => {
-            total++;
-            const key = __buildActivityKey(mi, moi, ai);
-            const at = __trim(a.title) || `Activité ${ai+1}`;
-            const row = document.createElement('label');
-            row.className = 'flex items-start gap-2 text-xs text-slate-700 ml-4 py-1';
-            row.setAttribute('data-search', (__oneLine(`${mt} ${mot} ${at}`)).toLowerCase());
-            row.innerHTML = `
-              <input type="checkbox" class="mt-0.5" data-activity-key="${key}"/>
-              <span class="leading-snug">${__escapeHtml2(`Activité ${ai+1} — ${at}`)}</span>
-            `;
-            actWrap.appendChild(row);
-          });
-        });
-      });
-
-      if (!total) {
-        actWrap.innerHTML = `<div class="text-[11px] text-slate-500">Aucune activité.</div>`;
-        actWrap.setAttribute('data-empty','true');
-      } else {
-        actWrap.setAttribute('data-empty','false');
-      }
-      actWrap.__filled = true;
-    }
-
-    // Apply filter in activities list
-    if (actWrap) {
-      const q = (st.filterTxt || '').toLowerCase();
-      let shown = 0;
-      let total = 0;
-      __qsa('label[data-search]', actWrap).forEach(row => {
-        total++;
-        const hay = row.getAttribute('data-search') || '';
-        const ok = !q || hay.includes(q);
-        row.style.display = ok ? '' : 'none';
-        if (ok) shown++;
-      });
-      if (actCount) {
-        if (actWrap.getAttribute('data-empty') === 'true') actCount.textContent = '';
-        else actCount.textContent = q ? `${shown}/${total} activités affichées` : `${total} activités`;
-      }
-    }
-
-    // Build filtered model for preview/export
-    let scoped = __buildFilteredModel(baseModel, st);
-
-    // Render preview (Markdown/HTML only)
-    const hint = __qs('#export-preview-hint', modal);
-    const pre = __qs('#export-preview-text', modal);
-    const htmlBox = __qs('#export-preview-html', modal);
-
-    const fmt = st.format;
-
-    function setPreviewText(txt){
-      if (pre) pre.textContent = __asText(txt || '');
-      if (htmlBox) htmlBox.classList.add('hidden');
-      if (pre) pre.classList.remove('hidden');
-      if (hint) hint.textContent = 'Aperçu en Markdown';
-    }
-    function setPreviewHtml(docHtml){
-      if (htmlBox) {
-        htmlBox.innerHTML = __asText(docHtml || '');
-        htmlBox.classList.remove('hidden');
-      }
-      if (pre) pre.classList.add('hidden');
-      if (hint) hint.textContent = 'Aperçu en HTML';
-    }
-
-    try {
-      if (fmt === 'richtext') {
-        const full = __renderHTMLFromModel(scoped, st.opts);
-        // Show body only in preview pane
-        const body = full.replace(/^.*?<body>/s,'').replace(/<\/body>.*$/s,'');
-        setPreviewHtml(body);
-      } else {
-        const md = __renderMarkdownFromModel(scoped, st.opts);
-        setPreviewText(md);
-      }
-    } catch(err) {
-      try { window.reportError(err, { action: 'export-preview-render' }); } catch(_){}
-      if (pre) pre.textContent = 'Erreur lors de la génération de l’aperçu.';
-    }
-
-    // Update hint for non-preview formats
-    if (fmt === 'docx' || fmt === 'xlsx' || fmt === 'rtf') {
-      if (hint) hint.textContent = 'Aperçu en Markdown (export vers le format sélectionné disponible)';
-      if (pre && !pre.textContent) {
-        pre.textContent = __renderMarkdownFromModel(scoped, st.opts);
-      }
-    }
-  }
-
-  function __runExportFromPreview(){
-    const st = __getExportPreviewState();
-    if (!st) return;
-
-    let baseModel = null;
-    try { baseModel = (typeof buildExportModel === 'function') ? buildExportModel() : null; } catch(_) {}
-    if (!baseModel) baseModel = { meta: {}, modules: [] };
-
-    const scoped = __buildFilteredModel(baseModel, st);
-    const fmt = st.format;
-
-    // Export with scope/options — does not affect the main Export dropdown.
-    if (fmt === 'markdown') {
-      const md = __renderMarkdownFromModel(scoped, st.opts);
-      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `learning-design_${new Date().toISOString().slice(0,10)}.md`;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(()=>{ try { a.remove(); URL.revokeObjectURL(url);} catch(_){} }, 0);
-      return;
-    }
-
-    if (fmt === 'richtext') {
-      const h = __renderHTMLFromModel(scoped, st.opts);
-      const blob = new Blob([h], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `learning-design_${new Date().toISOString().slice(0,10)}.html`;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(()=>{ try { a.remove(); URL.revokeObjectURL(url);} catch(_){} }, 0);
-      return;
-    }
-
-    if (fmt === 'rtf') {
-      const r = __renderRTFFromModel(scoped, st.opts);
-      const blob = new Blob([r], { type: 'application/rtf;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `learning-design_${new Date().toISOString().slice(0,10)}.rtf`;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(()=>{ try { a.remove(); URL.revokeObjectURL(url);} catch(_){} }, 0);
-      return;
-    }
-
-    if (fmt === 'xlsx') {
-      __exportXLSXFromModel(scoped, st.opts);
-      return;
-    }
-
-    if (fmt === 'docx') {
-      __exportDOCXFromModel(scoped, st.opts);
-      return;
-    }
-
-    // fallback
-    const md = __renderMarkdownFromModel(scoped, st.opts);
-    const blob = new Blob([md], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `learning-design_${new Date().toISOString().slice(0,10)}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(()=>{ try { a.remove(); URL.revokeObjectURL(url);} catch(_){} }, 0);
-  }
-
-  window.openExportPreview = function(){
-    const modal = __ensureExportPreviewModal();
-    if (!modal) return;
-
-    // Reset dynamic fill flags so we rebuild lists on open (titles may have changed)
-    const modSel = __qs('#export-preview-scope-module', modal);
-    const actWrap = __qs('#export-preview-activities', modal);
-    if (modSel) { modSel.__filled = false; }
-    if (actWrap) { actWrap.__filled = false; }
-
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-
-    // Default: keep previous state if already set
-    try { __refreshExportPreview(); } catch(_) {}
-  };
-
-  window.closeExportPreview = function(){
-    const modal = __qs('#export-preview-modal');
-    if (!modal) return;
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-  };
 
   // -------------------------
   // Duplication d’activité (options)
@@ -28122,14 +27183,6 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
         return;
       }
 
-      // 4) Close export preview modal if open
-      const ep = qs('#export-preview-modal');
-      if (ep && !ep.classList.contains('hidden')) {
-        e.preventDefault();
-        try { if (typeof window.closeExportPreview === 'function') window.closeExportPreview(e); else ep.classList.add('hidden'); } catch(_) {}
-        return;
-      }
-
       // 5) Close template/i18n modals if open
       const modalIds = ['template-export-modal','template-import-modal','i18n-audit-modal','import-error-modal'];
       for (let i=0;i<modalIds.length;i++) {
@@ -28159,8 +27212,7 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
     const modalIds = [
       ['template-export-modal','Exporter un modèle'],
       ['template-import-modal','Importer un modèle'],
-      ['i18n-audit-modal','Vérifier traductions'],
-      ['export-preview-modal','Aperçu export']
+      ['i18n-audit-modal','Vérifier traductions']
     ];
     modalIds.forEach(([id,label]) => {
       const el = qs('#' + id);
@@ -28433,6 +27485,9 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
 
 })();
 </script>
+
+
+  <div id="vertical-time-rail" aria-hidden="true"></div>
 
 </body>
 </html>
