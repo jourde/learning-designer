@@ -1122,13 +1122,23 @@ body[data-view-level="submoments"] [data-action="add-step-submoment"] { display:
 }
 
 /* Niveau 1 : Module */
-.activity-group::before { background: rgba(79, 70, 229, 0.85); } /* indigo */
+.activity-group::before { background: rgba(203, 213, 225, 0.95); } /* grey */
 
 /* Niveau 2 : Moment */
-.moment-group::before { background: rgba(129, 140, 248, 0.75); } /* indigo clair */
+.moment-group::before { background: rgba(203, 213, 225, 0.95); } /* grey */
 
 /* Niveau 3 : Sous-moment */
-.submoment-card::before { background: rgba(100, 116, 139, 0.45); } /* slate */
+.submoment-card::before { background: rgba(203, 213, 225, 0.95); } /* grey */
+
+/* Overrides for dark/high-contrast modes (keep the rail visible) */
+html.ui-dark .activity-group::before,
+html.ui-dark .moment-group::before,
+html.ui-dark .submoment-card::before { background: rgba(148, 163, 184, 0.55); }
+
+body.hc .activity-group::before,
+body.hc .moment-group::before,
+body.hc .submoment-card::before { background: #64748b; }
+
 
 /* Niveau 4 : Activité */
 .step-card::before { background: rgba(148, 163, 184, 0.40); } /* slate clair */
