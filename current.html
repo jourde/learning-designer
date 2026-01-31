@@ -11745,14 +11745,20 @@ function buildExportProjectData() {
                                 momentData.subMoments = [];
                                 smEls.forEach(smEl => {
                                     const smTitleVal = smEl.querySelector('.submoment-title')?.value || "";
+                                    const smTargetTime = smEl.querySelector('.submoment-target-time')?.value || "";
+                                    const smTargetUnit = smEl.querySelector('.submoment-target-unit')?.value || getDefaultDurationUnitSecs();
                                     const smLegacy = {
                                         titre: smTitleVal,
                                         description: "",
+                                        dureeCible: smTargetTime,
+                                        uniteDureeCible: smTargetUnit,
                                         activites: []
                                     };
                                     const smCanon = {
                                         title: smTitleVal,
                                         description: "",
+                                        targetTime: smTargetTime,
+                                        targetUnit: String(smTargetUnit),
                                         steps: []
                                     };
                                     smEl.querySelectorAll('.step-card').forEach(stepEl => {
@@ -12321,6 +12327,8 @@ objective: asStr(s?.objective ?? s?.objectifActivite ?? ""),
                 const subMoments = Array.isArray(smRaw) ? smRaw.map((sm) => ({
                     title: asStr(sm?.title ?? sm?.titre ?? ''),
                     description: asStr(sm?.description ?? ''),
+                    targetTime: asNumStr(sm?.targetTime ?? sm?.dureeCible ?? ''),
+                    targetUnit: asStr(sm?.targetUnit ?? sm?.uniteDureeCible ?? defaultMomentUnit),
                     steps: Array.isArray(sm?.steps) ? sm.steps.map(normStep)
                         : (Array.isArray(sm?.activites) ? sm.activites.map(normStep) : [])
                 })) : [];
@@ -12334,6 +12342,8 @@ objective: asStr(s?.objective ?? s?.objectifActivite ?? ""),
                     sousMoments: subMoments.map(sm => ({
                         titre: sm.title || '',
                         description: sm.description || '',
+                        dureeCible: sm.targetTime || '',
+                        uniteDureeCible: sm.targetUnit || '',
                         activites: (sm.steps || []).map(st => ({ ...st }))
                     })),
                     steps: Array.isArray(m?.steps) ? m.steps.map(normStep)
@@ -12613,6 +12623,14 @@ if (m.targetTimeSec == null) {
                                     sm.title = _trimText(sm.title ?? sm.titre ?? "", 200);
                                     sm.description = _trimText(sm.description ?? "", 5000);
 
+                                    // Sub-moment target time & unit
+                                    sm.targetTime = _normaliseNumberString(sm.targetTime ?? sm.dureeCible ?? sm.tempsCible ?? "", 20);
+                                    sm.targetUnit = _normaliseUnitSecs(sm.targetUnit ?? sm.uniteDureeCible ?? sm.uniteCible ?? m.targetUnit ?? mod.targetUnit ?? p.dureeApprentissageUnite, m.targetUnit ?? mod.targetUnit ?? p.dureeApprentissageUnite);
+                                    sm.targetUnitKey = _normaliseUnit(sm.targetUnit, p.dureeApprentissageUnite);
+                                    // Legacy mirrors
+                                    sm.dureeCible = _trimText(sm.dureeCible ?? sm.targetTime ?? "", 20);
+                                    sm.uniteDureeCible = _trimText(sm.uniteDureeCible ?? sm.targetUnit ?? "", 30);
+
                                     // Steps within sub-moment
                                     if (!Array.isArray(sm.steps)) {
                                         sm.steps = Array.isArray(sm.activites) ? sm.activites : (Array.isArray(sm.activities) ? sm.activities : []);
@@ -12678,6 +12696,8 @@ s.unite = s.unit;
                             m.sousMoments = m.subMoments.map(sm => ({
                                 titre: sm.title || "",
                                 description: sm.description || "",
+                                dureeCible: sm.targetTime || sm.dureeCible || "",
+                                uniteDureeCible: sm.targetUnit || sm.uniteDureeCible || "",
                                 activites: (sm.steps || []).map(st => ({ ...st }))
                             }));
                         } else {
@@ -13030,6 +13050,8 @@ const __chartsSuspendFn = window.__setChartsSuspended;
                     return Array.isArray(smRaw) ? smRaw.map(sm => ({
                         title: sm?.title ?? sm?.titre ?? "",
                         description: sm?.description ?? "",
+                        targetTime: sm?.targetTime ?? sm?.dureeCible ?? "",
+                        targetUnit: sm?.targetUnit ?? sm?.uniteDureeCible ?? (m?.targetUnit ?? m?.uniteDureeCible ?? (document.getElementById('param-learning-unit')?.value || "mins")),
                         steps: Array.isArray(sm?.steps) ? sm.steps.map(normaliseStep) : (Array.isArray(sm?.activites) ? sm.activites.map(normaliseStep) : [])
                     })) : [];
                 })(),
@@ -13623,6 +13645,8 @@ loadProjectFromObject(project);
                     if (momentEl) {
                         const titleInput = momentEl.querySelector('.moment-title');
                         if (titleInput) titleInput.value = momentData.title || "";
+                        const mDescInput = momentEl.querySelector('.moment-description');
+                        if (mDescInput) mDescInput.value = momentData.description || "";
                                                 const mTgt = momentEl.querySelector('.moment-target-time');
                         if (mTgt) mTgt.value = momentData.targetTime || "";
                         const mUnitSel = momentEl.querySelector('.moment-target-unit');
@@ -13641,6 +13665,10 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
                                 const smEl = subWrap.lastElementChild;
                                 const smTitle = smEl ? smEl.querySelector('.submoment-title') : null;
                                 if (smTitle) smTitle.value = (sm.title || sm.titre || "");
+                                const smTgtTime = smEl ? smEl.querySelector('.submoment-target-time') : null;
+                                if (smTgtTime) smTgtTime.value = (sm.targetTime || sm.dureeCible || "");
+                                const smTgtUnit = smEl ? smEl.querySelector('.submoment-target-unit') : null;
+                                if (smTgtUnit) smTgtUnit.value = mapUnitToSecs(sm.targetUnit || sm.uniteDureeCible || getDefaultDurationUnitKey());
                                 const smSteps = smEl ? smEl.querySelector('.submoment-steps') : null;
                                 initSortableSteps(smSteps);
                                 ((sm.steps || sm.activites || []) || []).forEach(stepData => { addStepToContainerFromData(smSteps, stepData); });
