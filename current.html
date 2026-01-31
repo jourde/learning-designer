@@ -4406,6 +4406,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <div class="lg:flex-1 step-right-col">
   <!-- Onglets : Déroulé / Alignement / Ressources -->
   <div class="step-tabs" role="tablist" aria-label="Panneaux de l'activité">
+            <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="description" data-i18n="tab_description">Description</button>
     <button class="step-tab" type="button" role="tab" aria-selected="true" tabindex="0" data-step-tab="flow" data-i18n="tab_flow">Déroulé</button>
     <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="alignment" data-i18n="tab_alignment">Alignement</button>
     <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="resources" data-i18n="tab_resources">Ressources</button>
@@ -4413,23 +4414,20 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
   </div>
 
   <div class="step-tabpanels">
-    <!-- Déroulé -->
-    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="flow">
-      <details class="step-right-section border border-slate-200 rounded-lg bg-white" open>
-        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
+        <!-- Description -->
+    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="description" hidden>
+      <div class="step-right-section border border-slate-200 rounded-lg bg-white p-2">
+        <div class="compact-label flex items-center gap-1 mb-1">
           <span class="material-icons-round text-[10px] text-slate-400">flag</span>
           <span data-i18n="label_step_objective">Description de l'activité</span>
-          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
-            <span>Afficher</span>
-            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
-          </span>
-        </summary>
-        <div class="px-2 pb-2 pt-1">
-          <textarea class="step-input-objective w-full px-2 py-1.5 text-[12px] border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 bg-slate-50 text-slate-700" data-i18n-placeholder="ph_step_objective" placeholder="Décrivez l'activité..." rows="2"></textarea>
         </div>
-      </details>
+        <textarea class="step-input-objective w-full px-2 py-1.5 text-[12px] border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 bg-slate-50 text-slate-700" data-i18n-placeholder="ph_step_objective" placeholder="Décrivez l'activité..." rows="2"></textarea>
+      </div>
+    </div>
 
-      <details class="step-right-section border border-slate-200 rounded-lg bg-white" open>
+    <!-- Déroulé -->
+    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="flow">
+<details class="step-right-section border border-slate-200 rounded-lg bg-white" open>
         <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
           <span class="material-icons-round text-[10px] text-slate-400">assignment</span>
           <span data-i18n="label_tasks">Ce que les apprenants doivent faire</span>
@@ -8095,7 +8093,8 @@ title_new_activity: "Ajouter un nouveau module",
                 tab_alignment: "Alignement",
                 tab_analysis: "GRAPHIQUES D'ANALYSE",
                 tab_competences: "Compétences",
-                tab_flow: "Déroulé",
+                tab_description: "Description",
+                 tab_flow: "Déroulé",
                 tab_info: "INFORMATIONS ET PARAMÈTRES DE LA FORMATION",
                 tab_modalities: "Modalités",
                 tab_outcomes: "Résultats",
