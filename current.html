@@ -5132,6 +5132,10 @@ function initViewLevelSegmentedUI() {
   const sel = document.getElementById('ld-view-level-select');
   if (!sel) return;
 
+  // Guard against multiple initialisations (called from several init paths)
+  if (sel.dataset && sel.dataset.boundViewLevel === '1') return;
+  if (sel.dataset) sel.dataset.boundViewLevel = '1';
+
   let saved = null;
   try { saved = localStorage.getItem('ld_view_level'); } catch (_) {}
   const initial = saved || 'activities';
@@ -8432,6 +8436,27 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             const clone = tmpl.content.cloneNode(true);
             container.appendChild(clone);
             const subEl = container.lastElementChild;
+            // Ensure the new sub-moment remains visible (expand moment + correct view level)
+            try {
+                const momentBody = momentEl.querySelector('.moment-body');
+                if (momentBody) momentBody.classList.remove('collapsed');
+
+                const toggleBtn = momentEl.querySelector('button[data-action="toggle-moment"]');
+                if (toggleBtn) {
+                    toggleBtn.setAttribute('aria-expanded', 'true');
+                    const icon = toggleBtn.querySelector('.rotate-icon');
+                    if (icon) icon.style.transform = 'rotate(180deg)';
+                }
+
+                // If the UI is currently in "moments" view, sub-moments are hidden by CSS.
+                // Switch back to "activities" so the newly created sub-moment stays visible.
+                const lvl = document.body && document.body.getAttribute ? document.body.getAttribute('data-view-level') : '';
+                if (String(lvl || '').trim() === 'moments') {
+                    if (typeof applyViewLevel === 'function') applyViewLevel('activities');
+                    else if (document.body && document.body.setAttribute) document.body.setAttribute('data-view-level', 'activities');
+                }
+            } catch (_) {}
+
             try { initSortableSteps(subEl.querySelector('.submoment-steps')); } catch (_) {}
 
             // If this is the first submoment, migrate any existing direct steps into it
@@ -14040,19 +14065,27 @@ try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closes
             });
 
             // Hide empty containers (sub-moments, moments, modules)
+            // IMPORTANT: keep containers with 0 activities visible, otherwise creating a new empty sub-moment
+            // would appear briefly and then be hidden by the status filter.
             document.querySelectorAll('.submoment-card').forEach(subEl => {
-                const any = !!subEl.querySelector('.step-card:not(.ld-hidden-by-status-filter)');
-                subEl.classList.toggle('ld-hidden-by-status-filter', !any);
+                const total = subEl.querySelectorAll('.step-card').length;
+                const anyVisible = !!subEl.querySelector('.step-card:not(.ld-hidden-by-status-filter)');
+                const shouldHide = (total > 0) && !anyVisible;
+                subEl.classList.toggle('ld-hidden-by-status-filter', shouldHide);
             });
 
             document.querySelectorAll('.moment-group').forEach(momentEl => {
-                const any = !!momentEl.querySelector('.step-card:not(.ld-hidden-by-status-filter)');
-                momentEl.classList.toggle('ld-hidden-by-status-filter', !any);
+                const total = momentEl.querySelectorAll('.step-card').length;
+                const anyVisible = !!momentEl.querySelector('.step-card:not(.ld-hidden-by-status-filter)');
+                const shouldHide = (total > 0) && !anyVisible;
+                momentEl.classList.toggle('ld-hidden-by-status-filter', shouldHide);
             });
 
             document.querySelectorAll('.activity-group').forEach(modEl => {
-                const any = !!modEl.querySelector('.step-card:not(.ld-hidden-by-status-filter)');
-                modEl.classList.toggle('ld-hidden-by-status-filter', !any);
+                const total = modEl.querySelectorAll('.step-card').length;
+                const anyVisible = !!modEl.querySelector('.step-card:not(.ld-hidden-by-status-filter)');
+                const shouldHide = (total > 0) && !anyVisible;
+                modEl.classList.toggle('ld-hidden-by-status-filter', shouldHide);
             });
 
             // Empty message (only when a filter is active)
