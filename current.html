@@ -956,7 +956,7 @@ details[data-readonly="true"] label{ cursor: default; }
         /* --- Step status (signalisation) --- */
         .step-card[data-status="done"] .step-header { box-shadow: inset 4px 0 0 rgba(34, 197, 94, 0.75); }
         .step-card[data-status="review"] .step-header { box-shadow: inset 4px 0 0 rgba(245, 158, 11, 0.85); }
-        .step-card[data-status="in_progress"] .step-header { box-shadow: inset 4px 0 0 rgba(100, 116, 139, 0.35); }
+        .step-card[data-status="in_progress"] .step-header { box-shadow: inset 4px 0 0 rgba(96, 165, 250, 0.7); }
         .step-status-select { display:none !important; } /* hidden, value kept for logic */
         /* --- Compact status dot widget --- */
         .step-status-dot{
@@ -992,49 +992,47 @@ body.ld-hide-status-summaries .ld-status-summary{ display:none !important; }
 
 
 
-        /* ===== Status summaries (Module / Moment / Sous-moment) ===== */
+        /* ===== Status summaries – vertical histogram (Module / Moment / Sous-moment) ===== */
         .ld-status-summary:empty{ display:none !important; }
         .ld-status-summary{
             display:inline-flex;
-            align-items:center;
-            gap:6px;
-            font-size:10px;
-            line-height:1;
-            padding:2px 8px;
+            align-items:flex-end;
+            gap:3px;
+            padding:2px 6px;
             border:1px solid rgba(226,232,240,1);
-            border-radius:9999px;
+            border-radius:6px;
             background:#ffffff;
-            color:#475569; /* slate-600 */
-            white-space:nowrap;
             user-select:none;
+            height:36px;
         }
-
-        /* Module & Moment: afficher la synthèse sur 3 lignes pour économiser l'espace horizontal */
-        .ld-status-summary--module,
-        .ld-status-summary--moment{
-            display:inline-block;
-            white-space:normal;
-            line-height:1.15;
+        .ld-status-summary .ld-ss-empty{
+            font-size:9px;
+            color:#94a3b8;
+            line-height:32px;
         }
-        .ld-status-summary--module .ld-ss-line,
-        .ld-status-summary--moment .ld-ss-line{
-            display:block;
+        .ld-status-summary .ld-ss-bar-col{
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:flex-end;
+            height:100%;
+            gap:1px;
         }
-
-        .ld-status-summary .ld-ss-item{ display:inline-flex; align-items:center; gap:4px; }
-        .ld-status-summary .ld-ss-item b{ font-weight:800; color:#0f172a; } /* slate-900 */
-        .ld-status-summary .ld-ss-sep{ opacity:0.55; padding:0 2px; }
-        .ld-status-summary .ld-ss-item::before{
-            content:"";
-            width:6px;
-            height:6px;
-            border-radius:9999px;
-            display:inline-block;
+        .ld-status-summary .ld-ss-count{
+            font-size:8px;
+            font-weight:700;
+            line-height:1;
+            color:#334155;
         }
-        .ld-status-summary .ld-ss-done::before{ background: rgba(34, 197, 94, 0.75); }      /* green */
-        .ld-status-summary .ld-ss-review::before{ background: rgba(245, 158, 11, 0.85); }   /* amber */
-        .ld-status-summary .ld-ss-progress::before{ background: rgba(100, 116, 139, 0.40); }/* slate */
-        .ld-status-summary .ld-ss-empty{ opacity:0.75; }
+        .ld-status-summary .ld-ss-bar{
+            width:10px;
+            min-height:2px;
+            border-radius:2px 2px 1px 1px;
+            transition: height 0.2s ease;
+        }
+        .ld-status-summary .ld-ss-bar--done{ background: rgba(34, 197, 94, 0.75); }      /* vert */
+        .ld-status-summary .ld-ss-bar--review{ background: rgba(245, 158, 11, 0.85); }   /* orange */
+        .ld-status-summary .ld-ss-bar--progress{ background: rgba(96, 165, 250, 0.7); }  /* bleu */
 
         .step-coherence-indicator { cursor: help; }
 
@@ -14278,34 +14276,23 @@ document.addEventListener('DOMContentLoaded', () => { try { __ldInitStatusSelect
             if (!summaryEl) return;
             const total = counts?.total || 0;
             if (total <= 0){
-                summaryEl.innerHTML = '<span class="ld-ss-empty">0 activité</span>';
+                summaryEl.innerHTML = '<span class="ld-ss-empty">0</span>';
                 return;
             }
-            const isMultilineSummary = !!(summaryEl.classList && (
-                summaryEl.classList.contains('ld-status-summary--module') ||
-                summaryEl.classList.contains('ld-status-summary--moment') ||
-                summaryEl.classList.contains('activity-status-summary')
-            ));
-            if (isMultilineSummary){
-                // Module / Moment: 3 lignes pour réduire l'encombrement horizontal
-                summaryEl.innerHTML =
-                    '<span class="ld-ss-line">' +
-                        '<span class="ld-ss-item ld-ss-done">Finalisé <b>' + (counts.done || 0) + '</b></span>' +
-                    '</span>' +
-                    '<span class="ld-ss-line">' +
-                        '<span class="ld-ss-item ld-ss-review">À revoir <b>' + (counts.review || 0) + '</b></span>' +
-                    '</span>' +
-                    '<span class="ld-ss-line">' +
-                        '<span class="ld-ss-item ld-ss-progress">En cours <b>' + (counts.in_progress || 0) + '</b></span>' +
-                    '</span>';
-                return;
+            // Vertical histogram: bar height proportional to count, max bar = 22px
+            const maxH = 22;
+            const maxVal = Math.max(counts.done || 0, counts.review || 0, counts.in_progress || 0, 1);
+            function barH(v){ return Math.max(2, Math.round((v / maxVal) * maxH)); }
+            function col(cls, v, label){
+                return '<div class="ld-ss-bar-col" title="' + label + ' : ' + v + '">' +
+                    '<span class="ld-ss-count">' + v + '</span>' +
+                    '<div class="ld-ss-bar ld-ss-bar--' + cls + '" style="height:' + barH(v) + 'px"></div>' +
+                '</div>';
             }
             summaryEl.innerHTML =
-                '<span class="ld-ss-item ld-ss-done">Finalisé <b>' + (counts.done || 0) + '</b></span>' +
-                '<span class="ld-ss-sep">•</span>' +
-                '<span class="ld-ss-item ld-ss-review">À revoir <b>' + (counts.review || 0) + '</b></span>' +
-                '<span class="ld-ss-sep">•</span>' +
-                '<span class="ld-ss-item ld-ss-progress">En cours <b>' + (counts.in_progress || 0) + '</b></span>';
+                col('progress', counts.in_progress || 0, 'En cours') +
+                col('review', counts.review || 0, 'À revoir') +
+                col('done', counts.done || 0, 'Finalisé');
         }
 
         function __ldEnsureModuleSummaryEl(modEl){
