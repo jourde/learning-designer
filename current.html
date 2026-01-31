@@ -3418,22 +3418,25 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
   <!-- SECTION 2: CONTRÔLES D'AFFICHAGE -->
   <div class="flex flex-wrap items-center justify-end gap-2 flex-grow">
 
-    <!-- GROUPE: Niveau d'affichage -->
+    <!-- GROUPE: Tout replier -->
     <div class="ld-control-group">
-      <span class="hidden md:inline text-xs text-slate-500 font-extrabold" aria-hidden="true">Niveau d'affichage</span>
+      <button class="ld-control-btn" id="btn-toggle-all-main" data-action="toggle-all-activities" aria-label="Replier ou déplier tous les modules" title="Replier ou déplier tous les modules">
+        <span class="material-icons-round text-base" id="icon-toggle-all-main">unfold_less</span>
+        <span class="hidden xl:inline" data-i18n="btn_collapse_all" id="text-toggle-all-main">Tout replier</span>
+      </button>
+    </div>
 
-      <select id="ld-view-level-select" class="ld-control-select" aria-label="Sélection du niveau d'affichage">
+    <!-- GROUPE: Affichage -->
+    <div class="ld-control-group">
+      <span class="hidden md:inline text-xs text-slate-500 font-extrabold" aria-hidden="true">Affichage</span>
+
+      <select id="ld-view-level-select" class="ld-control-select" aria-label="Sélection du affichage">
         <option value="modules" data-i18n="btn_view_modules">Modules</option>
         <option value="moments" data-i18n="btn_view_moments">Moments</option>
         <option value="submoments" data-i18n="btn_view_submoments">Sous-moments</option>
         <option value="activities" data-i18n="btn_view_activities">Activités</option>
         <option value="panorama" data-i18n="btn_view_panorama">Panorama</option>
       </select>
-
-      <button class="ld-control-btn ml-1" id="btn-toggle-all-main" data-action="toggle-all-activities" aria-label="Replier ou déplier tous les modules" title="Replier ou déplier tous les modules">
-        <span class="material-icons-round text-base" id="icon-toggle-all-main">unfold_less</span>
-        <span class="hidden xl:inline" data-i18n="btn_collapse_all" id="text-toggle-all-main">Tout replier</span>
-      </button>
     </div>
 
     <!-- SÉPARATEUR -->
