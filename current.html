@@ -16305,6 +16305,7 @@ function buildExportModel() {
                 trainerTasks: asStr(a.aFaireFormateur),
                 notes: asStr(a.notes),
                 evaluationSuivi: asStr(a.evaluationSuivi),
+                linksReferences: asStr(a.liensReferences),
                 typeKey: asStr(a.type),
                 typeLabel: safeTypeLabel(asStr(a.type)),
                 groupingKey: asStr(a.regroupement),
@@ -16354,6 +16355,7 @@ durationValue: asStr(a.duree),
         return {
             title: asStr(m.titre),
             description: asStr(m.description),
+            notes: asStr(m.notes),
             target: fmtTarget(m.dureeCible, m.uniteDureeCible),
             targetRaw: { value: asStr(m.dureeCible), unit: asStr(m.uniteDureeCible) },
             aimsTargets: Array.isArray(m.objectifsApprentissageModule) ? m.objectifsApprentissageModule : [],
@@ -16376,12 +16378,19 @@ durationValue: asStr(a.duree),
         level: asStr(project.parametres?.niveau),
         targetAudience: asStr(project.parametres?.publicCible),
         prerequisites: asStr(project.parametres?.prerequis),
+        toolsMaterials: asStr(project.parametres?.outilsMateriel),
+        toolsMaterialsItems: Array.isArray(project.parametres?.outilsMaterielItems) ? project.parametres.outilsMaterielItems : [],
         mode: asStr(project.parametres?.modalite),
         cohortSize: asStr(project.parametres?.tailleCohorte),
         learningTime: `${asStr(project.parametres?.dureeApprentissageValeur)} ${asStr(project.parametres?.dureeApprentissageUnite)}`.trim(),
         designedTime: `${asStr(project.parametres?.dureeConcueValeur)} ${asStr(project.parametres?.dureeConcueUnite)}`.trim(),
         aims: asStr(project.parametres?.objectifs),
+        aimsItems: Array.isArray(project.parametres?.objectifsItems) ? project.parametres.objectifsItems : [],
         outcomesText: asStr(project.parametres?.resultatsTexte),
+        outcomesTextItems: Array.isArray(project.parametres?.resultatsTexteItems) ? project.parametres.resultatsTexteItems : [],
+        outcomes: Array.isArray(project.parametres?.resultats) ? project.parametres.resultats : [],
+        competences: Array.isArray(project.parametres?.competences) ? project.parametres.competences : [],
+        competencesTransversales: Array.isArray(project.parametres?.competencesTransversales) ? project.parametres.competencesTransversales : [],
         description: asStr(project.parametres?.description),
         generatedOn: new Date().toISOString().slice(0, 10)
     };
@@ -16395,6 +16404,7 @@ function buildTabularExportRows(model) {
         'Module #',
         'Module titre',
         'Module description',
+        'Module notes',
         'Module durée cible',
         'Module objectifs (sélection)',
         'Module résultats (sélection)',
@@ -16410,7 +16420,9 @@ function buildTabularExportRows(model) {
         'Tâches',
         'Tâches du formateur',
         'Évaluation',
+        'Évaluation / suivi',
         'Notes',
+        'Liens / références',
         "Type d'apprentissage",
         'Regroupement',
         'Taille groupe',
@@ -16436,6 +16448,7 @@ function buildTabularExportRows(model) {
         const moduleIdx = mi + 1;
         const modTitle = safe(mod.title);
         const modDesc = safe(mod.description);
+        const modNotes = safe(mod.notes);
         const modTarget = safe(mod.target);
         const modAims = joinArr(mod.aimsTargets);
         const modOut = joinArr(mod.outcomesTargets);
@@ -16458,6 +16471,7 @@ function buildTabularExportRows(model) {
                             moduleIdx,
                             modTitle,
                             modDesc,
+                            modNotes,
                             modTarget,
                             modAims,
                             modOut,
@@ -16473,7 +16487,9 @@ function buildTabularExportRows(model) {
                             safe(act.tasks),
                             safe(act.trainerTasks),
                             safe(act.evaluationLabel || act.evaluationKey || act.evaluation || ''),
+                            safe(act.evaluationSuivi),
                             safe(act.notes),
+                            safe(act.linksReferences),
                             safe(act.typeLabel),
                             safe(act.groupingLabel),
                             safe(act.groupSize),
@@ -16495,15 +16511,16 @@ function buildTabularExportRows(model) {
                     r[0] = moduleIdx;
                     r[1] = modTitle;
                     r[2] = modDesc;
-                    r[3] = modTarget;
-                    r[4] = modAims;
-                    r[5] = modOut;
-                    r[6] = modCs;
-                    r[7] = modCt;
-                    r[8] = momentIdx;
-                    r[9] = momTitle;
-                    r[10] = momDesc;
-                    r[11] = momTarget;
+                    r[3] = modNotes;
+                    r[4] = modTarget;
+                    r[5] = modAims;
+                    r[6] = modOut;
+                    r[7] = modCs;
+                    r[8] = modCt;
+                    r[9] = momentIdx;
+                    r[10] = momTitle;
+                    r[11] = momDesc;
+                    r[12] = momTarget;
                     rows.push(r);
                 }
             });
@@ -16512,11 +16529,12 @@ function buildTabularExportRows(model) {
             r[0] = moduleIdx;
             r[1] = modTitle;
             r[2] = modDesc;
-            r[3] = modTarget;
-            r[4] = modAims;
-            r[5] = modOut;
-            r[6] = modCs;
-            r[7] = modCt;
+            r[3] = modNotes;
+            r[4] = modTarget;
+            r[5] = modAims;
+            r[6] = modOut;
+            r[7] = modCs;
+            r[8] = modCt;
             rows.push(r);
         }
     });
@@ -16593,6 +16611,45 @@ function exportDOCX() {
         lines(model.meta.outcomesText).forEach(l => children.push(new Paragraph({ text: l })));
     }
 
+    if (model.meta.outcomes && model.meta.outcomes.length) {
+        children.push(new Paragraph({ text: '' }));
+        children.push(new Paragraph({ text: 'Résultats d\'apprentissage (Bloom)', heading: HeadingLevel.HEADING_1 }));
+        model.meta.outcomes.forEach(o => {
+            const txt = safe(o.texte || o.text || '');
+            const lvl = safe(o.niveau || o.level || '');
+            const sub = safe(o.sousNiveau || o.sub || '');
+            let prefix = '';
+            if (lvl) { prefix = `[${lvl.toUpperCase()}${sub ? ' - ' + sub : ''}] `; }
+            if (txt) children.push(new Paragraph({ text: `${prefix}${txt}` }));
+        });
+    }
+
+    if (safe(model.meta.toolsMaterials)) {
+        children.push(new Paragraph({ text: '' }));
+        children.push(new Paragraph({ text: 'Outils et matériel', heading: HeadingLevel.HEADING_1 }));
+        lines(model.meta.toolsMaterials).forEach(l => children.push(new Paragraph({ text: l })));
+    }
+
+    if (model.meta.competences && model.meta.competences.length) {
+        children.push(new Paragraph({ text: '' }));
+        children.push(new Paragraph({ text: 'Compétences du sujet', heading: HeadingLevel.HEADING_1 }));
+        model.meta.competences.forEach(c => {
+            const label = safe(c.label || c.id || '');
+            const cat = [safe(c.categorie), safe(c.sousCategorie)].filter(Boolean).join(' > ');
+            children.push(new Paragraph({ text: cat ? `${label} (${cat})` : label }));
+        });
+    }
+
+    if (model.meta.competencesTransversales && model.meta.competencesTransversales.length) {
+        children.push(new Paragraph({ text: '' }));
+        children.push(new Paragraph({ text: 'Compétences transversales', heading: HeadingLevel.HEADING_1 }));
+        model.meta.competencesTransversales.forEach(c => {
+            const label = safe(c.label || c.id || '');
+            const cat = [safe(c.categorie), safe(c.sousCategorie)].filter(Boolean).join(' > ');
+            children.push(new Paragraph({ text: cat ? `${label} (${cat})` : label }));
+        });
+    }
+
     children.push(new Paragraph({ text: '' }));
     children.push(new Paragraph({ text: 'Structure pédagogique', heading: HeadingLevel.HEADING_1 }));
 
@@ -16605,6 +16662,9 @@ function exportDOCX() {
         }
         if (safe(mod.description)) {
             lines(mod.description).forEach(l => children.push(new Paragraph({ text: l })));
+        }
+        if (safe(mod.notes)) {
+            children.push(new Paragraph({ children: [new TextRun({ text: 'Notes du module : ', bold: true }), new TextRun(safe(mod.notes))] }));
         }
 
         // Sélections du module (objectifs / résultats / compétences)
@@ -16681,6 +16741,9 @@ function exportDOCX() {
                 }
                 if (safe(act.notes)) {
                     children.push(new Paragraph({ children: [new TextRun({ text: 'Notes : ', bold: true }), new TextRun(safe(act.notes))] }));
+                }
+                if (safe(act.linksReferences)) {
+                    children.push(new Paragraph({ children: [new TextRun({ text: 'Liens / références : ', bold: true }), new TextRun(safe(act.linksReferences))] }));
                 }
                 // Competences (subject + transversal)
         if (safe(act.competencesSujetText) || safe(act.competencesTransversalesText)) {
@@ -20222,6 +20285,23 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 __chartsPanel.style.width = __chartsPanelPrev.width;
             }
 
+            // Pre-compute project-level competences for inclusion in HTML export
+            const __rtCompList = getCompetencesFromUI() || [];
+            const __rtCompTList = getCompetencesTransversalesFromUI() || [];
+
+            // Helper to build project-level competences HTML
+            const __buildCompListHtml = (title, list) => {
+                if (!list || !list.length) return '';
+                let s = `<h3>${__esc(title)}</h3><ul>`;
+                list.forEach(c => {
+                    const label = __esc(String(c.label || c.id || '').trim());
+                    const cat = [String(c.categorie || ''), String(c.sousCategorie || '')].filter(Boolean).join(' > ');
+                    s += `<li>${label}${cat ? ' <em>(' + __esc(cat) + ')</em>' : ''}</li>`;
+                });
+                s += `</ul>`;
+                return s;
+            };
+
 let html = `
             <!DOCTYPE html>
             <html lang="${currentLang}">
@@ -20242,7 +20322,7 @@ let html = `
                     .step-block { margin-left: 20px; margin-bottom: 20px; padding: 15px; background-color: white; border-left: 4px solid #cbd5e1; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
                     .tag { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; color: white; margin-right: 5px; }
                     .task-box { background-color: #f1f5f9; padding: 10px; border-radius: 4px; margin-top: 10px; font-style: italic; }
-                    
+
                     .type-acquisition { border-color: #a1f5ed; } .bg-none { background-color: #e5e7eb; }
  .bg-acquisition { background-color: #7dded6; color: #0f766e; }
                     .type-collaboration { border-color: #ffd966; } .bg-collaboration { background-color: #f0c953; color: #854d0e; }
@@ -20250,9 +20330,9 @@ let html = `
                     .type-investigation { border-color: #f8807f; } .bg-investigation { background-color: #e06e6d; color: #991b1b; }
                     .type-practice { border-color: #bb98dc; } .bg-practice { background-color: #a582c6; color: #6b21a8; }
                     .type-production { border-color: #bdea75; } .bg-production { background-color: #a6d15e; color: #3f6212; }
-                
 
-  
+
+
   #timeline-panel #timeline-activities{ overflow: visible !important; }
 
 </style>
@@ -20335,6 +20415,9 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
 
                 `;
 
+            html += __buildCompListHtml('Compétences du sujet', __rtCompList);
+            html += __buildCompListHtml('Compétences transversales', __rtCompTList);
+
             html += `<h2>Structure pédagogique</h2>`;
 
             document.querySelectorAll('.activity-group').forEach((activity, aIdx) => {
@@ -20402,6 +20485,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const trainerTasks = (step.querySelector('.step-input-trainer-tasks')?.value || '').trim();
                         const evalFollowup = (step.querySelector('.step-input-eval-followup')?.value || '').trim();
                         const notes = (step.querySelector('.step-input-notes')?.value || '').trim();
+                        const linksRefs = (step.querySelector('.step-input-linksrefs')?.value || '').trim();
 
                         // Competences
                         const csSel = step.querySelector('.step-competences-select');
@@ -20442,6 +20526,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             ${trainerTasks ? `<div class="task-box"><strong>Ce que le formateur doit faire :</strong><br>${__nl2br(trainerTasks)}</div>` : ''}
                             ${evalFollowup ? `<div class="task-box"><strong>Évaluation / suivi :</strong><br>${__nl2br(evalFollowup)}</div>` : ''}
                             ${notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>${t.label_notes}:</strong> ${__nl2br(notes)}</div>` : ''}
+                            ${linksRefs ? `<div style="margin-top: 10px; font-size: 0.9em; color: #475569;"><strong>Liens / références :</strong> ${__nl2br(linksRefs)}</div>` : ''}
                         </div>`;
                     });
                 };
@@ -20564,6 +20649,8 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 '\\fs20 ' +
                 '\\b ' + escapeRtf(t.label_course_name) + ':\\b0 ' + escapeRtf(courseName) + '\\par' +
                 '\\b ' + escapeRtf(t.label_authors) + ':\\b0 ' + escapeRtf(document.getElementById('param-authors')?.value || '') + '\\par' +
+                '\\b ' + escapeRtf(t.label_trainers || 'Formateur(s)') + ':\\b0 ' + escapeRtf(document.getElementById('param-trainers')?.value || '') + '\\par' +
+                '\\b Thème:\\b0 ' + escapeRtf(document.getElementById('param-topic')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_mode) + ':\\b0 ' + escapeRtf(document.getElementById('param-mode')?.selectedOptions?.[0]?.innerText || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_level) + ':\\b0 ' + escapeRtf(document.getElementById('param-level')?.selectedOptions?.[0]?.innerText || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_class_size) + ':\\b0 ' + escapeRtf(document.getElementById('global-class-size')?.value || '') + '\\par' +
@@ -20595,7 +20682,31 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 rtf += '\\bullet ' + escapeRtf(bloomPrefix + text) + '\\par ';
             });
 
+            // Project-level competences lists
+            const __rtfCompList = getCompetencesFromUI() || [];
+            const __rtfCompTList = getCompetencesTransversalesFromUI() || [];
+            if (__rtfCompList.length) {
+                rtf += '\\par\\b ' + escapeRtf('Compétences du sujet :') + '\\b0\\par ';
+                __rtfCompList.forEach(c => {
+                    const label = String(c.label || c.id || '').trim();
+                    const cat = [String(c.categorie || ''), String(c.sousCategorie || '')].filter(Boolean).join(' > ');
+                    rtf += '\\bullet ' + escapeRtf(label + (cat ? ' (' + cat + ')' : '')) + '\\par ';
+                });
+            }
+            if (__rtfCompTList.length) {
+                rtf += '\\par\\b ' + escapeRtf('Compétences transversales :') + '\\b0\\par ';
+                __rtfCompTList.forEach(c => {
+                    const label = String(c.label || c.id || '').trim();
+                    const cat = [String(c.categorie || ''), String(c.sousCategorie || '')].filter(Boolean).join(' > ');
+                    rtf += '\\bullet ' + escapeRtf(label + (cat ? ' (' + cat + ')' : '')) + '\\par ';
+                });
+            }
+
             rtf += '\\par\\fs24\\b ' + escapeRtf('Structure pédagogique') + '\\b0\\par\\fs20 ';
+
+            const __rtfCompMap = new Map((__rtfCompList || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
+            const __rtfCompTMap = new Map((__rtfCompTList || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
+            const __rtfIdsToLabels = (ids, mp) => (Array.isArray(ids) ? ids.map(x => String(x||'').trim()).filter(Boolean).map(id => mp.get(id) || id) : []);
 
             // Modules designed (current structure)
             let moduleIdx = 0;
@@ -20603,11 +20714,27 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 moduleIdx += 1;
                 const moduleTitle = (moduleEl.querySelector('.activity-title')?.value || '').trim() || `${t.md_module} ${moduleIdx}`;
                 const moduleDesc = (moduleEl.querySelector('.activity-description')?.value || '').trim();
+                const moduleNotes = (moduleEl.querySelector('.module-notes')?.value || '').trim();
                 const moduleTarget = fmtTarget(moduleEl.querySelector('.activity-target-time'), moduleEl.querySelector('.activity-target-unit'));
 
                 rtf += '\\par\\b ' + escapeRtf(`MODULE ${moduleIdx} — `) + escapeRtf(moduleTitle) + '\\b0\\par ';
                 if (moduleTarget) rtf += escapeRtf(`Durée cible : ${moduleTarget}`) + '\\par ';
                 if (moduleDesc) rtf += escapeRtf(`Description : ${moduleDesc}`) + '\\par ';
+                if (moduleNotes) rtf += escapeRtf(`Notes : ${moduleNotes}`) + '\\par ';
+
+                // Module-level selections
+                try {
+                    const __modAims = (typeof getModuleSelectedAims === 'function') ? (getModuleSelectedAims(moduleEl) || []) : [];
+                    const __modOut = (typeof getModuleSelectedOutcomes === 'function') ? (getModuleSelectedOutcomes(moduleEl) || []) : [];
+                    const __mCsIds = (typeof getSelectedModuleTargetCompetencesSujetIds === 'function') ? (getSelectedModuleTargetCompetencesSujetIds(moduleEl) || []) : [];
+                    const __mCtIds = (typeof getSelectedModuleTargetCompetencesTransversalesIds === 'function') ? (getSelectedModuleTargetCompetencesTransversalesIds(moduleEl) || []) : [];
+                    const __mCs = __rtfIdsToLabels(__mCsIds, __rtfCompMap);
+                    const __mCt = __rtfIdsToLabels(__mCtIds, __rtfCompTMap);
+                    if (__modAims.length) rtf += escapeRtf(`Objectifs du module (sélection) : ${__modAims.join(' ; ')}`) + '\\par ';
+                    if (__modOut.length) rtf += escapeRtf(`Résultats du module (sélection) : ${__modOut.join(' ; ')}`) + '\\par ';
+                    if (__mCs.length) rtf += escapeRtf(`Compétences du module (sujet) : ${__mCs.join(', ')}`) + '\\par ';
+                    if (__mCt.length) rtf += escapeRtf(`Compétences du module (transversales) : ${__mCt.join(', ')}`) + '\\par ';
+                } catch(_) {}
 
                 const momentEls = moduleEl.querySelectorAll('.moment-group');
                 const hasMoments = momentEls && momentEls.length > 0;
@@ -20657,6 +20784,8 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         if (trainerTasks) rtf += escapeRtf(`      Tâches du formateur : ${trainerTasks}`) + '\\par ';
                         if (evalFollowup) rtf += escapeRtf(`      Évaluation / suivi : ${evalFollowup}`) + '\\par ';
                         if (notes) rtf += escapeRtf(`      Notes : ${notes}`) + '\\par ';
+                        const linksRefs = (stepEl.querySelector('.step-input-linksrefs')?.value || '').trim();
+                        if (linksRefs) rtf += escapeRtf(`      Liens / références : ${linksRefs}`) + '\\par ';
                     });
                 };
                 if (hasMoments) {
@@ -20745,6 +20874,27 @@ md += `- **Horodatage d'export :** ${new Date().toISOString()}\n\n`;
             });
             md += `\n### ${t.label_description}\n${document.getElementById('param-description').value}\n\n`;
 
+            const __mdCompList = getCompetencesFromUI() || [];
+            const __mdCompTList = getCompetencesTransversalesFromUI() || [];
+            if (__mdCompList.length) {
+                md += `### Compétences du sujet\n`;
+                __mdCompList.forEach(c => {
+                    const label = String(c.label || c.id || '').trim();
+                    const cat = [String(c.categorie || ''), String(c.sousCategorie || '')].filter(Boolean).join(' > ');
+                    md += `- ${label}${cat ? ' (' + cat + ')' : ''}\n`;
+                });
+                md += `\n`;
+            }
+            if (__mdCompTList.length) {
+                md += `### Compétences transversales\n`;
+                __mdCompTList.forEach(c => {
+                    const label = String(c.label || c.id || '').trim();
+                    const cat = [String(c.categorie || ''), String(c.sousCategorie || '')].filter(Boolean).join(' > ');
+                    md += `- ${label}${cat ? ' (' + cat + ')' : ''}\n`;
+                });
+                md += `\n`;
+            }
+
             md += `## structure_pédagogique
 
 `;
@@ -20756,11 +20906,15 @@ md += `- **Horodatage d'export :** ${new Date().toISOString()}\n\n`;
                 const moduleTitle = activity.querySelector('.activity-title').value || t.md_untitled_activity;
                 const moduleDesc = activity.querySelector('.activity-description').value;
 
+                const moduleNotes = (activity.querySelector('.module-notes')?.value || '').trim();
+
                 md += `### MODULE ${aIdx + 1} : ${moduleTitle.toUpperCase()}
 
 `;
                 if (moduleDesc) md += `> ${moduleDesc}
 
+`;
+                if (moduleNotes) md += `- **Notes du module :** ${moduleNotes}
 `;
 
                 const moduleTgtVal = (activity.querySelector('.activity-target-time')?.value || '').trim();
@@ -20884,6 +21038,13 @@ ${evalFollowup}
 ${notes}
 
 `;
+                        const linksRefs = (step.querySelector('.step-input-linksrefs')?.value || '').trim();
+                        if (linksRefs) {
+                            md += `**Liens / références :**
+${linksRefs}
+
+`;
+                        }
                     });
                 };
 
