@@ -21136,26 +21136,81 @@ ${linksRefs}
                 if (hasMoments) {
                     momentEls.forEach((momentEl, mIdx) => {
                         const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
-                        const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
-                        const momentSecs = calcMomentSecs(stepCards);
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
 
-                        md += `#### MOMENT ${momentPrefix}${momentTitle ? ` : ${__esc(momentTitle)}` : ''}
+                        // Vérifier si le moment contient des sous-moments
+                        const submomentEls = momentEl.querySelectorAll('.submoment-card');
+                        const hasSubmoments = submomentEls && submomentEls.length > 0;
+
+                        if (hasSubmoments) {
+                            // Le moment contient des sous-moments
+                            // Calculer la durée totale du moment (somme de tous les sous-moments)
+                            let totalMomentSecs = 0;
+                            submomentEls.forEach(smEl => {
+                                const smSteps = smEl.querySelectorAll('.submoment-steps .step-card');
+                                totalMomentSecs += calcMomentSecs(smSteps);
+                            });
+
+                            md += `#### MOMENT ${momentPrefix}${momentTitle ? ` : ${__esc(momentTitle)}` : ''}
 `;
-                        md += `- **Durée conçue :** ${formatTimelineDuration(momentSecs)}
+                            md += `- **Durée conçue :** ${formatTimelineDuration(totalMomentSecs)}
 `;
 
-                        const mTgtVal = (momentEl.querySelector('.moment-target-time')?.value || '').trim();
-                        const mTgtUnitTxt = momentEl.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
-                        if (mTgtVal) md += `- **Durée cible :** ${__esc(mTgtVal)} ${__esc(mTgtUnitTxt)}
+                            const mTgtVal = (momentEl.querySelector('.moment-target-time')?.value || '').trim();
+                            const mTgtUnitTxt = momentEl.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
+                            if (mTgtVal) md += `- **Durée cible :** ${__esc(mTgtVal)} ${__esc(mTgtUnitTxt)}
 `;
-                        const mDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
-                        if (mDesc) md += `- **Description :**\n${mDesc}\n`;
-                        md += `
+                            const mDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
+                            if (mDesc) md += `- **Description :**\n${mDesc}\n`;
+                            md += `
 
 `;
 
-                        renderSteps(stepCards, momentPrefix);
+                            // Exporter chaque sous-moment
+                            submomentEls.forEach((smEl, smIdx) => {
+                                const smTitle = (smEl.querySelector('.submoment-title')?.value || '').trim();
+                                const smSteps = smEl.querySelectorAll('.submoment-steps .step-card');
+                                const smSecs = calcMomentSecs(smSteps);
+                                const smPrefix = `${momentPrefix}.${smIdx + 1}`;
+
+                                md += `##### SOUS-MOMENT ${smPrefix}${smTitle ? ` : ${__esc(smTitle)}` : ''}
+`;
+                                md += `- **Durée conçue :** ${formatTimelineDuration(smSecs)}
+`;
+
+                                const smTgtVal = (smEl.querySelector('.submoment-target-time')?.value || '').trim();
+                                const smTgtUnitTxt = smEl.querySelector('.submoment-target-unit')?.selectedOptions?.[0]?.innerText || '';
+                                if (smTgtVal) md += `- **Durée cible :** ${__esc(smTgtVal)} ${__esc(smTgtUnitTxt)}
+`;
+                                md += `
+
+`;
+
+                                // Rendre les activités du sous-moment
+                                renderSteps(smSteps, smPrefix);
+                            });
+                        } else {
+                            // Le moment contient des activités directes (pas de sous-moments)
+                            const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
+                            const momentSecs = calcMomentSecs(stepCards);
+
+                            md += `#### MOMENT ${momentPrefix}${momentTitle ? ` : ${__esc(momentTitle)}` : ''}
+`;
+                            md += `- **Durée conçue :** ${formatTimelineDuration(momentSecs)}
+`;
+
+                            const mTgtVal = (momentEl.querySelector('.moment-target-time')?.value || '').trim();
+                            const mTgtUnitTxt = momentEl.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
+                            if (mTgtVal) md += `- **Durée cible :** ${__esc(mTgtVal)} ${__esc(mTgtUnitTxt)}
+`;
+                            const mDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
+                            if (mDesc) md += `- **Description :**\n${mDesc}\n`;
+                            md += `
+
+`;
+
+                            renderSteps(stepCards, momentPrefix);
+                        }
                     });
                 } else {
                     
