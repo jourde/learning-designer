@@ -16373,12 +16373,30 @@ function buildExportModel() {
             uniteDureeCible: '',
             activites: (m.activites || [])
         }];
-        const moments = (__momentsSource || []).map((mo) => ({
-            title: asStr(mo.titre),
-            description: asStr(mo.description),
-            target: fmtTarget(mo.dureeCible, mo.uniteDureeCible),
-            targetRaw: { value: asStr(mo.dureeCible), unit: asStr(mo.uniteDureeCible) },
-            activities: (mo.activites || []).map((a) => ({
+        const moments = (__momentsSource || []).map((mo) => {
+            // Build activities list - handle both direct activities and those in sub-moments
+            let allActivities = [];
+            
+            // Check if moment has sub-moments (sousMoments or subMoments)
+            const subMoments = mo.sousMoments || mo.subMoments || [];
+            
+            if (subMoments && subMoments.length > 0) {
+                // Moment has sub-moments - collect activities from each sub-moment
+                subMoments.forEach(sm => {
+                    const smActivities = sm.activites || sm.steps || [];
+                    allActivities = allActivities.concat(smActivities);
+                });
+            } else {
+                // Moment has direct activities
+                allActivities = mo.activites || [];
+            }
+            
+            return {
+                title: asStr(mo.titre),
+                description: asStr(mo.description),
+                target: fmtTarget(mo.dureeCible, mo.uniteDureeCible),
+                targetRaw: { value: asStr(mo.dureeCible), unit: asStr(mo.uniteDureeCible) },
+                activities: allActivities.map((a) => ({
                 title: asStr(a.titre),
                 objective: asStr(a.objectifActivite),
                 tasks: asStr(a.aFaire),
@@ -16429,8 +16447,8 @@ durationValue: asStr(a.duree),
                 competencesSujetText: (__idsToLabels((Array.isArray(a.competencesSujet) ? a.competencesSujet : (Array.isArray(a.competences) ? a.competences : [])), __compMap)).join(', '),
                 competencesTransversalesText: (__idsToLabels((Array.isArray(a.competencesTransversales) ? a.competencesTransversales : []), __compTMap)).join(', ')
             }))
-
-        }));
+            };
+        });
 
         return {
             title: asStr(m.titre),
@@ -20626,22 +20644,62 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 if (hasMoments) {
                     momentEls.forEach((momentEl, mIdx) => {
                         const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
-                        const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
-                        const momentSecs = calcMomentSecs(stepCards);
-
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
-                        html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${__esc(momentTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
+                        const mDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
                         const mTgtVal = (momentEl.querySelector('.moment-target-time')?.value || '').trim();
                         const mTgtUnitTxt = momentEl.querySelector('.moment-target-unit')?.selectedOptions?.[0]?.innerText || '';
-                        const mDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
-                        if (mTgtVal) {
-                            html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal)} ${__esc(mTgtUnitTxt)}</div>`;
-                        }
 
-                        if (mDesc) {
-                            html += `<div style="margin-top: 6px;"><strong>Description :</strong><br>${escapeHtml(mDesc).replace(/\n/g,'<br>')}</div>`;
+                        // Check for sub-moments
+                        const submomentEls = momentEl.querySelectorAll('.submoment-card');
+                        const hasSubmoments = submomentEls && submomentEls.length > 0;
+
+                        if (hasSubmoments) {
+                            // Moment has sub-moments
+                            let totalMomentSecs = 0;
+                            submomentEls.forEach(smEl => {
+                                const smSteps = smEl.querySelectorAll('.submoment-steps .step-card');
+                                totalMomentSecs += calcMomentSecs(smSteps);
+                            });
+
+                            html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${__esc(momentTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(totalMomentSecs)})</span></h3>`;
+                            if (mTgtVal) {
+                                html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal)} ${__esc(mTgtUnitTxt)}</div>`;
+                            }
+                            if (mDesc) {
+                                html += `<div style="margin-top: 6px;"><strong>Description :</strong><br>${escapeHtml(mDesc).replace(/\n/g,'<br>')}</div>`;
+                            }
+
+                            // Export each sub-moment
+                            submomentEls.forEach((smEl, smIdx) => {
+                                const smTitle = (smEl.querySelector('.submoment-title')?.value || '').trim();
+                                const smSteps = smEl.querySelectorAll('.submoment-steps .step-card');
+                                const smSecs = calcMomentSecs(smSteps);
+                                const smPrefix = `${momentPrefix}.${smIdx + 1}`;
+
+                                const smTgtVal = (smEl.querySelector('.submoment-target-time')?.value || '').trim();
+                                const smTgtUnitTxt = smEl.querySelector('.submoment-target-unit')?.selectedOptions?.[0]?.innerText || '';
+
+                                html += `<h4 style="margin-top: 14px; margin-left: 20px; color: #475569; font-size: 0.95em;">Sous-moment ${smPrefix}${smTitle ? ` : ${__esc(smTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(smSecs)})</span></h4>`;
+                                if (smTgtVal) {
+                                    html += `<div style="font-size: 0.85em; color: #64748b; margin-left: 20px; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(smTgtVal)} ${__esc(smTgtUnitTxt)}</div>`;
+                                }
+
+                                renderSteps(smSteps, smPrefix);
+                            });
+                        } else {
+                            // Moment has direct steps
+                            const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
+                            const momentSecs = calcMomentSecs(stepCards);
+
+                            html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${__esc(momentTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
+                            if (mTgtVal) {
+                                html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal)} ${__esc(mTgtUnitTxt)}</div>`;
+                            }
+                            if (mDesc) {
+                                html += `<div style="margin-top: 6px;"><strong>Description :</strong><br>${escapeHtml(mDesc).replace(/\n/g,'<br>')}</div>`;
+                            }
+                            renderSteps(stepCards, momentPrefix);
                         }
-                        renderSteps(stepCards, momentPrefix);
                     });
                 } else {
                     // Legacy designs (no moments): export as a single moment for a complete structure
@@ -20875,17 +20933,51 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
                         const momentDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
                         const momentTarget = fmtTarget(momentEl.querySelector('.moment-target-time'), momentEl.querySelector('.moment-target-unit'));
-
-                        const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
-                        const momentSecs = sumStepsToSecs(stepCards);
                         const momentPrefix = `${moduleIdx}.${moIdx + 1}`;
 
-                        rtf += '\\par\\b ' + escapeRtf(`  Moment ${momentPrefix}`) + escapeRtf(momentTitle ? ` — ${momentTitle}` : '') + '\\b0\\par ';
-                        rtf += escapeRtf(`  Durée conçue : ${formatTimelineDuration(momentSecs)}`) + '\\par ';
-                        if (momentTarget) rtf += escapeRtf(`  Durée cible : ${momentTarget}`) + '\\par ';
-                        if (momentDesc) rtf += escapeRtf(`  Description : ${momentDesc}`) + '\\par ';
+                        // Check for sub-moments
+                        const submomentEls = momentEl.querySelectorAll('.submoment-card');
+                        const hasSubmoments = submomentEls && submomentEls.length > 0;
 
-                        renderSteps(stepCards, momentPrefix);
+                        if (hasSubmoments) {
+                            // Moment has sub-moments
+                            let totalMomentSecs = 0;
+                            submomentEls.forEach(smEl => {
+                                const smSteps = smEl.querySelectorAll('.submoment-steps .step-card');
+                                totalMomentSecs += sumStepsToSecs(smSteps);
+                            });
+
+                            rtf += '\\par\\b ' + escapeRtf(`  Moment ${momentPrefix}`) + escapeRtf(momentTitle ? ` — ${momentTitle}` : '') + '\\b0\\par ';
+                            rtf += escapeRtf(`  Durée conçue : ${formatTimelineDuration(totalMomentSecs)}`) + '\\par ';
+                            if (momentTarget) rtf += escapeRtf(`  Durée cible : ${momentTarget}`) + '\\par ';
+                            if (momentDesc) rtf += escapeRtf(`  Description : ${momentDesc}`) + '\\par ';
+
+                            // Export each sub-moment
+                            submomentEls.forEach((smEl, smIdx) => {
+                                const smTitle = (smEl.querySelector('.submoment-title')?.value || '').trim();
+                                const smTarget = fmtTarget(smEl.querySelector('.submoment-target-time'), smEl.querySelector('.submoment-target-unit'));
+                                const smSteps = smEl.querySelectorAll('.submoment-steps .step-card');
+                                const smSecs = sumStepsToSecs(smSteps);
+                                const smPrefix = `${momentPrefix}.${smIdx + 1}`;
+
+                                rtf += '\\par\\b ' + escapeRtf(`    Sous-moment ${smPrefix}`) + escapeRtf(smTitle ? ` — ${smTitle}` : '') + '\\b0\\par ';
+                                rtf += escapeRtf(`    Durée conçue : ${formatTimelineDuration(smSecs)}`) + '\\par ';
+                                if (smTarget) rtf += escapeRtf(`    Durée cible : ${smTarget}`) + '\\par ';
+
+                                renderSteps(smSteps, smPrefix);
+                            });
+                        } else {
+                            // Moment has direct steps
+                            const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
+                            const momentSecs = sumStepsToSecs(stepCards);
+
+                            rtf += '\\par\\b ' + escapeRtf(`  Moment ${momentPrefix}`) + escapeRtf(momentTitle ? ` — ${momentTitle}` : '') + '\\b0\\par ';
+                            rtf += escapeRtf(`  Durée conçue : ${formatTimelineDuration(momentSecs)}`) + '\\par ';
+                            if (momentTarget) rtf += escapeRtf(`  Durée cible : ${momentTarget}`) + '\\par ';
+                            if (momentDesc) rtf += escapeRtf(`  Description : ${momentDesc}`) + '\\par ';
+
+                            renderSteps(stepCards, momentPrefix);
+                        }
                     });
                 } else {
                     // Legacy designs (no moments): export as a single moment for completeness
