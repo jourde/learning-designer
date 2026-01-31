@@ -957,11 +957,36 @@ details[data-readonly="true"] label{ cursor: default; }
         .step-card[data-status="done"] .step-header { box-shadow: inset 4px 0 0 rgba(34, 197, 94, 0.75); }
         .step-card[data-status="review"] .step-header { box-shadow: inset 4px 0 0 rgba(245, 158, 11, 0.85); }
         .step-card[data-status="in_progress"] .step-header { box-shadow: inset 4px 0 0 rgba(100, 116, 139, 0.35); }
-        .step-status-select { text-transform: none; }
+        .step-status-select { display:none !important; } /* hidden, value kept for logic */
+        /* --- Compact status dot widget --- */
+        .step-status-dot{
+            width:18px; height:18px; border-radius:50%; border:2px solid rgba(100,116,139,0.25);
+            cursor:pointer; position:relative; flex-shrink:0;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .step-status-dot:hover{ border-color:rgba(99,102,241,0.5); }
+        .step-status-dot[data-val="in_progress"]{ background:rgba(96,165,250,0.7); }
+        .step-status-dot[data-val="done"]{ background:rgba(34,197,94,0.75); }
+        .step-status-dot[data-val="review"]{ background:rgba(245,158,11,0.85); }
+        .step-status-dot-menu{
+            display:none; position:fixed;
+            background:#fff; border:1px solid #e2e8f0; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.12);
+            padding:4px; z-index:9999; white-space:nowrap;
+        }
+        .step-status-dot-menu.open{ display:flex; gap:4px; }
+        .step-status-dot-menu-item{
+            width:22px; height:22px; border-radius:50%; border:2px solid transparent;
+            cursor:pointer; transition: border-color 0.15s, transform 0.15s;
+        }
+        .step-status-dot-menu-item:hover{ transform:scale(1.15); border-color:rgba(99,102,241,0.5); }
+        .step-status-dot-menu-item[data-val="in_progress"]{ background:rgba(96,165,250,0.7); }
+        .step-status-dot-menu-item[data-val="done"]{ background:rgba(34,197,94,0.75); }
+        .step-status-dot-menu-item[data-val="review"]{ background:rgba(245,158,11,0.85); }
+        @media print{ .step-status-dot-menu{ display:none !important; } }
         .ld-hidden-by-status-filter{ display:none !important; }
 /* --- Toggle status selectors (Activity status dropdowns) --- */
-body:not(.ld-show-status-selectors) .step-status-select{ display:none !important; }
-body:not(.ld-show-status-selectors) .step-status-select + *:has(.no-print){ margin-left: 0 !important; }
+body:not(.ld-show-status-selectors) .step-status-dot{ display:none !important; }
+body:not(.ld-show-status-selectors) .step-status-dot + *:has(.no-print){ margin-left: 0 !important; }
 /* --- Toggle status summaries (Module / Moment / Sous-moment) --- */
 body.ld-hide-status-summaries .ld-status-summary{ display:none !important; }
 
@@ -4237,12 +4262,13 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
           </option>
 </select>
 </div>
-<div class="w-32">
-<select class="step-status-select w-full px-2 py-0.5 text-xs border border-slate-200 rounded bg-white outline-none focus:ring-2 focus:ring-indigo-200 h-[22px]" data-action-change="update-step-status" aria-label="État" title="État">
-<option value="in_progress">⚪ En cours</option>
-<option value="done">🟢 Finalisé</option>
-<option value="review">🟠 À revoir</option>
+<div class="flex items-center" style="position:relative;">
+<select class="step-status-select" data-action-change="update-step-status" aria-label="État">
+<option value="in_progress">En cours</option>
+<option value="done">Finalisé</option>
+<option value="review">À revoir</option>
 </select>
+<button type="button" class="step-status-dot" data-val="in_progress" title="État : En cours" aria-label="Changer l'état"></button>
 </div>
 <div class="flex items-center gap-0.5 no-print">
 <button class="text-slate-400 hover:text-indigo-500 p-0.5" data-action="toggle-step" data-i18n-title="title_toggle_panel" title="Afficher/Masquer les paramètres">
@@ -13973,6 +13999,12 @@ try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closes
             try { stepEl.dataset.status = st; } catch (_) {}
             const sel = stepEl.querySelector?.('.step-status-select');
             if (sel && sel.value !== st) sel.value = st;
+            const dot = stepEl.querySelector?.('.step-status-dot');
+            if (dot) {
+                dot.dataset.val = st;
+                const titles = {in_progress:'En cours',done:'Finalisé',review:'À revoir'};
+                dot.title = 'État : ' + (titles[st] || st);
+            }
         }
 
         function updateStepStatus(el) {
@@ -13984,6 +14016,51 @@ try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closes
             try { updateStatsDebounced(); } catch (_) {}
             try { __ldApplyStatusFilterDebounced(); } catch (_) {}
         }
+
+        // --- Status dot widget (compact icon dropdown) ---
+        (function(){
+            let _activeDot = null; // the dot button that opened the floating menu
+            const _floatingMenu = document.createElement('div');
+            _floatingMenu.className = 'step-status-dot-menu';
+            _floatingMenu.innerHTML =
+                '<button type="button" class="step-status-dot-menu-item" data-val="in_progress" title="En cours"></button>' +
+                '<button type="button" class="step-status-dot-menu-item" data-val="review" title="À revoir"></button>' +
+                '<button type="button" class="step-status-dot-menu-item" data-val="done" title="Finalisé"></button>';
+            document.body.appendChild(_floatingMenu);
+
+            function closeMenu(){
+                _floatingMenu.classList.remove('open');
+                _activeDot = null;
+            }
+            document.addEventListener('click', function(e){
+                // Click on the dot => toggle menu
+                const dot = e.target.closest?.('.step-status-dot');
+                if (dot) {
+                    e.stopPropagation();
+                    if (_activeDot === dot) { closeMenu(); return; }
+                    _activeDot = dot;
+                    const rect = dot.getBoundingClientRect();
+                    _floatingMenu.style.left = Math.max(0, rect.left + rect.width / 2 - 45) + 'px';
+                    _floatingMenu.style.top = (rect.bottom + 4) + 'px';
+                    _floatingMenu.classList.add('open');
+                    return;
+                }
+                // Click on a menu item => apply status
+                const item = e.target.closest?.('.step-status-dot-menu-item');
+                if (item && _activeDot) {
+                    e.stopPropagation();
+                    const val = item.dataset.val;
+                    const stepEl = _activeDot.closest('.step-card');
+                    const sel = stepEl?.querySelector('.step-status-select');
+                    if (sel) { sel.value = val; sel.dispatchEvent(new Event('change', {bubbles:true})); }
+                    else if (stepEl) { applyStepStatus(stepEl, val); }
+                    closeMenu();
+                    return;
+                }
+                // Click elsewhere => close menu
+                closeMenu();
+            });
+        })();
 
         // --- Status filter (affichage : Tous / À revoir / En cours / Finalisé) ---
         let __ldStatusFilterTimer = null;
