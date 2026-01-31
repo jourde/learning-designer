@@ -692,6 +692,16 @@ body.hc #timeline-ruler .timeline-ruler-label { border-color: #94a3b8; backgroun
     animation: timelineAlertPulse 1.4s ease-in-out infinite;
   }
 
+  /* Animation pour les activités nouvellement créées */
+  .newly-created-activity {
+    animation: pulse-highlight 2s ease-in-out;
+    border-left: 4px solid #6366f1 !important;
+  }
+  @keyframes pulse-highlight {
+    0%, 100% { background-color: transparent; }
+    50% { background-color: rgba(99, 102, 241, 0.15); }
+  }
+
   
   .timeline-overrun-light{background:#fecaca;}
 
@@ -8417,6 +8427,23 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
                 mUnitSel.value = String(getDefaultDurationUnitSecs());
                 __ldLockUnitSelect(mUnitSel);
             }
+            
+            // CRITICAL FIX: Ensure the new moment is visible
+            // Moments are hidden in "modules" view
+            try {
+                const lvl = document.body && document.body.getAttribute ? document.body.getAttribute('data-view-level') : '';
+                const currentLevel = String(lvl || '').trim();
+                
+                // Switch to moments view if we're in modules view
+                if (currentLevel === 'modules') {
+                    if (typeof applyViewLevel === 'function') {
+                        applyViewLevel('moments');
+                    } else if (document.body && document.body.setAttribute) {
+                        document.body.setAttribute('data-view-level', 'moments');
+                    }
+                }
+            } catch (_) {}
+            
             updateMomentIndexes(activityGroup);
             syncMomentSubmomentsUI(moment);
             applyTranslations();
@@ -8552,7 +8579,52 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             const outLevel = newStep ? newStep.querySelector('.outcome-bloom-level') : null;
             try { if (outLevel) renderBloomOptions(outLevel, outLevel.value || ""); } catch (_) {}
 
+            // CRITICAL FIX: Ensure the new activity is visible
+            // Activities in sub-moments are hidden when view level is "modules" or "moments"
+            try {
+                const lvl = document.body && document.body.getAttribute ? document.body.getAttribute('data-view-level') : '';
+                const currentLevel = String(lvl || '').trim();
+                
+                // Switch to activities view if we're not already there
+                if (currentLevel !== 'activities') {
+                    if (typeof applyViewLevel === 'function') {
+                        applyViewLevel('activities');
+                    } else if (document.body && document.body.setAttribute) {
+                        document.body.setAttribute('data-view-level', 'activities');
+                    }
+                }
+                
+                // Also ensure the parent moment is expanded
+                const momentEl = subEl.closest('.moment-group');
+                if (momentEl) {
+                    const momentBody = momentEl.querySelector('.moment-body');
+                    if (momentBody && momentBody.classList.contains('collapsed')) {
+                        momentBody.classList.remove('collapsed');
+                        const toggleBtn = momentEl.querySelector('button[data-action="toggle-moment"]');
+                        if (toggleBtn) {
+                            toggleBtn.setAttribute('aria-expanded', 'true');
+                            const icon = toggleBtn.querySelector('.rotate-icon');
+                            if (icon) icon.style.transform = 'rotate(180deg)';
+                        }
+                    }
+                }
+            } catch (_) {}
+
             try { updateStats(); } catch (_) {}
+            
+            // CRITICAL FIX: Scroll to the new activity and highlight it
+            try {
+                // Force a small delay to ensure view change is applied
+                setTimeout(() => {
+                    if (newStep && typeof newStep.scrollIntoView === 'function') {
+                        newStep.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        newStep.classList.add('newly-created-activity');
+                        setTimeout(() => {
+                            if (newStep) newStep.classList.remove('newly-created-activity');
+                        }, 2000);
+                    }
+                }, 150);
+            } catch (_) {}
         }
         /* END_SUBMOMENT_HELPERS_V1 */
 
@@ -13809,12 +13881,16 @@ if (((data.groupMode || data.regroupement) === 'groups')) stepEl.querySelector('
                 : activityGroup.querySelector('.activity-steps-container');
 
             // If sub-moments exist, add activities into the last sub-moment by default
+            let addedToSubmoment = false;
             try {
                 const subs = targetMoment ? targetMoment.querySelectorAll('.submoments-container .submoment-card') : [];
                 if (subs && subs.length) {
                     const lastSub = subs[subs.length - 1];
                     const smCont = lastSub ? lastSub.querySelector('.submoment-steps') : null;
-                    if (smCont) container = smCont;
+                    if (smCont) {
+                        container = smCont;
+                        addedToSubmoment = true;
+                    }
                 }
             } catch (_) {}
 
@@ -13853,8 +13929,55 @@ try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closes
             const outLevel = newStep ? newStep.querySelector('.outcome-bloom-level') : null;
             if (outLevel) renderBloomOptions(outLevel, outLevel.value || "");
 
+            // CRITICAL FIX: Ensure the new activity is visible
+            // If we added to a sub-moment or if activities are hidden in current view, switch to "activities" view
+            try {
+                const lvl = document.body && document.body.getAttribute ? document.body.getAttribute('data-view-level') : '';
+                const currentLevel = String(lvl || '').trim();
+                
+                // Switch to activities view if:
+                // 1. We're in "modules" view (activities hidden)
+                // 2. We're in "moments" view (activities hidden)
+                // 3. We added to a submoment and we're not already in "activities" view
+                if (currentLevel === 'modules' || currentLevel === 'moments' || (addedToSubmoment && currentLevel !== 'activities')) {
+                    if (typeof applyViewLevel === 'function') {
+                        applyViewLevel('activities');
+                    } else if (document.body && document.body.setAttribute) {
+                        document.body.setAttribute('data-view-level', 'activities');
+                    }
+                }
+                
+                // Also ensure the moment is expanded if it was collapsed
+                if (targetMoment) {
+                    const momentBody = targetMoment.querySelector('.moment-body');
+                    if (momentBody && momentBody.classList.contains('collapsed')) {
+                        momentBody.classList.remove('collapsed');
+                        const toggleBtn = targetMoment.querySelector('button[data-action="toggle-moment"]');
+                        if (toggleBtn) {
+                            toggleBtn.setAttribute('aria-expanded', 'true');
+                            const icon = toggleBtn.querySelector('.rotate-icon');
+                            if (icon) icon.style.transform = 'rotate(180deg)';
+                        }
+                    }
+                }
+            } catch (_) {}
+
             // Ensure UI updates
             updateStats();
+            
+            // CRITICAL FIX: Scroll to the new activity and highlight it
+            try {
+                // Force a small delay to ensure view change is applied
+                setTimeout(() => {
+                    if (newStep && typeof newStep.scrollIntoView === 'function') {
+                        newStep.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        newStep.classList.add('newly-created-activity');
+                        setTimeout(() => {
+                            if (newStep) newStep.classList.remove('newly-created-activity');
+                        }, 2000);
+                    }
+                }, 150);
+            } catch (_) {}
         }
 
         function copyFormValues(source, dest) {
