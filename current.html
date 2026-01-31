@@ -156,15 +156,15 @@ body.hide-types .activity-type-bar {
         }
 
 /* Simplified view: hide target durations (keep designed durations) */
-body.hide-target-durations .activity-target-wrap,
-body.hide-target-durations .moment-target-wrap,
-body.hide-target-durations .submoment-target-wrap,
-body.hide-target-durations .module-time-compare,
-body.hide-target-durations .moment-time-compare,
-body.hide-target-durations .submoment-time-compare,
-body.hide-target-durations .timeline-track-planned,
-body.hide-target-durations #timeline-activities-planned,
-body.hide-target-durations #timeline-activities-planned-labels {
+html.hide-target-durations .activity-target-wrap,
+html.hide-target-durations .moment-target-wrap,
+html.hide-target-durations .submoment-target-wrap,
+html.hide-target-durations .module-time-compare,
+html.hide-target-durations .moment-time-compare,
+html.hide-target-durations .submoment-time-compare,
+html.hide-target-durations .timeline-track-planned,
+html.hide-target-durations #timeline-activities-planned,
+html.hide-target-durations #timeline-activities-planned-labels {
   display: none !important;
 }
 
@@ -2197,8 +2197,14 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
   }
 </style>
 
+
+<script>
+  // Masquer les durées cibles dès le tout début du rendu (évite tout flash)
+  document.documentElement.classList.add('hide-target-durations');
+</script>
+
 </head>
-<body class="p-2 md:p-4 hide-types text-slate-900">
+<body class="p-2 md:p-4 hide-types text-slate-900 hide-target-durations">
 <div class="ld-page">
 <header class="mb-3">
 <h1 class="text-2xl font-bold text-slate-900 leading-tight">
@@ -3461,9 +3467,9 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
               class="ld-control-btn"
               data-action="toggle-target-durations"
               aria-pressed="false"
-              title="Masquer les durées cibles"
-              aria-label="Masquer les durées cibles">
-        <span class="material-icons-round text-[16px]" id="icon-toggle-target-durations">visibility</span>
+              title="Afficher les durées cibles"
+              aria-label="Afficher les durées cibles">
+        <span class="material-icons-round text-[16px]" id="icon-toggle-target-durations">visibility_off</span>
         <span class="hidden xl:inline" id="text-toggle-target-durations">Cibles</span>
       </button>
 
@@ -8864,37 +8870,41 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             }
         }
 
-        const TARGET_DURATIONS_STORAGE_KEY = 'ld_hide_target_durations';
+        // Durées cibles : masquées par défaut (affichables via le bouton "Cibles").
+// Implémentation robuste : on porte l'état sur <html> (et <body> par compatibilité) pour garantir l'état dès le premier paint.
 
-        function setTargetDurationsHidden(hidden) {
-            const isHidden = !!hidden;
-            document.body.classList.toggle('hide-target-durations', isHidden);
+function setTargetDurationsHidden(hidden) {
+    const isHidden = !!hidden;
 
-            const btn = document.getElementById('btn-toggle-target-durations');
-            const icon = document.getElementById('icon-toggle-target-durations');
-            if (btn) btn.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
-            if (icon) icon.innerText = isHidden ? 'visibility_off' : 'visibility';
-            if (btn) {
-                btn.title = isHidden ? 'Afficher les durées cibles' : 'Masquer les durées cibles';
-                btn.setAttribute('aria-label', btn.title);
-            }
-        }
+    // État porté sur <html> pour un masquage immédiat (et sur <body> pour compatibilité)
+    document.documentElement.classList.toggle('hide-target-durations', isHidden);
+    document.body.classList.toggle('hide-target-durations', isHidden);
 
-        function toggleTargetDurations() {
-            const next = !document.body.classList.contains('hide-target-durations');
-            setTargetDurationsHidden(next);
-            try { localStorage.setItem(TARGET_DURATIONS_STORAGE_KEY, next ? '1' : '0'); } catch (_) {}
-        }
+    const btn = document.getElementById('btn-toggle-target-durations');
+    const icon = document.getElementById('icon-toggle-target-durations');
 
-        document.addEventListener('DOMContentLoaded', () => {
-            try {
-                const saved = localStorage.getItem(TARGET_DURATIONS_STORAGE_KEY);
-                if (saved === '1') setTargetDurationsHidden(true);
-            } catch (_) {}
-        });
+    // aria-pressed: "on" = cibles visibles
+    if (btn) btn.setAttribute('aria-pressed', isHidden ? 'false' : 'true');
+    if (icon) icon.innerText = isHidden ? 'visibility_off' : 'visibility';
 
-        
-        function toggleActivity(btn) {
+    if (btn) {
+        btn.title = isHidden ? 'Afficher les durées cibles' : 'Masquer les durées cibles';
+        btn.setAttribute('aria-label', btn.title);
+    }
+}
+
+function toggleTargetDurations() {
+    const currentlyHidden =
+        document.documentElement.classList.contains('hide-target-durations') ||
+        document.body.classList.contains('hide-target-durations');
+    setTargetDurationsHidden(!currentlyHidden); // si masqué -> afficher ; si visible -> masquer
+}
+
+// Forcer l'état par défaut à chaque chargement : masqué.
+document.addEventListener('DOMContentLoaded', () => {
+    setTargetDurationsHidden(true);
+});
+function toggleActivity(btn) {
             const activityGroup = btn.closest('.activity-group');
             if (!activityGroup) return;
             const body = activityGroup.querySelector('.activity-body');
