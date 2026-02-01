@@ -8429,7 +8429,8 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             if (mUnitSel) {
                 __ldEnsureUnitOption(mUnitSel, 2592000, 'unit_months', 'Mois');
                 mUnitSel.value = String(getDefaultDurationUnitSecs());
-                __ldLockUnitSelect(mUnitSel);
+                // BUGFIX: Do NOT lock moment target unit - users should be able to change it
+                // __ldLockUnitSelect(mUnitSel); // REMOVED
             }
             
             // CRITICAL FIX: Ensure the new moment is visible
@@ -15159,7 +15160,8 @@ function formatTimelineDuration(secs) {
                     }
                     const targetVal = String(newSecs);
                     if (Array.from(unitSel.options).some(o => String(o.value) === targetVal)) unitSel.value = targetVal;
-                    __ldLockUnitSelect(unitSel);
+                    // BUGFIX: Do NOT lock moment target units - users should be able to change them
+                    // __ldLockUnitSelect(unitSel); // REMOVED
                 });
 
                 // Update STEP (activity) duration units + (optional) convert values
@@ -15520,16 +15522,10 @@ const unitSel = momentEl.querySelector('.moment-target-unit');
                 const unitSecs = mapUnitToSecs(unitSel?.value || getDefaultDurationUnitSecs());
                 const unitText = __ldGetUnitLabelBySecs(unitSecs, unitLabelFmt);
 
-                // Auto-compute moment target from contained activities (steps)
-                try {
-                    const targetInput = momentEl.querySelector('.moment-target-time');
-                    if (targetInput) {
-                        let v = secs / unitSecs;
-                        if (unitSecs === 60) v = Math.round(v);
-                        else v = parseFloat(v.toFixed(1));
-                        targetInput.value = String(v);
-                    }
-                } catch (_) {}
+                // BUGFIX: Do NOT auto-compute moment target - user should manually enter it
+                // The target duration is a GOAL set by the user, not a sum of activities
+                // Previously, this code was overwriting the user's input every time updateStats() was called
+                // REMOVED: Auto-compute moment target from contained activities (steps)
 
                 const label = momentEl.querySelector('.moment-total-time');
                 if (label) {
