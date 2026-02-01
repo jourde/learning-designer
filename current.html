@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 
 <html lang="fr">
@@ -656,7 +655,31 @@ body.hc #timeline-ruler .timeline-ruler-label { border-color: #94a3b8; backgroun
   }
 
   
-  .timeline-alert-icons{
+  
+  /* Mini-histogramme sous les durées (cible vs conçu) */
+  .ld-duration-badge{ position: relative; overflow: hidden; }
+  .ld-mini-hist{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:3px;
+    pointer-events:none;
+  }
+  .ld-mini-hist .ld-mini-target{
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:0%;
+    background: rgba(245, 158, 11, 0.75); /* amber */
+  }
+  .ld-mini-hist .ld-mini-designed{
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:0%;
+    background: rgba(99, 102, 241, 0.95); /* indigo */
+  }
+  html.hide-target-durations .ld-mini-hist .ld-mini-target{ display:none !important; }
+.timeline-alert-icons{
     position:absolute;
     top:-18px;
     right:6px;
@@ -3866,11 +3889,11 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <span class="text-[9px] text-slate-400 uppercase font-bold tracking-wider leading-none mb-0.5" data-i18n="label_designed">
          Conçu
         </span>
-<div class="bg-indigo-50 border border-indigo-100 rounded px-2 py-0.5 h-[22px] flex items-center min-w-[3rem] justify-end activity-designed-badge">
+<div class="bg-indigo-50 border border-indigo-100 rounded px-2 py-0.5 h-[22px] flex items-center min-w-[3rem] justify-end activity-designed-badge ld-duration-badge">
 <span class="activity-total-time text-xs font-bold text-indigo-700 font-mono">
           0m
          </span>
-</div>
+<div class="ld-mini-hist" aria-hidden="true"><div class="ld-mini-target"></div><div class="ld-mini-designed"></div></div></div>
 </div>
 </div>
 <div class="activity-status-summary ld-status-summary ld-status-summary--module" title="Synthèse des états des activités du module"></div>
@@ -4076,9 +4099,9 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div>
 <span aria-hidden="true" class="moment-time-compare text-xs font-bold bg-transparent mx-1 select-none self-center">=</span><div class="flex flex-col items-end">
 <span class="text-[9px] text-slate-400 uppercase font-bold tracking-wider leading-none mb-0.5" data-i18n="label_designed">Conçu</span>
-<div class="bg-indigo-50 border border-indigo-100 rounded px-2 py-0.5 h-[22px] flex items-center min-w-[3rem] justify-end moment-designed-badge">
+<div class="bg-indigo-50 border border-indigo-100 rounded px-2 py-0.5 h-[22px] flex items-center min-w-[3rem] justify-end moment-designed-badge ld-duration-badge">
 <span class="moment-total-time text-xs font-bold text-indigo-700 font-mono">0m</span>
-</div>
+<div class="ld-mini-hist" aria-hidden="true"><div class="ld-mini-target"></div><div class="ld-mini-designed"></div></div></div>
 </div>
 </div>
 <div class="moment-status-summary ld-status-summary ld-status-summary--moment" title="Synthèse des états des activités du moment"></div>
@@ -4151,9 +4174,9 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
           <span aria-hidden="true" class="submoment-time-compare text-[11px] font-bold bg-transparent mx-1 select-none self-center">=</span>
           <div class="flex flex-col items-end">
             <span class="text-[8px] text-slate-400 uppercase font-bold tracking-wider leading-none mb-0.5" data-i18n="label_designed">Conçu</span>
-            <div class="bg-indigo-50 border border-indigo-100 rounded px-2 py-0.5 h-[20px] flex items-center min-w-[3rem] justify-end submoment-designed-badge">
+            <div class="bg-indigo-50 border border-indigo-100 rounded px-2 py-0.5 h-[20px] flex items-center min-w-[3rem] justify-end submoment-designed-badge ld-duration-badge">
               <span class="submoment-total-time text-[11px] font-bold text-indigo-700 font-mono">0m</span>
-            </div>
+            <div class="ld-mini-hist" aria-hidden="true"><div class="ld-mini-target"></div><div class="ld-mini-designed"></div></div></div>
           </div>
         </div>
         <div class="submoment-status-summary ld-status-summary" title="Synthèse des états des activités du sous-moment"></div>
@@ -4679,6 +4702,54 @@ function compareDurations(designedSecs, targetSecs, options = {}) {
     };
 }
 try { window.compareDurations = compareDurations; } catch (_) {}
+
+
+
+// ---- Mini-histogram helper (Target vs Designed) ----
+function __ldEnsureMiniHistogram(badgeEl){
+  try{
+    if(!badgeEl) return null;
+    let wrap = badgeEl.querySelector('.ld-mini-hist');
+    if(!wrap){
+      wrap = document.createElement('div');
+      wrap.className = 'ld-mini-hist';
+      wrap.setAttribute('aria-hidden','true');
+      const t = document.createElement('div'); t.className = 'ld-mini-target';
+      const d = document.createElement('div'); d.className = 'ld-mini-designed';
+      wrap.appendChild(t); wrap.appendChild(d);
+      badgeEl.appendChild(wrap);
+    }
+    return wrap;
+  }catch(_){ return null; }
+}
+
+function __ldUpdateMiniHistogram(badgeEl, targetSecs, designedSecs){
+  try{
+    if(!badgeEl) return;
+    const wrap = __ldEnsureMiniHistogram(badgeEl);
+    if(!wrap) return;
+    const tEl = wrap.querySelector('.ld-mini-target');
+    const dEl = wrap.querySelector('.ld-mini-designed');
+
+    const hideTarget = document.documentElement.classList.contains('hide-target-durations');
+
+    const t = Math.max(0, Number(targetSecs) || 0);
+    const d = Math.max(0, Number(designedSecs) || 0);
+
+    const max = hideTarget ? Math.max(1, d) : Math.max(1, t, d);
+    const tPct = hideTarget ? 0 : (t / max) * 100;
+    const dPct = (d / max) * 100;
+
+    if (tEl){
+      tEl.style.width = `${Math.min(100, Math.max(0, tPct))}%`;
+      tEl.style.display = hideTarget ? 'none' : '';
+    }
+    if (dEl){
+      dEl.style.width = `${Math.min(100, Math.max(0, dPct))}%`;
+    }
+  }catch(_){}
+}
+try { window.__ldUpdateMiniHistogram = __ldUpdateMiniHistogram; } catch(_) {}
 
 // ---- Global step duration helper (seconds) ----
 // Used for all designed-duration aggregates (module/moment), regardless of per-step unit.
@@ -15668,7 +15739,9 @@ const unitSel = momentEl.querySelector('.moment-target-unit');
                         if (designedBadge) designedBadge.classList.remove('duration-alert-light');
                         const tv = targetValEl ? parseFloat(targetValEl.value) : 0;
                         const targetSecs = (isNaN(tv) ? 0 : tv) * (isNaN(smUnitSecs) ? 60 : smUnitSecs);
-                        if (targetSecs > 0) {
+                        
+                        try { __ldUpdateMiniHistogram(designedBadge, targetSecs, smSecs); } catch(_) {}
+if (targetSecs > 0) {
                             const cmp = (typeof compareDurations === 'function')
                                 ? compareDurations(smSecs, targetSecs)
                                 : { isMatch: Math.round(smSecs) === Math.round(targetSecs), deviation: smSecs - targetSecs };
@@ -15695,7 +15768,9 @@ const unitSel = momentEl.querySelector('.moment-target-unit');
                     const tv = targetVal ? parseFloat(targetVal.value) : 0;
                     const targetSecs = (isNaN(tv) ? 0 : tv) * (isNaN(unitSecs) ? 60 : unitSecs);
 
-                    if (targetSecs > 0) {
+                    
+                    try { __ldUpdateMiniHistogram(designedBadge, targetSecs, secs); } catch(_) {}
+if (targetSecs > 0) {
                         const cmp = (typeof compareDurations === 'function')
                             ? compareDurations(secs, targetSecs)
                             : { isMatch: Math.round(secs) === Math.round(targetSecs), deviation: secs - targetSecs };
@@ -16443,7 +16518,9 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong>`;
 	                          const tv = targetVal ? parseFloat(targetVal.value) : 0;
 	                          const tu = targetUnitSel ? mapUnitToSecs(targetUnitSel.value) : 60;
 	                          const targetSecs = (isNaN(tv) ? 0 : tv) * (isNaN(tu) ? 60 : tu);
-	                          if (targetSecs > 0) {
+	                          
+	                          try { __ldUpdateMiniHistogram(designedBadge, targetSecs, moduleDesignedSecs); } catch(_) {}
+if (targetSecs > 0) {
 	                            const cmp = (typeof compareDurations === 'function')
 	                                ? compareDurations(moduleDesignedSecs, targetSecs)
 	                                : { isMatch: Math.round(moduleDesignedSecs) === Math.round(targetSecs), deviation: moduleDesignedSecs - targetSecs };
