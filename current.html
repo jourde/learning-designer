@@ -2913,6 +2913,15 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </p>
 </div>
 </details>
+<details class="group border border-slate-200 rounded-lg bg-white/0 mt-2">
+<summary class="px-3 py-2 cursor-pointer select-none flex items-center justify-between">
+<span class="compact-label" data-i18n="label_notes">Notes</span>
+<span class="material-icons-round text-slate-400 text-sm transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<div class="px-3 pb-3">
+<textarea id="param-tools-materials-notes" class="w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y bg-slate-50 text-slate-700" data-i18n-placeholder="ph_notes" placeholder="Notes formateur, ressources ou liens..." rows="3"></textarea>
+</div>
+</details>
 </div>
 </div>
 
@@ -11852,6 +11861,7 @@ function buildExportProjectData() {
                     prerequis: document.getElementById('param-prerequisites')?.value || '',
                     outilsMateriel: document.getElementById('param-tools-materials')?.value || '',
                     outilsMaterielItems: (typeof getToolsMaterialsItemsFromUI === 'function') ? getToolsMaterialsItemsFromUI() : [],
+                    outilsMaterielNotes: document.getElementById('param-tools-materials-notes')?.value || '',
                     modalite: document.getElementById('param-mode').value,
                     tailleCohorte: (document.getElementById('global-class-size')?.value),
                     dureeApprentissageValeur: (document.getElementById('param-learning-val')?.value),
@@ -12367,6 +12377,9 @@ function migrateProjectToCurrentSchema(project) {
                 durationToleranceRelPct: pr.toleranceRelativePct ?? '',
                 aims: pr.objectifs ?? '',
                 outcomesText: pr.resultatsTexte ?? '',
+                toolsMaterials: pr.outilsMateriel ?? '',
+                toolsMaterialsItems: Array.isArray(pr.outilsMaterielItems) ? pr.outilsMaterielItems : [],
+                toolsMaterialsNotes: pr.outilsMaterielNotes ?? '',
                 description: pr.description ?? '',
                 competences: (Array.isArray(pr.competences) ? pr.competences : []),
                 outcomes
@@ -12959,6 +12972,7 @@ s.unite = s.unit;
     mirror("outcomesText", p.resultatsTexte);
     mirror("toolsMaterials", p.outilsMateriel);
     try { if (!kp.toolsMaterialsItems && Array.isArray(p.outilsMaterielItems)) kp.toolsMaterialsItems = p.outilsMaterielItems; } catch (_) {}
+    mirror("toolsMaterialsNotes", p.outilsMaterielNotes);
     mirror("learningTimeUnit", p.dureeApprentissageUnite);
     mirror("designedTimeUnit", p.dureeConcueUnite);
     mirror("learningTimeVal", p.dureeApprentissageValeur);
@@ -13133,6 +13147,7 @@ const __chartsSuspendFn = window.__setChartsSuspended;
                 } catch (_) {}
                 __setVal('param-outcomes-text', __pick(__kp.outcomesText, __pr.resultatsTexte, ""));
                 __setVal('param-tools-materials', __pick(__kp.toolsMaterials, __pr.outilsMateriel, ""));
+                __setVal('param-tools-materials-notes', __pick(__kp.toolsMaterialsNotes, __pr.outilsMaterielNotes, ""));
                 try {
                     const __ti = __pick(__kp.toolsMaterialsItems, __pr.outilsMaterielItems, null);
                     if (__ti && Array.isArray(__ti)) window.__kpwizToolsMaterialsItemsFromLoad = __ti;
@@ -16663,6 +16678,7 @@ durationValue: asStr(a.duree),
         prerequisites: asStr(project.parametres?.prerequis),
         toolsMaterials: asStr(project.parametres?.outilsMateriel),
         toolsMaterialsItems: Array.isArray(project.parametres?.outilsMaterielItems) ? project.parametres.outilsMaterielItems : [],
+        toolsMaterialsNotes: asStr(project.parametres?.outilsMaterielNotes),
         mode: asStr(project.parametres?.modalite),
         cohortSize: asStr(project.parametres?.tailleCohorte),
         learningTime: `${asStr(project.parametres?.dureeApprentissageValeur)} ${asStr(project.parametres?.dureeApprentissageUnite)}`.trim(),
@@ -16911,6 +16927,13 @@ function exportDOCX() {
         children.push(new Paragraph({ text: '' }));
         children.push(new Paragraph({ text: 'Outils et matériel', heading: HeadingLevel.HEADING_1 }));
         lines(model.meta.toolsMaterials).forEach(l => children.push(new Paragraph({ text: l })));
+    }
+
+
+    if (safe(model.meta.toolsMaterialsNotes)) {
+        children.push(new Paragraph({ text: '' }));
+        children.push(new Paragraph({ text: 'Notes (outils et matériel)', heading: HeadingLevel.HEADING_1 }));
+        lines(model.meta.toolsMaterialsNotes).forEach(l => children.push(new Paragraph({ text: l })));
     }
 
     if (model.meta.competences && model.meta.competences.length) {
@@ -17452,8 +17475,10 @@ function __deprecated__exportRichText_1() {
 
                 <h3>${t.label_tools_materials || 'Outils et matériel'}</h3>
                 <p>${__nl2br(document.getElementById('param-tools-materials')?.value || '')}</p>
+                ${(() => { const __n=(document.getElementById('param-tools-materials-notes')?.value||'').trim(); return __n ? `<p><strong>${t.label_notes || 'Notes'}:</strong> ${__nl2br(__n)}</p>` : ''; })()}
 
                 <p>${__nl2br(document.getElementById('param-tools-materials')?.value || '')}</p>
+                ${(() => { const __n=(document.getElementById('param-tools-materials-notes')?.value||'').trim(); return __n ? `<p><strong>${t.label_notes || 'Notes'}:</strong> ${__nl2br(__n)}</p>` : ''; })()}
 
                 <h3>${t.label_aims}</h3>
                 <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
@@ -17954,6 +17979,7 @@ function __deprecated__exportCSV_2() {
 
                 <h3>${t.label_tools_materials || 'Outils et matériel'}</h3>
                 <p>${__nl2br(document.getElementById('param-tools-materials')?.value || '')}</p>
+                ${(() => { const __n=(document.getElementById('param-tools-materials-notes')?.value||'').trim(); return __n ? `<p><strong>${t.label_notes || 'Notes'}:</strong> ${__nl2br(__n)}</p>` : ''; })()}
 
                 <h3>${t.label_aims}</h3>
                 <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
@@ -18522,6 +18548,7 @@ function __deprecated__exportCSV_3() {
 
                 <h3>${t.label_tools_materials || 'Outils et matériel'}</h3>
                 <p>${__nl2br(document.getElementById('param-tools-materials')?.value || '')}</p>
+                ${(() => { const __n=(document.getElementById('param-tools-materials-notes')?.value||'').trim(); return __n ? `<p><strong>${t.label_notes || 'Notes'}:</strong> ${__nl2br(__n)}</p>` : ''; })()}
 
                 <h3>${t.label_aims}</h3>
                 <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
@@ -18967,6 +18994,7 @@ function __deprecated__exportCSV_4() {
 
                 <h3>${t.label_tools_materials || 'Outils et matériel'}</h3>
                 <p>${__nl2br(document.getElementById('param-tools-materials')?.value || '')}</p>
+                ${(() => { const __n=(document.getElementById('param-tools-materials-notes')?.value||'').trim(); return __n ? `<p><strong>${t.label_notes || 'Notes'}:</strong> ${__nl2br(__n)}</p>` : ''; })()}
 
                 <h3>${t.label_aims}</h3>
                 <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
@@ -19190,6 +19218,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 '\\b ' + escapeRtf(t.label_target_audience) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-target-audience')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_prerequisites) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-prerequisites')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_tools_materials || 'Outils et matériel') + ':\\b0\\par ' + escapeRtf(document.getElementById('param-tools-materials')?.value || '') + '\\par\\par' +
+                (function(){ const __n=(document.getElementById('param-tools-materials-notes')?.value||'').trim(); return __n ? ('\\b ' + escapeRtf(t.label_notes || 'Notes') + ':\\b0\\par ' + escapeRtf(__n) + '\\par\\par') : ''; })() +
                 '\\b ' + escapeRtf(t.label_aims) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-aims')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_outcomes_text) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-outcomes-text')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_outcomes) + ':\\b0\\par ';
@@ -19367,6 +19396,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
 
                 <h3>${t.label_tools_materials || 'Outils et matériel'}</h3>
                 <p>${__nl2br(document.getElementById('param-tools-materials')?.value || '')}</p>
+                ${(() => { const __n=(document.getElementById('param-tools-materials-notes')?.value||'').trim(); return __n ? `<p><strong>${t.label_notes || 'Notes'}:</strong> ${__nl2br(__n)}</p>` : ''; })()}
 
                 <h3>${t.label_aims}</h3>
                 <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
@@ -19589,6 +19619,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 '\\b ' + escapeRtf(t.label_target_audience) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-target-audience')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_prerequisites) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-prerequisites')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_tools_materials || 'Outils et matériel') + ':\\b0\\par ' + escapeRtf(document.getElementById('param-tools-materials')?.value || '') + '\\par\\par' +
+                (function(){ const __n=(document.getElementById('param-tools-materials-notes')?.value||'').trim(); return __n ? ('\\b ' + escapeRtf(t.label_notes || 'Notes') + ':\\b0\\par ' + escapeRtf(__n) + '\\par\\par') : ''; })() +
                 '\\b ' + escapeRtf(t.label_aims) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-aims')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_outcomes_text) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-outcomes-text')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_outcomes) + ':\\b0\\par ';
@@ -19891,6 +19922,7 @@ function __deprecated__exportRichText_6() {
 
                 <h3>${t.label_tools_materials || 'Outils et matériel'}</h3>
                 <p>${__nl2br(document.getElementById('param-tools-materials')?.value || '')}</p>
+                ${(() => { const __n=(document.getElementById('param-tools-materials-notes')?.value||'').trim(); return __n ? `<p><strong>${t.label_notes || 'Notes'}:</strong> ${__nl2br(__n)}</p>` : ''; })()}
 
                 <h3>${t.label_aims}</h3>
                 <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
@@ -20193,6 +20225,7 @@ function exportCSV() {
 
                 <h3>${t.label_tools_materials || 'Outils et matériel'}</h3>
                 <p>${__nl2br(document.getElementById('param-tools-materials')?.value || '')}</p>
+                ${(() => { const __n=(document.getElementById('param-tools-materials-notes')?.value||'').trim(); return __n ? `<p><strong>${t.label_notes || 'Notes'}:</strong> ${__nl2br(__n)}</p>` : ''; })()}
 
                 <h3>${t.label_aims}</h3>
                 <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
@@ -20416,6 +20449,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 '\\b ' + escapeRtf(t.label_target_audience) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-target-audience')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_prerequisites) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-prerequisites')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_tools_materials || 'Outils et matériel') + ':\\b0\\par ' + escapeRtf(document.getElementById('param-tools-materials')?.value || '') + '\\par\\par' +
+                (function(){ const __n=(document.getElementById('param-tools-materials-notes')?.value||'').trim(); return __n ? ('\\b ' + escapeRtf(t.label_notes || 'Notes') + ':\\b0\\par ' + escapeRtf(__n) + '\\par\\par') : ''; })() +
                 '\\b ' + escapeRtf(t.label_aims) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-aims')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_outcomes_text) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-outcomes-text')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_outcomes) + ':\\b0\\par ';
@@ -20672,6 +20706,7 @@ let html = `
 
                 <h3>${t.label_tools_materials || 'Outils et matériel'}</h3>
                 <p>${__nl2br(document.getElementById('param-tools-materials')?.value || '')}</p>
+                ${(() => { const __n=(document.getElementById('param-tools-materials-notes')?.value||'').trim(); return __n ? `<p><strong>${t.label_notes || 'Notes'}:</strong> ${__nl2br(__n)}</p>` : ''; })()}
 
                 <h3>${t.label_aims}</h3>
                 <p>${__nl2br(document.getElementById('param-aims')?.value)}</p>
@@ -20988,6 +21023,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 '\\b ' + escapeRtf(t.label_target_audience) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-target-audience')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_prerequisites) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-prerequisites')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_tools_materials || 'Outils et matériel') + ':\\b0\\par ' + escapeRtf(document.getElementById('param-tools-materials')?.value || '') + '\\par\\par' +
+                (function(){ const __n=(document.getElementById('param-tools-materials-notes')?.value||'').trim(); return __n ? ('\\b ' + escapeRtf(t.label_notes || 'Notes') + ':\\b0\\par ' + escapeRtf(__n) + '\\par\\par') : ''; })() +
                 '\\b ' + escapeRtf(t.label_aims) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-aims')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_outcomes_text) + ':\\b0\\par ' + escapeRtf(document.getElementById('param-outcomes-text')?.value || '') + '\\par\\par' +
                 '\\b ' + escapeRtf(t.label_outcomes) + ':\\b0\\par ';
@@ -21213,6 +21249,7 @@ md += `- **Horodatage d'export :** ${new Date().toISOString()}\n\n`;
             md += `### ${t.label_target_audience}\n${document.getElementById('param-target-audience')?.value || ''}\n\n`;
             md += `### ${t.label_prerequisites}\n${document.getElementById('param-prerequisites')?.value || ''}\n\n`;
             md += `### ${t.label_tools_materials || 'Outils et matériel'}\n${document.getElementById('param-tools-materials')?.value || ''}\n\n`;
+            { const __n=(document.getElementById('param-tools-materials-notes')?.value||'').trim(); if(__n){ md += `### ${t.label_notes || 'Notes'}\n${__n}\n\n`; } }
             md += `### ${t.label_aims}\n${document.getElementById('param-aims').value}\n\n`;
             md += `### ${t.label_outcomes_text}\n${document.getElementById('param-outcomes-text')?.value || ''}\n\n`;
             md += `### ${t.label_outcomes}\n`;
