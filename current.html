@@ -4803,6 +4803,14 @@ function __ldQueryDesignedStepCards(scopeEl) {
 }
 try { window.__ldQueryDesignedStepCards = __ldQueryDesignedStepCards; } catch (_) {}
 
+
+function __ldQueryAllDesignedStepCards(scopeEl) {
+  try {
+    if (!scopeEl) return [];
+    return Array.from(scopeEl.querySelectorAll('.activity-steps-container .step-card, .submoment-steps .step-card'));
+  } catch (_) { return []; }
+}
+try { window.__ldQueryAllDesignedStepCards = __ldQueryAllDesignedStepCards; } catch (_) {}
 // LD_ESCAPE_HTML_GLOBAL_V1
 function __esc(s){
   const str = String(s ?? "");
@@ -5986,7 +5994,7 @@ function initViewLevelSegmentedUI() {
         function _parseCategorisedListFile(content, fileName) {
             const name = String(fileName || '').toLowerCase();
             const isTxt = name.endsWith('.txt');
-            const raw = String(content || '').replace(/﻿/g, '');
+            const raw = String(content || '').replace(/\uFEFF/g, '');
             const lines = raw.split(/\r?\n/);
             const out = [];
 
@@ -11897,7 +11905,7 @@ function buildExportProjectData() {
                 };
 
                 const momentsRoot = actEl.querySelector('.activity-moments-container');
-                const momentEls = momentsRoot ? Array.from(momentsRoot.querySelectorAll('.moment-group')).filter(m => !__ldIsIgnored(m)) : [];
+                const momentEls = momentsRoot ? Array.from(momentsRoot.querySelectorAll('.moment-group')) : [];
 
                 if (momentEls && momentEls.length) {
                     momentEls.forEach(momentEl => {
@@ -11940,7 +11948,7 @@ function buildExportProjectData() {
                                         targetUnit: String(smTargetUnit),
                                         steps: []
                                     };
-                                    __ldQueryDesignedStepCards(smEl).forEach(stepEl => {
+                                    __ldQueryAllDesignedStepCards(smEl).forEach(stepEl => {
                                         const stepObj = __ldSerializeStepFromEl(stepEl);
                                         smLegacy.activites.push(stepObj);
                                         smCanon.steps.push({ ...stepObj });
@@ -11953,7 +11961,7 @@ function buildExportProjectData() {
 moduleData.moments.push(momentData);
                     });
                 } else {
-                    __ldFilterStepNodeList(actEl.querySelectorAll('.step-card')).forEach(stepEl => {
+                    Array.from(actEl.querySelectorAll('.step-card') || []).forEach(stepEl => {
                         moduleData.activites.push(__ldSerializeStepFromEl(stepEl));
                     });
                 }
@@ -16518,6 +16526,8 @@ function handleExport(select) {
 
 function buildExportModel() {
     // Centralised export model derived from the same source as project save (single point of truth).
+    // This model is used by XLSX/DOCX exports and aims to keep a stable, explicit structure:
+    // Modules → Moments → Sub-moments → Activities.
     const t = translations[currentLang] || translations.fr;
     const project = buildExportProjectData();
 
@@ -16564,6 +16574,68 @@ function buildExportModel() {
         return (t && t[k]) ? t[k] : (fallback || asStr(key));
     };
 
+    const __mapActivity = (a) => {
+        const duree = asStr(a.duree);
+        const unite = asStr(a.unite);
+        const minutes = Math.round((asNum(duree) * asNum(unite) / 60) * 100) / 100;
+        const evalKey = asStr(a.evaluation || 'Aucune');
+
+        const toolsTargets = Array.isArray(a.outilsMaterielCibles) ? a.outilsMaterielCibles : [];
+        const toolsNotesObj = __normaliseToolsMaterialsNotes(a.outilsMaterielNotes ?? a.toolsMaterialsNotes ?? a.toolsMaterialsNotesByItem ?? {});
+        const toolsTargetsWithNotesText = (toolsTargets || []).map(v0 => {
+            const v = String(v0 || '').trim();
+            if (!v) return null;
+            const nn = (toolsNotesObj && Object.prototype.hasOwnProperty.call(toolsNotesObj, v)) ? String(toolsNotesObj[v] || '').trim() : '';
+            return nn ? (v + ' — ' + __toOneLineNote(nn)) : v;
+        }).filter(Boolean).join('; ');
+
+        const csIds = Array.isArray(a.competencesSujet) ? a.competencesSujet : (Array.isArray(a.competences) ? a.competences : []);
+        const ctIds = Array.isArray(a.competencesTransversales) ? a.competencesTransversales : [];
+
+        return {
+            title: ((a && a.ignored) ? '[IGNORÉ] ' : '') + asStr(a.titre),
+            objective: asStr(a.objectifActivite),
+            tasks: asStr(a.aFaire),
+            trainerTasks: asStr(a.aFaireFormateur),
+            notes: asStr(a.notes),
+            evaluationSuivi: asStr(a.evaluationSuivi),
+            linksReferences: asStr(a.liensReferences),
+            typeKey: asStr(a.type),
+            typeLabel: safeTypeLabel(asStr(a.type)),
+            groupingKey: asStr(a.regroupement),
+            groupingLabel: safeOptLabel('opt', (a.regroupement === 'class' ? 'whole_class' : a.regroupement === 'groups' ? 'groups' : a.regroupement === 'individual' ? 'individual' : a.regroupement), asStr(a.regroupement)),
+            groupCount: asStr(a.nombreGroupes),
+            groupSize: asStr(a.tailleGroupe),
+            groupDetails: asStr(a.detailsRegroupement),
+            aimsTargets: Array.isArray(a.objectifsCibles) ? a.objectifsCibles : [],
+            outcomesTargets: Array.isArray(a.resultatsApprentissageCibles) ? a.resultatsApprentissageCibles : [],
+            toolsMaterialsTargets: toolsTargets,
+            aimsTargetsText: (Array.isArray(a.objectifsCibles) ? a.objectifsCibles : []).join('; '),
+            outcomesTargetsText: (Array.isArray(a.resultatsApprentissageCibles) ? a.resultatsApprentissageCibles : []).join('; '),
+            toolsMaterialsTargetsText: (toolsTargets || []).join('; '),
+            toolsMaterialsNotes: toolsNotesObj,
+            toolsMaterialsTargetsWithNotesText,
+            trainerKey: asStr(a.formateur),
+            placeKey: asStr(a.lieu),
+            timeKey: asStr(a.temps),
+            evaluationKey: evalKey,
+            trainerLabel: safeOptLabel('opt', asStr(a.formateur), asStr(a.formateur)),
+            placeLabel: safeOptLabel('opt', asStr(a.lieu), asStr(a.lieu)),
+            timeLabel: safeOptLabel('opt', asStr(a.temps), asStr(a.temps)),
+            evaluationLabel: evalKey,
+            durationValue: duree,
+            durationUnitSecs: unite,
+            durationLabel: `${duree} ${unitLabelFromSecs(unite)}`.trim(),
+            durationMinutes: minutes,
+            competencesSujetIds: csIds,
+            competencesTransversalesIds: ctIds,
+            competencesSujetLabels: __idsToLabels(csIds, __compMap),
+            competencesTransversalesLabels: __idsToLabels(ctIds, __compTMap),
+            competencesSujetText: (__idsToLabels(csIds, __compMap)).join(', '),
+            competencesTransversalesText: (__idsToLabels(ctIds, __compTMap)).join(', ')
+        };
+    };
+
     const modules = (project.modules || []).map((m) => {
         const __rawMoments = (m.moments || []);
         const __momentsSource = (__rawMoments && __rawMoments.length) ? __rawMoments : [{
@@ -16573,81 +16645,53 @@ function buildExportModel() {
             uniteDureeCible: '',
             activites: (m.activites || [])
         }];
+
         const moments = (__momentsSource || []).map((mo) => {
-            // Build activities list - handle both direct activities and those in sub-moments
-            let allActivities = [];
-            
-            // Check if moment has sub-moments (sousMoments or subMoments)
-            const subMoments = mo.sousMoments || mo.subMoments || [];
-            
-            if (subMoments && subMoments.length > 0) {
-                // Moment has sub-moments - collect activities from each sub-moment
-                subMoments.forEach(sm => {
-                    const smActivities = sm.activites || sm.steps || [];
-                    allActivities = allActivities.concat(smActivities);
-                });
-            } else {
-                // Moment has direct activities
-                allActivities = mo.activites || [];
-            }
-            
-            return {
-                title: asStr(mo.titre),
+            // Normalise sub-moments (keep both legacy FR keys and canonical EN keys)
+            let smSrc = [];
+            if (Array.isArray(mo.sousMoments) && mo.sousMoments.length) smSrc = mo.sousMoments;
+            else if (Array.isArray(mo.subMoments) && mo.subMoments.length) smSrc = mo.subMoments;
+
+            const momentObj = {
+                title: ((mo && mo.ignored) ? '[IGNORÉ] ' : '') + asStr(mo.titre),
                 description: asStr(mo.description),
                 target: fmtTarget(mo.dureeCible, mo.uniteDureeCible),
                 targetRaw: { value: asStr(mo.dureeCible), unit: asStr(mo.uniteDureeCible) },
-                activities: allActivities.map((a) => ({
-                title: asStr(a.titre),
-                objective: asStr(a.objectifActivite),
-                tasks: asStr(a.aFaire),
-                trainerTasks: asStr(a.aFaireFormateur),
-                notes: asStr(a.notes),
-                evaluationSuivi: asStr(a.evaluationSuivi),
-                linksReferences: asStr(a.liensReferences),
-                typeKey: asStr(a.type),
-                typeLabel: safeTypeLabel(asStr(a.type)),
-                groupingKey: asStr(a.regroupement),
-                groupingLabel: safeOptLabel('opt', (a.regroupement === 'class' ? 'whole_class' : a.regroupement === 'groups' ? 'groups' : a.regroupement === 'individual' ? 'individual' : a.regroupement), asStr(a.regroupement)),
-                groupCount: asStr(a.nombreGroupes),
-                groupSize: asStr(a.tailleGroupe),
-                groupDetails: asStr(a.detailsRegroupement),
-                aimsTargets: Array.isArray(a.objectifsCibles) ? a.objectifsCibles : [],
-                outcomesTargets: Array.isArray(a.resultatsApprentissageCibles) ? a.resultatsApprentissageCibles : [],
-                toolsMaterialsTargets: Array.isArray(a.outilsMaterielCibles) ? a.outilsMaterielCibles : [],
-                aimsTargetsText: (Array.isArray(a.objectifsCibles) ? a.objectifsCibles : []).join('; '),
-                outcomesTargetsText: (Array.isArray(a.resultatsApprentissageCibles) ? a.resultatsApprentissageCibles : []).join('; '),
-                toolsMaterialsTargetsText: (Array.isArray(a.outilsMaterielCibles) ? a.outilsMaterielCibles : []).join('; '),
-                toolsMaterialsNotes: __normaliseToolsMaterialsNotes(a.outilsMaterielNotes ?? a.toolsMaterialsNotes ?? a.toolsMaterialsNotesByItem ?? {}),
-                toolsMaterialsTargetsWithNotesText: (function(){
-                    const __t = (Array.isArray(a.outilsMaterielCibles) ? a.outilsMaterielCibles : []);
-                    const __n = __normaliseToolsMaterialsNotes(a.outilsMaterielNotes ?? a.toolsMaterialsNotes ?? a.toolsMaterialsNotesByItem ?? {});
-                    return (__t || []).map(v0 => {
-                        const v = String(v0 || '').trim();
-                        if (!v) return null;
-                        const nn = (__n && Object.prototype.hasOwnProperty.call(__n, v)) ? String(__n[v] || '').trim() : '';
-                        return nn ? (v + ' — ' + __toOneLineNote(nn)) : v;
-                    }).filter(Boolean).join('; ');
-                })(),
-                trainerKey: asStr(a.formateur),
-                placeKey: asStr(a.lieu),
-                timeKey: asStr(a.temps),
-                                evaluationKey: asStr(a.evaluation || 'Aucune'),
-trainerLabel: safeOptLabel('opt', asStr(a.formateur), asStr(a.formateur)),
-                placeLabel: safeOptLabel('opt', asStr(a.lieu), asStr(a.lieu)),
-                timeLabel: safeOptLabel('opt', asStr(a.temps), asStr(a.temps)),
-                                evaluationLabel: asStr(a.evaluation || 'Aucune'),
-durationValue: asStr(a.duree),
-                durationUnitSecs: asStr(a.unite),
-                durationLabel: `${asStr(a.duree)} ${unitLabelFromSecs(a.unite)}`.trim(),
-                durationMinutes: Math.round((asNum(a.duree) * asNum(a.unite) / 60) * 100) / 100,
-                competencesSujetIds: Array.isArray(a.competencesSujet) ? a.competencesSujet : (Array.isArray(a.competences) ? a.competences : []),
-                competencesTransversalesIds: Array.isArray(a.competencesTransversales) ? a.competencesTransversales : [],
-                competencesSujetLabels: __idsToLabels((Array.isArray(a.competencesSujet) ? a.competencesSujet : (Array.isArray(a.competences) ? a.competences : [])), __compMap),
-                competencesTransversalesLabels: __idsToLabels((Array.isArray(a.competencesTransversales) ? a.competencesTransversales : []), __compTMap),
-                competencesSujetText: (__idsToLabels((Array.isArray(a.competencesSujet) ? a.competencesSujet : (Array.isArray(a.competences) ? a.competences : [])), __compMap)).join(', '),
-                competencesTransversalesText: (__idsToLabels((Array.isArray(a.competencesTransversales) ? a.competencesTransversales : []), __compTMap)).join(', ')
-            }))
+                submoments: []
             };
+
+            if (smSrc && smSrc.length) {
+                momentObj.submoments = smSrc.map((sm) => {
+                    // Support both shapes:
+                    // - legacy: {titre, dureeCible, uniteDureeCible, activites:[...]}
+                    // - canonical: {title, targetTime, targetUnit, steps:[...]}
+                    const smTitle = (((sm && sm.ignored) ? '[IGNORÉ] ' : '') + asStr(sm.titre ?? sm.title));
+                    const smTargetVal = asStr(sm.dureeCible ?? sm.targetTime);
+                    const smTargetUnit = asStr(sm.uniteDureeCible ?? sm.targetUnit);
+                    const acts = (sm.activites || sm.steps || []);
+                    return {
+                        title: smTitle,
+                        description: asStr(sm.description || ''),
+                        target: fmtTarget(smTargetVal, smTargetUnit),
+                        targetRaw: { value: smTargetVal, unit: smTargetUnit },
+                        activities: (acts || []).map(__mapActivity)
+                    };
+                });
+            } else {
+                // No sub-moments: keep a single implicit sub-moment to preserve a stable depth
+                const acts = (mo.activites || []);
+                momentObj.submoments = [{
+                    title: '',
+                    description: '',
+                    target: '',
+                    targetRaw: { value: '', unit: '' },
+                    activities: (acts || []).map(__mapActivity)
+                }];
+            }
+
+            // Backward-compatible flattened list (some exporters may still rely on it)
+            momentObj.activities = momentObj.submoments.reduce((acc, sm) => acc.concat(sm.activities || []), []);
+            return momentObj;
         });
 
         return {
@@ -16697,8 +16741,10 @@ durationValue: asStr(a.duree),
     return { meta, modules };
 }
 
+
 function buildTabularExportRows(model) {
     // Tabular export for XLSX (menu label may say CSV). Keeps a strict header↔row parity.
+    // Structure: Module → Moment → Sous-moment → Activité (une ligne par activité).
     const headers = [
         'Module #',
         'Module titre',
@@ -16713,6 +16759,10 @@ function buildTabularExportRows(model) {
         'Moment titre',
         'Moment description',
         'Moment durée cible',
+        'Sous-moment #',
+        'Sous-moment titre',
+        'Sous-moment description',
+        'Sous-moment durée cible',
         'Activité #',
         'Activité titre',
         'Objectif',
@@ -16762,68 +16812,92 @@ function buildTabularExportRows(model) {
                 const momDesc = safe(mom.description);
                 const momTarget = safe(mom.target);
 
-                const acts = (mom.activities || []);
-                if (acts.length) {
-                    acts.forEach((act, ai) => {
-                        const activityIdx = ai + 1;
-                        rows.push([
-                            moduleIdx,
-                            modTitle,
-                            modDesc,
-                            modNotes,
-                            modTarget,
-                            modAims,
-                            modOut,
-                            modCs,
-                            modCt,
-                            momentIdx,
-                            momTitle,
-                            momDesc,
-                            momTarget,
-                            activityIdx,
-                            safe(act.title),
-                            safe(act.objective),
-                            safe(act.tasks),
-                            safe(act.trainerTasks),
-                            safe(act.evaluationLabel || act.evaluationKey || act.evaluation || ''),
-                            safe(act.evaluationSuivi),
-                            safe(act.notes),
-                            safe(act.linksReferences),
-                            safe(act.typeLabel),
-                            safe(act.groupingLabel),
-                            safe(act.groupSize),
-                            safe(act.groupCount),
-                            safe(act.groupDetails),
-                            safe(act.aimsTargetsText),
-                            safe(act.outcomesTargetsText),
-                            safe(act.toolsMaterialsTargetsWithNotesText || act.toolsMaterialsTargetsText),
-                            safe(act.placeLabel),
-                            safe(act.timeLabel),
-                            safe(act.trainerLabel),
-                            safe(act.competencesSujetText),
-                            safe(act.competencesTransversalesText),
-                            safe(act.durationMinutes)
-                        ]);
-                    });
-                } else {
-                    const r = blankRow();
-                    r[0] = moduleIdx;
-                    r[1] = modTitle;
-                    r[2] = modDesc;
-                    r[3] = modNotes;
-                    r[4] = modTarget;
-                    r[5] = modAims;
-                    r[6] = modOut;
-                    r[7] = modCs;
-                    r[8] = modCt;
-                    r[9] = momentIdx;
-                    r[10] = momTitle;
-                    r[11] = momDesc;
-                    r[12] = momTarget;
-                    rows.push(r);
-                }
+                const submoments = (mom.submoments && mom.submoments.length) ? mom.submoments : [{
+                    title: '',
+                    description: '',
+                    target: '',
+                    activities: (mom.activities || [])
+                }];
+
+                submoments.forEach((sm, smj) => {
+                    const smIdx = smj + 1;
+                    const smTitle = safe(sm.title);
+                    const smDesc = safe(sm.description);
+                    const smTarget = safe(sm.target);
+
+                    const acts = (sm.activities || []);
+                    if (acts.length) {
+                        acts.forEach((act, ai) => {
+                            const activityIdx = ai + 1;
+                            rows.push([
+                                moduleIdx,
+                                modTitle,
+                                modDesc,
+                                modNotes,
+                                modTarget,
+                                modAims,
+                                modOut,
+                                modCs,
+                                modCt,
+                                momentIdx,
+                                momTitle,
+                                momDesc,
+                                momTarget,
+                                smTitle || smDesc || smTarget ? smIdx : '',     // keep blank when it's the implicit sub-moment
+                                smTitle,
+                                smDesc,
+                                smTarget,
+                                activityIdx,
+                                safe(act.title),
+                                safe(act.objective),
+                                safe(act.tasks),
+                                safe(act.trainerTasks),
+                                safe(act.evaluationLabel || act.evaluationKey || act.evaluation || ''),
+                                safe(act.evaluationSuivi),
+                                safe(act.notes),
+                                safe(act.linksReferences),
+                                safe(act.typeLabel),
+                                safe(act.groupingLabel),
+                                safe(act.groupSize),
+                                safe(act.groupCount),
+                                safe(act.groupDetails),
+                                safe(act.aimsTargetsText),
+                                safe(act.outcomesTargetsText),
+                                safe(act.toolsMaterialsTargetsWithNotesText || act.toolsMaterialsTargetsText),
+                                safe(act.placeLabel),
+                                safe(act.timeLabel),
+                                safe(act.trainerLabel),
+                                safe(act.competencesSujetText),
+                                safe(act.competencesTransversalesText),
+                                safe(act.durationMinutes)
+                            ]);
+                        });
+                    } else {
+                        // Keep a structural row even when there is no activity
+                        const r = blankRow();
+                        r[0] = moduleIdx;
+                        r[1] = modTitle;
+                        r[2] = modDesc;
+                        r[3] = modNotes;
+                        r[4] = modTarget;
+                        r[5] = modAims;
+                        r[6] = modOut;
+                        r[7] = modCs;
+                        r[8] = modCt;
+                        r[9] = momentIdx;
+                        r[10] = momTitle;
+                        r[11] = momDesc;
+                        r[12] = momTarget;
+                        r[13] = smTitle || smDesc || smTarget ? smIdx : '';
+                        r[14] = smTitle;
+                        r[15] = smDesc;
+                        r[16] = smTarget;
+                        rows.push(r);
+                    }
+                });
             });
         } else {
+            // No moments: keep a minimal structural row
             const r = blankRow();
             r[0] = moduleIdx;
             r[1] = modTitle;
@@ -16840,6 +16914,7 @@ function buildTabularExportRows(model) {
 
     return rows;
 }
+
 
 
 
@@ -17000,63 +17075,91 @@ function exportDOCX() {
                 lines(mom.description).forEach(l => children.push(new Paragraph({ text: l })));
             }
 
-            (mom.activities || []).forEach((act, ai) => {
-                const actIdx = ai + 1;
-                const actTitle = safe(act.title) || `Activité ${actIdx}`;
-                children.push(new Paragraph({ text: `Activité ${moduleIdx}.${momentIdx}.${actIdx} : ${actTitle}`, heading: HeadingLevel.HEADING_4 }));
+                        const __submoments = (mom.submoments && mom.submoments.length) ? mom.submoments : [{
+                title: '',
+                description: '',
+                target: '',
+                activities: (mom.activities || [])
+            }];
 
-                const metaParts = [];
-                if (safe(act.typeLabel)) metaParts.push(`Type : ${safe(act.typeLabel)}`);
-                if (safe(act.groupingLabel)) {
-                    const __gBits = [];
-                    if (safe(act.groupSize)) __gBits.push(`taille: ${safe(act.groupSize)}`);
-                    if (safe(act.groupCount)) __gBits.push(`nb groupes: ${safe(act.groupCount)}`);
-                    if (safe(act.groupDetails)) __gBits.push(`détails: ${safe(act.groupDetails)}`);
-                    metaParts.push(`Regroupement : ${safe(act.groupingLabel)}${__gBits.length ? ` (${__gBits.join(', ')})` : ''}`);
-                }
-                const modality = [safe(act.trainerLabel), safe(act.placeLabel), safe(act.timeLabel)].filter(Boolean).join(', ');
-                if (modality) metaParts.push(`Modalité : ${modality}`);
-                const evalLabel = safe(act.evaluationLabel || act.evaluationKey || act.evaluation || '');
-                if (evalLabel) metaParts.push(`Évaluation : ${evalLabel}`);
-                if (act.durationMinutes) metaParts.push(`Durée (min) : ${act.durationMinutes}`);
+            __submoments.forEach((sm, smj) => {
+                const smIdx = smj + 1;
+                const smTitle = safe(sm.title);
+                const smDesc = safe(sm.description);
+                const smTarget = safe(sm.target);
+                const smHasExplicit = !!(smTitle || smDesc || smTarget);
 
-                if (metaParts.length) {
-                    children.push(new Paragraph({ text: metaParts.join(' | ') }));
+                if (smHasExplicit) {
+                    children.push(new Paragraph({ text: `Sous-moment ${moduleIdx}.${momentIdx}.${smIdx} : ${smTitle || `Sous-moment ${smIdx}`}`, heading: HeadingLevel.HEADING_4 }));
+                    if (smTarget) {
+                        children.push(new Paragraph({ children: [new TextRun({ text: 'Durée cible : ', bold: true }), new TextRun(smTarget)] }));
+                    }
+                    if (smDesc) {
+                        lines(smDesc).forEach(l => children.push(new Paragraph({ text: l })));
+                    }
                 }
 
-                if (safe(act.objective)) {
-                    children.push(new Paragraph({ children: [new TextRun({ text: 'Objectif : ', bold: true }), new TextRun(safe(act.objective))] }));
-                }
-                if (safe(act.aimsTargetsText)) {
-                    children.push(new Paragraph({ children: [new TextRun({ text: 'Objectifs ciblés : ', bold: true }), new TextRun(safe(act.aimsTargetsText))] }));
-                }
-                if (safe(act.outcomesTargetsText)) {
-                    children.push(new Paragraph({ children: [new TextRun({ text: 'Résultats ciblés : ', bold: true }), new TextRun(safe(act.outcomesTargetsText))] }));
-                }
-                if (safe(act.toolsMaterialsTargetsWithNotesText || act.toolsMaterialsTargetsText)) {
-                    children.push(new Paragraph({ children: [new TextRun({ text: 'Outils et matériel (activité) : ', bold: true }), new TextRun(safe(act.toolsMaterialsTargetsWithNotesText || act.toolsMaterialsTargetsText))] }));
-                }
-                if (safe(act.tasks)) {
-                    children.push(new Paragraph({ children: [new TextRun({ text: 'Ce que les apprenants doivent faire : ', bold: true }), new TextRun(safe(act.tasks))] }));
-                }
-                if (safe(act.trainerTasks)) {
-                    children.push(new Paragraph({ children: [new TextRun({ text: 'Ce que le formateur doit faire : ', bold: true }), new TextRun(safe(act.trainerTasks))] }));
-                }
-                if (safe(act.evaluationSuivi)) {
-                    children.push(new Paragraph({ children: [new TextRun({ text: 'Évaluation / suivi : ', bold: true }), new TextRun(safe(act.evaluationSuivi))] }));
-                }
-                if (safe(act.notes)) {
-                    children.push(new Paragraph({ children: [new TextRun({ text: 'Notes : ', bold: true }), new TextRun(safe(act.notes))] }));
-                }
-                if (safe(act.linksReferences)) {
-                    children.push(new Paragraph({ children: [new TextRun({ text: 'Liens / références : ', bold: true }), new TextRun(safe(act.linksReferences))] }));
-                }
-                // Competences (subject + transversal)
-        if (safe(act.competencesSujetText) || safe(act.competencesTransversalesText)) {
-            children.push(new Paragraph({ children: [new TextRun({ text: 'Compétences du sujet : ', bold: true }), new TextRun(safe(act.competencesSujetText) || '—')] }));
-            children.push(new Paragraph({ children: [new TextRun({ text: 'Compétences transversales : ', bold: true }), new TextRun(safe(act.competencesTransversalesText) || '—')] }));
-        }
-                children.push(new Paragraph({ text: '' }));
+                const acts = (sm.activities || []);
+                acts.forEach((act, ai) => {
+                    const actIdx = ai + 1;
+                    const actTitle = safe(act.title) || `Activité ${actIdx}`;
+                    const actHeading = smHasExplicit ? HeadingLevel.HEADING_5 : HeadingLevel.HEADING_4;
+                    const actPrefix = smHasExplicit ? `${moduleIdx}.${momentIdx}.${smIdx}.${actIdx}` : `${moduleIdx}.${momentIdx}.${actIdx}`;
+                    children.push(new Paragraph({ text: `Activité ${actPrefix} : ${actTitle}`, heading: actHeading }));
+
+                    const metaParts = [];
+                    if (safe(act.typeLabel)) metaParts.push(`Type : ${safe(act.typeLabel)}`);
+                    if (safe(act.groupingLabel)) {
+                        const __gBits = [];
+                        if (safe(act.groupSize)) __gBits.push(`taille: ${safe(act.groupSize)}`);
+                        if (safe(act.groupCount)) __gBits.push(`nb groupes: ${safe(act.groupCount)}`);
+                        if (safe(act.groupDetails)) __gBits.push(`détails: ${safe(act.groupDetails)}`);
+                        metaParts.push(`Regroupement : ${safe(act.groupingLabel)}${__gBits.length ? ` (${__gBits.join(', ')})` : ''}`);
+                    }
+                    const modality = [safe(act.trainerLabel), safe(act.placeLabel), safe(act.timeLabel)].filter(Boolean).join(', ');
+                    if (modality) metaParts.push(`Modalité : ${modality}`);
+                    const evalLabel = safe(act.evaluationLabel || act.evaluationKey || act.evaluation || '');
+                    if (evalLabel) metaParts.push(`Évaluation : ${evalLabel}`);
+                    if (act.durationMinutes) metaParts.push(`Durée (min) : ${act.durationMinutes}`);
+
+                    if (metaParts.length) {
+                        children.push(new Paragraph({ text: metaParts.join(' | ') }));
+                    }
+
+                    if (safe(act.objective)) {
+                        children.push(new Paragraph({ children: [new TextRun({ text: 'Objectif : ', bold: true }), new TextRun(safe(act.objective))] }));
+                    }
+                    if (safe(act.aimsTargetsText)) {
+                        children.push(new Paragraph({ children: [new TextRun({ text: 'Objectifs ciblés : ', bold: true }), new TextRun(safe(act.aimsTargetsText))] }));
+                    }
+                    if (safe(act.outcomesTargetsText)) {
+                        children.push(new Paragraph({ children: [new TextRun({ text: 'Résultats ciblés : ', bold: true }), new TextRun(safe(act.outcomesTargetsText))] }));
+                    }
+                    if (safe(act.toolsMaterialsTargetsWithNotesText || act.toolsMaterialsTargetsText)) {
+                        children.push(new Paragraph({ children: [new TextRun({ text: 'Outils et matériel (activité) : ', bold: true }), new TextRun(safe(act.toolsMaterialsTargetsWithNotesText || act.toolsMaterialsTargetsText))] }));
+                    }
+                    if (safe(act.tasks)) {
+                        children.push(new Paragraph({ children: [new TextRun({ text: 'Ce que les apprenants doivent faire : ', bold: true }), new TextRun(safe(act.tasks))] }));
+                    }
+                    if (safe(act.trainerTasks)) {
+                        children.push(new Paragraph({ children: [new TextRun({ text: 'Ce que le formateur doit faire : ', bold: true }), new TextRun(safe(act.trainerTasks))] }));
+                    }
+                    if (safe(act.evaluationSuivi)) {
+                        children.push(new Paragraph({ children: [new TextRun({ text: 'Évaluation / suivi : ', bold: true }), new TextRun(safe(act.evaluationSuivi))] }));
+                    }
+                    if (safe(act.notes)) {
+                        children.push(new Paragraph({ children: [new TextRun({ text: 'Notes : ', bold: true }), new TextRun(safe(act.notes))] }));
+                    }
+                    if (safe(act.linksReferences)) {
+                        children.push(new Paragraph({ children: [new TextRun({ text: 'Liens / références : ', bold: true }), new TextRun(safe(act.linksReferences))] }));
+                    }
+                    // Competences (subject + transversal)
+                    if (safe(act.competencesSujetText) || safe(act.competencesTransversalesText)) {
+                        children.push(new Paragraph({ children: [new TextRun({ text: 'Compétences du sujet : ', bold: true }), new TextRun(safe(act.competencesSujetText) || '—')] }));
+                        children.push(new Paragraph({ children: [new TextRun({ text: 'Compétences transversales : ', bold: true }), new TextRun(safe(act.competencesTransversalesText) || '—')] }));
+                    }
+                    children.push(new Paragraph({ text: '' }));
+                });
             });
         });
 
@@ -17076,6 +17179,7 @@ function exportDOCX() {
         setTimeout(() => URL.revokeObjectURL(url), 500);
     });
 }
+
 
 function __deprecated__exportCSV_1() {
     if (!window.XLSX) {
@@ -20115,6 +20219,9 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
 
 function exportCSV() {
     // Export to Excel (.xlsx) – keeps the existing "CSV" menu entry unchanged.
+    // Sheets:
+    //  - "Meta" : project-level metadata (incl. Outils et matériel + Notes)
+    //  - "Learning design" : tabular structure (Modules/Moments/Sous-moments/Activités)
     if (!window.XLSX) {
         showAlert('Erreur', (currentLang === 'en') ? 'Excel export library is not available.' : 'La bibliothèque d’export Excel n’est pas disponible.');
         return;
@@ -20123,13 +20230,41 @@ function exportCSV() {
     const model = buildExportModel();
     const rows = buildTabularExportRows(model);
 
-    const ws = XLSX.utils.aoa_to_sheet(rows);
     const wb = XLSX.utils.book_new();
+
+    // Meta sheet (key-value)
+    const meta = model.meta || {};
+    const metaRows = [
+        ['Champ', 'Valeur'],
+        ['Nom de la formation', meta.courseName || ''],
+        ['Concepteurs', meta.authors || ''],
+        ['Formateurs', meta.trainers || ''],
+        ['Thème', meta.topic || ''],
+        ['Niveau', meta.level || ''],
+        ['Modalité', meta.mode || ''],
+        ['Taille cohorte', meta.cohortSize || ''],
+        ['Temps apprentissage', meta.learningTime || ''],
+        ['Temps conçu', meta.designedTime || ''],
+        ['Description', meta.description || ''],
+        ['Public cible', meta.targetAudience || ''],
+        ['Prérequis', meta.prerequisites || ''],
+        ['Objectifs', meta.aims || ''],
+        ['Résultats attendus (texte)', meta.outcomesText || ''],
+        ['Outils et matériel', meta.toolsMaterials || ''],
+        ['Notes (outils et matériel)', meta.toolsMaterialsNotes || ''],
+        ['Généré le', meta.generatedOn || '']
+    ];
+    const wsMeta = XLSX.utils.aoa_to_sheet(metaRows);
+    XLSX.utils.book_append_sheet(wb, wsMeta, 'Meta');
+
+    // Learning design sheet
+    const ws = XLSX.utils.aoa_to_sheet(rows);
     XLSX.utils.book_append_sheet(wb, ws, 'Learning design');
 
     const filename = window.__ldBuildExportFilename('xlsx');
     XLSX.writeFile(wb, filename);
 }
+
 
 
             
@@ -20827,9 +20962,10 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const duration = `${durVal} ${durUnitTxt}`.trim();
 
                         const activityNumber = `${momentNumberPrefix}.${sIdx + 1}`;
+                        const __ignored = (typeof __ldIsIgnored==='function') ? !!__ldIsIgnored(step) : false;
 
                         html += `<div class="step-block type-${typeKey}">
-                            <h4>${activityNumber}. ${__esc(stepTitle)} <span class="tag bg-${typeKey}" style="float: right;">${__esc(typeLabel)}</span></h4>
+                            <h4>${activityNumber}. ${__ignored ? '<span style="color:#b91c1c; font-weight:700;">[IGNORÉ]</span> ' : ''}${__esc(stepTitle)} <span class="tag bg-${typeKey}" style="float: right;">${__esc(typeLabel)}</span></h4>
                             <div style="font-size: 0.9em; color: #64748b; margin-bottom: 10px;">
                                 <strong>Durée :</strong> ${__esc(duration)} | <strong>Évaluation :</strong> ${__esc(evaluationText)} |
                                 <strong>Regroupement :</strong> ${__esc(groupInfo)} |
@@ -20853,6 +20989,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 const calcMomentSecs = (stepCards) => {
                     let secs = 0;
                     stepCards.forEach(step => {
+                        try { if (typeof __ldIsIgnored==='function' && __ldIsIgnored(step)) return; } catch(_) {}
                         const v = parseFloat(step.querySelector('.duration-input')?.value) || 0;
                         const u = parseFloat(step.querySelector('.duration-unit')?.value) || 60;
                         secs += (v * u);
@@ -20876,11 +21013,11 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             // Moment has sub-moments
                             let totalMomentSecs = 0;
                             submomentEls.forEach(smEl => {
-                                const smSteps = __ldQueryDesignedStepCards(smEl);
+                                const smSteps = __ldQueryAllDesignedStepCards(smEl);
                                 totalMomentSecs += calcMomentSecs(smSteps);
                             });
 
-                            html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${__esc(momentTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(totalMomentSecs)})</span></h3>`;
+                            html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${(typeof __ldIsIgnored==='function' && __ldIsIgnored(momentEl)) ? ' [IGNORÉ]' : ''}${momentTitle ? ` : ${__esc(momentTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(totalMomentSecs)})</span></h3>`;
                             if (mTgtVal) {
                                 html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal)} ${__esc(mTgtUnitTxt)}</div>`;
                             }
@@ -20891,14 +21028,14 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             // Export each sub-moment
                             submomentEls.forEach((smEl, smIdx) => {
                                 const smTitle = (smEl.querySelector('.submoment-title')?.value || '').trim();
-                                const smSteps = __ldQueryDesignedStepCards(smEl);
+                                const smSteps = __ldQueryAllDesignedStepCards(smEl);
                                 const smSecs = calcMomentSecs(smSteps);
                                 const smPrefix = `${momentPrefix}.${smIdx + 1}`;
 
                                 const smTgtVal = (smEl.querySelector('.submoment-target-time')?.value || '').trim();
                                 const smTgtUnitTxt = smEl.querySelector('.submoment-target-unit')?.selectedOptions?.[0]?.innerText || '';
 
-                                html += `<h4 style="margin-top: 14px; margin-left: 20px; color: #475569; font-size: 0.95em;">Sous-moment ${smPrefix}${smTitle ? ` : ${__esc(smTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(smSecs)})</span></h4>`;
+                                html += `<h4 style="margin-top: 14px; margin-left: 20px; color: #475569; font-size: 0.95em;">Sous-moment ${smPrefix}${(typeof __ldIsIgnored==='function' && __ldIsIgnored(smEl)) ? ' [IGNORÉ]' : ''}${smTitle ? ` : ${__esc(smTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(smSecs)})</span></h4>`;
                                 if (smTgtVal) {
                                     html += `<div style="font-size: 0.85em; color: #64748b; margin-left: 20px; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(smTgtVal)} ${__esc(smTgtUnitTxt)}</div>`;
                                 }
@@ -20910,7 +21047,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
                             const momentSecs = calcMomentSecs(stepCards);
 
-                            html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${momentTitle ? ` : ${__esc(momentTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
+                            html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${(typeof __ldIsIgnored==='function' && __ldIsIgnored(momentEl)) ? ' [IGNORÉ]' : ''}${momentTitle ? ` : ${__esc(momentTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
                             if (mTgtVal) {
                                 html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal)} ${__esc(mTgtUnitTxt)}</div>`;
                             }
@@ -20922,7 +21059,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     });
                 } else {
                     // Legacy designs (no moments): export as a single moment for a complete structure
-                    const stepCards = __ldFilterStepNodeList(activity.querySelectorAll('.step-card'));
+                    const stepCards = Array.from(activity.querySelectorAll('.step-card') || []);
                     const momentSecs = calcMomentSecs(stepCards);
                     const momentPrefix = `${aIdx + 1}.1`;
                     html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
@@ -20995,7 +21132,8 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
 
             const sumStepsToSecs = (stepCards) => {
                 let secs = 0;
-                stepCards.forEach(step => { secs += readDurationSecs(step); });
+                stepCards.forEach(step => {
+                try { if (typeof __ldIsIgnored==='function' && __ldIsIgnored(step)) return; } catch(_) {} secs += readDurationSecs(step); });
                 return secs;
             };
 
@@ -21102,6 +21240,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 const renderSteps = (stepCards, prefix) => {
                     stepCards.forEach((stepEl, sIdx) => {
                         const stepTitle = (stepEl.querySelector('.step-input-title')?.value || '').trim() || `${t.md_step} ${sIdx + 1}`;
+                        const __ignored = (typeof __ldIsIgnored==='function') ? !!__ldIsIgnored(stepEl) : false;
                         const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
                         const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
                         const trainerTasks = (stepEl.querySelector('.step-input-trainer-tasks')?.value || '').trim();
@@ -21116,7 +21255,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const trainer = getSelectedText(stepEl.querySelector('.trainer-select'));
 
                         const stepPrefix = `${prefix}.${sIdx + 1}`;
-                        rtf += '\\par\\b ' + escapeRtf(`      Activité ${stepPrefix} — `) + escapeRtf(stepTitle) + '\\b0\\par ';
+                        rtf += '\\par\\b ' + escapeRtf(`      Activité ${stepPrefix} — `) + escapeRtf((__ignored ? '[IGNORÉ] ' : '') + stepTitle) + '\\b0\\par ';
                         rtf += escapeRtf(`      Durée conçue : ${formatTimelineDuration(sSecs)}`) + '\\par ';
                         if (lt) rtf += escapeRtf(`      Type d'apprentissage : ${lt}`) + '\\par ';
                         if (grouping) rtf += escapeRtf(`      Regroupement : ${grouping}`) + '\\par ';
@@ -21163,11 +21302,11 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             // Moment has sub-moments
                             let totalMomentSecs = 0;
                             submomentEls.forEach(smEl => {
-                                const smSteps = __ldQueryDesignedStepCards(smEl);
+                                const smSteps = __ldQueryAllDesignedStepCards(smEl);
                                 totalMomentSecs += sumStepsToSecs(smSteps);
                             });
 
-                            rtf += '\\par\\b ' + escapeRtf(`  Moment ${momentPrefix}`) + escapeRtf(momentTitle ? ` — ${momentTitle}` : '') + '\\b0\\par ';
+                            rtf += '\\par\\b ' + escapeRtf(`  Moment ${momentPrefix}${(typeof __ldIsIgnored==='function' && __ldIsIgnored(momentEl)) ? ' [IGNORÉ]' : ''}`) + escapeRtf(momentTitle ? ` — ${momentTitle}` : '') + '\\b0\\par ';
                             rtf += escapeRtf(`  Durée conçue : ${formatTimelineDuration(totalMomentSecs)}`) + '\\par ';
                             if (momentTarget) rtf += escapeRtf(`  Durée cible : ${momentTarget}`) + '\\par ';
                             if (momentDesc) rtf += escapeRtf(`  Description : ${momentDesc}`) + '\\par ';
@@ -21176,11 +21315,11 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             submomentEls.forEach((smEl, smIdx) => {
                                 const smTitle = (smEl.querySelector('.submoment-title')?.value || '').trim();
                                 const smTarget = fmtTarget(smEl.querySelector('.submoment-target-time'), smEl.querySelector('.submoment-target-unit'));
-                                const smSteps = __ldQueryDesignedStepCards(smEl);
+                                const smSteps = __ldQueryAllDesignedStepCards(smEl);
                                 const smSecs = sumStepsToSecs(smSteps);
                                 const smPrefix = `${momentPrefix}.${smIdx + 1}`;
 
-                                rtf += '\\par\\b ' + escapeRtf(`    Sous-moment ${smPrefix}`) + escapeRtf(smTitle ? ` — ${smTitle}` : '') + '\\b0\\par ';
+                                rtf += '\\par\\b ' + escapeRtf(`    Sous-moment ${smPrefix}${(typeof __ldIsIgnored==='function' && __ldIsIgnored(smEl)) ? ' [IGNORÉ]' : ''}`) + escapeRtf(smTitle ? ` — ${smTitle}` : '') + '\\b0\\par ';
                                 rtf += escapeRtf(`    Durée conçue : ${formatTimelineDuration(smSecs)}`) + '\\par ';
                                 if (smTarget) rtf += escapeRtf(`    Durée cible : ${smTarget}`) + '\\par ';
 
@@ -21191,7 +21330,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
                             const momentSecs = sumStepsToSecs(stepCards);
 
-                            rtf += '\\par\\b ' + escapeRtf(`  Moment ${momentPrefix}`) + escapeRtf(momentTitle ? ` — ${momentTitle}` : '') + '\\b0\\par ';
+                            rtf += '\\par\\b ' + escapeRtf(`  Moment ${momentPrefix}${(typeof __ldIsIgnored==='function' && __ldIsIgnored(momentEl)) ? ' [IGNORÉ]' : ''}`) + escapeRtf(momentTitle ? ` — ${momentTitle}` : '') + '\\b0\\par ';
                             rtf += escapeRtf(`  Durée conçue : ${formatTimelineDuration(momentSecs)}`) + '\\par ';
                             if (momentTarget) rtf += escapeRtf(`  Durée cible : ${momentTarget}`) + '\\par ';
                             if (momentDesc) rtf += escapeRtf(`  Description : ${momentDesc}`) + '\\par ';
@@ -21201,7 +21340,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     });
                 } else {
                     // Legacy designs (no moments): export as a single moment for completeness
-                    const stepCards = __ldFilterStepNodeList(moduleEl.querySelectorAll('.step-card'));
+                    const stepCards = Array.from(moduleEl.querySelectorAll('.step-card') || []);
                     const momentSecs = sumStepsToSecs(stepCards);
                     const momentPrefix = `${moduleIdx}.1`;
 
@@ -21342,6 +21481,7 @@ md += `- **Horodatage d'export :** ${new Date().toISOString()}\n\n`;
                 const calcMomentSecs = (stepCards) => {
                     let secs = 0;
                     stepCards.forEach(step => {
+                                try { if (typeof __ldIsIgnored==='function' && __ldIsIgnored(step)) return; } catch(_) {}
                         const v = parseFloat(step.querySelector('.duration-input')?.value) || 0;
                         const u = parseFloat(step.querySelector('.duration-unit')?.value) || 60;
                         secs += (v * u);
@@ -21380,8 +21520,9 @@ md += `- **Horodatage d'export :** ${new Date().toISOString()}\n\n`;
                         const notes = step.querySelector('.step-input-notes').value || "Non renseigné";
 
                         const activityNum = `${momentPrefix}.${sIdx + 1}`;
+                        const __ignored = (typeof __ldIsIgnored==='function') ? !!__ldIsIgnored(step) : false;
 
-                        md += `##### ACTIVITÉ ${activityNum} : ${stepTitle}
+                        md += `##### ACTIVITÉ ${activityNum} : ${__ignored ? '[IGNORÉ] ' : ''}${stepTitle}
 `;
                         md += `- **Type :** ${typeLabel}
 `;
@@ -21460,11 +21601,11 @@ ${linksRefs}
                             // Calculer la durée totale du moment (somme de tous les sous-moments)
                             let totalMomentSecs = 0;
                             submomentEls.forEach(smEl => {
-                                const smSteps = __ldQueryDesignedStepCards(smEl);
+                                const smSteps = __ldQueryAllDesignedStepCards(smEl);
                                 totalMomentSecs += calcMomentSecs(smSteps);
                             });
 
-                            md += `#### MOMENT ${momentPrefix}${momentTitle ? ` : ${__esc(momentTitle)}` : ''}
+                            md += `#### MOMENT ${momentPrefix}${(typeof __ldIsIgnored==='function' && __ldIsIgnored(momentEl)) ? ' [IGNORÉ]' : ''}${momentTitle ? ` : ${__esc(momentTitle)}` : ''}
 `;
                             md += `- **Durée conçue :** ${formatTimelineDuration(totalMomentSecs)}
 `;
@@ -21482,11 +21623,11 @@ ${linksRefs}
                             // Exporter chaque sous-moment
                             submomentEls.forEach((smEl, smIdx) => {
                                 const smTitle = (smEl.querySelector('.submoment-title')?.value || '').trim();
-                                const smSteps = __ldQueryDesignedStepCards(smEl);
+                                const smSteps = __ldQueryAllDesignedStepCards(smEl);
                                 const smSecs = calcMomentSecs(smSteps);
                                 const smPrefix = `${momentPrefix}.${smIdx + 1}`;
 
-                                md += `##### SOUS-MOMENT ${smPrefix}${smTitle ? ` : ${__esc(smTitle)}` : ''}
+                                md += `##### SOUS-MOMENT ${smPrefix}${(typeof __ldIsIgnored==='function' && __ldIsIgnored(smEl)) ? ' [IGNORÉ]' : ''}${smTitle ? ` : ${__esc(smTitle)}` : ''}
 `;
                                 md += `- **Durée conçue :** ${formatTimelineDuration(smSecs)}
 `;
@@ -21507,7 +21648,7 @@ ${linksRefs}
                             const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
                             const momentSecs = calcMomentSecs(stepCards);
 
-                            md += `#### MOMENT ${momentPrefix}${momentTitle ? ` : ${__esc(momentTitle)}` : ''}
+                            md += `#### MOMENT ${momentPrefix}${(typeof __ldIsIgnored==='function' && __ldIsIgnored(momentEl)) ? ' [IGNORÉ]' : ''}${momentTitle ? ` : ${__esc(momentTitle)}` : ''}
 `;
                             md += `- **Durée conçue :** ${formatTimelineDuration(momentSecs)}
 `;
@@ -21527,7 +21668,7 @@ ${linksRefs}
                     });
                 } else {
                     
-                    const stepCards = __ldFilterStepNodeList(activity.querySelectorAll('.step-card'));
+                    const stepCards = Array.from(activity.querySelectorAll('.step-card') || []);
                     const momentSecs = calcMomentSecs(stepCards);
                     const momentPrefix = `${aIdx + 1}.1`;
 
