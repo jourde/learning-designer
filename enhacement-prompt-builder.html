@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Designer Analysis & Prompt Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .prompt-box {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            white-space: pre-wrap;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .section-card {
+            transition: all 0.2s ease;
+        }
+        .section-card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .upload-zone {
+            border: 3px dashed #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        .upload-zone:hover {
+            border-color: #6366f1;
+            background-color: #eef2ff;
+        }
+        .upload-zone.dragover {
+            border-color: #4f46e5;
+            background-color: #e0e7ff;
+        }
+        .field-row {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            transition: background-color 0.2s;
+        }
+        .field-row:hover {
+            background-color: #f8fafc;
+        }
+        .progress-bar {
+            height: 1.25rem;
+            border-radius: 0.375rem;
+            overflow: hidden;
+            background-color: #e5e7eb;
+        }
+        .progress-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-6">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Learning Designer Analysis & Prompt Generator</h1>
+            <p class="text-gray-600">Upload your JSON export to analyse field completion and customise your enhancement prompt</p>
+        </div>
+
+        <!-- JSON Upload Section -->
+        <div id="uploadSection" class="bg-white rounded-xl shadow-lg p-8 mb-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Step 1: Upload Your JSON File</h2>
+            <div id="dropZone" class="upload-zone rounded-lg p-12 text-center cursor-pointer">
+                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <p class="text-lg font-medium text-gray-700 mb-2">Drop your JSON file here</p>
+                <p class="text-sm text-gray-500 mb-4">or click to browse</p>
+                <input type="file" id="fileInput" accept=".json" class="hidden">
+                <button type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium">
+                    Choose File
+                </button>
+            </div>
+            <div id="fileInfo" class="mt-4 hidden">
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <p class="text-green-800 font-medium">✓ File loaded: <span id="fileName"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analysis Section (hidden until JSON loaded) -->
+        <div id="analysisSection" class="hidden mb-6">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Step 2: Design Analysis</h2>
+                
+                <!-- Structure Overview -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-blue-50 rounded-lg p-4 text-center">
+                        <div class="text-3xl font-bold text-blue-600" id="moduleCount">0</div>
+                        <div class="text-sm text-blue-800">Modules</div>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-4 text-center">
+                        <div class="text-3xl font-bold text-purple-600" id="momentCount">0</div>
+                        <div class="text-sm text-purple-800">Moments</div>
+                    </div>
+                    <div class="bg-amber-50 rounded-lg p-4 text-center">
+                        <div class="text-3xl font-bold text-amber-600" id="submomentCount">0</div>
+                        <div class="text-sm text-amber-800">Submoments</div>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4 text-center">
+                        <div class="text-3xl font-bold text-green-600" id="activityCount">0</div>
+                        <div class="text-sm text-green-800">Activities</div>
+                    </div>
+                </div>
+
+                <!-- Field Analysis -->
+                <div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 mb-4 rounded">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-indigo-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-indigo-800">How to select fields for enhancement</h3>
+                            <div class="mt-2 text-sm text-indigo-700">
+                                <p class="mb-2"><strong>Step 1:</strong> Select one or more categories below (e.g., "Content & Structure", "Pedagogical Elements")</p>
+                                <p class="mb-2"><strong>Step 2:</strong> Within each category, tick the specific fields you want the AI to enhance</p>
+                                <p><strong>Note:</strong> Only selected fields will be enhanced by the AI. By default, nothing is selected.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Selection -->
+                <div class="bg-white border border-gray-300 rounded-lg p-4 mb-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-semibold text-gray-900">Select Enhancement Categories</h3>
+                        <div class="space-x-2">
+                            <button onclick="selectAllCategories()" class="text-xs px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition">
+                                Select All Categories
+                            </button>
+                            <button onclick="deselectAllCategories()" class="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition">
+                                Deselect All
+                            </button>
+                        </div>
+                    </div>
+                    <div id="categoryContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                </div>
+
+                <div id="fieldsContainer" class="mb-6"></div>
+
+                <!-- Learning Types Distribution -->
+                <div id="typesContainer" class="mb-6"></div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="configSection" class="hidden">
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Left: Configuration -->
+                <div class="space-y-4">
+                    <!-- Base Instructions -->
+                    <div class="bg-white rounded-lg shadow p-6 section-card">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <span class="bg-indigo-100 text-indigo-700 rounded-full w-8 h-8 flex items-center justify-center mr-3 text-sm font-bold">3</span>
+                            Customise Enhancement Options
+                        </h2>
+                        <p class="text-sm text-gray-600 bg-blue-50 border-l-4 border-blue-400 p-3 rounded mb-4">
+                            Select which fields to enhance in Step 2 above, then add optional requirements below.
+                        </p>
+                    </div>
+
+                    <!-- Optional Additions -->
+                    <div class="bg-white rounded-lg shadow p-6 section-card">
+                        <h3 class="font-semibold text-gray-800 mb-4">Optional Requirements</h3>
+                        
+                        <!-- Focus Area -->
+                        <div class="mb-4">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" id="focusCheck" class="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500">
+                                <span class="ml-3 text-gray-700 font-medium">Focus on specific module/moment</span>
+                            </label>
+                            <select id="focusSelect" class="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed" disabled>
+                                <option value="">Select from your design...</option>
+                            </select>
+                        </div>
+
+                        <!-- Activity Priority -->
+                        <div class="mb-4">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" id="activityCheck" class="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500">
+                                <span class="ml-3 text-gray-700 font-medium">Prioritise specific activity type</span>
+                            </label>
+                            <select id="activitySelect" class="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed" disabled>
+                                <option value="">Select activity type...</option>
+                                <option value="collaborative">Collaborative activities</option>
+                                <option value="acquisition">Acquisition activities</option>
+                                <option value="discussion">Discussion activities</option>
+                                <option value="investigation">Investigation activities</option>
+                                <option value="practice">Practice activities</option>
+                                <option value="production">Production activities</option>
+                            </select>
+                        </div>
+
+                        <!-- Target Audience -->
+                        <div class="mb-4">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" id="audienceCheck" class="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500">
+                                <span class="ml-3 text-gray-700 font-medium">Specify pupil level/age group</span>
+                            </label>
+                            <input type="text" id="audienceInput" placeholder="e.g., University undergraduates or Ages 14-16" 
+                                   class="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed" 
+                                   disabled>
+                        </div>
+
+                        <!-- Duration Constraint -->
+                        <div class="mb-4">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" id="durationCheck" class="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500">
+                                <span class="ml-3 text-gray-700 font-medium">Set total duration limit</span>
+                            </label>
+                            <div class="mt-2 flex gap-2">
+                                <input type="number" id="durationInput" placeholder="24" min="1"
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed" 
+                                       disabled>
+                                <select id="durationUnit" class="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed" disabled>
+                                    <option value="hours">hours</option>
+                                    <option value="minutes">minutes</option>
+                                    <option value="days">days</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Specific Tools -->
+                        <div class="mb-4">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" id="toolsCheck" class="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500">
+                                <span class="ml-3 text-gray-700 font-medium">Include specific tools/technologies</span>
+                            </label>
+                            <input type="text" id="toolsInput" placeholder="e.g., Moodle, Padlet, Google Workspace" 
+                                   class="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed" 
+                                   disabled>
+                        </div>
+                    </div>
+
+                    <!-- Generate Button -->
+                    <button onclick="updatePrompt()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-200 transform hover:scale-105">
+                        Generate Prompt
+                    </button>
+                </div>
+
+                <!-- Right: Generated Prompt -->
+                <div class="bg-white rounded-lg shadow-lg p-6 section-card">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                            <span class="bg-indigo-100 text-indigo-700 rounded-full w-8 h-8 flex items-center justify-center mr-3 text-sm font-bold">4</span>
+                            Your Prompt
+                        </h2>
+                        <button onclick="copyPrompt()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-200 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                            Copy
+                        </button>
+                    </div>
+                    <div id="promptOutput" class="prompt-box p-4 rounded-lg min-h-[500px] max-h-[700px] overflow-y-auto">
+                        Upload your JSON file to generate a customised prompt.
+                    </div>
+                    <div id="copyFeedback" class="mt-3 text-green-600 font-medium text-sm hidden">
+                        ✓ Copied to clipboard!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-6 text-center text-gray-500 text-sm">
+            <p>Upload your JSON export to analyse field completion and generate a customised enhancement prompt.</p>
+        </div>
+    </div>
+
+    <script>
+        let learningData = null;
+        let analysisResults = null;
+        let selectedFields = new Set();
+        let selectedCategories = new Set();
+
+        // Helper functions for category selection
+        function selectAllCategories() {
+            document.querySelectorAll('.category-checkbox').forEach(cb => {
+                cb.checked = true;
+                selectedCategories.add(cb.value);
+            });
+            updateFieldVisibility();
+            updatePrompt();
+        }
+
+        function deselectAllCategories() {
+            document.querySelectorAll('.category-checkbox').forEach(cb => {
+                cb.checked = false;
+            });
+            selectedCategories.clear();
+            updateFieldVisibility();
+            updatePrompt();
+        }
+
+        function updateFieldVisibility() {
+            document.querySelectorAll('.field-category-section').forEach(section => {
+                const category = section.dataset.category;
+                if (selectedCategories.has(category) || selectedCategories.size === 0) {
+                    section.style.display = '';
+                } else {
+                    section.style.display = 'none';
+                }
+            });
+        }
+
+        // Field definitions organized by categories
+        const fieldCategories = {
+            'Content & Structure': ['title', 'description'],
+            'Pedagogical Elements': ['objective', 'tasks', 'learningType'],
+            'Learning Outcomes': ['objectives', 'learningOutcomes', 'competences'],
+            'Resources & Tools': ['resources', 'notes']
+        };
+
+        const fieldDefinitions = {
+            module: {
+                title: 'Title',
+                description: 'Description',
+                notes: 'Notes',
+                objectives: 'Learning Objectives',
+                learningOutcomes: 'Learning Outcomes',
+                competences: 'Competences'
+            },
+            moment: {
+                title: 'Title',
+                description: 'Description'
+            },
+            submoment: {
+                title: 'Title',
+                description: 'Description'
+            },
+            activity: {
+                title: 'Title',
+                description: 'Description',
+                objective: 'Objective',
+                tasks: 'Tasks/Instructions',
+                notes: 'Notes',
+                resources: 'Resources/Links',
+                learningType: 'Learning Type'
+            }
+        };
+
+        // Get category for a field
+        function getFieldCategory(fieldKey) {
+            for (const [category, fields] of Object.entries(fieldCategories)) {
+                if (fields.includes(fieldKey)) return category;
+            }
+            return 'Other';
+        }
+
+        // Base prompt template
+        const basePrompt = `I'm uploading two files:
+1. An .html file: The Learning Designer web application interface
+2. A JSON file: My current learning design export
+
+Analyse the learning design.
+
+Enhance the existing items, but don't create any new item (e.g. don't create any new activity).
+
+Provide the enhanced JSON file that I can reimport into the Learning Designer, along with a summary of the key improvements made.`;
+
+        // File upload handling
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+
+        fileInput.addEventListener('change', handleFileSelect);
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', handleDragOver);
+        dropZone.addEventListener('dragleave', handleDragLeave);
+        dropZone.addEventListener('drop', handleDrop);
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect();
+            }
+        }
+
+        function handleFileSelect() {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            if (!file.name.endsWith('.json')) {
+                alert('Please select a JSON file');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    learningData = JSON.parse(e.target.result);
+                    document.getElementById('fileName').textContent = file.name;
+                    document.getElementById('fileInfo').classList.remove('hidden');
+                    analyseDesign();
+                } catch (error) {
+                    alert('Error parsing JSON file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function analyseDesign() {
+            if (!learningData) return;
+
+            const analysis = {
+                moduleCount: 0,
+                momentCount: 0,
+                submomentCount: 0,
+                activityCount: 0,
+                fields: {
+                    module: {},
+                    moment: {},
+                    submoment: {},
+                    activity: {}
+                },
+                learningTypes: {
+                    none: 0,
+                    acquisition: 0,
+                    collaboration: 0,
+                    discussion: 0,
+                    investigation: 0,
+                    practice: 0,
+                    production: 0
+                },
+                modules: [],
+                moments: []
+            };
+
+            // Helper to check if field is filled
+            const isFilled = (value) => {
+                if (!value) return false;
+                const str = String(value).trim();
+                if (str === '') return false;
+                if (str.toLowerCase().includes('aucun')) return false;
+                if (str === 'none' || str === 'null' || str === 'undefined') return false;
+                // Check for arrays
+                if (Array.isArray(value)) {
+                    return value.length > 0 && !value.every(v => 
+                        String(v).toLowerCase().includes('aucun') || 
+                        String(v).toLowerCase().includes('none')
+                    );
+                }
+                return true;
+            };
+
+            // Helper to track field status
+            const trackField = (level, fieldName, value) => {
+                if (!analysis.fields[level][fieldName]) {
+                    analysis.fields[level][fieldName] = { filled: 0, unfilled: 0, total: 0 };
+                }
+                analysis.fields[level][fieldName].total++;
+                if (isFilled(value)) {
+                    analysis.fields[level][fieldName].filled++;
+                } else {
+                    analysis.fields[level][fieldName].unfilled++;
+                }
+            };
+
+            // Analyse modules
+            if (learningData.modules && Array.isArray(learningData.modules)) {
+                analysis.moduleCount = learningData.modules.length;
+                
+                learningData.modules.forEach((module, mIdx) => {
+                    const moduleName = module.title || module.titre || `Module ${mIdx + 1}`;
+                    analysis.modules.push({ id: module.id || mIdx, name: moduleName });
+
+                    // Track module fields
+                    trackField('module', 'title', module.title || module.titre);
+                    trackField('module', 'description', module.description);
+                    trackField('module', 'notes', module.notes);
+                    trackField('module', 'objectives', module.objectifsApprentissageModule);
+                    trackField('module', 'learningOutcomes', module.resultatsApprentissageModule);
+                    trackField('module', 'competences', module.competencesModuleSujet);
+
+                    // Analyse moments
+                    if (module.moments && Array.isArray(module.moments)) {
+                        analysis.momentCount += module.moments.length;
+                        
+                        module.moments.forEach((moment, momIdx) => {
+                            const momentName = moment.title || moment.titre || `Moment ${momIdx + 1}`;
+                            analysis.moments.push({ 
+                                id: moment.id || `${module.id}-${momIdx}`, 
+                                name: `${moduleName} > ${momentName}`,
+                                moduleId: module.id || mIdx
+                            });
+
+                            // Track moment fields
+                            trackField('moment', 'title', moment.title || moment.titre);
+                            trackField('moment', 'description', moment.description);
+
+                            // Function to analyse activities
+                            const analyseActivities = (activities) => {
+                                if (!activities || !Array.isArray(activities)) return;
+                                
+                                analysis.activityCount += activities.length;
+                                
+                                activities.forEach((activity) => {
+                                    // Track activity fields
+                                    trackField('activity', 'title', activity.title || activity.titre);
+                                    trackField('activity', 'description', activity.description);
+                                    trackField('activity', 'objective', activity.objective || activity.objectifActivite);
+                                    trackField('activity', 'tasks', activity.tasks || activity.aFaire);
+                                    trackField('activity', 'notes', activity.notes);
+                                    trackField('activity', 'resources', activity.linksReferences || activity.liensReferences);
+                                    
+                                    // Track learning type
+                                    const type = activity.learningType || activity.type || 'none';
+                                    trackField('activity', 'learningType', (type !== 'none' && type !== '') ? type : null);
+                                    
+                                    // Count learning types for distribution
+                                    if (analysis.learningTypes.hasOwnProperty(type)) {
+                                        analysis.learningTypes[type]++;
+                                    } else {
+                                        analysis.learningTypes.none++;
+                                    }
+                                });
+                            };
+
+                            // Check for submoments
+                            const submoments = moment.sousMoments || moment.submoments || moment.subMoments;
+                            if (submoments && Array.isArray(submoments)) {
+                                analysis.submomentCount += submoments.length;
+                                
+                                submoments.forEach((submoment) => {
+                                    // Track submoment fields
+                                    trackField('submoment', 'title', submoment.title || submoment.titre);
+                                    trackField('submoment', 'description', submoment.description);
+                                    
+                                    // Analyse activities in submoment
+                                    analyseActivities(submoment.activites);
+                                    analyseActivities(submoment.activities);
+                                    analyseActivities(submoment.steps);
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+
+            analysisResults = analysis;
+            displayAnalysis(analysis);
+        }
+
+        function displayAnalysis(analysis) {
+            // Show counts
+            document.getElementById('moduleCount').textContent = analysis.moduleCount;
+            document.getElementById('momentCount').textContent = analysis.momentCount;
+            document.getElementById('submomentCount').textContent = analysis.submomentCount;
+            document.getElementById('activityCount').textContent = analysis.activityCount;
+
+            // Display category checkboxes
+            const categoryContainer = document.getElementById('categoryContainer');
+            let categoryHTML = '';
+            
+            const categoryDescriptions = {
+                'Content & Structure': 'Titles, descriptions, and organizational content',
+                'Pedagogical Elements': 'Objectives, tasks, instructions, and learning types',
+                'Learning Outcomes': 'Learning objectives, outcomes, and competences',
+                'Resources & Tools': 'Links, resources, notes, and supporting materials'
+            };
+
+            Object.entries(fieldCategories).forEach(([category, fields]) => {
+                categoryHTML += `
+                    <label class="flex items-start p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition">
+                        <input type="checkbox" 
+                               value="${category}" 
+                               class="category-checkbox w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500 mt-1 mr-3">
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-900 text-sm">${category}</div>
+                            <div class="text-xs text-gray-600 mt-1">${categoryDescriptions[category]}</div>
+                        </div>
+                    </label>
+                `;
+            });
+            
+            categoryContainer.innerHTML = categoryHTML;
+
+            // Add event listeners to category checkboxes
+            document.querySelectorAll('.category-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        selectedCategories.add(e.target.value);
+                    } else {
+                        selectedCategories.delete(e.target.value);
+                    }
+                    updateFieldVisibility();
+                    updatePrompt();
+                });
+            });
+
+            // Display field analysis grouped by category and level
+            const fieldsContainer = document.getElementById('fieldsContainer');
+            let fieldsHTML = '';
+
+            const levelColors = {
+                module: { bg: 'bg-blue-50', border: 'border-blue-200', title: 'text-blue-900', bar: 'bg-blue-500' },
+                moment: { bg: 'bg-purple-50', border: 'border-purple-200', title: 'text-purple-900', bar: 'bg-purple-500' },
+                submoment: { bg: 'bg-amber-50', border: 'border-amber-200', title: 'text-amber-900', bar: 'bg-amber-500' },
+                activity: { bg: 'bg-green-50', border: 'border-green-200', title: 'text-green-900', bar: 'bg-green-500' }
+            };
+
+            // Group fields by category first
+            const fieldsByCategory = {};
+            
+            Object.entries(analysis.fields).forEach(([level, fields]) => {
+                Object.entries(fields).forEach(([fieldKey, data]) => {
+                    const category = getFieldCategory(fieldKey);
+                    if (!fieldsByCategory[category]) {
+                        fieldsByCategory[category] = {};
+                    }
+                    if (!fieldsByCategory[category][level]) {
+                        fieldsByCategory[category][level] = {};
+                    }
+                    fieldsByCategory[category][level][fieldKey] = data;
+                });
+            });
+
+            // Display by category
+            Object.entries(fieldsByCategory).forEach(([category, levels]) => {
+                fieldsHTML += `
+                    <div class="field-category-section mb-4" data-category="${category}" style="display: none;">
+                        <div class="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4">
+                            <h3 class="font-bold text-indigo-900 mb-4 text-lg flex items-center">
+                                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                ${category}
+                            </h3>
+                `;
+
+                Object.entries(levels).forEach(([level, fields]) => {
+                    if (Object.keys(fields).length === 0) return;
+
+                    const colors = levelColors[level];
+                    const levelName = level.charAt(0).toUpperCase() + level.slice(1);
+                    
+                    fieldsHTML += `
+                        <div class="${colors.bg} border ${colors.border} rounded-lg p-4 mb-3">
+                            <h4 class="font-semibold ${colors.title} mb-3 capitalize">${levelName} Level</h4>
+                            <div class="space-y-2">
+                    `;
+
+                    Object.entries(fields).forEach(([fieldKey, data]) => {
+                        const fieldName = fieldDefinitions[level][fieldKey] || fieldKey;
+                        const percentage = data.total > 0 ? Math.round((data.filled / data.total) * 100) : 0;
+                        const fieldId = `field-${level}-${fieldKey}`;
+                        
+                        fieldsHTML += `
+                            <div class="field-row">
+                                <input type="checkbox" 
+                                       id="${fieldId}" 
+                                       class="field-checkbox w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500 mr-3" 
+                                       data-level="${level}" 
+                                       data-field="${fieldKey}">
+                                <label for="${fieldId}" class="flex-1 cursor-pointer">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-sm font-medium text-gray-700">${fieldName}</span>
+                                        <span class="text-xs text-gray-500">
+                                            <span class="font-semibold text-${data.unfilled > 0 ? 'red' : 'green'}-600">${data.filled}/${data.total}</span> filled
+                                            ${data.unfilled > 0 ? `<span class="text-red-600">(${data.unfilled} missing)</span>` : ''}
+                                        </span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill ${colors.bar}" style="width: ${percentage}%">
+                                            ${percentage > 15 ? percentage + '%' : ''}
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        `;
+                    });
+
+                    fieldsHTML += `
+                            </div>
+                        </div>
+                    `;
+                });
+
+                fieldsHTML += `
+                        </div>
+                    </div>
+                `;
+            });
+
+            fieldsContainer.innerHTML = fieldsHTML;
+
+            // Add event listeners to field checkboxes
+            document.querySelectorAll('.field-checkbox').forEach(checkbox => {
+                const key = `${checkbox.dataset.level}.${checkbox.dataset.field}`;
+                
+                checkbox.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        selectedFields.add(key);
+                    } else {
+                        selectedFields.delete(key);
+                    }
+                    updatePrompt();
+                });
+            });
+
+            // Display learning types distribution
+            const typesContainer = document.getElementById('typesContainer');
+            const totalActivities = analysis.activityCount;
+            const typeColors = {
+                acquisition: 'bg-cyan-400',
+                collaboration: 'bg-yellow-400',
+                discussion: 'bg-blue-400',
+                investigation: 'bg-red-400',
+                practice: 'bg-purple-400',
+                production: 'bg-green-400',
+                none: 'bg-gray-300'
+            };
+
+            const typeBars = Object.entries(analysis.learningTypes)
+                .filter(([type, count]) => count > 0)
+                .map(([type, count]) => {
+                    const percentage = totalActivities > 0 ? ((count / totalActivities) * 100).toFixed(1) : 0;
+                    return `
+                        <div class="flex items-center gap-3">
+                            <div class="w-32 text-sm text-gray-700 capitalize">${type}:</div>
+                            <div class="flex-1 bg-gray-200 rounded-full h-6">
+                                <div class="${typeColors[type]} h-6 rounded-full flex items-center justify-end px-2" style="width: ${percentage}%">
+                                    <span class="text-xs font-medium text-gray-900">${count} (${percentage}%)</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            typesContainer.innerHTML = `
+                <div class="bg-white border border-gray-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-3">Learning Types Distribution</h3>
+                    <div class="space-y-2">
+                        ${typeBars || '<p class="text-sm text-gray-500">No activities found</p>'}
+                    </div>
+                </div>
+            `;
+
+            // Populate focus dropdown
+            const focusSelect = document.getElementById('focusSelect');
+            focusSelect.innerHTML = '<option value="">Select from your design...</option>';
+            
+            analysis.modules.forEach(module => {
+                const opt = document.createElement('option');
+                opt.value = module.name;
+                opt.textContent = module.name;
+                focusSelect.appendChild(opt);
+            });
+            
+            analysis.moments.forEach(moment => {
+                const opt = document.createElement('option');
+                opt.value = moment.name;
+                opt.textContent = moment.name;
+                focusSelect.appendChild(opt);
+            });
+
+            // Show sections
+            document.getElementById('analysisSection').classList.remove('hidden');
+            document.getElementById('configSection').classList.remove('hidden');
+            
+            // Generate initial prompt
+            updatePrompt();
+        }
+
+        // Enable/disable inputs
+        document.getElementById('focusCheck').addEventListener('change', function(e) {
+            document.getElementById('focusSelect').disabled = !e.target.checked;
+            updatePrompt();
+        });
+
+        document.getElementById('activityCheck').addEventListener('change', function(e) {
+            document.getElementById('activitySelect').disabled = !e.target.checked;
+            updatePrompt();
+        });
+
+        document.getElementById('audienceCheck').addEventListener('change', function(e) {
+            document.getElementById('audienceInput').disabled = !e.target.checked;
+            updatePrompt();
+        });
+
+        document.getElementById('durationCheck').addEventListener('change', function(e) {
+            document.getElementById('durationInput').disabled = !e.target.checked;
+            document.getElementById('durationUnit').disabled = !e.target.checked;
+            updatePrompt();
+        });
+
+        document.getElementById('toolsCheck').addEventListener('change', function(e) {
+            document.getElementById('toolsInput').disabled = !e.target.checked;
+            updatePrompt();
+        });
+
+        function updatePrompt() {
+            if (!analysisResults) return;
+
+            let prompt = basePrompt;
+            let sections = [];
+
+            // Add category and field-specific instructions
+            if (selectedCategories.size > 0 || selectedFields.size > 0) {
+                let fieldInstructions = '\n\n**Enhancement Focus:**\n';
+                
+                if (selectedCategories.size > 0) {
+                    fieldInstructions += '\nSelected categories:\n- ' + Array.from(selectedCategories).join('\n- ') + '\n';
+                }
+                
+                if (selectedFields.size > 0) {
+                    const fieldsByLevel = {};
+                    selectedFields.forEach(key => {
+                        const [level, field] = key.split('.');
+                        if (!fieldsByLevel[level]) fieldsByLevel[level] = [];
+                        const fieldName = fieldDefinitions[level][field] || field;
+                        const category = getFieldCategory(field);
+                        fieldsByLevel[level].push(`${fieldName} (${category})`);
+                    });
+
+                    fieldInstructions += '\nSpecific fields to enhance:\n';
+                    Object.entries(fieldsByLevel).forEach(([level, fields]) => {
+                        const levelName = level.charAt(0).toUpperCase() + level.slice(1);
+                        fieldInstructions += `\n${levelName} level:\n  - ${fields.join('\n  - ')}\n`;
+                    });
+                }
+                
+                sections.push(fieldInstructions);
+            }
+
+            // Optional additions
+            const additionalReqs = [];
+            
+            if (document.getElementById('focusCheck').checked) {
+                const value = document.getElementById('focusSelect').value;
+                if (value) {
+                    additionalReqs.push(`Focus particularly on "${value}"`);
+                }
+            }
+
+            if (document.getElementById('activityCheck').checked) {
+                const value = document.getElementById('activitySelect').value;
+                if (value) {
+                    additionalReqs.push(`Prioritise adding ${value} activities`);
+                }
+            }
+
+            if (document.getElementById('audienceCheck').checked) {
+                const value = document.getElementById('audienceInput').value.trim();
+                if (value) {
+                    additionalReqs.push(`Ensure activities are suitable for ${value}`);
+                }
+            }
+
+            if (document.getElementById('durationCheck').checked) {
+                const value = document.getElementById('durationInput').value;
+                const unit = document.getElementById('durationUnit').value;
+                if (value) {
+                    additionalReqs.push(`Keep the total duration within ${value} ${unit}`);
+                }
+            }
+
+            if (document.getElementById('toolsCheck').checked) {
+                const value = document.getElementById('toolsInput').value.trim();
+                if (value) {
+                    additionalReqs.push(`Add activities that incorporate ${value}`);
+                }
+            }
+
+            if (additionalReqs.length > 0) {
+                sections.push('\n**Additional Requirements:**\n- ' + additionalReqs.join('\n- '));
+            }
+
+            if (sections.length > 0) {
+                prompt += '\n\n---' + sections.join('\n');
+            }
+
+            document.getElementById('promptOutput').textContent = prompt;
+        }
+
+        function copyPrompt() {
+            const promptText = document.getElementById('promptOutput').textContent;
+            
+            if (promptText === 'Upload your JSON file to generate a customised prompt.') {
+                alert('Please upload a JSON file first!');
+                return;
+            }
+
+            navigator.clipboard.writeText(promptText).then(() => {
+                const feedback = document.getElementById('copyFeedback');
+                feedback.classList.remove('hidden');
+                setTimeout(() => {
+                    feedback.classList.add('hidden');
+                }, 3000);
+            }).catch(err => {
+                alert('Failed to copy: ' + err);
+            });
+        }
+
+        // Update prompt when inputs change
+        document.querySelectorAll('#focusSelect, #activitySelect, #audienceInput, #durationInput, #durationUnit, #toolsInput').forEach(elem => {
+            elem.addEventListener('input', () => {
+                if (learningData) updatePrompt();
+            });
+            elem.addEventListener('change', () => {
+                if (learningData) updatePrompt();
+            });
+        });
+    </script>
+</body>
+</html>
