@@ -656,29 +656,44 @@ body.hc #timeline-ruler .timeline-ruler-label { border-color: #94a3b8; backgroun
 
   
   
-  /* Mini-histogramme sous les durées (cible vs conçu) */
-  .ld-duration-badge{ position: relative; overflow: hidden; }
-  .ld-mini-hist{
-    position:absolute;
-    left:0;
-    right:0;
-    bottom:0;
-    height:3px;
-    pointer-events:none;
-  }
-  .ld-mini-hist .ld-mini-target{
-    position:absolute;
-    left:0; top:0; bottom:0;
-    width:0%;
-    background: rgba(245, 158, 11, 0.75); /* amber */
-  }
-  .ld-mini-hist .ld-mini-designed{
-    position:absolute;
-    left:0; top:0; bottom:0;
-    width:0%;
-    background: rgba(99, 102, 241, 0.95); /* indigo */
-  }
-  html.hide-target-durations .ld-mini-hist .ld-mini-target{ display:none !important; }
+  /* Barre divergente (delta) sous les durées conçues : trop court vs trop long */
+.ld-duration-badge{ position: relative; overflow: hidden; }
+.ld-delta-bar{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  height:3px;
+  pointer-events:none;
+  background: rgba(148, 163, 184, 0.18); /* slate-400/18 */
+}
+.ld-delta-bar .ld-delta-axis{
+  position:absolute;
+  left:50%;
+  top:0; bottom:0;
+  width:1px;
+  transform: translateX(-0.5px);
+  background: rgba(148, 163, 184, 0.75); /* slate-400 */
+}
+.ld-delta-bar .ld-delta-neg{
+  position:absolute;
+  right:50%;
+  top:0; bottom:0;
+  width:0%;
+  background: rgba(59, 130, 246, 0.92); /* blue (trop court) */
+}
+.ld-delta-bar .ld-delta-pos{
+  position:absolute;
+  left:50%;
+  top:0; bottom:0;
+  width:0%;
+  background: rgba(239, 68, 68, 0.92); /* red (trop long) */
+}
+/* Optionnel: rendu neutre si conforme (on garde le code couleur directionnel, mais en vert) */
+.ld-delta-bar.ld-delta-ok .ld-delta-neg,
+.ld-delta-bar.ld-delta-ok .ld-delta-pos{
+  background: rgba(34, 197, 94, 0.86); /* green */
+}
 .timeline-alert-icons{
     position:absolute;
     top:-18px;
@@ -3893,7 +3908,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <span class="activity-total-time text-xs font-bold text-indigo-700 font-mono">
           0m
          </span>
-<div class="ld-mini-hist" aria-hidden="true"><div class="ld-mini-target"></div><div class="ld-mini-designed"></div></div></div>
+<div class="ld-delta-bar" aria-hidden="true"><div class="ld-delta-axis"></div><div class="ld-delta-neg"></div><div class="ld-delta-pos"></div></div></div>
 </div>
 </div>
 <div class="activity-status-summary ld-status-summary ld-status-summary--module" title="Synthèse des états des activités du module"></div>
@@ -4101,7 +4116,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <span class="text-[9px] text-slate-400 uppercase font-bold tracking-wider leading-none mb-0.5" data-i18n="label_designed">Conçu</span>
 <div class="bg-indigo-50 border border-indigo-100 rounded px-2 py-0.5 h-[22px] flex items-center min-w-[3rem] justify-end moment-designed-badge ld-duration-badge">
 <span class="moment-total-time text-xs font-bold text-indigo-700 font-mono">0m</span>
-<div class="ld-mini-hist" aria-hidden="true"><div class="ld-mini-target"></div><div class="ld-mini-designed"></div></div></div>
+<div class="ld-delta-bar" aria-hidden="true"><div class="ld-delta-axis"></div><div class="ld-delta-neg"></div><div class="ld-delta-pos"></div></div></div>
 </div>
 </div>
 <div class="moment-status-summary ld-status-summary ld-status-summary--moment" title="Synthèse des états des activités du moment"></div>
@@ -4176,7 +4191,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
             <span class="text-[8px] text-slate-400 uppercase font-bold tracking-wider leading-none mb-0.5" data-i18n="label_designed">Conçu</span>
             <div class="bg-indigo-50 border border-indigo-100 rounded px-2 py-0.5 h-[20px] flex items-center min-w-[3rem] justify-end submoment-designed-badge ld-duration-badge">
               <span class="submoment-total-time text-[11px] font-bold text-indigo-700 font-mono">0m</span>
-            <div class="ld-mini-hist" aria-hidden="true"><div class="ld-mini-target"></div><div class="ld-mini-designed"></div></div></div>
+            <div class="ld-delta-bar" aria-hidden="true"><div class="ld-delta-axis"></div><div class="ld-delta-neg"></div><div class="ld-delta-pos"></div></div></div>
           </div>
         </div>
         <div class="submoment-status-summary ld-status-summary" title="Synthèse des états des activités du sous-moment"></div>
@@ -4705,51 +4720,77 @@ try { window.compareDurations = compareDurations; } catch (_) {}
 
 
 
-// ---- Mini-histogram helper (Target vs Designed) ----
-function __ldEnsureMiniHistogram(badgeEl){
+// ---- Delta bar helper (Target vs Designed) ----
+// Visualise l'écart centré sur la cible : trop court (gauche) vs trop long (droite).
+function __ldEnsureDeltaBar(badgeEl){
   try{
     if(!badgeEl) return null;
-    let wrap = badgeEl.querySelector('.ld-mini-hist');
+
+    // Nettoyer l'ancien mini-histogramme si présent (rétrocompat)
+    const old = badgeEl.querySelector('.ld-mini-hist');
+    if(old) old.remove();
+
+    let wrap = badgeEl.querySelector('.ld-delta-bar');
     if(!wrap){
       wrap = document.createElement('div');
-      wrap.className = 'ld-mini-hist';
+      wrap.className = 'ld-delta-bar';
       wrap.setAttribute('aria-hidden','true');
-      const t = document.createElement('div'); t.className = 'ld-mini-target';
-      const d = document.createElement('div'); d.className = 'ld-mini-designed';
-      wrap.appendChild(t); wrap.appendChild(d);
+
+      const axis = document.createElement('div'); axis.className = 'ld-delta-axis';
+      const neg  = document.createElement('div'); neg.className  = 'ld-delta-neg';
+      const pos  = document.createElement('div'); pos.className  = 'ld-delta-pos';
+
+      wrap.appendChild(axis);
+      wrap.appendChild(neg);
+      wrap.appendChild(pos);
       badgeEl.appendChild(wrap);
     }
     return wrap;
   }catch(_){ return null; }
 }
 
-function __ldUpdateMiniHistogram(badgeEl, targetSecs, designedSecs){
+function __ldUpdateDeltaBar(badgeEl, targetSecs, designedSecs){
   try{
     if(!badgeEl) return;
-    const wrap = __ldEnsureMiniHistogram(badgeEl);
+    const wrap = __ldEnsureDeltaBar(badgeEl);
     if(!wrap) return;
-    const tEl = wrap.querySelector('.ld-mini-target');
-    const dEl = wrap.querySelector('.ld-mini-designed');
 
-    const hideTarget = document.documentElement.classList.contains('hide-target-durations');
+    const negEl = wrap.querySelector('.ld-delta-neg');
+    const posEl = wrap.querySelector('.ld-delta-pos');
 
     const t = Math.max(0, Number(targetSecs) || 0);
     const d = Math.max(0, Number(designedSecs) || 0);
 
-    const max = hideTarget ? Math.max(1, d) : Math.max(1, t, d);
-    const tPct = hideTarget ? 0 : (t / max) * 100;
-    const dPct = (d / max) * 100;
+    // Reset
+    if (negEl) negEl.style.width = '0%';
+    if (posEl) posEl.style.width = '0%';
+    wrap.classList.remove('ld-delta-ok');
 
-    if (tEl){
-      tEl.style.width = `${Math.min(100, Math.max(0, tPct))}%`;
-      tEl.style.display = hideTarget ? 'none' : '';
+    // Sans cible : pas d'écart interprétable (on laisse la barre neutre)
+    if (!(t > 0)) return;
+
+    const delta = d - t;
+
+    // Largeur relative à la cible, saturée : |delta| >= cible => demi-largeur complète (50%)
+    const ratio = Math.min(1, Math.abs(delta) / t);
+    const sidePct = Math.max(0, Math.min(50, ratio * 50)); // 0..50 (% de la largeur totale)
+
+    if (delta > 0) {
+      if (posEl) posEl.style.width = `${sidePct}%`;
+    } else if (delta < 0) {
+      if (negEl) negEl.style.width = `${sidePct}%`;
     }
-    if (dEl){
-      dEl.style.width = `${Math.min(100, Math.max(0, dPct))}%`;
-    }
+
+    // Marquer conforme (couleur verte) selon la logique existante de tolérance
+    try{
+      const cmp = (typeof compareDurations === 'function')
+        ? compareDurations(d, t)
+        : { isMatch: Math.round(d) === Math.round(t), deviation: d - t };
+      if (cmp && cmp.isMatch) wrap.classList.add('ld-delta-ok');
+    }catch(_){}
   }catch(_){}
 }
-try { window.__ldUpdateMiniHistogram = __ldUpdateMiniHistogram; } catch(_) {}
+try { window.__ldUpdateDeltaBar = __ldUpdateDeltaBar; } catch(_) {}
 
 // ---- Global step duration helper (seconds) ----
 // Used for all designed-duration aggregates (module/moment), regardless of per-step unit.
@@ -15740,7 +15781,7 @@ const unitSel = momentEl.querySelector('.moment-target-unit');
                         const tv = targetValEl ? parseFloat(targetValEl.value) : 0;
                         const targetSecs = (isNaN(tv) ? 0 : tv) * (isNaN(smUnitSecs) ? 60 : smUnitSecs);
                         
-                        try { __ldUpdateMiniHistogram(designedBadge, targetSecs, smSecs); } catch(_) {}
+                        try { __ldUpdateDeltaBar(designedBadge, targetSecs, smSecs); } catch(_) {}
 if (targetSecs > 0) {
                             const cmp = (typeof compareDurations === 'function')
                                 ? compareDurations(smSecs, targetSecs)
@@ -15769,7 +15810,7 @@ if (targetSecs > 0) {
                     const targetSecs = (isNaN(tv) ? 0 : tv) * (isNaN(unitSecs) ? 60 : unitSecs);
 
                     
-                    try { __ldUpdateMiniHistogram(designedBadge, targetSecs, secs); } catch(_) {}
+                    try { __ldUpdateDeltaBar(designedBadge, targetSecs, secs); } catch(_) {}
 if (targetSecs > 0) {
                         const cmp = (typeof compareDurations === 'function')
                             ? compareDurations(secs, targetSecs)
@@ -16519,7 +16560,7 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong>`;
 	                          const tu = targetUnitSel ? mapUnitToSecs(targetUnitSel.value) : 60;
 	                          const targetSecs = (isNaN(tv) ? 0 : tv) * (isNaN(tu) ? 60 : tu);
 	                          
-	                          try { __ldUpdateMiniHistogram(designedBadge, targetSecs, moduleDesignedSecs); } catch(_) {}
+	                          try { __ldUpdateDeltaBar(designedBadge, targetSecs, moduleDesignedSecs); } catch(_) {}
 if (targetSecs > 0) {
 	                            const cmp = (typeof compareDurations === 'function')
 	                                ? compareDurations(moduleDesignedSecs, targetSecs)
