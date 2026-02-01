@@ -1273,6 +1273,38 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
   /* ===== END_LD_PAGE_WIDTH_CANONICAL ===== */
 
 
+
+/* --- Ignore (cocher-décocher) --- */
+.ld-ignore-label{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  font-size:11px;
+  font-weight:700;
+  color:#64748b;
+  user-select:none;
+  cursor:pointer;
+}
+.ld-ignore-label input{
+  width:14px;
+  height:14px;
+}
+.ld-ignored{ opacity:0.55; }
+.ld-ignored .ld-ignore-label,
+.ld-ignored .ld-ignore-label *{ opacity:1; }
+.ld-ignored-inherited{ opacity:0.65; }
+.ld-ignored .step-header,
+.ld-ignored .moment-header,
+.ld-ignored .submoment-header{
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(148,163,184,0.12),
+    rgba(148,163,184,0.12) 6px,
+    rgba(148,163,184,0.02) 6px,
+    rgba(148,163,184,0.02) 12px
+  );
+}
+
 </style>
 <script>
 /* Modèles: stubs globaux disponibles dès le chargement (évite les clics "inerte" avant l'initialisation).
@@ -3995,6 +4027,8 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
   <span class="material-icons-round text-lg">done_all</span>
 </button>
 <button aria-expanded="false" class="no-print text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-action="toggle-moment-description" data-i18n-title="title_toggle_description" title="Afficher/Masquer la description" type="button"><span class="material-icons-round text-lg">description</span></button>
+<label class="ld-ignore-label" title="Ignorer ce moment (exclu des durées, graphiques et séquence)"><input type="checkbox" class="ld-ignore-toggle" data-ignore-scope="moment"/><span>Ign.</span></label>
+
 <button aria-expanded="true" class="no-print text-slate-400 hover:text-indigo-500 p-1 transition-colors" data-action="toggle-moment" title="Replier / déplier ce moment" type="button">
 <span class="material-icons-round text-lg rotate-icon" style="transform: rotate(180deg);">expand_more</span>
 </button>
@@ -4071,6 +4105,8 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
         <button class="no-print text-slate-400 hover:text-indigo-700 transition-colors" data-action="add-step-submoment" title="Ajouter une activité au sous-moment" type="button">
           <span class="material-icons-round text-sm">add</span>
         </button>
+<label class="ld-ignore-label" title="Ignorer ce sous-moment (exclu des durées, graphiques et séquence)"><input type="checkbox" class="ld-ignore-toggle" data-ignore-scope="submoment"/><span>Ign.</span></label>
+
         <button aria-expanded="true" class="no-print text-slate-400 hover:text-indigo-700 transition-colors" data-action="toggle-submoment" title="Replier / déplier ce sous-moment" type="button">
           <span class="material-icons-round text-sm rotate-icon" style="transform: rotate(180deg);">expand_more</span>
         </button>
@@ -4160,6 +4196,8 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <button type="button" class="step-status-dot" data-val="in_progress" title="État : En cours" aria-label="Changer l'état"></button>
 </div>
 <div class="flex items-center gap-0.5 no-print">
+
+<label class="ld-ignore-label" title="Ignorer cette activité (exclue des durées, graphiques et séquence)"><input type="checkbox" class="ld-ignore-toggle" data-ignore-scope="step"/><span>Ign.</span></label>
 <button class="text-slate-400 hover:text-indigo-500 p-0.5" data-action="toggle-step" data-i18n-title="title_toggle_panel" title="Afficher/Masquer les paramètres">
 <span class="material-icons-round text-base">
         description
@@ -4601,10 +4639,107 @@ try { window.getStepDurationSecs = getStepDurationSecs; } catch (_) {}
 // ---- Designed step-card query helper (includes steps inside submoments) ----
 // IMPORTANT: Submoment step containers use `.submoment-steps` (not `.activity-steps-container`).
 // For all "designed duration" aggregates, we must include BOTH containers.
+
+/* --- Ignore (cocher-décocher) helpers --- */
+function __ldIsSelfIgnored(el){
+  try {
+    if (!el) return false;
+    const d = el.dataset || {};
+    return d.ldIgnored === '1' || d.ignored === '1' || d.ignore === '1' || el.classList.contains('ld-ignored');
+  } catch(_) { return false; }
+}
+function __ldHasIgnoredAncestor(el){
+  try {
+    let p = el && el.parentElement;
+    while (p && p !== document.body) {
+      if (p.classList && (p.classList.contains('moment-group') || p.classList.contains('submoment-card') || p.classList.contains('step-card'))) {
+        if (__ldIsSelfIgnored(p)) return true;
+      }
+      p = p.parentElement;
+    }
+  } catch(_) {}
+  return false;
+}
+function __ldIsIgnored(el){
+  return __ldIsSelfIgnored(el) || __ldHasIgnoredAncestor(el);
+}
+function __ldFilterStepNodeList(list){
+  try { return Array.from(list || []).filter(el => !__ldIsIgnored(el)); } catch(_) { return Array.from(list || []); }
+}
+function __ldSetIgnored(el, flag, opts){
+  if (!el) return;
+  const silent = !!(opts && opts.silent);
+  try { if (!silent && typeof historyCaptureNow === 'function') historyCaptureNow(); } catch(_) {}
+  try {
+    if (flag) el.dataset.ldIgnored = '1';
+    else delete el.dataset.ldIgnored;
+  } catch(_) {}
+  try { el.classList.toggle('ld-ignored', !!flag); } catch(_) {}
+}
+function __ldRefreshIgnoreCascade(){
+  try {
+    document.querySelectorAll('.moment-group').forEach(mEl => {
+      const self = __ldIsSelfIgnored(mEl);
+      const cb = mEl.querySelector('.ld-ignore-toggle[data-ignore-scope="moment"]');
+      if (cb) { cb.checked = self; cb.indeterminate = false; cb.disabled = false; }
+
+      mEl.querySelectorAll('.submoment-card, .step-card').forEach(child => {
+        const inherited = !__ldIsSelfIgnored(child) && __ldHasIgnoredAncestor(child);
+        child.classList.toggle('ld-ignored-inherited', inherited);
+        const sc = child.querySelector('.ld-ignore-toggle');
+        if (!sc) return;
+        if (inherited) {
+          sc.checked = true;
+          sc.indeterminate = true;
+          sc.disabled = true;
+        } else {
+          sc.disabled = false;
+          sc.indeterminate = false;
+          sc.checked = __ldIsSelfIgnored(child);
+        }
+      });
+    });
+
+    // Defensive: outside moments (shouldn't happen, but keeps UI consistent)
+    document.querySelectorAll('.submoment-card').forEach(smEl => {
+      const inherited = !__ldIsSelfIgnored(smEl) && __ldHasIgnoredAncestor(smEl);
+      smEl.classList.toggle('ld-ignored-inherited', inherited);
+    });
+    __ldFilterStepNodeList(__ldFilterStepNodeList(document.querySelectorAll('.step-card'))).forEach(stEl => {
+      const inherited = !__ldIsSelfIgnored(stEl) && __ldHasIgnoredAncestor(stEl);
+      stEl.classList.toggle('ld-ignored-inherited', inherited);
+    });
+  } catch(_) {}
+}
+
+document.addEventListener('change', function(e){
+  try {
+    const t = e.target;
+    if (!t || !t.classList || !t.classList.contains('ld-ignore-toggle')) return;
+    const scope = t.dataset ? (t.dataset.ignoreScope || '') : '';
+    let host = null;
+    if (scope === 'moment') host = t.closest('.moment-group');
+    else if (scope === 'submoment') host = t.closest('.submoment-card');
+    else host = t.closest('.step-card');
+    if (!host) return;
+
+    __ldSetIgnored(host, !!t.checked, { silent: false });
+    __ldRefreshIgnoreCascade();
+    try { if (typeof updateStatsDebounced === 'function') updateStatsDebounced(); else if (typeof updateStats === 'function') updateStats(); } catch(_) {}
+    try { if (typeof renderPanoramaView === 'function') renderPanoramaView(); } catch(_) {}
+  } catch(_) {}
+}, true);
+
+document.addEventListener('DOMContentLoaded', function(){
+  try { __ldRefreshIgnoreCascade(); } catch(_) {}
+});
+/* --- End ignore helpers --- */
+
 function __ldQueryDesignedStepCards(scopeEl) {
   try {
     if (!scopeEl) return [];
-    return Array.from(scopeEl.querySelectorAll('.activity-steps-container .step-card, .submoment-steps .step-card'));
+    const arr = Array.from(scopeEl.querySelectorAll('.activity-steps-container .step-card, .submoment-steps .step-card'));
+    try { return arr.filter(el => !__ldIsIgnored(el)); } catch (_) { return arr; }
   } catch (_) { return []; }
 }
 try { window.__ldQueryDesignedStepCards = __ldQueryDesignedStepCards; } catch (_) {}
@@ -4799,18 +4934,18 @@ function buildPanoramaRowsFromDOM() {
   modules.forEach((modEl, mIdx) => {
     const modTitle = (modEl.querySelector('.activity-title')?.value || modEl.querySelector('.module-title')?.value || `Module ${mIdx+1}`).trim();
 
-    const moments = Array.from(modEl.querySelectorAll('.activity-moments-container .moment-group'));
+    const moments = Array.from(modEl.querySelectorAll('.activity-moments-container .moment-group')).filter(m => !__ldIsIgnored(m));
     if (!moments.length) return;
 
     moments.forEach((momentEl, moIdx) => {
       const moTitle = (momentEl.querySelector('.moment-title')?.value || `Moment ${moIdx+1}`).trim();
 
       // Sub-moments
-      const subs = Array.from(momentEl.querySelectorAll('.submoments-container .submoment-card'));
+      const subs = Array.from(momentEl.querySelectorAll('.submoments-container .submoment-card')).filter(sm => !__ldIsIgnored(sm));
       if (subs.length) {
         subs.forEach((smEl, smIdx) => {
           const smTitle = (smEl.querySelector('.submoment-title')?.value || '').trim();
-          const steps = Array.from(smEl.querySelectorAll('.step-card'));
+          const steps = Array.from(__ldFilterStepNodeList(smEl.querySelectorAll('.step-card'))).filter(st => !__ldIsIgnored(st));
           steps.forEach((stepEl, sIdx) => {
             counter += 1;
             const stTitle = (stepEl.querySelector('.step-input-title')?.value || `Activité ${sIdx+1}`).trim();
@@ -4840,7 +4975,7 @@ function buildPanoramaRowsFromDOM() {
       }
 
       // Direct steps in moment (no sub-moment)
-      const directSteps = Array.from(momentEl.querySelectorAll('.moment-direct-steps .step-card'));
+      const directSteps = Array.from(momentEl.querySelectorAll('.moment-direct-steps .step-card')).filter(st => !__ldIsIgnored(st));
       if (directSteps.length) {
         directSteps.forEach((stepEl, sIdx) => {
           counter += 1;
@@ -6569,7 +6704,7 @@ function addAimItem(textValue = null) {
             const modules = Array.from(document.querySelectorAll('.activity-group'));
             const moduleIndex = modules.indexOf(moduleEl);
 
-            const steps = Array.from(moduleEl.querySelectorAll('.step-card'));
+            const steps = Array.from(__ldFilterStepNodeList(moduleEl.querySelectorAll('.step-card')));
             const stepIndex = steps.indexOf(stepEl);
 
             const moduleTitle = moduleEl.querySelector('.activity-title')?.value || moduleEl.querySelector('.activity-title')?.getAttribute('value') || '';
@@ -6742,7 +6877,7 @@ function openAimsFromStep(btn) {
             const modules = Array.from(document.querySelectorAll('.activity-group'));
             const moduleEl = modules[origin.moduleIndex];
             if (!moduleEl) return;
-            const steps = Array.from(moduleEl.querySelectorAll('.step-card'));
+            const steps = Array.from(__ldFilterStepNodeList(moduleEl.querySelectorAll('.step-card')));
             const stepEl = steps[origin.stepIndex];
             if (stepEl && stepEl.scrollIntoView) stepEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
@@ -8470,7 +8605,7 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             const directContainer = momentEl ? momentEl.querySelector('.moment-direct-steps .activity-steps-container') : null;
 
             // Move contained steps to moment direct container (no data loss)
-            try { if (directContainer) subEl.querySelectorAll('.step-card').forEach(st => directContainer.appendChild(st)); } catch (_) {}
+            try { if (directContainer) __ldFilterStepNodeList(subEl.querySelectorAll('.step-card')).forEach(st => directContainer.appendChild(st)); } catch (_) {}
 
             try { subEl.remove(); } catch (_) {}
 
@@ -9079,7 +9214,7 @@ function toggleMomentDescription(btn) {
             let targetEl = moduleEl;
 
             if (stepIndex !== null && stepIndex !== undefined) {
-                const steps = Array.from(moduleEl.querySelectorAll('.step-card'));
+                const steps = Array.from(__ldFilterStepNodeList(moduleEl.querySelectorAll('.step-card')));
                 const stepEl = steps[stepIndex];
                 if (stepEl) {
                     targetEl = stepEl;
@@ -10023,7 +10158,7 @@ function updateOutcomeBloom(levelSelect) {
 }
 
         function refreshAllStepCompetenceOptions() {
-            document.querySelectorAll('.step-card').forEach(stepEl => {
+            __ldFilterStepNodeList(__ldFilterStepNodeList(document.querySelectorAll('.step-card'))).forEach(stepEl => {
                 populateStepCompetencesSelect(stepEl, null);
                 populateStepCompetencesTransversalesSelect(stepEl, null);
             });
@@ -10244,7 +10379,7 @@ function updateOutcomeBloom(levelSelect) {
         }
 
         function refreshAllStepAimsOptions() {
-            document.querySelectorAll('.step-card').forEach(stepEl => {
+            __ldFilterStepNodeList(__ldFilterStepNodeList(document.querySelectorAll('.step-card'))).forEach(stepEl => {
                 try { populateStepAimsSelect(stepEl, null); } catch (_) {}
             });
         }
@@ -10346,7 +10481,7 @@ function updateOutcomeBloom(levelSelect) {
         }
 
         function refreshAllStepToolsMaterialsOptions() {
-            document.querySelectorAll('.step-card').forEach(stepEl => {
+            __ldFilterStepNodeList(__ldFilterStepNodeList(document.querySelectorAll('.step-card'))).forEach(stepEl => {
                 try { populateStepToolsMaterialsSelect(stepEl, null); } catch (_) {}
             });
         }
@@ -10585,7 +10720,7 @@ function updateOutcomeBloom(levelSelect) {
         }
 
 function refreshAllStepOutcomesOptions() {
-            document.querySelectorAll('.step-card').forEach(stepEl => {
+            __ldFilterStepNodeList(__ldFilterStepNodeList(document.querySelectorAll('.step-card'))).forEach(stepEl => {
                 try { populateStepOutcomesSelect(stepEl, null); } catch (_) {}
             });
         }
@@ -10726,7 +10861,7 @@ function refreshAllStepOutcomesOptions() {
             const transvSet = new Set();
             if (!moduleEl) return { aims: [], outcomes: [], competencesSujet: [], competencesTransv: [] };
 
-            moduleEl.querySelectorAll('.step-card').forEach(stepEl => {
+            __ldFilterStepNodeList(moduleEl.querySelectorAll('.step-card')).forEach(stepEl => {
                 // Aims
                 let aims = [];
                 try {
@@ -11295,7 +11430,7 @@ obs3.observe(alist, { childList: true, subtree: true });
             const sujetIds = new Set();
             const transvIds = new Set();
 
-            moduleEl.querySelectorAll('.step-card').forEach(stepEl => {
+            __ldFilterStepNodeList(moduleEl.querySelectorAll('.step-card')).forEach(stepEl => {
                 try {
                     const s = (typeof getSelectedStepCompetenceIds === 'function') ? getSelectedStepCompetenceIds(stepEl) : [];
                     (s || []).forEach(id => { if (id) sujetIds.add(String(id).trim()); });
@@ -11601,6 +11736,7 @@ obs3.observe(alist, { childList: true, subtree: true });
 
         function __ldSerializeStepFromEl(stepEl) {
             return {
+                                ignored: (typeof __ldIsSelfIgnored === 'function') ? __ldIsSelfIgnored(stepEl) : false,
 
                                 titre: stepEl.querySelector('.step-input-title').value,
                                 type: stepEl.querySelector('.learning-type-select').value,
@@ -11701,11 +11837,12 @@ function buildExportProjectData() {
                 };
 
                 const momentsRoot = actEl.querySelector('.activity-moments-container');
-                const momentEls = momentsRoot ? momentsRoot.querySelectorAll('.moment-group') : [];
+                const momentEls = momentsRoot ? Array.from(momentsRoot.querySelectorAll('.moment-group')).filter(m => !__ldIsIgnored(m)) : [];
 
                 if (momentEls && momentEls.length) {
                     momentEls.forEach(momentEl => {
                         const momentData = {
+                            ignored: (typeof __ldIsSelfIgnored === 'function') ? __ldIsSelfIgnored(momentEl) : false,
                             titre: momentEl.querySelector('.moment-title')?.value || "",
                             description: momentEl.querySelector('.moment-description')?.value || "",
                             dureeCible: momentEl.querySelector('.moment-target-time')?.value,
@@ -11728,6 +11865,7 @@ function buildExportProjectData() {
                                     const smTargetTime = smEl.querySelector('.submoment-target-time')?.value || "";
                                     const smTargetUnit = smEl.querySelector('.submoment-target-unit')?.value || getDefaultDurationUnitSecs();
                                     const smLegacy = {
+                                        ignored: (typeof __ldIsSelfIgnored === 'function') ? __ldIsSelfIgnored(smEl) : false,
                                         titre: smTitleVal,
                                         description: "",
                                         dureeCible: smTargetTime,
@@ -11735,13 +11873,14 @@ function buildExportProjectData() {
                                         activites: []
                                     };
                                     const smCanon = {
+                                        ignored: (typeof __ldIsSelfIgnored === 'function') ? __ldIsSelfIgnored(smEl) : false,
                                         title: smTitleVal,
                                         description: "",
                                         targetTime: smTargetTime,
                                         targetUnit: String(smTargetUnit),
                                         steps: []
                                     };
-                                    smEl.querySelectorAll('.step-card').forEach(stepEl => {
+                                    __ldQueryDesignedStepCards(smEl).forEach(stepEl => {
                                         const stepObj = __ldSerializeStepFromEl(stepEl);
                                         smLegacy.activites.push(stepObj);
                                         smCanon.steps.push({ ...stepObj });
@@ -11754,7 +11893,7 @@ function buildExportProjectData() {
 moduleData.moments.push(momentData);
                     });
                 } else {
-                    actEl.querySelectorAll('.step-card').forEach(stepEl => {
+                    __ldFilterStepNodeList(actEl.querySelectorAll('.step-card')).forEach(stepEl => {
                         moduleData.activites.push(__ldSerializeStepFromEl(stepEl));
                     });
                 }
@@ -12559,6 +12698,7 @@ mod.uniteCible = _trimText(mod.uniteCible ?? mod.targetUnit ?? "", 30);
                 .filter(m => m && typeof m === "object")
                 .map((m, mj) => {
                     ensureUniqueId(m, "moment");
+                    m.ignored = !!(m.ignored ?? m.ignore ?? m.isIgnored ?? m.ldIgnored);
                     m.title = _trimText(m.title ?? m.titre ?? `Moment ${mj+1}`, 200);
                     m.type = _trimText(m.type ?? "", 40);
 
@@ -12600,6 +12740,7 @@ if (m.targetTimeSec == null) {
                                 .filter(sm => sm && typeof sm === "object")
                                 .map((sm, smi) => {
                                     ensureUniqueId(sm, "submoment");
+                                    sm.ignored = !!(sm.ignored ?? sm.ignore ?? sm.isIgnored ?? sm.ldIgnored);
                                     sm.title = _trimText(sm.title ?? sm.titre ?? "", 200);
                                     sm.description = _trimText(sm.description ?? "", 5000);
 
@@ -12628,6 +12769,8 @@ if (m.targetTimeSec == null) {
                                         .filter(s => s && typeof s === "object")
                                         .map((s, si) => {
                                             ensureUniqueId(s, "step");
+                            s.ignored = !!(s.ignored ?? s.ignore ?? s.isIgnored ?? s.ldIgnored);
+                                            s.ignored = !!(s.ignored ?? s.ignore ?? s.isIgnored ?? s.ldIgnored);
                                             s.title = _trimText(s.title ?? s.titre ?? `Activité ${si+1}`, 200);
                                             s.type = _trimText(s.type ?? "", 50);
 
@@ -12993,6 +13136,7 @@ const __chartsSuspendFn = window.__setChartsSuspended;
                     : (Array.isArray(project) ? project : []));
 
             const normaliseStep = (s) => ({
+                ignored: !!(s?.ignored || s?.ignore || s?.isIgnored || s?.ldIgnored),
                 title: s?.title ?? s?.titre ?? "",
                 type: s?.type ?? "",
                 duration: s?.duration ?? s?.duree ?? "",
@@ -13021,6 +13165,7 @@ const __chartsSuspendFn = window.__setChartsSuspended;
             });
 
             const normaliseMoment = (m) => ({
+                ignored: !!(m?.ignored || m?.ignore || m?.isIgnored || m?.ldIgnored),
                 title: m?.title ?? m?.titre ?? "",
                 description: m?.description ?? "",
                 targetTime: m?.targetTime ?? m?.dureeCible ?? "",
@@ -13028,6 +13173,7 @@ const __chartsSuspendFn = window.__setChartsSuspended;
                 subMoments: (function(){
                     const smRaw = Array.isArray(m?.subMoments) ? m.subMoments : (Array.isArray(m?.sousMoments) ? m.sousMoments : []);
                     return Array.isArray(smRaw) ? smRaw.map(sm => ({
+                        ignored: !!(sm?.ignored || sm?.ignore || sm?.isIgnored || sm?.ldIgnored),
                         title: sm?.title ?? sm?.titre ?? "",
                         description: sm?.description ?? "",
                         targetTime: sm?.targetTime ?? sm?.dureeCible ?? "",
@@ -13633,6 +13779,7 @@ loadProjectFromObject(project);
                         if (mTgt) mTgt.value = momentData.targetTime || "";
                         const mUnitSel = momentEl.querySelector('.moment-target-unit');
                         if (mUnitSel) mUnitSel.value = mapUnitToSecs(momentData.targetUnit ?? getDefaultDurationUnitKey());
+                        try { if (momentData.ignored || momentData.ignore || momentData.ldIgnored) __ldSetIgnored(momentEl, true, { silent: true }); } catch(_) {}
 const stepsContainer = momentEl.querySelector('.activity-steps-container');
                         initSortableSteps(stepsContainer);
                         try { setupCompactTextareas(momentEl); } catch (_) {}
@@ -13651,6 +13798,7 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
                                 if (smTgtTime) smTgtTime.value = (sm.targetTime || sm.dureeCible || "");
                                 const smTgtUnit = smEl ? smEl.querySelector('.submoment-target-unit') : null;
                                 if (smTgtUnit) smTgtUnit.value = mapUnitToSecs(sm.targetUnit || sm.uniteDureeCible || getDefaultDurationUnitKey());
+                                try { if (sm.ignored || sm.ignore || sm.ldIgnored) __ldSetIgnored(smEl, true, { silent: true }); } catch(_) {}
                                 const smSteps = smEl ? smEl.querySelector('.submoment-steps') : null;
                                 initSortableSteps(smSteps);
                                 ((sm.steps || sm.activites || []) || []).forEach(stepData => { addStepToContainerFromData(smSteps, stepData); });
@@ -13693,6 +13841,7 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
             try { populateModuleTargetCompetencesSujetSelect(actEl, data.competencesModuleSujet || []); } catch (_) {}
             try { populateModuleTargetCompetencesTransvSelect(actEl, data.competencesModuleTransversales || []); } catch (_) {}
             try { updateModuleTargetCompetencesSummary(actEl); } catch (_) {}
+            try { __ldRefreshIgnoreCascade(); } catch(_) {}
 
             return actEl;
         }
@@ -13717,6 +13866,7 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
             stepEl.querySelector('.time-select').value = data.time || "sync";
                         stepEl.querySelector('.evaluation-select').value = data.evaluation || "Aucune";
             try { applyStepStatus(stepEl, (data.status ?? data.etat ?? data.state ?? 'in_progress')); } catch(_) {}
+            try { if (data.ignored || data.ignore || data.isIgnored || data.ldIgnored) __ldSetIgnored(stepEl, true, { silent: true }); } catch(_) {}
 stepEl.querySelector('.step-input-objective').value = data.objective || "";
             stepEl.querySelector('.step-input-tasks').value = data.tasks || "";
             stepEl.querySelector('.step-input-trainer-tasks').value = data.trainerTasks || data.aFaireFormateur || data.trainer_actions || data.trainerActions || "";
@@ -14142,7 +14292,7 @@ try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closes
             const v = __ldGetStatusFilterValue();
 
             // Filter step cards
-            document.querySelectorAll('.step-card').forEach(stepEl => {
+            __ldFilterStepNodeList(__ldFilterStepNodeList(document.querySelectorAll('.step-card'))).forEach(stepEl => {
                 let st = 'in_progress';
                 try { st = (typeof getStepStatus === 'function') ? getStepStatus(stepEl) : (stepEl?.dataset?.status || 'in_progress'); } catch (_) {}
                 st = (typeof normaliseStepStatus === 'function') ? normaliseStepStatus(st) : String(st || '').trim();
@@ -14154,21 +14304,21 @@ try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closes
             // IMPORTANT: keep containers with 0 activities visible, otherwise creating a new empty sub-moment
             // would appear briefly and then be hidden by the status filter.
             document.querySelectorAll('.submoment-card').forEach(subEl => {
-                const total = subEl.querySelectorAll('.step-card').length;
+                const total = __ldFilterStepNodeList(subEl.querySelectorAll('.step-card')).length;
                 const anyVisible = !!subEl.querySelector('.step-card:not(.ld-hidden-by-status-filter)');
                 const shouldHide = (total > 0) && !anyVisible;
                 subEl.classList.toggle('ld-hidden-by-status-filter', shouldHide);
             });
 
             document.querySelectorAll('.moment-group').forEach(momentEl => {
-                const total = momentEl.querySelectorAll('.step-card').length;
+                const total = __ldFilterStepNodeList(momentEl.querySelectorAll('.step-card')).length;
                 const anyVisible = !!momentEl.querySelector('.step-card:not(.ld-hidden-by-status-filter)');
                 const shouldHide = (total > 0) && !anyVisible;
                 momentEl.classList.toggle('ld-hidden-by-status-filter', shouldHide);
             });
 
             document.querySelectorAll('.activity-group').forEach(modEl => {
-                const total = modEl.querySelectorAll('.step-card').length;
+                const total = __ldFilterStepNodeList(modEl.querySelectorAll('.step-card')).length;
                 const anyVisible = !!modEl.querySelector('.step-card:not(.ld-hidden-by-status-filter)');
                 const shouldHide = (total > 0) && !anyVisible;
                 modEl.classList.toggle('ld-hidden-by-status-filter', shouldHide);
@@ -14330,7 +14480,7 @@ document.addEventListener('DOMContentLoaded', () => { try { __ldInitStatusSelect
         function __ldComputeStatusCounts(rootEl){
             const counts = { done: 0, review: 0, in_progress: 0, total: 0 };
             if (!rootEl) return counts;
-            const steps = rootEl.querySelectorAll?.('.step-card') || [];
+            const steps = __ldQueryDesignedStepCards(rootEl);
             steps.forEach(stepEl => {
                 const st = getStepStatus(stepEl);
                 if (st === 'done') counts.done += 1;
@@ -14971,7 +15121,7 @@ function formatTimelineDuration(secs) {
                 });
 
                 // STEP duration units
-                document.querySelectorAll('.step-card').forEach(stepEl => {
+                __ldFilterStepNodeList(__ldFilterStepNodeList(document.querySelectorAll('.step-card'))).forEach(stepEl => {
                     const unitSel = stepEl.querySelector('.duration-unit');
                     const valEl = stepEl.querySelector('.duration-input');
                     if (!unitSel) return;
@@ -15100,7 +15250,7 @@ function formatTimelineDuration(secs) {
                 });
 
                 // Update STEP (activity) duration units + (optional) convert values
-                document.querySelectorAll('.step-card').forEach(stepEl => {
+                __ldFilterStepNodeList(__ldFilterStepNodeList(document.querySelectorAll('.step-card'))).forEach(stepEl => {
                     const unitSel = stepEl.querySelector('.duration-unit');
                     const valEl = stepEl.querySelector('.duration-input');
                     if (!unitSel) return;
@@ -15405,7 +15555,7 @@ const unitSel = momentEl.querySelector('.moment-target-unit');
                     const subEls = momentEl.querySelectorAll('.submoments-container .submoment-card');
                     subEls.forEach(smEl => {
                         let smSecs = 0;
-                        smEl.querySelectorAll('.submoment-steps .step-card').forEach(stepEl => { smSecs += getStepDurationSecs(stepEl); });
+                        __ldQueryDesignedStepCards(smEl).forEach(stepEl => { smSecs += getStepDurationSecs(stepEl); });
                         try { smEl.dataset.designedSecs = String(smSecs); } catch (_) {}
 
                         const smUnitSel = smEl.querySelector('.submoment-target-unit');
@@ -15720,7 +15870,7 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
 
                             momentEls.forEach((momEl, mi) => {
                                 let secs = 0;
-                                momEl.querySelectorAll('.step-card').forEach(stepEl => { secs += getStepDurationSecs(stepEl); });
+                                __ldQueryDesignedStepCards(momEl).forEach(stepEl => { secs += getStepDurationSecs(stepEl); });
                                 if (secs <= 0) return;
 
                                 const title = (momEl.querySelector('.moment-title')?.value || '').trim() || `Moment ${mi + 1}`;
@@ -15871,7 +16021,7 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
                                 const subEls = Array.from(momEl.querySelectorAll(':scope .submoments-container > .submoment-card'));
                                 subEls.forEach((smEl, si) => {
                                     let secs = 0;
-                                    smEl.querySelectorAll('.step-card').forEach(stepEl => { secs += getStepDurationSecs(stepEl); });
+                                    __ldQueryDesignedStepCards(smEl).forEach(stepEl => { secs += getStepDurationSecs(stepEl); });
                                     if (secs <= 0) return;
 
                                     const title = (smEl.querySelector('.submoment-title')?.value || '').trim() || `Sous-moment ${si + 1}`;
@@ -17465,7 +17615,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     });
                 } else {
                     // Legacy designs (no moments): export as a single moment for a complete structure
-                    const stepCards = activity.querySelectorAll('.step-card');
+                    const stepCards = __ldFilterStepNodeList(activity.querySelectorAll('.step-card'));
                     const momentSecs = calcMomentSecs(stepCards);
                     const momentPrefix = `${aIdx + 1}.1`;
                     html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
@@ -17916,7 +18066,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     });
                 } else {
                     // Legacy designs (no moments): export as a single moment for a complete structure
-                    const stepCards = activity.querySelectorAll('.step-card');
+                    const stepCards = __ldFilterStepNodeList(activity.querySelectorAll('.step-card'));
                     const momentSecs = calcMomentSecs(stepCards);
                     const momentPrefix = `${aIdx + 1}.1`;
                     html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
@@ -18484,7 +18634,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     });
                 } else {
                     // Legacy designs (no moments): export as a single moment for a complete structure
-                    const stepCards = activity.querySelectorAll('.step-card');
+                    const stepCards = __ldFilterStepNodeList(activity.querySelectorAll('.step-card'));
                     const momentSecs = calcMomentSecs(stepCards);
                     const momentPrefix = `${aIdx + 1}.1`;
                     html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
@@ -18929,7 +19079,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     });
                 } else {
                     // Legacy designs (no moments): export as a single moment for a complete structure
-                    const stepCards = activity.querySelectorAll('.step-card');
+                    const stepCards = __ldFilterStepNodeList(activity.querySelectorAll('.step-card'));
                     const momentSecs = calcMomentSecs(stepCards);
                     const momentPrefix = `${aIdx + 1}.1`;
                     html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
@@ -19030,7 +19180,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const moTitle = momentCard.querySelector('.moment-title')?.value || `Moment ${moIdx+1}`;
                         const moTgtVal = momentCard.querySelector('.moment-target-time')?.value || '';
                         const moTgtUnit = momentCard.querySelector('.moment-target-unit')?.selectedOptions[0]?.innerText || '';
-                        const stepCards = momentCard.querySelectorAll('.step-card');
+                        const stepCards = __ldFilterStepNodeList(momentCard.querySelectorAll('.step-card'));
                         const momentSecs = sumDurationCardsToSecs(stepCards);
 
                         rtf += '\\par\\b ' + escapeRtf(`    Moment ${mIdx+1}.${aIdx+1}.${moIdx+1} — `) + escapeRtf(moTitle) + '\\b0\\par ';
@@ -19328,7 +19478,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     });
                 } else {
                     // Legacy designs (no moments): export as a single moment for a complete structure
-                    const stepCards = activity.querySelectorAll('.step-card');
+                    const stepCards = __ldFilterStepNodeList(activity.querySelectorAll('.step-card'));
                     const momentSecs = calcMomentSecs(stepCards);
                     const momentPrefix = `${aIdx + 1}.1`;
                     html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
@@ -19429,7 +19579,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const moTitle = momentCard.querySelector('.moment-title')?.value || `Moment ${moIdx+1}`;
                         const moTgtVal = momentCard.querySelector('.moment-target-time')?.value || '';
                         const moTgtUnit = momentCard.querySelector('.moment-target-unit')?.selectedOptions[0]?.innerText || '';
-                        const stepCards = momentCard.querySelectorAll('.step-card');
+                        const stepCards = __ldFilterStepNodeList(momentCard.querySelectorAll('.step-card'));
                         const momentSecs = sumDurationCardsToSecs(stepCards);
 
                         rtf += '\\par\\b ' + escapeRtf(`    Moment ${mIdx+1}.${aIdx+1}.${moIdx+1} — `) + escapeRtf(moTitle) + '\\b0\\par ';
@@ -19853,7 +20003,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     });
                 } else {
                     // Legacy designs (no moments): export as a single moment for a complete structure
-                    const stepCards = activity.querySelectorAll('.step-card');
+                    const stepCards = __ldFilterStepNodeList(activity.querySelectorAll('.step-card'));
                     const momentSecs = calcMomentSecs(stepCards);
                     const momentPrefix = `${aIdx + 1}.1`;
                     html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
@@ -20155,7 +20305,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     });
                 } else {
                     // Legacy designs (no moments): export as a single moment for a complete structure
-                    const stepCards = activity.querySelectorAll('.step-card');
+                    const stepCards = __ldFilterStepNodeList(activity.querySelectorAll('.step-card'));
                     const momentSecs = calcMomentSecs(stepCards);
                     const momentPrefix = `${aIdx + 1}.1`;
                     html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
@@ -20256,7 +20406,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         const moTitle = momentCard.querySelector('.moment-title')?.value || `Moment ${moIdx+1}`;
                         const moTgtVal = momentCard.querySelector('.moment-target-time')?.value || '';
                         const moTgtUnit = momentCard.querySelector('.moment-target-unit')?.selectedOptions[0]?.innerText || '';
-                        const stepCards = momentCard.querySelectorAll('.step-card');
+                        const stepCards = __ldFilterStepNodeList(momentCard.querySelectorAll('.step-card'));
                         const momentSecs = sumDurationCardsToSecs(stepCards);
 
                         rtf += '\\par\\b ' + escapeRtf(`    Moment ${mIdx+1}.${aIdx+1}.${moIdx+1} — `) + escapeRtf(moTitle) + '\\b0\\par ';
@@ -20641,7 +20791,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             // Moment has sub-moments
                             let totalMomentSecs = 0;
                             submomentEls.forEach(smEl => {
-                                const smSteps = smEl.querySelectorAll('.submoment-steps .step-card');
+                                const smSteps = __ldQueryDesignedStepCards(smEl);
                                 totalMomentSecs += calcMomentSecs(smSteps);
                             });
 
@@ -20656,7 +20806,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             // Export each sub-moment
                             submomentEls.forEach((smEl, smIdx) => {
                                 const smTitle = (smEl.querySelector('.submoment-title')?.value || '').trim();
-                                const smSteps = smEl.querySelectorAll('.submoment-steps .step-card');
+                                const smSteps = __ldQueryDesignedStepCards(smEl);
                                 const smSecs = calcMomentSecs(smSteps);
                                 const smPrefix = `${momentPrefix}.${smIdx + 1}`;
 
@@ -20687,7 +20837,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     });
                 } else {
                     // Legacy designs (no moments): export as a single moment for a complete structure
-                    const stepCards = activity.querySelectorAll('.step-card');
+                    const stepCards = __ldFilterStepNodeList(activity.querySelectorAll('.step-card'));
                     const momentSecs = calcMomentSecs(stepCards);
                     const momentPrefix = `${aIdx + 1}.1`;
                     html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
@@ -20927,7 +21077,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             // Moment has sub-moments
                             let totalMomentSecs = 0;
                             submomentEls.forEach(smEl => {
-                                const smSteps = smEl.querySelectorAll('.submoment-steps .step-card');
+                                const smSteps = __ldQueryDesignedStepCards(smEl);
                                 totalMomentSecs += sumStepsToSecs(smSteps);
                             });
 
@@ -20940,7 +21090,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             submomentEls.forEach((smEl, smIdx) => {
                                 const smTitle = (smEl.querySelector('.submoment-title')?.value || '').trim();
                                 const smTarget = fmtTarget(smEl.querySelector('.submoment-target-time'), smEl.querySelector('.submoment-target-unit'));
-                                const smSteps = smEl.querySelectorAll('.submoment-steps .step-card');
+                                const smSteps = __ldQueryDesignedStepCards(smEl);
                                 const smSecs = sumStepsToSecs(smSteps);
                                 const smPrefix = `${momentPrefix}.${smIdx + 1}`;
 
@@ -20965,7 +21115,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                     });
                 } else {
                     // Legacy designs (no moments): export as a single moment for completeness
-                    const stepCards = moduleEl.querySelectorAll('.step-card');
+                    const stepCards = __ldFilterStepNodeList(moduleEl.querySelectorAll('.step-card'));
                     const momentSecs = sumStepsToSecs(stepCards);
                     const momentPrefix = `${moduleIdx}.1`;
 
@@ -21223,7 +21373,7 @@ ${linksRefs}
                             // Calculer la durée totale du moment (somme de tous les sous-moments)
                             let totalMomentSecs = 0;
                             submomentEls.forEach(smEl => {
-                                const smSteps = smEl.querySelectorAll('.submoment-steps .step-card');
+                                const smSteps = __ldQueryDesignedStepCards(smEl);
                                 totalMomentSecs += calcMomentSecs(smSteps);
                             });
 
@@ -21245,7 +21395,7 @@ ${linksRefs}
                             // Exporter chaque sous-moment
                             submomentEls.forEach((smEl, smIdx) => {
                                 const smTitle = (smEl.querySelector('.submoment-title')?.value || '').trim();
-                                const smSteps = smEl.querySelectorAll('.submoment-steps .step-card');
+                                const smSteps = __ldQueryDesignedStepCards(smEl);
                                 const smSecs = calcMomentSecs(smSteps);
                                 const smPrefix = `${momentPrefix}.${smIdx + 1}`;
 
@@ -21290,7 +21440,7 @@ ${linksRefs}
                     });
                 } else {
                     
-                    const stepCards = activity.querySelectorAll('.step-card');
+                    const stepCards = __ldFilterStepNodeList(activity.querySelectorAll('.step-card'));
                     const momentSecs = calcMomentSecs(stepCards);
                     const momentPrefix = `${aIdx + 1}.1`;
 
@@ -21534,7 +21684,7 @@ function clearAutosave() {
 
 function isLikelyEmptyProject() {
     const hasModules = document.querySelectorAll('.activity-group').length > 0;
-    const hasAnyStep = document.querySelectorAll('.step-card').length > 0;
+    const hasAnyStep = __ldFilterStepNodeList(__ldFilterStepNodeList(document.querySelectorAll('.step-card'))).length > 0;
     const name = (document.getElementById('param-name')?.value || '').trim();
     const desc = (document.getElementById('param-description')?.value || '').trim();
     // If the tool auto-creates an empty module, treat it as empty unless there is any meaningful content.
@@ -23085,7 +23235,7 @@ function updateCompetenceStats() {
 
     const activityData = [];
 
-    const steps = Array.from(document.querySelectorAll('.step-card'))
+    const steps = Array.from(__ldFilterStepNodeList(__ldFilterStepNodeList(document.querySelectorAll('.step-card'))))
     steps.forEach((step, idx) => {
       const sSel = step.querySelector('.step-competences-select');
       const tSel = step.querySelector('.step-competences-transversales-select');
@@ -23228,7 +23378,7 @@ function updateCompetenceStats() {
       } else {
         modules.forEach((mod, i) => {
           const title = (mod.querySelector('.activity-title')?.value || '').trim() || `Module ${i + 1}`;
-          const steps = Array.from(mod.querySelectorAll('.step-card'));
+          const steps = Array.from(__ldFilterStepNodeList(mod.querySelectorAll('.step-card')));
           let totalS = 0;
           let totalT = 0;
           steps.forEach(step => {
@@ -23302,7 +23452,7 @@ function updateAimsStats() {
     const used = new Set();
     const freq = new Map();
 
-    const steps = Array.from(document.querySelectorAll('.step-card'));
+    const steps = Array.from(__ldFilterStepNodeList(__ldFilterStepNodeList(document.querySelectorAll('.step-card'))));
     steps.forEach((step) => {
       const sel = step.querySelector('.step-aims-select');
       const ids = new Set(Array.from(sel?.selectedOptions || []).map(o => String(o.value||'').trim()).filter(Boolean));
@@ -23405,7 +23555,7 @@ function updateAimsStats() {
     const modules = Array.from(document.querySelectorAll('#activities-root .activity-group'));
     modules.forEach((mod, i) => {
       const title = (mod.querySelector('.activity-title')?.value || '').trim() || `Module ${i + 1}`;
-      const steps = Array.from(mod.querySelectorAll('.step-card'));
+      const steps = Array.from(__ldFilterStepNodeList(mod.querySelectorAll('.step-card')));
       let total = 0;
       steps.forEach(step => {
         total += Array.from(step.querySelector('.step-aims-select')?.selectedOptions || []).map(o => String(o.value||'').trim()).filter(Boolean).length;
@@ -23453,7 +23603,7 @@ function updateOutcomesStats() {
     const used = new Set();
     const freq = new Map();
 
-    const steps = Array.from(document.querySelectorAll('.step-card'));
+    const steps = Array.from(__ldFilterStepNodeList(__ldFilterStepNodeList(document.querySelectorAll('.step-card'))));
     steps.forEach((step) => {
       const sel = step.querySelector('.step-outcomes-select');
       const ids = new Set(Array.from(sel?.selectedOptions || []).map(o => String(o.value||'').trim()).filter(Boolean));
@@ -23554,7 +23704,7 @@ function updateOutcomesStats() {
     const modules = Array.from(document.querySelectorAll('#activities-root .activity-group'));
     modules.forEach((mod, i) => {
       const title = (mod.querySelector('.activity-title')?.value || '').trim() || `Module ${i + 1}`;
-      const steps = Array.from(mod.querySelectorAll('.step-card'));
+      const steps = Array.from(__ldFilterStepNodeList(mod.querySelectorAll('.step-card')));
       let total = 0;
       steps.forEach(step => {
         total += Array.from(step.querySelector('.step-outcomes-select')?.selectedOptions || []).map(o => String(o.value||'').trim()).filter(Boolean).length;
@@ -23843,7 +23993,7 @@ function updateCharts() {
     const moments = listMoments();
     const out = [];
     moments.forEach((m) => {
-      const steps = Array.from(m.el.querySelectorAll('.step-card'));
+      const steps = Array.from(m.__ldFilterStepNodeList(el.querySelectorAll('.step-card')));
       steps.forEach((stepEl, si) => {
         const st = safeText(stepEl.querySelector('.step-input-title')?.value, `Activité ${si + 1}`);
         out.push({
@@ -23868,7 +24018,7 @@ function updateCharts() {
 
   function buildMomentDataFromEl(momentEl) {
     const stepsContainer = momentEl.querySelector('.activity-steps-container');
-    const stepEls = stepsContainer ? Array.from(stepsContainer.querySelectorAll('.step-card')) : [];
+    const stepEls = stepsContainer ? Array.from(__ldFilterStepNodeList(stepsContainer.querySelectorAll('.step-card'))) : [];
     return {
       title: momentEl.querySelector('.moment-title')?.value || "",
       description: momentEl.querySelector('.moment-description')?.value || "",
@@ -24088,7 +24238,7 @@ function updateCharts() {
       const mosi = parseInt(momSel.value || "0", 10);
       const modEl = listModules()[mi];
       const momEl = modEl ? Array.from(modEl.querySelectorAll('.moment-group'))[mosi] : null;
-      const steps = momEl ? Array.from(momEl.querySelectorAll('.step-card')) : [];
+      const steps = momEl ? Array.from(__ldFilterStepNodeList(momEl.querySelectorAll('.step-card'))) : [];
       steps.forEach((stepEl, k) => {
         const label = safeText(stepEl.querySelector('.step-input-title')?.value, `Activité ${k + 1}`);
         const opt = document.createElement('option');
@@ -24237,7 +24387,7 @@ function insertActivity(payload, moduleIndex, momentIndex, position, refStepInde
   stepEl.querySelector('.duration-input').value = payload.duration || 0;
   stepEl.querySelector('.duration-unit').value = payload.unit || (typeof getDefaultDurationUnitKey === 'function' ? getDefaultDurationUnitKey() : "60");
 
-  const existing = Array.from(stepsContainer.querySelectorAll('.step-card'));
+  const existing = Array.from(__ldFilterStepNodeList(stepsContainer.querySelectorAll('.step-card')));
   if (position === 'start') {
     stepsContainer.insertBefore(stepEl, existing[0] || null);
   } else if (position === 'before') {
@@ -24882,7 +25032,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function updateAllStepHeaderChips() {
-            document.querySelectorAll('.step-card').forEach(stepEl => {
+            __ldFilterStepNodeList(__ldFilterStepNodeList(document.querySelectorAll('.step-card'))).forEach(stepEl => {
                 try { updateStepHeaderChips(stepEl); } catch (_) {}
             });
         }
@@ -25107,7 +25257,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sel.appendChild(opt);
       __jumpIndex.set(modKey, { el: modEl, type: 'module' });
 
-      const steps = Array.from(modEl.querySelectorAll('.step-card'));
+      const steps = Array.from(__ldFilterStepNodeList(modEl.querySelectorAll('.step-card')));
       steps.forEach(function(stepEl, si){
         const stepKey = ensureJumpKey(stepEl, 'act');
         const stepLabel = getLabelForStep(stepEl, si);
