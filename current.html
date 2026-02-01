@@ -15780,11 +15780,11 @@ const unitSel = momentEl.querySelector('.moment-target-unit');
 
                             let tooltipText;
                             if (activity.targetSecs > 0) {
-                                tooltipText = `<strong>${escapeHtml(activity.title)}</strong><br><span class="text-slate-300">Durée prévue : ${durationMins} ${translations[currentLang].unit_mins}</span>`;
+                                tooltipText = `<strong>${escapeHtml(activity.title)}</strong>`;
                             } else if (activity.isEstimated) {
-                                tooltipText = `<strong>${escapeHtml(activity.title)}</strong><br><span class="text-slate-300">Durée prévue : ${durationMins} ${translations[currentLang].unit_mins}</span>`;
+                                tooltipText = `<strong>${escapeHtml(activity.title)}</strong>`;
                             } else {
-                                tooltipText = `<strong>${escapeHtml(activity.title)}</strong><br><span class="opacity-80">Durée prévue : à définir</span>`;
+                                tooltipText = `<strong>${escapeHtml(activity.title)}</strong>`;
                             }
 
                             actEl.onmouseenter = (e) => showTooltip(e, tooltipText, true);
@@ -15870,7 +15870,7 @@ const unitSel = momentEl.querySelector('.moment-target-unit');
                             overEl.style.display = 'none';
                         }
 
-const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span class="text-slate-300">${formatTimelineDuration(designedSecs)}</span>`;
+const tooltipText = `<strong>${escapeHtml(planned.title)}</strong>`;
                         actEl.onmouseenter = (e) => showTooltip(e, tooltipText, true);
                         actEl.onmousemove = (e) => updateTooltipPos(e);
                         actEl.onmouseleave = () => hideTooltip();
@@ -15982,9 +15982,7 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
 
                                 const moduleTitle = (totals.detailedTimeline[index] && totals.detailedTimeline[index].title) ? totals.detailedTimeline[index].title : `Module ${index + 1}`;
 
-                                const tooltipHtml =
-                                    `<div class="font-bold">${escapeHtml(moduleTitle)}</div>` +
-                                    `<div class="mt-0.5"><span class="font-semibold">${escapeHtml(seg.title)}</span> • <span class="text-slate-600">${escapeHtml(formatTimelineDuration(seg.secs))}</span></div>`;
+                                const tooltipHtml = `<strong>${escapeHtml(seg.title)}</strong>`;
 
                                 block.onmouseenter = (e) => showTooltip(e, tooltipHtml, true);
                                 block.onmousemove = (e) => updateTooltipPos(e);
@@ -16153,11 +16151,7 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
                                 block.style.width = `${w}%`;
 
                                 const moduleTitle = (totals.detailedTimeline[index] && totals.detailedTimeline[index].title) ? totals.detailedTimeline[index].title : `Module ${index + 1}`;
-                                const segTitle = seg.isDirect ? `${seg.title} — ${seg.momentTitle}` : `${seg.title}`;
-                                const tooltipHtml =
-                                    `<div class="font-bold">${escapeHtml(moduleTitle)}</div>` +
-                                    (seg.momentTitle ? `<div class="text-slate-600 mt-0.5">${escapeHtml(seg.momentTitle)}</div>` : '') +
-                                    `<div class="mt-0.5"><span class="font-semibold">${escapeHtml(segTitle)}</span> • <span class="text-slate-600">${escapeHtml(formatTimelineDuration(seg.secs))}</span></div>`;
+                                const tooltipHtml = `<strong>${escapeHtml(seg.title)}</strong>`;
 
                                 block.onmouseenter = (e) => showTooltip(e, tooltipHtml, true);
                                 block.onmousemove = (e) => updateTooltipPos(e);
@@ -16319,7 +16313,7 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
                         iconsEl.style.display = 'none';
                     }
 
-                    const tooltipTextModule = `<strong>${escapeHtml(planned.title)}</strong><br><span class="text-slate-300">${formatTimelineDuration(designedSecs)}</span>`;
+                    const tooltipTextModule = `<strong>${escapeHtml(planned.title)}</strong>`;
                     stepsWrap.onmouseenter = (e) => showTooltip(e, tooltipTextModule, true);
                     stepsWrap.onmousemove = (e) => updateTooltipPos(e);
                     stepsWrap.onmouseleave = () => hideTooltip();
@@ -16348,7 +16342,7 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
                             stepEl.className = 'h-full border-r border-white/20 last:border-0 hover:brightness-90 transition-all relative group cursor-pointer';
 
                             const sDur = Math.round(step.duration / 60);
-                            const tooltipText = `<strong>${escapeHtml(step.title)}</strong><br><span class="text-slate-300">${escapeHtml(step.learningTypeLabel)}</span><br><span class="text-slate-300">${sDur}m</span>`;
+                            const tooltipText = `<strong>${escapeHtml(step.title)}</strong>`;
                             stepEl.onmouseenter = (e) => showTooltip(e, tooltipText, true);
                             stepEl.onmousemove = (e) => updateTooltipPos(e);
                             stepEl.onmouseleave = () => hideTooltip();
@@ -16358,25 +16352,25 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
                             const grpColor = step.groupMode === 'class' ? greySolid : greyStriped;
                             const grpPattern = step.groupMode === 'groups' ? 'pattern-stripes' : '';
                             const grpLabel = step.groupMode === 'groups' ? t.opt_groups : (step.groupMode === 'individual' ? t.opt_individual : t.opt_whole_class);
-                            groupingFill.appendChild(createBlock(stepPctWithinDesigned, grpColor, grpPattern, `<strong>${grpLabel}</strong><br><span class="text-slate-300">${sDur}m</span>`, () => scrollToEditor(index, stepIdx)));
+                            groupingFill.appendChild(createBlock(stepPctWithinDesigned, grpColor, grpPattern, `<strong>${grpLabel}</strong>`, () => scrollToEditor(index, stepIdx)));
 
                             // Trainer (Stripes for Absent)
                             const trainerColor = step.trainer === 'present' ? greySolid : greyStriped;
                             const trainerPattern = step.trainer === 'absent' ? 'pattern-stripes' : '';
                             const trainerLabel = step.trainer === 'present' ? t.opt_present : t.opt_absent;
-                            trainerFill.appendChild(createBlock(stepPctWithinDesigned, trainerColor, trainerPattern, `<strong>${trainerLabel}</strong><br><span class="text-slate-300">${sDur}m</span>`, () => scrollToEditor(index, stepIdx)));
+                            trainerFill.appendChild(createBlock(stepPctWithinDesigned, trainerColor, trainerPattern, `<strong>${trainerLabel}</strong>`, () => scrollToEditor(index, stepIdx)));
 
                             // Place (Stripes for Online / Hybrid)
                             const placeLabel = (step.place === 'situ') ? t.opt_insitu : (step.place === 'online') ? t.opt_online : t.opt_hybrid;
                             const placeColor = (step.place === 'situ') ? greySolid : greyStriped;
                             const placePattern = (step.place === 'situ') ? '' : 'pattern-stripes';
-                            placeFill.appendChild(createBlock(stepPctWithinDesigned, placeColor, placePattern, `<strong>${placeLabel}</strong><br><span class="text-slate-300">${sDur}m</span>`, () => scrollToEditor(index, stepIdx)));
+                            placeFill.appendChild(createBlock(stepPctWithinDesigned, placeColor, placePattern, `<strong>${placeLabel}</strong>`, () => scrollToEditor(index, stepIdx)));
 
                             // Time (Stripes for Asynchronous)
                             const timeLabel = (step.time === 'sync') ? t.opt_sync : t.opt_async;
                             const timeColor = (step.time === 'sync') ? greySolid : greyStriped;
                             const timePattern = (step.time === 'sync') ? '' : 'pattern-stripes';
-                            timeFill.appendChild(createBlock(stepPctWithinDesigned, timeColor, timePattern, `<strong>${timeLabel}</strong><br><span class="text-slate-300">${sDur}m</span>`, () => scrollToEditor(index, stepIdx)));
+                            timeFill.appendChild(createBlock(stepPctWithinDesigned, timeColor, timePattern, `<strong>${timeLabel}</strong>`, () => scrollToEditor(index, stepIdx)));
                         });
                     }
 
