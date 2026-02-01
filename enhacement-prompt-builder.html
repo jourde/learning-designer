@@ -525,54 +525,199 @@
         // Base prompt template
         const basePrompt = `I'm uploading a JSON file: My current learning design export from Learning Designer.
 
-**Your Task:**
+# YOUR TASK
+
 Analyse and enhance the learning design by improving the quality and completeness of existing content. Do NOT create any new structural elements (no new modules, moments, submoments, or activities).
 
-**Technical Constraints (CRITICAL):**
-- Preserve ALL technical fields: IDs, durations, units, status codes, counts, timestamps
-- Maintain the exact JSON structure and hierarchy
-- Keep all existing field names in their original language (French/English mix is normal)
-- Do not modify: id, unite, uniteDureeCible, etat, status, regroupement, formateur, lieu, temps
-- The output must be valid JSON that can be directly reimported
+---
 
-**Enhancement Guidelines:**
+# CRITICAL TECHNICAL CONSTRAINTS (ABSOLUTELY MANDATORY)
 
-1. **Content Quality:**
-   - Make titles clear, specific, and descriptive
-   - Expand brief descriptions into actionable, detailed explanations
-   - Ensure objectives are measurable and aligned with Bloom's taxonomy
-   - Make tasks/instructions concrete and step-by-step
-   - Add relevant, specific resources and tools where missing
+## 1. JSON Structure Preservation
+- **NEVER** modify the root structure or schema
+- **PRESERVE** the exact value of \`schemaVersion\` (currently 2)
+- **PRESERVE** the exact structure of \`i18n\` object
+- **MAINTAIN** all array structures and nesting levels
+- The output must be **valid, parseable JSON** that imports without errors
 
-2. **Pedagogical Coherence:**
-   - Ensure logical progression within and across modules/moments
-   - Verify alignment between objectives, activities, and learning outcomes
-   - Balance learning types (acquisition, collaboration, discussion, investigation, practice, production)
-   - Ensure appropriate scaffolding and complexity progression
-   - Make implicit pedagogical intentions explicit
+## 2. Immutable Technical Fields
+**DO NOT MODIFY** any of these fields or their values:
+- All \`id\` fields (e.g., \`id: "step_2ac095d7..."\`, \`id: "moment_1037c..."\`)
+- All duration unit fields: \`unite\`, \`unit\`, \`uniteDureeCible\`, \`targetUnit\`, \`dureeApprentissageUniteSecs\`, \`dureeConcueUniteSecs\`, \`unitKey\`, \`targetUnitKey\`
+- All status fields: \`etat\`, \`status\`, \`state\`
+- All grouping fields: \`regroupement\`, \`groupMode\`, \`grouping\`, \`nombreGroupes\`, \`groupCount\`, \`tailleGroupe\`, \`groupSize\`
+- All context fields: \`formateur\`, \`trainer\`, \`lieu\`, \`place\`, \`temps\`, \`time\`
+- Boolean fields: \`ignored\`, \`ignore\`, \`isIgnored\`, \`ldIgnored\`
+- Any field ending in \`Secs\` (e.g., \`targetTimeSec\`)
+- Timestamp fields: \`exportedAt\`
+- Version fields: \`version\`, \`schemaVersion\`
 
-3. **Completeness:**
-   - Fill empty or placeholder fields with meaningful content
-   - Replace generic statements with specific, contextual information
-   - Ensure all activities have clear objectives and instructions
-   - Add missing pedagogical rationale in notes where helpful
+## 3. Dual-Language Field Handling
+The schema uses **parallel French/English fields**. When enhancing content:
+- ✅ **UPDATE BOTH** when they exist: \`titre\` AND \`title\`, \`description\` AND \`desc\`
+- ✅ Use the **SAME enhanced content** for both language variants
+- ❌ **NEVER** delete one variant to keep only the other
+- ❌ **NEVER** translate between the two (they should contain identical content)
 
-4. **Contextual Appropriateness:**
-   - Respect the training's target audience, level, and modality
-   - Ensure language is appropriate for the specified audience
-   - Consider prerequisites and build upon them
-   - Align with stated competences and learning outcomes
+Example: \`"titre": "Welcome"\` and \`"title": "Welcome"\` should both have the same enhanced content.
 
-**What NOT to do:**
-- Do not create new modules, moments, submoments, or activities
-- Do not delete or merge existing elements
-- Do not change technical/structural fields
-- Do not translate field names or keys
-- Do not add fields that don't exist in the original schema
+## 4. Field Names - Zero Tolerance
+- **NEVER** rename fields (e.g., don't change \`sousMoments\` to \`subMoments\`)
+- **NEVER** add new fields that don't exist in the original
+- **NEVER** translate field names themselves
+- Keep the exact French/English mix as it appears
 
-**Output Requirements:**
-1. The complete enhanced JSON file (valid and importable)
-2. A concise summary of key improvements made, organized by category`;
+## 5. Array and Object Integrity
+- **PRESERVE** empty arrays exactly as \`[]\`
+- **PRESERVE** the order of all array elements
+- **DO NOT** remove array elements, even if they seem redundant
+- **DO NOT** merge or split objects
+
+---
+
+# ENHANCEMENT GUIDELINES
+
+## Content Types to Enhance
+
+### Level 1: Training Parameters (\`parametres\`)
+Enhance these fields if present:
+- \`nom\` / \`name\` - Make specific and professional
+- \`description\` - Add comprehensive overview with context and goals
+- \`publicCible\` - Detail audience characteristics, prerequisites, context
+- \`prerequis\` - Make specific and testable
+- \`objectifs\` - Make SMART and measurable
+- \`outilsMateriel\` - Be specific about tools, versions, access requirements
+
+### Level 2: Module-Level
+For each module in \`modules\` array:
+- \`titre\` / \`title\` - Clear, specific module purpose
+- \`description\` - Module intent, learning approach, expected outputs
+- \`notes\` - Add pedagogical rationale if appropriate
+
+### Level 3: Moment-Level  
+For each moment in \`modules[].moments\`:
+- \`titre\` / \`title\` - Time + clear session purpose
+- \`description\` - **THIS IS CRITICAL**: Add structured description with:
+  - Learning intent (objectives for this session)
+  - Pedagogical approach (how learning will happen)
+  - Expected outputs (what participants will produce/achieve)
+  
+**Template for moment descriptions:**
+\`\`\`
+This [session type] [establishes/develops/applies] [specific learning goal].
+
+**Learning intent**
+- [Specific objective 1]
+- [Specific objective 2]
+
+**Approach**
+[Description of pedagogical methods, activities, flow]
+
+**Expected outputs**
+- [Tangible deliverable/understanding 1]
+- [Tangible deliverable/understanding 2]
+\`\`\`
+
+### Level 4: Sub-moment Level
+For each submoment in \`moments[].sousMoments\` or \`moments[].subMoments\`:
+- \`titre\` / \`title\` - Clear sub-session purpose
+- \`description\` - Brief rationale for this segment
+
+### Level 5: Activity/Step Level
+For each activity in \`activites\` / \`steps\`:
+- \`titre\` / \`title\` - Action-oriented, specific activity name
+- \`objectifActivite\` / \`objective\` - Clear, measurable learning objective
+- \`aFaire\` / \`tasks\` - Concrete, step-by-step instructions
+- \`aFaireFormateur\` / \`trainerTasks\` - Specific trainer actions/preparations
+- \`notes\` - Pedagogical tips, variations, potential issues
+- \`liensReferences\` / \`linksReferences\` - Relevant resources
+
+## Quality Standards
+
+### For Titles
+- ✅ Specific and descriptive
+- ✅ Action-oriented where appropriate
+- ✅ Include time indicators for moments (e.g., "10:00-12:30")
+- ❌ Avoid generic terms
+
+### For Descriptions
+- ✅ Use structured formatting (bullets, sections)
+- ✅ Include concrete details and context
+- ✅ Explain the "why" not just the "what"
+- ✅ Use markdown formatting (**, -, \\n\\n for readability)
+- ❌ Don't exceed 500 words per description
+
+### For Objectives
+- ✅ Start with measurable verbs (analyse, create, evaluate, apply)
+- ✅ Be specific about what participants will achieve
+- ✅ Align with Bloom's taxonomy
+- ❌ Avoid vague verbs (understand, know, learn about)
+
+### For Tasks/Instructions
+- ✅ Numbered or bulleted steps
+- ✅ Clear sequence and timing
+- ✅ Specify tools/materials needed
+- ❌ Don't assume implicit knowledge
+
+## Pedagogical Coherence
+1. **Progression**: Ensure logical flow from foundational to advanced
+2. **Alignment**: Match objectives → activities → assessment
+3. **Balance**: Vary learning types across the design
+4. **Scaffolding**: Build on previous learning appropriately
+5. **Context**: Respect the specified audience, level, and modality
+
+---
+
+# WHAT NOT TO DO (CRITICAL ERRORS TO AVOID)
+
+## Structural Changes (FORBIDDEN)
+- ❌ Adding new modules, moments, submoments, or activities
+- ❌ Deleting or merging existing elements
+- ❌ Changing the hierarchy or nesting
+- ❌ Reordering array elements
+
+## Content Changes (FORBIDDEN)
+- ❌ Changing field names or keys
+- ❌ Modifying ID values
+- ❌ Changing duration unit values (60, 3600, etc.)
+- ❌ Altering status codes or enumerated values
+- ❌ Translating technical field names
+- ❌ Adding fields that don't exist in the schema
+
+## Data Integrity (FORBIDDEN)
+- ❌ Creating invalid JSON syntax
+- ❌ Breaking object/array structures
+- ❌ Removing duplicate language fields
+- ❌ Changing data types (string → number, etc.)
+
+---
+
+# OUTPUT REQUIREMENTS
+
+## Part 1: The Enhanced JSON
+Provide the **complete, valid JSON file** with:
+- All enhancements applied
+- All technical fields preserved exactly
+- Valid JSON syntax (proper quotes, commas, brackets)
+- No truncation - the entire file from \`{\` to final \`}\`
+
+## Part 2: Summary of Changes
+After the JSON, provide a concise summary (max 300 words).
+
+---
+
+# VALIDATION CHECKLIST
+
+Before submitting, verify:
+- ✅ JSON is valid and complete
+- ✅ All \`id\` fields unchanged
+- ✅ All duration units unchanged (still 60, 3600, etc.)
+- ✅ Both \`titre\` and \`title\` updated when both exist
+- ✅ No new structural elements added
+- ✅ schemaVersion remains exactly \`2\`
+- ✅ No field names translated or changed
+
+**Remember**: The AI-enhanced JSON must be **directly importable** without any manual fixes. Preserve technical integrity while maximizing pedagogical quality.`;
 
         function getLanguageInstruction() {
             const langSelect = document.getElementById('languageSelect');
