@@ -4394,8 +4394,8 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <div class="lg:flex-1 step-right-col">
   <!-- Onglets : Déroulé / Alignement / Ressources -->
   <div class="step-tabs" role="tablist" aria-label="Panneaux de l'activité">
-            <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="description" data-i18n="tab_description">Description</button>
-    <button class="step-tab" type="button" role="tab" aria-selected="true" tabindex="0" data-step-tab="flow" data-i18n="tab_flow">Déroulé</button>
+            <button class="step-tab" type="button" role="tab" aria-selected="true" tabindex="0" data-step-tab="description" data-i18n="tab_description">Description</button>
+    <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="flow" data-i18n="tab_flow">Déroulé</button>
     <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="alignment" data-i18n="tab_alignment">Alignement</button>
     <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="resources" data-i18n="tab_resources">Ressources</button>
     <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="notes" data-i18n="label_notes">Notes</button>
@@ -4403,7 +4403,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 
   <div class="step-tabpanels">
         <!-- Description -->
-    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="description" hidden>
+    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="description">
       <div class="step-right-section border border-slate-200 rounded-lg bg-white p-2">
         <div class="compact-label flex items-center gap-1 mb-1">
           <span class="material-icons-round text-[10px] text-slate-400">flag</span>
@@ -4414,7 +4414,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
     </div>
 
     <!-- Déroulé -->
-    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="flow">
+    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="flow" hidden>
 <details class="step-right-section border border-slate-200 rounded-lg bg-white" open>
         <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
           <span class="material-icons-round text-[10px] text-slate-400">assignment</span>
@@ -9366,6 +9366,12 @@ function toggleMomentDescription(btn) {
                 if (icon) icon.style.transform = 'rotate(180deg)';
 
                 const hasTabs = !!stepCard.querySelector('.step-tabs');
+
+                // Default tab when expanding: Description (not Flow)
+                if (hasTabs && typeof window.__setStepTab === 'function') {
+                    try { window.__setStepTab(stepCard, 'description', { focus: false }); } catch (_) {}
+                }
+
                 const activePanel = hasTabs ? (stepCard.querySelector('.step-tabpanel:not([hidden])') || stepCard) : stepCard;
                 activePanel.querySelectorAll('details.step-right-section').forEach(s => { s.open = true; });
                 activePanel.querySelectorAll('details.step-right-group').forEach(g => { g.open = true; });
