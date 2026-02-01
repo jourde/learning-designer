@@ -1273,71 +1273,6 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
   /* ===== END_LD_PAGE_WIDTH_CANONICAL ===== */
 
 
-/* =========================================================
-   Vertical cumulative timeline rail (right sidebar)
-   ========================================================= */
-/* Ligne de temps verticale cumulative */
-#vertical-time-rail {
-    position: fixed;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 65px;
-    background: rgba(248, 250, 252, 0.9);
-    border-left: 1px solid #e2e8f0;
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    padding-top: 20px;
-    padding-bottom: 20px;
-    pointer-events: none; /* Permet de cliquer à travers la zone vide */
-}
-
-.time-marker {
-    position: absolute;
-    right: 0;
-    width: 100%;
-    border-top: 1px solid #cbd5e1;
-    pointer-events: auto; /* Rend les marqueurs cliquables */
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-
-.time-marker:hover {
-    background: rgba(99, 102, 241, 0.1);
-    border-top: 2px solid #6366f1;
-}
-
-.time-marker-label {
-    position: absolute;
-    top: -18px;
-    right: 8px;
-    font-size: 10px;
-    font-weight: 800;
-    color: #475569;
-    font-family: 'Inter', monospace;
-    white-space: nowrap;
-}
-
-.time-marker-title {
-    position: absolute;
-    top: 2px;
-    right: 8px;
-    font-size: 9px;
-    font-weight: 500;
-    color: #94a3b8;
-    max-width: 50px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    text-align: right;
-}
-
-/* Cache la ligne lors de l'impression */
-@media print {
-    #vertical-time-rail { display: none !important; }
-}
-
 </style>
 <script>
 /* Modèles: stubs globaux disponibles dès le chargement (évite les clics "inerte" avant l'initialisation).
@@ -9185,8 +9120,6 @@ function toggleMomentDescription(btn) {
             try { updateAllModuleCompetenceSummaries(); } catch (e) { console.error('updateAllModuleCompetenceSummaries failed', e); }
             try { updateAllModuleLearningTargetsSummaries(); } catch (e) { console.error('updateAllModuleLearningTargetsSummaries failed', e); }
 
-            try { updateVerticalTimeline(); } catch (_) {}
-
             updateFocusButtons();
 }
 
@@ -15371,77 +15304,6 @@ function formatAdaptiveDurationFromSecs(totalSecs) {
         }
 
 
-/* =========================================================
-   Vertical cumulative timeline rail (right sidebar)
-   ========================================================= */
-function updateVerticalTimeline() {
-    const rail = document.getElementById('vertical-time-rail');
-    if (!rail) return;
-    rail.innerHTML = '';
-
-    let totalSecs = 0;
-    try { totalSecs = (typeof getTotals === 'function') ? (getTotals().totalSecs || 0) : 0; } catch (_) { totalSecs = 0; }
-    totalSecs = Math.max(0, parseFloat(totalSecs) || 0);
-    if (totalSecs <= 0) return;
-
-    const modules = document.querySelectorAll('.activity-group');
-    let cumulativeSecs = 0;
-
-    modules.forEach((mod, idx) => {
-        const marker = document.createElement('div');
-        marker.className = 'time-marker';
-
-        const topPos = (cumulativeSecs / totalSecs) * 95;
-        marker.style.top = topPos + '%';
-
-        const label = document.createElement('span');
-        label.className = 'time-marker-label';
-        try { label.innerText = (typeof formatTimelineDuration === 'function') ? formatTimelineDuration(cumulativeSecs) : ''; } catch (_) {}
-
-        const title = document.createElement('span');
-        title.className = 'time-marker-title';
-        title.innerText = (mod.querySelector('.activity-title')?.value || `M${idx+1}`);
-
-        marker.appendChild(label);
-        marker.appendChild(title);
-
-        marker.onclick = () => {
-            try {
-                const body = mod.querySelector('.activity-body');
-                if (body && body.classList.contains('collapsed')) {
-                    const toggleBtn = mod.querySelector('button[data-action="toggle-module"]');
-                    if (toggleBtn) toggleBtn.click();
-                }
-                mod.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                if (typeof flashHighlight === 'function') flashHighlight(mod);
-            } catch (_) {}
-        };
-
-        rail.appendChild(marker);
-
-        const steps = (typeof __ldQueryDesignedStepCards === 'function') ? __ldQueryDesignedStepCards(mod) : Array.from(mod.querySelectorAll('.step-card'));
-        steps.forEach(step => {
-            try { cumulativeSecs += (typeof getStepDurationSecs === 'function') ? getStepDurationSecs(step) : 0; } catch (_) {}
-        });
-    });
-
-    const finalMarker = document.createElement('div');
-    finalMarker.className = 'time-marker';
-    finalMarker.style.top = '98%';
-    finalMarker.style.borderTop = '2px solid #1e293b';
-
-    const finalLabel = document.createElement('span');
-    finalLabel.className = 'time-marker-label';
-    finalLabel.style.color = '#0f172a';
-    try { finalLabel.innerText = (typeof formatTimelineDuration === 'function') ? formatTimelineDuration(totalSecs) : ''; } catch (_) {}
-
-    finalMarker.appendChild(finalLabel);
-    rail.appendChild(finalMarker);
-}
-try { window.updateVerticalTimeline = updateVerticalTimeline; } catch (_) {}
-
-
-
 function updateStats() {
             const totals = getTotals();
             // Sync user-defined duration tolerance (% only)
@@ -16383,8 +16245,6 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong><br><span clas
             });
             try { updateAllModuleCompetenceSummaries(); } catch (e) { console.error('updateAllModuleCompetenceSummaries failed', e); }
             try { updateAllModuleLearningTargetsSummaries(); } catch (e) { console.error('updateAllModuleLearningTargetsSummaries failed', e); }
-
-            try { updateVerticalTimeline(); } catch (_) {}
 
             updateFocusButtons();
         }
@@ -17627,7 +17487,6 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
 
 
 
-  <div id="vertical-time-rail" aria-hidden="true"></div>
 </body></html>`;
 
             const blob = new Blob([html], { type: 'text/html' });
@@ -27814,8 +27673,6 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
 })();
 </script>
 
-
-  <div id="vertical-time-rail" aria-hidden="true"></div>
 
 </body>
 </html>
