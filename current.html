@@ -2060,6 +2060,56 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
 
 
 })();
+
+
+// ---- Plain-text paste for text fields (keep Markdown visible, no rich formatting) ----
+function __ldEnablePlainTextPaste(){
+  const isTextField = (el)=>{
+    if(!el) return false;
+    if(el.isContentEditable) return true;
+    if(!el.matches) return false;
+    return el.matches('textarea, input[type="text"], input[type="search"]');
+  };
+  document.addEventListener('paste', (e)=>{
+    const t = e.target;
+    if(!isTextField(t)) return;
+
+    const cd = e.clipboardData || window.clipboardData;
+    if(!cd) return;
+
+    // Prefer plain text so Markdown syntax is pasted as-is
+    const plain = cd.getData('text/plain');
+    if(plain === null || plain === undefined) return;
+
+    e.preventDefault();
+
+    if(t.isContentEditable){
+      // Insert plain text at caret (keeps Markdown characters visible)
+      try{
+        document.execCommand('insertText', false, plain);
+      }catch(_){
+        const sel = window.getSelection && window.getSelection();
+        if(sel && sel.rangeCount){
+          sel.deleteFromDocument();
+          sel.getRangeAt(0).insertNode(document.createTextNode(plain));
+        }
+      }
+      return;
+    }
+
+    // Inputs / textareas
+    const start = (typeof t.selectionStart === 'number') ? t.selectionStart : (t.value || '').length;
+    const end   = (typeof t.selectionEnd === 'number') ? t.selectionEnd : (t.value || '').length;
+    const val   = (t.value || '');
+    t.value = val.slice(0, start) + plain + val.slice(end);
+    const pos = start + plain.length;
+    if(t.setSelectionRange) t.setSelectionRange(pos, pos);
+    // Trigger downstream computations / autosize / exports
+    t.dispatchEvent(new Event('input', { bubbles: true }));
+  }, true);
+}
+document.addEventListener('DOMContentLoaded', __ldEnablePlainTextPaste);
+
 </script>
 
 <style id="top-level-tabs-style">
