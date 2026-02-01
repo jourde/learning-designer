@@ -2224,7 +2224,7 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
 </script>
 
 </head>
-<body class="p-2 md:p-4 hide-types text-slate-900 hide-target-durations">
+<body class="p-2 md:p-4 hide-types text-slate-900 hide-target-durations" data-view-level="activities">
 <div class="ld-page">
 <header class="mb-3">
 <h1 class="text-2xl font-bold text-slate-900 leading-tight">
@@ -3457,10 +3457,10 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
       <span class="hidden md:inline text-xs text-slate-500 font-extrabold" aria-hidden="true">Affichage</span>
 
       <select id="ld-view-level-select" class="ld-control-select" aria-label="Sélection du affichage">
-        <option value="modules" data-i18n="btn_view_modules">Modules</option>
-        <option value="moments" data-i18n="btn_view_moments">Moments</option>
+        <option value="activities" data-i18n="btn_view_activities" selected>Activités</option>
         <option value="submoments" data-i18n="btn_view_submoments">Sous-moments</option>
-        <option value="activities" data-i18n="btn_view_activities">Activités</option>
+        <option value="moments" data-i18n="btn_view_moments">Moments</option>
+        <option value="modules" data-i18n="btn_view_modules">Modules</option>
         <option value="panorama" data-i18n="btn_view_panorama">Panorama</option>
       </select>
     </div>
@@ -4716,7 +4716,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Set initial select state based on saved or default level
   try {
     const savedLevel = localStorage.getItem('ld_view_level') || 'activities';
-    __ldUpdateViewLevelSegmentedUI(savedLevel);
+    applyViewLevel(savedLevel); // Apply the view level (sets body attribute and updates UI)
   } catch (_) {}
 }, { once: true });
 
@@ -13627,8 +13627,10 @@ if (modal) {
             }
         });
 
-   // Default behaviour after loading: keep everything collapsed.
-            collapseAllUiAfterLoad();
+   // BUGFIX: Do NOT collapse everything by default - keep moments and activities expanded
+   // so all activities are visible when the user first opens the application
+   // Previously: collapseAllUiAfterLoad();
+   // Now: Keep everything expanded for better visibility (activities view is the default)
 
             updateEmptyState();
             updateStats();
