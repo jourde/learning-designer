@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 
 <html lang="fr">
@@ -14496,6 +14497,12 @@ function __ldInitStatusSummariesToggleUI(){
     btn.addEventListener('click', () => {
         const currentlyHidden = document.body.classList.contains('ld-hide-status-summaries');
         __ldSetStatusSummariesVisible(currentlyHidden); // if hidden -> show, else hide
+
+        // Auto-close "Affichage des états" menu after selecting an option.
+        try {
+            const det = btn.closest('details');
+            if (det) det.open = false;
+        } catch (_) {}
     });
 }
 
@@ -14547,6 +14554,12 @@ function __ldInitStatusSelectorsToggleUI(){
     btn.addEventListener('click', () => {
         const currentlyVisible = document.body.classList.contains('ld-show-status-selectors');
         __ldSetStatusSelectorsVisible(!currentlyVisible); // toggle
+
+        // Auto-close "Affichage des états" menu after selecting an option.
+        try {
+            const det = btn.closest('details');
+            if (det) det.open = false;
+        } catch (_) {}
     });
 }
 
