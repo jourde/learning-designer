@@ -67,56 +67,138 @@
     <div class="max-w-7xl mx-auto">
         <!-- Header -->
         <div class="bg-white rounded-xl shadow-lg p-8 mb-6">
-            <h1 class="text-3xl font-bold text-gray-800 mb-3">Learning Designer AI Enhancement Tool</h1>
+            <div class="flex items-center gap-3 mb-3">
+                <h1 class="text-3xl font-bold text-gray-800">Learning Designer AI Enhancement Tool</h1>
+                <span class="bg-yellow-100 text-yellow-800 text-sm font-semibold px-3 py-1 rounded-full border border-yellow-300">
+                    PROTOTYPE
+                </span>
+            </div>
             <p class="text-gray-600 text-lg mb-4">Enhance your learning design using AI-powered analysis and content generation</p>
             
-            <!-- Workflow Overview -->
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-indigo-200 rounded-lg p-5 mt-4">
-                <h2 class="font-semibold text-indigo-900 mb-3 flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
-                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
-                    </svg>
-                    How it works
-                </h2>
-                <div class="grid md:grid-cols-4 gap-4">
-                    <div class="bg-white rounded-lg p-3 border border-indigo-100">
-                        <div class="font-bold text-indigo-600 mb-1">1. Upload</div>
-                        <div class="text-sm text-gray-700">Upload your JSON export from Learning Designer</div>
+            <!-- Feature Selection -->
+            <div class="grid md:grid-cols-2 gap-6 mt-6">
+                <!-- Enhancement Feature -->
+                <div class="border-2 border-indigo-200 rounded-lg p-6 hover:border-indigo-400 transition cursor-pointer bg-gradient-to-br from-indigo-50 to-blue-50" onclick="selectFeature('enhancement')">
+                    <div class="flex items-center mb-3">
+                        <svg class="w-10 h-10 text-indigo-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
+                        </svg>
+                        <h3 class="text-xl font-bold text-indigo-900">AI Enhancement</h3>
                     </div>
-                    <div class="bg-white rounded-lg p-3 border border-indigo-100">
-                        <div class="font-bold text-indigo-600 mb-1">2. Select</div>
-                        <div class="text-sm text-gray-700">Choose which categories and fields to enhance</div>
+                    <p class="text-gray-700 text-sm mb-4">Generate customised AI prompts to enhance your learning design content (works with JSON or MD files)</p>
+                    <div class="flex items-center text-xs text-indigo-600 font-semibold">
+                        <span>Select this feature</span>
+                        <svg class="w-4 h-4 ml-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                        </svg>
                     </div>
-                    <div class="bg-white rounded-lg p-3 border border-indigo-100">
-                        <div class="font-bold text-indigo-600 mb-1">3. Generate</div>
-                        <div class="text-sm text-gray-700">Get a customized AI prompt with your requirements</div>
+                </div>
+
+                <!-- Conversion Feature -->
+                <div class="border-2 border-green-200 rounded-lg p-6 hover:border-green-400 transition cursor-pointer bg-gradient-to-br from-green-50 to-emerald-50" onclick="selectFeature('conversion')">
+                    <div class="flex items-center mb-3">
+                        <svg class="w-10 h-10 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>
+                        </svg>
+                        <h3 class="text-xl font-bold text-green-900">MD to JSON Conversion</h3>
                     </div>
-                    <div class="bg-white rounded-lg p-3 border border-indigo-100">
-                        <div class="font-bold text-indigo-600 mb-1">4. Use with AI</div>
-                        <div class="text-sm text-gray-700">Copy the prompt and use it with Generative AI chatbot</div>
+                    <p class="text-gray-700 text-sm mb-4">Convert Markdown learning designs to JSON format for import into Learning Designer</p>
+                    <div class="flex items-center text-xs text-green-600 font-semibold">
+                        <span>Select this feature</span>
+                        <svg class="w-4 h-4 ml-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                        </svg>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- JSON Upload Section -->
-        <div id="uploadSection" class="bg-white rounded-xl shadow-lg p-8 mb-6">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">Step 1: Upload Your JSON File</h2>
+        <!-- Conversion Tool Section (initially hidden) -->
+        <div id="conversionSection" class="hidden bg-white rounded-xl shadow-lg p-8 mb-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-semibold text-gray-800 flex items-center">
+                    <svg class="w-6 h-6 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>
+                    </svg>
+                    MD to JSON Converter
+                </h2>
+                <button onclick="returnToFeatureSelection()" class="text-gray-600 hover:text-gray-800 text-sm flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                    </svg>
+                    Back to Feature Selection
+                </button>
+            </div>
+
+            <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-6 rounded">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-green-800">
+                            Upload a Markdown (.md) learning design file exported from Learning Designer. The tool will parse the structure and generate a valid JSON file that can be imported back into Learning Designer.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conversion Upload Zone -->
+            <div id="conversionDropZone" class="upload-zone rounded-lg p-12 text-center cursor-pointer mb-6">
+                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <p class="text-lg font-medium text-gray-700 mb-2">Drop your MD file here</p>
+                <p class="text-sm text-gray-500 mb-4">or click to browse (.md files only)</p>
+                <input type="file" id="conversionFileInput" accept=".md" class="hidden">
+                <button type="button" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium">
+                    Choose MD File
+                </button>
+            </div>
+
+            <div id="conversionFileInfo" class="hidden mb-6">
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <p class="text-green-800 font-medium">✓ File loaded: <span id="conversionFileName"></span></p>
+                </div>
+            </div>
+
+            <div id="conversionButton" class="hidden">
+                <button onclick="convertMDToJSON()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition duration-200 transform hover:scale-105 flex items-center justify-center">
+                    <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                    Convert to JSON and Download
+                </button>
+            </div>
+        </div>
+
+        <!-- Enhancement Upload Section (initially hidden) -->
+        <div id="uploadSection" class="hidden bg-white rounded-xl shadow-lg p-8 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">Step 1: Upload Your File</h2>
+                <button onclick="returnToFeatureSelection()" class="text-gray-600 hover:text-gray-800 text-sm flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                    </svg>
+                    Back to Feature Selection
+                </button>
+            </div>
             <div id="dropZone" class="upload-zone rounded-lg p-12 text-center cursor-pointer">
                 <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                     <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
-                <p class="text-lg font-medium text-gray-700 mb-2">Drop your JSON file here</p>
-                <p class="text-sm text-gray-500 mb-4">or click to browse</p>
-                <input type="file" id="fileInput" accept=".json" class="hidden">
+                <p class="text-lg font-medium text-gray-700 mb-2">Drop your JSON or MD file here</p>
+                <p class="text-sm text-gray-500 mb-4">Accepts .json or .md files from Learning Designer</p>
+                <input type="file" id="fileInput" accept=".json,.md" class="hidden">
                 <button type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium">
                     Choose File
                 </button>
             </div>
             <div id="fileInfo" class="mt-4 hidden">
                 <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <p class="text-green-800 font-medium">✓ File loaded: <span id="fileName"></span></p>
+                    <p class="text-green-800 font-medium">✓ File loaded: <span id="fileName"></span> (<span id="fileType"></span>)</p>
                 </div>
             </div>
         </div>
@@ -404,6 +486,8 @@
         let selectedFields = new Set();
         let selectedCategories = new Set();
         let detectedLanguage = null;
+        let fileType = null; // 'json' or 'md'
+        let mdContent = null; // Store MD file content
 
         // Helper functions for category selection
         function selectAllCategories() {
@@ -780,20 +864,34 @@ Before submitting, verify:
             const file = fileInput.files[0];
             if (!file) return;
 
-            if (!file.name.endsWith('.json')) {
-                alert('Please select a JSON file');
+            const fileName = file.name;
+            const extension = fileName.split('.').pop().toLowerCase();
+            
+            if (extension !== 'json' && extension !== 'md') {
+                alert('Please select a JSON or MD file');
                 return;
             }
 
             const reader = new FileReader();
             reader.onload = function(e) {
-                try {
-                    learningData = JSON.parse(e.target.result);
+                if (extension === 'json') {
+                    try {
+                        learningData = JSON.parse(e.target.result);
+                        fileType = 'json';
+                        document.getElementById('fileName').textContent = file.name;
+                        document.getElementById('fileType').textContent = 'JSON';
+                        document.getElementById('fileInfo').classList.remove('hidden');
+                        analyseDesign();
+                    } catch (error) {
+                        alert('Error parsing JSON file: ' + error.message);
+                    }
+                } else if (extension === 'md') {
+                    mdContent = e.target.result;
+                    fileType = 'md';
                     document.getElementById('fileName').textContent = file.name;
+                    document.getElementById('fileType').textContent = 'Markdown';
                     document.getElementById('fileInfo').classList.remove('hidden');
-                    analyseDesign();
-                } catch (error) {
-                    alert('Error parsing JSON file: ' + error.message);
+                    initializeMDMode();
                 }
             };
             reader.readAsText(file);
@@ -1367,6 +1465,949 @@ Before submitting, verify:
                 if (learningData) updatePrompt();
             });
         });
+
+        // MD MODE FUNCTIONS
+        let selectedMDFields = new Set();
+        let conversionMDContent = null; // Separate variable for conversion feature
+
+        function selectFeature(feature) {
+            if (feature === 'enhancement') {
+                document.getElementById('uploadSection').classList.remove('hidden');
+                document.getElementById('conversionSection').classList.add('hidden');
+            } else if (feature === 'conversion') {
+                document.getElementById('conversionSection').classList.remove('hidden');
+                document.getElementById('uploadSection').classList.add('hidden');
+                document.getElementById('analysisSection').classList.add('hidden');
+                document.getElementById('configSection').classList.add('hidden');
+                document.getElementById('promptSection').classList.add('hidden');
+            }
+        }
+
+        function returnToFeatureSelection() {
+            // Hide all feature sections
+            document.getElementById('uploadSection').classList.add('hidden');
+            document.getElementById('conversionSection').classList.add('hidden');
+            document.getElementById('analysisSection').classList.add('hidden');
+            document.getElementById('configSection').classList.add('hidden');
+            document.getElementById('promptSection').classList.add('hidden');
+            
+            // Reset file inputs
+            document.getElementById('fileInput').value = '';
+            document.getElementById('conversionFileInput').value = '';
+            document.getElementById('fileInfo').classList.add('hidden');
+            document.getElementById('conversionFileInfo').classList.add('hidden');
+            document.getElementById('conversionButton').classList.add('hidden');
+            
+            // Reset data
+            learningData = null;
+            mdContent = null;
+            conversionMDContent = null;
+            fileType = null;
+        }
+
+        // Conversion file handling
+        const conversionDropZone = document.getElementById('conversionDropZone');
+        const conversionFileInput = document.getElementById('conversionFileInput');
+
+        conversionDropZone.addEventListener('click', () => conversionFileInput.click());
+        
+        conversionDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            conversionDropZone.classList.add('dragover');
+        });
+        
+        conversionDropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            conversionDropZone.classList.remove('dragover');
+        });
+        
+        conversionDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            conversionDropZone.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                conversionFileInput.files = files;
+                handleConversionFileSelect();
+            }
+        });
+
+        conversionFileInput.addEventListener('change', handleConversionFileSelect);
+
+        function handleConversionFileSelect() {
+            const file = conversionFileInput.files[0];
+            if (!file) return;
+
+            const fileName = file.name;
+            const extension = fileName.split('.').pop().toLowerCase();
+            
+            if (extension !== 'md') {
+                alert('Please upload an MD file for conversion');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                conversionMDContent = e.target.result;
+                document.getElementById('conversionFileName').textContent = fileName;
+                document.getElementById('conversionFileInfo').classList.remove('hidden');
+                document.getElementById('conversionButton').classList.remove('hidden');
+            };
+            
+            reader.readAsText(file);
+        }
+
+        function updateMDFieldCount() {
+            const countEl = document.getElementById('mdFieldCount');
+            if (countEl) {
+                countEl.textContent = selectedMDFields.size;
+            }
+        }
+
+        function selectLevelFields(level) {
+            document.querySelectorAll(`.md-field[data-level="${level}"]`).forEach(cb => {
+                cb.checked = true;
+                selectedMDFields.add(cb.dataset.field);
+            });
+            updateMDFieldCount();
+            generateMDPrompt();
+        }
+
+        function toggleMDSection(sectionId) {
+            const section = document.getElementById('section-' + sectionId);
+            const arrow = document.getElementById('arrow-' + sectionId);
+            if (section.classList.contains('hidden')) {
+                section.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                section.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function selectAllMDFields() {
+            document.querySelectorAll('.md-field').forEach(cb => {
+                cb.checked = true;
+                selectedMDFields.add(cb.dataset.field);
+            });
+            updateMDFieldCount();
+            generateMDPrompt();
+        }
+
+        function deselectAllMDFields() {
+            document.querySelectorAll('.md-field').forEach(cb => {
+                cb.checked = false;
+            });
+            selectedMDFields.clear();
+            updateMDFieldCount();
+            generateMDPrompt();
+        }
+
+        function initializeMDMode() {
+            // Hide JSON-specific sections
+            document.getElementById('analysisSection').classList.add('hidden');
+            
+            // Show MD-specific configuration
+            showMDConfiguration();
+            
+            // Generate initial MD prompt
+            generateMDPrompt();
+        }
+
+        function showMDConfiguration() {
+            const configSection = document.getElementById('configSection');
+            configSection.classList.remove('hidden');
+            
+            // Replace the content with MD-specific options
+            const leftColumn = configSection.querySelector('.space-y-4');
+            leftColumn.innerHTML = `
+                <!-- MD Configuration -->
+                <div class="bg-white rounded-lg shadow p-6 section-card">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <span class="bg-purple-100 text-purple-700 rounded-full w-8 h-8 flex items-center justify-center mr-3 text-sm font-bold">2</span>
+                        Select Fields to Enhance
+                    </h2>
+                    <p class="text-sm text-gray-600 bg-purple-50 border-l-4 border-purple-400 p-3 rounded mb-4">
+                        Select specific elements from your learning design to enhance. Click on categories to expand and select individual fields.
+                    </p>
+                    <div class="flex gap-2 mb-4">
+                        <button onclick="selectAllMDFields()" class="text-xs px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition">
+                            Select All
+                        </button>
+                        <button onclick="deselectAllMDFields()" class="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition">
+                            Deselect All
+                        </button>
+                    </div>
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
+                        <p class="text-sm">
+                            <strong>Selected fields:</strong> <span id="mdFieldCount" class="font-semibold text-purple-700">0</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Fine-grained Field Selection -->
+                <div class="bg-white rounded-lg shadow p-6 section-card">
+                    <div id="mdFieldSelection" class="space-y-4">
+                        <!-- Training Level -->
+                        <div class="border border-gray-200 rounded-lg">
+                            <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-3 cursor-pointer flex items-center justify-between" onclick="toggleMDSection('training')">
+                                <div class="flex items-center">
+                                    <span class="text-lg mr-2">📚</span>
+                                    <h4 class="font-semibold text-gray-800">Training Level (Metadata & Overview)</h4>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="event.stopPropagation(); selectLevelFields('training')" class="text-xs px-2 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300 transition">
+                                        Select All
+                                    </button>
+                                    <svg id="arrow-training" class="w-5 h-5 transform transition-transform" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div id="section-training" class="p-3 space-y-2 hidden">
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="training.name" data-level="training"> Training name & description</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="training.designers" data-level="training"> Designers & trainers</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="training.audience" data-level="training"> Target audience</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="training.prerequisites" data-level="training"> Prerequisites</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="training.tools" data-level="training"> Tools & materials</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="training.objectives" data-level="training"> Learning objectives (what will be taught)</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="training.outcomes" data-level="training"> Learning outcomes (what learners will be able to do)</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="training.description" data-level="training"> General description</label>
+                            </div>
+                        </div>
+
+                        <!-- Module Level -->
+                        <div class="border border-gray-200 rounded-lg">
+                            <div class="bg-gradient-to-r from-indigo-50 to-indigo-100 p-3 cursor-pointer flex items-center justify-between" onclick="toggleMDSection('module')">
+                                <div class="flex items-center">
+                                    <span class="text-lg mr-2">📦</span>
+                                    <h4 class="font-semibold text-gray-800">Module Level</h4>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="event.stopPropagation(); selectLevelFields('module')" class="text-xs px-2 py-1 bg-indigo-200 text-indigo-800 rounded hover:bg-indigo-300 transition">
+                                        Select All
+                                    </button>
+                                    <svg id="arrow-module" class="w-5 h-5 transform transition-transform" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div id="section-module" class="p-3 space-y-2 hidden">
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="module.title" data-level="module"> Module titles</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="module.description" data-level="module"> Module descriptions</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="module.objectives" data-level="module"> Module objectives</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="module.outcomes" data-level="module"> Module outcomes</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="module.competences" data-level="module"> Module competences</label>
+                            </div>
+                        </div>
+
+                        <!-- Moment Level -->
+                        <div class="border border-gray-200 rounded-lg">
+                            <div class="bg-gradient-to-r from-purple-50 to-purple-100 p-3 cursor-pointer flex items-center justify-between" onclick="toggleMDSection('moment')">
+                                <div class="flex items-center">
+                                    <span class="text-lg mr-2">⏰</span>
+                                    <h4 class="font-semibold text-gray-800">Moment Level (Learning Sessions)</h4>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="event.stopPropagation(); selectLevelFields('moment')" class="text-xs px-2 py-1 bg-purple-200 text-purple-800 rounded hover:bg-purple-300 transition">
+                                        Select All
+                                    </button>
+                                    <svg id="arrow-moment" class="w-5 h-5 transform transition-transform" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div id="section-moment" class="p-3 space-y-2 hidden">
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="moment.title" data-level="moment"> Moment titles</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="moment.description" data-level="moment"> Moment descriptions</label>
+                            </div>
+                        </div>
+
+                        <!-- Submoment Level -->
+                        <div class="border border-gray-200 rounded-lg">
+                            <div class="bg-gradient-to-r from-amber-50 to-amber-100 p-3 cursor-pointer flex items-center justify-between" onclick="toggleMDSection('submoment')">
+                                <div class="flex items-center">
+                                    <span class="text-lg mr-2">🔸</span>
+                                    <h4 class="font-semibold text-gray-800">Submoment Level (Session Segments)</h4>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="event.stopPropagation(); selectLevelFields('submoment')" class="text-xs px-2 py-1 bg-amber-200 text-amber-800 rounded hover:bg-amber-300 transition">
+                                        Select All
+                                    </button>
+                                    <svg id="arrow-submoment" class="w-5 h-5 transform transition-transform" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div id="section-submoment" class="p-3 space-y-2 hidden">
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="submoment.title" data-level="submoment"> Submoment titles</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="submoment.description" data-level="submoment"> Submoment descriptions</label>
+                            </div>
+                        </div>
+
+                        <!-- Activity Level -->
+                        <div class="border border-gray-200 rounded-lg">
+                            <div class="bg-gradient-to-r from-green-50 to-green-100 p-3 cursor-pointer flex items-center justify-between" onclick="toggleMDSection('activity')">
+                                <div class="flex items-center">
+                                    <span class="text-lg mr-2">✏️</span>
+                                    <h4 class="font-semibold text-gray-800">Activity Level</h4>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="event.stopPropagation(); selectLevelFields('activity')" class="text-xs px-2 py-1 bg-green-200 text-green-800 rounded hover:bg-green-300 transition">
+                                        Select All
+                                    </button>
+                                    <svg id="arrow-activity" class="w-5 h-5 transform transition-transform" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div id="section-activity" class="p-3 space-y-2 hidden">
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="activity.title" data-level="activity"> Activity titles</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="activity.type" data-level="activity"> Activity type</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="activity.objective" data-level="activity"> Activity objective</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="activity.learner_tasks" data-level="activity"> What learners must do</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="activity.trainer_tasks" data-level="activity"> What trainer must do</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="activity.evaluation" data-level="activity"> Evaluation / follow-up</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="activity.notes" data-level="activity"> Pedagogical notes</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="activity.tools" data-level="activity"> Activity-specific tools & materials</label>
+                                <label class="flex items-center text-sm"><input type="checkbox" class="mr-2 md-field" data-field="activity.competences" data-level="activity"> Activity competences</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Number of Modifications -->
+                <div class="bg-white rounded-lg shadow p-6 section-card">
+                    <h3 class="font-semibold text-gray-800 mb-4">Number of Modifications</h3>
+                    <div class="flex flex-wrap gap-3">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="md_count" value="5" class="mr-2 md-count-radio">
+                            <span>5 modifications</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="md_count" value="10" class="mr-2 md-count-radio" checked>
+                            <span>10 modifications</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="md_count" value="15" class="mr-2 md-count-radio">
+                            <span>15 modifications</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="md_count" value="custom" class="mr-2 md-count-radio">
+                            <input type="number" id="md_custom_count" min="1" max="50" placeholder="Custom" 
+                                   class="border rounded px-2 py-1 w-20 text-sm">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Priority Level -->
+                <div class="bg-white rounded-lg shadow p-6 section-card">
+                    <h3 class="font-semibold text-gray-800 mb-4">Modification Priority</h3>
+                    <select id="md_priority" class="border rounded px-4 py-2 w-full">
+                        <option value="high">High-impact modifications only</option>
+                        <option value="mixed" selected>Mix of high and medium impact</option>
+                        <option value="comprehensive">Comprehensive (all levels)</option>
+                    </select>
+                </div>
+
+                <!-- Output Language -->
+                <div class="bg-white rounded-lg shadow p-6 section-card">
+                    <h3 class="font-semibold text-gray-800 mb-4">Output Language</h3>
+                    <select id="md_language" class="border rounded px-4 py-2 w-full">
+                        <option value="en">English</option>
+                        <option value="fr" selected>Français</option>
+                        <option value="es">Español</option>
+                        <option value="de">Deutsch</option>
+                        <option value="it">Italiano</option>
+                        <option value="pt">Português</option>
+                    </select>
+                </div>
+
+                <!-- Additional Context -->
+                <div class="bg-white rounded-lg shadow p-6 section-card">
+                    <h3 class="font-semibold text-gray-800 mb-4">Additional Context (Optional)</h3>
+                    <textarea id="md_context" rows="3" class="border rounded px-4 py-2 w-full" 
+                        placeholder="Add any specific requirements or constraints for the modifications..."></textarea>
+                </div>
+
+                <!-- Generate Button -->
+                <button onclick="generateMDPrompt()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-200 transform hover:scale-105">
+                    Update Prompt
+                </button>
+            `;
+            
+            // Add event listeners for MD options
+            setTimeout(() => {
+                document.querySelectorAll('.md-field').forEach(cb => {
+                    cb.addEventListener('change', (e) => {
+                        if (e.target.checked) {
+                            selectedMDFields.add(e.target.dataset.field);
+                        } else {
+                            selectedMDFields.delete(e.target.dataset.field);
+                        }
+                        updateMDFieldCount();
+                        generateMDPrompt();
+                    });
+                });
+                
+                document.querySelectorAll('.md-count-radio, #md_priority, #md_language, #md_context, #md_custom_count').forEach(elem => {
+                    elem.addEventListener('change', generateMDPrompt);
+                    elem.addEventListener('input', generateMDPrompt);
+                });
+            }, 100);
+        }
+
+        function generateMDPrompt() {
+            if (!mdContent) return;
+            
+            // Get selected fields organized by level
+            const fieldsByLevel = {
+                training: [],
+                module: [],
+                moment: [],
+                submoment: [],
+                activity: []
+            };
+            
+            const fieldLabels = {
+                'training.name': 'Training name & description',
+                'training.designers': 'Designers & trainers',
+                'training.audience': 'Target audience',
+                'training.prerequisites': 'Prerequisites',
+                'training.tools': 'Tools & materials',
+                'training.objectives': 'Learning objectives',
+                'training.outcomes': 'Learning outcomes',
+                'training.description': 'General description',
+                'module.title': 'Module titles',
+                'module.description': 'Module descriptions',
+                'module.objectives': 'Module objectives',
+                'module.outcomes': 'Module outcomes',
+                'module.competences': 'Module competences',
+                'moment.title': 'Moment titles',
+                'moment.description': 'Moment descriptions',
+                'submoment.title': 'Submoment titles',
+                'submoment.description': 'Submoment descriptions',
+                'activity.title': 'Activity titles',
+                'activity.type': 'Activity type',
+                'activity.objective': 'Activity objective',
+                'activity.learner_tasks': 'What learners must do',
+                'activity.trainer_tasks': 'What trainer must do',
+                'activity.evaluation': 'Evaluation / follow-up',
+                'activity.notes': 'Pedagogical notes',
+                'activity.tools': 'Activity-specific tools & materials',
+                'activity.competences': 'Activity competences'
+            };
+            
+            selectedMDFields.forEach(field => {
+                const [level, fieldName] = field.split('.');
+                if (fieldsByLevel[level]) {
+                    fieldsByLevel[level].push(fieldLabels[field] || field);
+                }
+            });
+            
+            let modCount = document.querySelector('input[name="md_count"]:checked')?.value || '10';
+            if (modCount === 'custom') {
+                modCount = document.getElementById('md_custom_count')?.value || '10';
+            }
+            
+            const priority = document.getElementById('md_priority')?.value || 'mixed';
+            const language = document.getElementById('md_language')?.value || 'fr';
+            const context = document.getElementById('md_context')?.value.trim() || '';
+            
+            const languageNames = {
+                'en': 'English',
+                'fr': 'French',
+                'es': 'Spanish',
+                'de': 'German',
+                'it': 'Italian',
+                'pt': 'Portuguese'
+            };
+            
+            const langName = languageNames[language] || language;
+            
+            let priorityDesc = '';
+            if (priority === 'high') {
+                priorityDesc = 'Focus only on high-impact modifications that will significantly improve learning outcomes.';
+            } else if (priority === 'mixed') {
+                priorityDesc = 'Provide a mix of high-impact and medium-impact modifications.';
+            } else {
+                priorityDesc = 'Provide a comprehensive set of modifications covering all aspects of the design.';
+            }
+            
+            // Build focus areas description
+            let focusAreasText = '';
+            if (selectedMDFields.size > 0) {
+                focusAreasText = '\n**FOCUS YOUR MODIFICATIONS ON THESE SPECIFIC FIELDS:**\n\n';
+                
+                if (fieldsByLevel.training.length > 0) {
+                    focusAreasText += '**Training Level:**\n' + fieldsByLevel.training.map(f => `- ${f}`).join('\n') + '\n\n';
+                }
+                if (fieldsByLevel.module.length > 0) {
+                    focusAreasText += '**Module Level:**\n' + fieldsByLevel.module.map(f => `- ${f}`).join('\n') + '\n\n';
+                }
+                if (fieldsByLevel.moment.length > 0) {
+                    focusAreasText += '**Moment Level:**\n' + fieldsByLevel.moment.map(f => `- ${f}`).join('\n') + '\n\n';
+                }
+                if (fieldsByLevel.submoment.length > 0) {
+                    focusAreasText += '**Submoment Level:**\n' + fieldsByLevel.submoment.map(f => `- ${f}`).join('\n') + '\n\n';
+                }
+                if (fieldsByLevel.activity.length > 0) {
+                    focusAreasText += '**Activity Level:**\n' + fieldsByLevel.activity.map(f => `- ${f}`).join('\n') + '\n\n';
+                }
+                
+                focusAreasText += 'Only propose modifications for the fields listed above. Do not modify other fields.\n';
+            } else {
+                focusAreasText = '\n**FOCUS AREAS:**\nNo specific fields selected. Please select fields from the checkboxes above to focus the enhancement.\n';
+            }
+            
+            const prompt = `You are an expert instructional designer. Please analyse the following learning design document (in Markdown format) and propose ${modCount} specific modifications to enhance it.
+
+**CRITICAL REQUIREMENTS:**
+
+For each modification, you MUST provide all three components:
+
+1. **Original Segment**: Quote the exact text or section from the document that needs modification. Include enough context (e.g., the section heading or activity number) to locate it precisely in the document.
+
+2. **Proposed Modification**: Provide the complete improved version of that text.
+
+3. **Explanation**: Explain why this modification improves the learning design. Reference specific instructional design principles, learning theories, or pedagogical best practices (e.g., Bloom's Taxonomy, constructive alignment, scaffolding, SMART objectives, etc.).
+
+---
+${focusAreasText}
+---
+
+**PRIORITY LEVEL:**
+${priorityDesc}
+
+**OUTPUT LANGUAGE:**
+All modifications and explanations must be written in ${langName}.
+${context ? `\n**ADDITIONAL CONTEXT:**\n${context}\n` : ''}
+---
+
+**OUTPUT FORMAT:**
+
+Structure your response EXACTLY as follows for each modification:
+
+## Modification 1: [Brief Descriptive Title]
+
+**Location in Document:**
+[Specify where this appears - e.g., "Module 1, Moment 1.1, Activity 1.1.1.1" or "Training metadata - Target audience section"]
+
+**Original Segment:**
+\`\`\`
+[Quote the exact text from the document that you are modifying]
+\`\`\`
+
+**Proposed Modification:**
+\`\`\`
+[Provide your complete improved version here]
+\`\`\`
+
+**Explanation:**
+[Explain clearly and specifically why this modification enhances the learning design. Reference instructional design principles, learning theories, or pedagogical best practices. Be concrete about the improvement - avoid vague statements like "this is better" - instead explain HOW and WHY it improves learning outcomes, clarity, alignment, engagement, etc.]
+
+---
+
+[Repeat the above structure for each of the ${modCount} modifications]
+
+---
+
+**LEARNING DESIGN DOCUMENT:**
+
+${mdContent}
+
+---
+
+**IMPORTANT REMINDERS:**
+
+- Provide exactly ${modCount} modifications
+- Each modification MUST include: Location, Original Segment, Proposed Modification, and Explanation
+${selectedMDFields.size > 0 ? `- Focus ONLY on the selected fields listed above (${selectedMDFields.size} fields selected)` : '- Please wait for field selection before proceeding'}
+- All text must be in ${langName}
+- Quote enough context in "Original Segment" to make the location unambiguous
+- Be specific and actionable in your modifications
+- Ground your explanations in pedagogical theory and best practices
+
+Please begin with your first modification now.`;
+            
+            document.getElementById('promptOutput').textContent = prompt;
+        }
+
+        // MD TO JSON CONVERSION
+        function generateUniqueId(prefix) {
+            return `${prefix}_${Math.random().toString(36).substr(2, 9)}`;
+        }
+
+        function parseDuration(durationStr) {
+            if (!durationStr) return { value: 0, unit: 60, unitKey: 'minutes' };
+            
+            // Parse formats like "2h16", "25m", "155 min", "2 Heures"
+            const hourMatch = durationStr.match(/(\d+)\s*h/i);
+            const minMatch = durationStr.match(/(\d+)\s*m(?:in)?/i);
+            
+            let totalMinutes = 0;
+            if (hourMatch) totalMinutes += parseInt(hourMatch[1]) * 60;
+            if (minMatch) totalMinutes += parseInt(minMatch[1]);
+            
+            return {
+                value: totalMinutes,
+                unit: 60,
+                unitKey: 'minutes'
+            };
+        }
+
+        function convertMDToJSON() {
+            // Check which content to use (conversion feature or enhancement feature)
+            const contentToConvert = conversionMDContent || mdContent;
+            
+            if (!contentToConvert) {
+                alert('No MD file loaded');
+                return;
+            }
+
+            try {
+                const jsonData = parseMDToJSON(contentToConvert);
+                
+                // Create downloadable JSON file
+                const jsonString = JSON.stringify(jsonData, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'learning-design-converted.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                // Show success message
+                alert('JSON file generated successfully! The file has been downloaded.');
+            } catch (error) {
+                alert('Error converting MD to JSON: ' + error.message);
+                console.error(error);
+            }
+        }
+
+        function parseMDToJSON(mdText) {
+            const lines = mdText.split('\n');
+            let currentSection = null;
+            let currentModule = null;
+            let currentMoment = null;
+            let currentSubmoment = null;
+            let currentActivity = null;
+            let currentField = null;
+            
+            const data = {
+                schemaVersion: 2,
+                exportedAt: new Date().toISOString(),
+                i18n: {
+                    currentLang: 'fr',
+                    defaultLang: 'fr',
+                    availableLangs: ['fr', 'en']
+                },
+                parametres: {
+                    nom: '',
+                    name: '',
+                    theme: '',
+                    auteurs: [],
+                    formateurs: [],
+                    niveau: '',
+                    modalite: '',
+                    tailleCohorte: 0,
+                    publicCible: '',
+                    prerequis: '',
+                    outilsMateriel: [],
+                    outilsMaterielNotes: '',
+                    objectifs: [],
+                    resultatsTexte: [],
+                    description: ''
+                },
+                modules: []
+            };
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const trimmedLine = line.trim();
+
+                // Skip empty lines
+                if (!trimmedLine) continue;
+
+                // Detect sections
+                if (trimmedLine === '## métadonnées' || trimmedLine === '## metadata') {
+                    currentSection = 'metadata';
+                    continue;
+                } else if (trimmedLine === '## informations_clés' || trimmedLine === '## key_information') {
+                    currentSection = 'key_info';
+                    continue;
+                } else if (trimmedLine === '## structure_pédagogique' || trimmedLine === '## pedagogical_structure') {
+                    currentSection = 'structure';
+                    continue;
+                }
+
+                // Parse metadata
+                if (currentSection === 'metadata') {
+                    const match = trimmedLine.match(/^-\s+\*\*([^:]+):\*\*\s*(.+)$/);
+                    if (match) {
+                        const fieldName = match[1].trim();
+                        const value = match[2].trim();
+                        
+                        if (fieldName.includes('Nom de la formation') || fieldName.includes('Training name')) {
+                            data.parametres.nom = value;
+                            data.parametres.name = value;
+                        } else if (fieldName.includes('Concepteur') || fieldName.includes('Designer')) {
+                            data.parametres.auteurs = [value];
+                        } else if (fieldName.includes('Formateur') || fieldName.includes('Trainer')) {
+                            data.parametres.formateurs = [value];
+                        } else if (fieldName.includes('Thème') || fieldName.includes('Theme')) {
+                            data.parametres.theme = value;
+                        } else if (fieldName.includes('Modalité') || fieldName.includes('Modality')) {
+                            data.parametres.modalite = value;
+                        } else if (fieldName.includes('Niveau') || fieldName.includes('Level')) {
+                            data.parametres.niveau = value;
+                        } else if (fieldName.includes('Taille') || fieldName.includes('Cohort')) {
+                            data.parametres.tailleCohorte = parseInt(value) || 0;
+                        }
+                    }
+                }
+
+                // Parse key information
+                if (currentSection === 'key_info') {
+                    if (trimmedLine.startsWith('### Public cible') || trimmedLine.startsWith('### Target audience')) {
+                        currentField = 'audience';
+                        continue;
+                    } else if (trimmedLine.startsWith('### Prérequis') || trimmedLine.startsWith('### Prerequisites')) {
+                        currentField = 'prerequisites';
+                        continue;
+                    } else if (trimmedLine.startsWith('### Outils') || trimmedLine.startsWith('### Tools')) {
+                        currentField = 'tools';
+                        continue;
+                    } else if (trimmedLine.startsWith('### Objectifs')) {
+                        currentField = 'objectives';
+                        continue;
+                    } else if (trimmedLine.startsWith('### Résultats')) {
+                        currentField = 'outcomes';
+                        continue;
+                    } else if (trimmedLine.startsWith('### Description')) {
+                        currentField = 'description';
+                        continue;
+                    } else if (trimmedLine.startsWith('###')) {
+                        currentField = null;
+                        continue;
+                    }
+
+                    if (currentField && trimmedLine && !trimmedLine.startsWith('#')) {
+                        switch (currentField) {
+                            case 'audience':
+                                data.parametres.publicCible += (data.parametres.publicCible ? '\n' : '') + trimmedLine;
+                                break;
+                            case 'prerequisites':
+                                data.parametres.prerequis += (data.parametres.prerequis ? '\n' : '') + trimmedLine;
+                                break;
+                            case 'tools':
+                                if (!trimmedLine.startsWith('-')) {
+                                    data.parametres.outilsMaterielNotes += (data.parametres.outilsMaterielNotes ? '\n' : '') + trimmedLine;
+                                } else {
+                                    data.parametres.outilsMateriel.push(trimmedLine.replace(/^-\s*/, ''));
+                                }
+                                break;
+                            case 'objectives':
+                                if (trimmedLine && !trimmedLine.startsWith('Aucun')) {
+                                    data.parametres.objectifs.push(trimmedLine);
+                                }
+                                break;
+                            case 'outcomes':
+                                if (trimmedLine && !trimmedLine.startsWith('Aucun')) {
+                                    data.parametres.resultatsTexte.push(trimmedLine);
+                                }
+                                break;
+                            case 'description':
+                                data.parametres.description += (data.parametres.description ? '\n' : '') + trimmedLine;
+                                break;
+                        }
+                    }
+                }
+
+                // Parse pedagogical structure
+                if (currentSection === 'structure') {
+                    // Module
+                    if (trimmedLine.match(/^###\s+MODULE\s+\d+/i)) {
+                        const titleMatch = trimmedLine.match(/^###\s+MODULE\s+\d+\s*[:：]\s*(.+)$/i);
+                        currentModule = {
+                            id: generateUniqueId('module'),
+                            titre: titleMatch ? titleMatch[1] : '',
+                            title: titleMatch ? titleMatch[1] : '',
+                            description: '',
+                            desc: '',
+                            notes: '',
+                            objectifs: [],
+                            objectives: [],
+                            learningOutcomes: [],
+                            competences: [],
+                            moments: []
+                        };
+                        data.modules.push(currentModule);
+                        currentMoment = null;
+                        currentSubmoment = null;
+                        currentActivity = null;
+                        continue;
+                    }
+
+                    // Moment
+                    if (trimmedLine.match(/^####\s+MOMENT\s+[\d.]+/i)) {
+                        const titleMatch = trimmedLine.match(/^####\s+MOMENT\s+[\d.]+\s*[:：]\s*(.+)$/i);
+                        currentMoment = {
+                            id: generateUniqueId('moment'),
+                            titre: titleMatch ? titleMatch[1] : '',
+                            title: titleMatch ? titleMatch[1] : '',
+                            description: '',
+                            desc: '',
+                            sousMoments: [],
+                            activites: []
+                        };
+                        if (currentModule) {
+                            currentModule.moments.push(currentMoment);
+                        }
+                        currentSubmoment = null;
+                        currentActivity = null;
+                        continue;
+                    }
+
+                    // Submoment
+                    if (trimmedLine.match(/^#####\s+SOUS-MOMENT\s+[\d.]+/i)) {
+                        const titleMatch = trimmedLine.match(/^#####\s+SOUS-MOMENT\s+[\d.]+\s*[:：]\s*(.+)$/i);
+                        currentSubmoment = {
+                            id: generateUniqueId('submoment'),
+                            titre: titleMatch ? titleMatch[1] : '',
+                            title: titleMatch ? titleMatch[1] : '',
+                            description: '',
+                            desc: '',
+                            activites: []
+                        };
+                        if (currentMoment) {
+                            currentMoment.sousMoments.push(currentSubmoment);
+                        }
+                        currentActivity = null;
+                        continue;
+                    }
+
+                    // Activity
+                    if (trimmedLine.match(/^#####\s+ACTIVITÉ\s+[\d.]+/i)) {
+                        const titleMatch = trimmedLine.match(/^#####\s+ACTIVITÉ\s+[\d.]+\s*[:：]\s*(.+)$/i);
+                        currentActivity = {
+                            id: generateUniqueId('step'),
+                            titre: titleMatch ? titleMatch[1] : '',
+                            title: titleMatch ? titleMatch[1] : '',
+                            description: '',
+                            desc: '',
+                            objectifActivite: '',
+                            objective: '',
+                            aFaire: '',
+                            tasks: '',
+                            aFaireFormateur: '',
+                            trainerTasks: '',
+                            notes: '',
+                            liensReferences: '',
+                            resources: '',
+                            typeDApprentissage: '',
+                            learningType: '',
+                            duree: 0,
+                            duration: 0,
+                            unite: 60,
+                            unit: 60,
+                            regroupement: '',
+                            groupMode: '',
+                            evaluation: '',
+                            outilsMateriel: ''
+                        };
+                        
+                        if (currentSubmoment) {
+                            currentSubmoment.activites.push(currentActivity);
+                        } else if (currentMoment) {
+                            currentMoment.activites.push(currentActivity);
+                        }
+                        continue;
+                    }
+
+                    // Parse activity/moment/module fields
+                    if (trimmedLine.startsWith('- **Type :**') || trimmedLine.startsWith('- **Type:**')) {
+                        if (currentActivity) {
+                            const value = trimmedLine.split(':')[1]?.trim() || '';
+                            currentActivity.typeDApprentissage = value;
+                            currentActivity.learningType = value;
+                        }
+                    } else if (trimmedLine.startsWith('- **Durée')) {
+                        const durationMatch = trimmedLine.match(/:\s*(.+)$/);
+                        if (durationMatch && currentActivity) {
+                            const parsed = parseDuration(durationMatch[1]);
+                            currentActivity.duree = parsed.value;
+                            currentActivity.duration = parsed.value;
+                        } else if (durationMatch && currentMoment && !currentActivity) {
+                            const parsed = parseDuration(durationMatch[1]);
+                            if (!currentMoment.dureeConcue) {
+                                currentMoment.dureeConcue = parsed.value;
+                                currentMoment.dureeConcueUnite = parsed.unit;
+                            }
+                        }
+                    } else if (trimmedLine.startsWith('- **Regroupement')) {
+                        if (currentActivity) {
+                            const value = trimmedLine.split(':')[1]?.trim() || '';
+                            currentActivity.regroupement = value;
+                            currentActivity.groupMode = value;
+                        }
+                    } else if (trimmedLine.startsWith('- **Objectif de l\'activité') || trimmedLine.startsWith('- **Activity objective')) {
+                        if (currentActivity) {
+                            const value = trimmedLine.split(':')[1]?.trim() || '';
+                            currentActivity.objectifActivite = value;
+                            currentActivity.objective = value;
+                        }
+                    } else if (trimmedLine.startsWith('**Ce que les apprenants')) {
+                        currentField = 'learner_tasks';
+                    } else if (trimmedLine.startsWith('**Ce que le formateur')) {
+                        currentField = 'trainer_tasks';
+                    } else if (trimmedLine.startsWith('**Évaluation')) {
+                        currentField = 'evaluation';
+                    } else if (trimmedLine.startsWith('**Notes pédagogiques')) {
+                        currentField = 'pedagogical_notes';
+                    } else if (trimmedLine.startsWith('**Outils et matériel')) {
+                        currentField = 'activity_tools';
+                    } else if (trimmedLine === 'Non renseigné' || trimmedLine === '—') {
+                        currentField = null;
+                    } else if (currentField && currentActivity && trimmedLine && !trimmedLine.startsWith('**') && !trimmedLine.startsWith('#')) {
+                        switch (currentField) {
+                            case 'learner_tasks':
+                                currentActivity.aFaire += (currentActivity.aFaire ? '\n' : '') + trimmedLine;
+                                currentActivity.tasks += (currentActivity.tasks ? '\n' : '') + trimmedLine;
+                                break;
+                            case 'trainer_tasks':
+                                currentActivity.aFaireFormateur += (currentActivity.aFaireFormateur ? '\n' : '') + trimmedLine;
+                                currentActivity.trainerTasks += (currentActivity.trainerTasks ? '\n' : '') + trimmedLine;
+                                break;
+                            case 'evaluation':
+                                currentActivity.evaluation += (currentActivity.evaluation ? '\n' : '') + trimmedLine;
+                                break;
+                            case 'pedagogical_notes':
+                                currentActivity.notes += (currentActivity.notes ? '\n' : '') + trimmedLine;
+                                break;
+                            case 'activity_tools':
+                                currentActivity.outilsMateriel += (currentActivity.outilsMateriel ? '\n' : '') + trimmedLine;
+                                break;
+                        }
+                    }
+
+                    // Module description
+                    if (currentModule && !currentMoment && trimmedLine.startsWith('>')) {
+                        const desc = trimmedLine.replace(/^>\s*/, '');
+                        currentModule.description = desc;
+                        currentModule.desc = desc;
+                    }
+                }
+            }
+
+            return data;
+        }
     </script>
 </body>
 </html>
