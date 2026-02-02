@@ -20,7 +20,7 @@ N.B. : Cette application a été développée avec l'aide de chatbots d'IA gén�
 
 ## Ressources
 - **Guide d'utilisation** : [https://github.com/jourde/learning-designer/wiki](https://github.com/jourde/learning-designer/wiki)
-- **Application de création de requête d'amélioration d'un scénario**: [https://jourde.github.io/learning-designer/enhacement-prompt-builder.html](https://jourde.github.io/learning-designer/enhacement-prompt-builder.html)
+- **Application de création de requête d'amélioration d'un scénario**: [https://jourde.github.io/learning-designer/development/enhacement-prompt-builder.html](https://jourde.github.io/learning-designer/development/enhacement-prompt-builder.html)
  
 - **Page web associée** : [https://jourde.github.io/learning-designer/](https://jourde.github.io/learning-designer/)
 
