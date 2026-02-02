@@ -236,6 +236,27 @@ html.hide-target-durations #timeline-activities-planned-labels {
         }
 
         
+        /* ── Solo-moment mode ──────────────────────────────────────
+           When a module has exactly 1 moment with no title/description,
+           hide the moment's chrome so the user sees only activities.
+           The moment DOM element remains (save/load/stats unaffected). */
+        .moment-group.ld-solo-moment {
+            border-color: transparent !important;
+            background: transparent !important;
+        }
+        .moment-group.ld-solo-moment > div:first-child {
+            display: none !important;                    /* header row */
+        }
+        .moment-group.ld-solo-moment > .moment-body {
+            padding: 0 !important;
+        }
+        .moment-group.ld-solo-moment .submoments-controls {
+            display: none !important;                    /* moment-level add buttons */
+        }
+        .moment-group.ld-solo-moment .moment-description-wrap {
+            display: none !important;
+        }
+
         /* Performance fix: reduced from 50000px. For modern browsers, consider:
            :root { interpolate-size: allow-keywords; }
            .panel-content.open { max-height: none; } */
@@ -8483,6 +8504,26 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             return moment;
         }
 
+        /**
+         * Solo-moment mode: when a module has exactly 1 moment with no title
+         * and no description, apply .ld-solo-moment to hide moment chrome.
+         * The user only sees activities. Adding a 2nd moment reveals all headers.
+         */
+        function syncSoloMomentUI(activityGroup) {
+            if (!activityGroup) return;
+            const momentsRoot = activityGroup.querySelector('.activity-moments-container');
+            if (!momentsRoot) return;
+            const moments = momentsRoot.querySelectorAll(':scope > .moment-group');
+            if (moments.length === 1) {
+                const m = moments[0];
+                const title = (m.querySelector('.moment-title')?.value || '').trim();
+                const desc  = (m.querySelector('.moment-description')?.value || '').trim();
+                m.classList.toggle('ld-solo-moment', !title && !desc);
+            } else {
+                moments.forEach(m => m.classList.remove('ld-solo-moment'));
+            }
+        }
+
         function updateMomentIndexes(activityGroup) {
             if (!activityGroup) return;
 
@@ -8538,6 +8579,7 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             } catch(_){ __ldSilentErr(_); }
             
             updateMomentIndexes(activityGroup);
+            syncSoloMomentUI(activityGroup);
             syncMomentSubmomentsUI(moment);
             applyTranslations();
             try { __ldApplyUnitLabelFormat(); } catch(_){ __ldSilentErr(_); }
@@ -8733,6 +8775,7 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             moment.remove();
             ensureDefaultMoment(activityGroup);
             updateMomentIndexes(activityGroup);
+            syncSoloMomentUI(activityGroup);
             updateStats();
         }
 
@@ -8759,6 +8802,7 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
                 moment.remove();
                 ensureDefaultMoment(activityGroup);
                 updateMomentIndexes(activityGroup);
+                syncSoloMomentUI(activityGroup);
                 updateStats();
                 return;
             }
@@ -8770,6 +8814,7 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
                 moment.remove();
                 ensureDefaultMoment(activityGroup);
                 updateMomentIndexes(activityGroup);
+                syncSoloMomentUI(activityGroup);
                 updateStats();
             };
 
@@ -13873,6 +13918,7 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
             try { populateModuleTargetCompetencesTransvSelect(actEl, data.competencesModuleTransversales || []); } catch(_){ __ldSilentErr(_); }
             try { updateModuleTargetCompetencesSummary(actEl); } catch(_){ __ldSilentErr(_); }
             try { __ldRefreshIgnoreCascade(); } catch(_){ __ldSilentErr(_); }
+            syncSoloMomentUI(actEl);
 
             return actEl;
         }
@@ -13983,6 +14029,7 @@ if (((data.groupMode || data.regroupement) === 'groups')) stepEl.querySelector('
             try { populateModuleTargetCompetencesTransvSelect(lastActivity); } catch(_){ __ldSilentErr(_); }
             try { updateModuleTargetCompetencesSummary(lastActivity); } catch(_){ __ldSilentErr(_); }
             try { updateModuleOutcomesSummary(lastActivity); } catch(_){ __ldSilentErr(_); }
+            syncSoloMomentUI(lastActivity);
             updateEmptyState();
         }
 
