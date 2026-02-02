@@ -3937,7 +3937,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
          Cible
         </span>
 <div class="flex items-center gap-1">
-<input class="activity-target-time w-12 px-1 py-0.5 text-xs text-right border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none h-[22px]" min="0" data-action-input="update-stats-debounced" placeholder="0" type="number"/>
+<input class="activity-target-time w-16 px-1 py-0.5 text-xs text-right border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none h-[22px]" min="0" data-action-input="update-stats-debounced" placeholder="0" type="number"/>
 <select class="activity-target-unit w-20 px-0 py-0.5 text-[10px] border border-slate-200 rounded bg-slate-50 focus:ring-1 focus:ring-indigo-500 outline-none h-[22px]" data-action-change="update-stats">
 <option data-i18n="unit_mins" value="60">
            min
@@ -14539,11 +14539,10 @@ function __ldInitStatusSelectorsToggleUI(){
     if (btn.dataset && btn.dataset.ldInited === '1') return;
     if (btn.dataset) btn.dataset.ldInited = '1';
 
-    // Load saved preference (default: hidden)
+    // Force states to be hidden by default on every page load
     let visible = false;
     try {
-        const saved = localStorage.getItem('ld_show_status_selectors');
-        if (saved === '1') visible = true;
+        localStorage.setItem('ld_show_status_selectors', '0');
     } catch(_){ __ldSilentErr(_); }
 
     try { document.body.classList.toggle('ld-show-status-selectors', visible); } catch(_){ __ldSilentErr(_); }
