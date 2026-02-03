@@ -12191,7 +12191,6 @@ window.exportLanguagePackTemplate = exportLanguagePackTemplate;
         document.querySelectorAll('[data-i18n]').forEach(el => { const k = el.getAttribute('data-i18n'); if (k) keys.add(k); });
         document.querySelectorAll('[data-i18n-title]').forEach(el => { const k = el.getAttribute('data-i18n-title'); if (k) keys.add(k); });
         document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { const k = el.getAttribute('data-i18n-placeholder'); if (k) keys.add(k); });
-        document.querySelectorAll('[data-i18n-html]').forEach(el => { const k = el.getAttribute('data-i18n-html'); if (k) keys.add(k); });
         return Array.from(keys).filter(Boolean).sort();
     }
 
@@ -12208,7 +12207,7 @@ window.exportLanguagePackTemplate = exportLanguagePackTemplate;
             if (el.closest('#i18n-audit-modal')) continue;
             if (el.closest('[data-i18n-audit-ignore="1"]')) continue;
 
-            const hasKey = el.hasAttribute('data-i18n') || el.hasAttribute('data-i18n-title') || el.hasAttribute('data-i18n-placeholder') || el.hasAttribute('data-i18n-html');
+            const hasKey = el.hasAttribute('data-i18n') || el.hasAttribute('data-i18n-title') || el.hasAttribute('data-i18n-placeholder');
             if (hasKey) continue;
 
             // Ignore pure icon containers
