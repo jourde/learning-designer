@@ -4569,6 +4569,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
         <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
           <span class="material-icons-round text-[10px] text-slate-400">school</span>
           <span>Compétences ciblées</span>
+          <span class="step-competences-count ml-1 px-1.5 py-0.5 text-[10px] font-semibold bg-indigo-50 text-indigo-600 rounded hidden"></span>
           <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
             <span>Afficher</span>
             <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
@@ -4602,6 +4603,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
         <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
           <span class="material-icons-round text-[10px] text-slate-400">flag</span>
           <span>Objectifs ciblés</span>
+          <span class="step-aims-count ml-1 px-1.5 py-0.5 text-[10px] font-semibold bg-indigo-50 text-indigo-600 rounded hidden"></span>
           <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
             <span>Afficher</span>
             <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
@@ -4625,6 +4627,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
         <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
           <span class="material-icons-round text-[10px] text-slate-400">assignment_turned_in</span>
           <span>Résultats d'apprentissage ciblés</span>
+          <span class="step-outcomes-count ml-1 px-1.5 py-0.5 text-[10px] font-semibold bg-indigo-50 text-indigo-600 rounded hidden"></span>
           <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
             <span>Afficher</span>
             <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
@@ -4651,6 +4654,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
         <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5 bg-slate-50 rounded-lg">
           <span class="material-icons-round text-[10px] text-slate-400">construction</span>
           <span>Outils et matériel (activité)</span>
+          <span class="step-tools-materials-count ml-1 px-1.5 py-0.5 text-[10px] font-semibold bg-indigo-50 text-indigo-600 rounded hidden"></span>
           <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
             <span>Afficher</span>
             <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
@@ -4675,6 +4679,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
         <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5 bg-slate-50 rounded-lg">
           <span class="material-icons-round text-[10px] text-slate-400">link</span>
           <span data-i18n="label_step_links_refs">Liens et références</span>
+          <span class="step-links-refs-count ml-1 px-1.5 py-0.5 text-[10px] font-semibold bg-indigo-50 text-indigo-600 rounded hidden"></span>
           <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
             <span>Afficher</span>
             <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
@@ -11189,6 +11194,13 @@ function refreshAllModuleAimsOptions() {
                     try { refreshAllStepOutcomesOptions(); } catch(_){ __ldSilentErr(_); }
                             try { refreshAllModuleOutcomesOptions(); } catch(_){ __ldSilentErr(_); }
                     try { refreshAllModuleOutcomesOptions(); } catch(_){ __ldSilentErr(_); }
+                }
+                // Update counter for Liens et références
+                if (t.classList && t.classList.contains('step-input-linksrefs')) {
+                    try {
+                        const stepEl = t.closest('.step-card');
+                        if (stepEl) updateSubsectionCounters(stepEl);
+                    } catch(_){ __ldSilentErr(_); }
                 }
             }, true);
 
@@ -25294,6 +25306,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const lbl = stepEl.querySelector('.tm-selected-count');
                 if (lbl) lbl.textContent = tmN ? `${tmN} sélectionné(s)` : '';
             } catch(_){ __ldSilentErr(_); }
+
+            // Update subsection counters
+            try { updateSubsectionCounters(stepEl); } catch(_){ __ldSilentErr(_); }
         }
 
         function updateAllStepHeaderChips() {
@@ -25301,6 +25316,101 @@ document.addEventListener('DOMContentLoaded', () => {
                 try { updateStepHeaderChips(stepEl); } catch(_){ __ldSilentErr(_); }
             });
         }
+
+        // ---- Update subsection counters in Alignement and Ressources tabs ----
+        function updateSubsectionCounters(stepEl) {
+            if (!stepEl) return;
+
+            try {
+                // Compétences ciblées (Alignement)
+                const compSel = stepEl.querySelector('select.step-competences-select');
+                const compTransvSel = stepEl.querySelector('select.step-competences-transversales-select');
+                const compCount = __countSelectedFromMultiSelect(compSel) + __countSelectedFromMultiSelect(compTransvSel);
+                const compCountEl = stepEl.querySelector('.step-competences-count');
+                if (compCountEl) {
+                    if (compCount > 0) {
+                        compCountEl.textContent = compCount;
+                        compCountEl.classList.remove('hidden');
+                    } else {
+                        compCountEl.classList.add('hidden');
+                    }
+                }
+            } catch(_){ __ldSilentErr(_); }
+
+            try {
+                // Objectifs ciblés (Alignement)
+                const aimsSel = stepEl.querySelector('select.step-aims-select');
+                const aimsCount = __countSelectedFromMultiSelect(aimsSel);
+                const aimsCountEl = stepEl.querySelector('.step-aims-count');
+                if (aimsCountEl) {
+                    if (aimsCount > 0) {
+                        aimsCountEl.textContent = aimsCount;
+                        aimsCountEl.classList.remove('hidden');
+                    } else {
+                        aimsCountEl.classList.add('hidden');
+                    }
+                }
+            } catch(_){ __ldSilentErr(_); }
+
+            try {
+                // Résultats d'apprentissage ciblés (Alignement)
+                const outSel = stepEl.querySelector('select.step-outcomes-select');
+                const outCount = __countSelectedFromMultiSelect(outSel);
+                const outCountEl = stepEl.querySelector('.step-outcomes-count');
+                if (outCountEl) {
+                    if (outCount > 0) {
+                        outCountEl.textContent = outCount;
+                        outCountEl.classList.remove('hidden');
+                    } else {
+                        outCountEl.classList.add('hidden');
+                    }
+                }
+            } catch(_){ __ldSilentErr(_); }
+
+            try {
+                // Outils et matériel (Ressources)
+                const tmSel = stepEl.querySelector('select.step-tools-materials-select');
+                const tmCount = __countSelectedFromMultiSelect(tmSel);
+                const tmCountEl = stepEl.querySelector('.step-tools-materials-count');
+                if (tmCountEl) {
+                    if (tmCount > 0) {
+                        tmCountEl.textContent = tmCount;
+                        tmCountEl.classList.remove('hidden');
+                    } else {
+                        tmCountEl.classList.add('hidden');
+                    }
+                }
+            } catch(_){ __ldSilentErr(_); }
+
+            try {
+                // Liens et références (Ressources)
+                const linksRefsTA = stepEl.querySelector('textarea.step-input-linksrefs');
+                if (linksRefsTA) {
+                    const lines = String(linksRefsTA.value || '').split(/\r\n|\r|\n/).filter(line => line.trim() !== '');
+                    const linksCount = lines.length;
+                    const linksCountEl = stepEl.querySelector('.step-links-refs-count');
+                    if (linksCountEl) {
+                        if (linksCount > 0) {
+                            linksCountEl.textContent = linksCount;
+                            linksCountEl.classList.remove('hidden');
+                        } else {
+                            linksCountEl.classList.add('hidden');
+                        }
+                    }
+                }
+            } catch(_){ __ldSilentErr(_); }
+        }
+
+        function updateAllSubsectionCounters() {
+            __ldFilterStepNodeList(__ldFilterStepNodeList(document.querySelectorAll('.step-card'))).forEach(stepEl => {
+                try { updateSubsectionCounters(stepEl); } catch(_){ __ldSilentErr(_); }
+            });
+        }
+
+        // Initialize subsection counters on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            try { updateAllSubsectionCounters(); } catch(_){ __ldSilentErr(_); }
+        }, { once: true });
 
         function __initStepToolsSelectedOnlyToggle(stepEl) {
             if (!stepEl) return;
