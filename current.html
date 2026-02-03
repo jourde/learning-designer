@@ -28216,9 +28216,80 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
     </div>
     
     <!-- Modal Body -->
-    <div class="flex-1 p-6 overflow-hidden">
+    <div class="flex-1 p-6 overflow-hidden flex flex-col gap-3">
+      <!-- Markdown Toolbar -->
+      <div class="flex items-center gap-1 px-2 py-2 bg-slate-50 border border-slate-200 rounded-lg flex-wrap">
+        <div class="flex items-center gap-1 border-r border-slate-300 pr-2">
+          <button type="button" class="md-btn" data-md-action="bold" title="Gras (Ctrl+B)">
+            <span class="material-icons-round text-[18px]">format_bold</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="italic" title="Italique (Ctrl+I)">
+            <span class="material-icons-round text-[18px]">format_italic</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="strikethrough" title="Barré">
+            <span class="material-icons-round text-[18px]">strikethrough_s</span>
+          </button>
+        </div>
+        
+        <div class="flex items-center gap-1 border-r border-slate-300 pr-2">
+          <button type="button" class="md-btn" data-md-action="h1" title="Titre 1">
+            <span class="font-bold text-sm">H1</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="h2" title="Titre 2">
+            <span class="font-bold text-sm">H2</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="h3" title="Titre 3">
+            <span class="font-bold text-sm">H3</span>
+          </button>
+        </div>
+        
+        <div class="flex items-center gap-1 border-r border-slate-300 pr-2">
+          <button type="button" class="md-btn" data-md-action="ul" title="Liste à puces">
+            <span class="material-icons-round text-[18px]">format_list_bulleted</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="ol" title="Liste numérotée">
+            <span class="material-icons-round text-[18px]">format_list_numbered</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="checklist" title="Liste de tâches">
+            <span class="material-icons-round text-[18px]">checklist</span>
+          </button>
+        </div>
+        
+        <div class="flex items-center gap-1 border-r border-slate-300 pr-2">
+          <button type="button" class="md-btn" data-md-action="link" title="Insérer un lien">
+            <span class="material-icons-round text-[18px]">link</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="quote" title="Citation">
+            <span class="material-icons-round text-[18px]">format_quote</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="code" title="Code inline">
+            <span class="material-icons-round text-[18px]">code</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="codeblock" title="Bloc de code">
+            <span class="material-icons-round text-[18px]">code_blocks</span>
+          </button>
+        </div>
+        
+        <div class="flex items-center gap-1">
+          <button type="button" class="md-btn" data-md-action="hr" title="Ligne horizontale">
+            <span class="material-icons-round text-[18px]">horizontal_rule</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="table" title="Tableau">
+            <span class="material-icons-round text-[18px]">table_chart</span>
+          </button>
+        </div>
+        
+        <div class="ml-auto flex items-center gap-2">
+          <span class="text-xs text-slate-500">Markdown activé</span>
+          <a href="https://www.markdownguide.org/cheat-sheet/" target="_blank" class="text-xs text-indigo-600 hover:text-indigo-700 flex items-center gap-1" title="Guide Markdown">
+            <span class="material-icons-round text-[14px]">help_outline</span>
+            Aide
+          </a>
+        </div>
+      </div>
+      
       <textarea id="fullscreen-textarea-content" 
-                class="w-full h-full px-4 py-3 text-base border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none bg-white text-slate-700 leading-relaxed font-sans"
+                class="flex-1 px-4 py-3 text-base border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none bg-white text-slate-700 leading-relaxed font-sans"
                 placeholder="Saisissez votre texte ici..."></textarea>
     </div>
     
@@ -28283,6 +28354,36 @@ kbd {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
+/* Markdown toolbar buttons */
+.md-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+  min-width: 32px;
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.md-btn:hover {
+  background-color: #eef2ff;
+  border-color: #c7d2fe;
+  color: #4f46e5;
+}
+
+.md-btn:active {
+  transform: scale(0.95);
+  background-color: #e0e7ff;
+}
+
+.md-btn .material-icons-round {
+  pointer-events: none;
+}
+
 /* Modal animation */
 #fullscreen-textarea-modal:not(.hidden) {
   animation: fadeIn 0.2s ease-out;
@@ -28325,6 +28426,106 @@ kbd {
   function updateCharCount() {
     const count = modalContent.value.length;
     modalCharCount.textContent = `${count} caractère${count > 1 ? 's' : ''}`;
+  }
+
+  // Markdown formatting functions
+  function getSelection() {
+    const start = modalContent.selectionStart;
+    const end = modalContent.selectionEnd;
+    const selectedText = modalContent.value.substring(start, end);
+    return { start, end, selectedText };
+  }
+
+  function replaceSelection(newText, selectStart, selectEnd) {
+    const { start, end } = getSelection();
+    const before = modalContent.value.substring(0, start);
+    const after = modalContent.value.substring(end);
+    
+    modalContent.value = before + newText + after;
+    
+    // Set cursor position
+    const newStart = start + (selectStart !== undefined ? selectStart : newText.length);
+    const newEnd = start + (selectEnd !== undefined ? selectEnd : newText.length);
+    modalContent.setSelectionRange(newStart, newEnd);
+    modalContent.focus();
+    updateCharCount();
+  }
+
+  function wrapSelection(prefix, suffix = prefix) {
+    const { selectedText } = getSelection();
+    if (selectedText) {
+      replaceSelection(prefix + selectedText + suffix, prefix.length, prefix.length + selectedText.length);
+    } else {
+      const placeholder = 'texte';
+      replaceSelection(prefix + placeholder + suffix, prefix.length, prefix.length + placeholder.length);
+    }
+  }
+
+  function insertAtCursor(text, cursorOffset = 0) {
+    const { start } = getSelection();
+    const before = modalContent.value.substring(0, start);
+    const after = modalContent.value.substring(start);
+    
+    modalContent.value = before + text + after;
+    const newPos = start + text.length + cursorOffset;
+    modalContent.setSelectionRange(newPos, newPos);
+    modalContent.focus();
+    updateCharCount();
+  }
+
+  function insertAtLineStart(prefix) {
+    const { start } = getSelection();
+    const before = modalContent.value.substring(0, start);
+    const lineStart = before.lastIndexOf('\n') + 1;
+    const lineContent = modalContent.value.substring(lineStart);
+    
+    const newContent = modalContent.value.substring(0, lineStart) + prefix + lineContent;
+    modalContent.value = newContent;
+    modalContent.setSelectionRange(start + prefix.length, start + prefix.length);
+    modalContent.focus();
+    updateCharCount();
+  }
+
+  const markdownActions = {
+    bold: () => wrapSelection('**'),
+    italic: () => wrapSelection('*'),
+    strikethrough: () => wrapSelection('~~'),
+    h1: () => insertAtLineStart('# '),
+    h2: () => insertAtLineStart('## '),
+    h3: () => insertAtLineStart('### '),
+    ul: () => insertAtLineStart('- '),
+    ol: () => insertAtLineStart('1. '),
+    checklist: () => insertAtLineStart('- [ ] '),
+    link: () => {
+      const { selectedText } = getSelection();
+      if (selectedText) {
+        replaceSelection(`[${selectedText}](url)`, selectedText.length + 3, selectedText.length + 6);
+      } else {
+        replaceSelection('[texte du lien](url)', 1, 14);
+      }
+    },
+    quote: () => insertAtLineStart('> '),
+    code: () => wrapSelection('`'),
+    codeblock: () => {
+      const { selectedText } = getSelection();
+      if (selectedText) {
+        replaceSelection('```\n' + selectedText + '\n```', 4, 4 + selectedText.length);
+      } else {
+        replaceSelection('```\ncode\n```', 4, 8);
+      }
+    },
+    hr: () => insertAtCursor('\n\n---\n\n', 0),
+    table: () => {
+      const table = '\n| Colonne 1 | Colonne 2 | Colonne 3 |\n|-----------|-----------|-----------|' +
+                    '\n| Cellule 1 | Cellule 2 | Cellule 3 |\n| Cellule 4 | Cellule 5 | Cellule 6 |\n';
+      insertAtCursor(table, 0);
+    }
+  };
+
+  function handleMarkdownAction(action) {
+    if (markdownActions[action]) {
+      markdownActions[action]();
+    }
   }
 
   function openFullscreen(textarea) {
@@ -28428,6 +28629,17 @@ kbd {
     modalContent.addEventListener('input', updateCharCount);
   }
 
+  // Markdown toolbar buttons
+  document.querySelectorAll('.md-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const action = btn.getAttribute('data-md-action');
+      if (action) {
+        handleMarkdownAction(action);
+      }
+    });
+  });
+
   // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     if (!modal || modal.classList.contains('hidden')) return;
@@ -28442,6 +28654,27 @@ kbd {
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
       e.preventDefault();
       closeFullscreen(true);
+    }
+
+    // Markdown shortcuts (only when modal is open and textarea is focused)
+    if (document.activeElement === modalContent) {
+      // Ctrl/Cmd + B for bold
+      if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+        e.preventDefault();
+        handleMarkdownAction('bold');
+      }
+      
+      // Ctrl/Cmd + I for italic
+      if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+        e.preventDefault();
+        handleMarkdownAction('italic');
+      }
+      
+      // Ctrl/Cmd + K for link
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        handleMarkdownAction('link');
+      }
     }
   });
 
