@@ -99,6 +99,23 @@ document.addEventListener('DOMContentLoaded', ()=>{
 textarea{resize:vertical;}
 .ld-ta-compact, .ld-ta-expanded{resize:vertical;}
 
+/* Description field: expand to fill available space */
+.step-tabpanel[data-step-panel="description"] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.step-tabpanel[data-step-panel="description"] .step-right-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.step-tabpanel[data-step-panel="description"] .step-input-objective {
+  flex: 1;
+  min-height: 120px;
+}
+
    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
         /* Prevent layout shift when the vertical scrollbar appears/disappears (e.g., wizard tab switch) */
@@ -2175,15 +2192,20 @@ function __ldEnablePlainTextPaste(){
       return;
     }
 
-    // Inputs / textareas
-    const start = (typeof t.selectionStart === 'number') ? t.selectionStart : (t.value || '').length;
-    const end   = (typeof t.selectionEnd === 'number') ? t.selectionEnd : (t.value || '').length;
-    const val   = (t.value || '');
-    t.value = val.slice(0, start) + plain + val.slice(end);
-    const pos = start + plain.length;
-    if(t.setSelectionRange) t.setSelectionRange(pos, pos);
-    // Trigger downstream computations / autosize / exports
-    t.dispatchEvent(new Event('input', { bubbles: true }));
+    // Inputs / textareas - use execCommand to preserve undo history
+    try{
+      document.execCommand('insertText', false, plain);
+    }catch(_){
+      // Fallback for browsers that don't support execCommand
+      const start = (typeof t.selectionStart === 'number') ? t.selectionStart : (t.value || '').length;
+      const end   = (typeof t.selectionEnd === 'number') ? t.selectionEnd : (t.value || '').length;
+      const val   = (t.value || '');
+      t.value = val.slice(0, start) + plain + val.slice(end);
+      const pos = start + plain.length;
+      if(t.setSelectionRange) t.setSelectionRange(pos, pos);
+      // Trigger downstream computations / autosize / exports
+      t.dispatchEvent(new Event('input', { bubbles: true }));
+    }
   }, true);
 }
 document.addEventListener('DOMContentLoaded', __ldEnablePlainTextPaste);
