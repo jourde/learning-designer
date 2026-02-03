@@ -28198,6 +28198,306 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
 })();
 </script>
 
+<!-- Fullscreen Textarea Modal -->
+<div id="fullscreen-textarea-modal" class="hidden fixed inset-0 z-[9999] bg-slate-900 bg-opacity-95 flex items-center justify-center p-4">
+  <div class="w-full h-full max-w-7xl mx-auto flex flex-col bg-white rounded-lg shadow-2xl overflow-hidden">
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between px-6 py-4 bg-slate-50 border-b border-slate-200">
+      <div class="flex items-center gap-3">
+        <span class="material-icons-round text-indigo-600">edit_note</span>
+        <h3 id="fullscreen-textarea-title" class="text-lg font-semibold text-slate-800">Édition plein écran</h3>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-slate-500">Appuyez sur <kbd class="px-1.5 py-0.5 bg-slate-200 rounded text-[10px] font-mono">Échap</kbd> pour fermer</span>
+        <button id="fullscreen-textarea-close" class="p-2 hover:bg-slate-200 rounded-lg transition-colors" title="Fermer (Échap)">
+          <span class="material-icons-round text-slate-600">close</span>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Modal Body -->
+    <div class="flex-1 p-6 overflow-hidden">
+      <textarea id="fullscreen-textarea-content" 
+                class="w-full h-full px-4 py-3 text-base border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none bg-white text-slate-700 leading-relaxed font-sans"
+                placeholder="Saisissez votre texte ici..."></textarea>
+    </div>
+    
+    <!-- Modal Footer -->
+    <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+      <div class="text-sm text-slate-600">
+        <span id="fullscreen-textarea-charcount" class="font-mono">0 caractères</span>
+      </div>
+      <div class="flex gap-2">
+        <button id="fullscreen-textarea-cancel" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+          Annuler
+        </button>
+        <button id="fullscreen-textarea-save" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2">
+          <span class="material-icons-round text-[18px]">check</span>
+          Valider
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Fullscreen textarea enhancements */
+.ld-textarea-wrapper {
+  position: relative;
+}
+
+.ld-textarea-fullscreen-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 4px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, background-color 0.2s;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ld-textarea-wrapper:hover .ld-textarea-fullscreen-btn,
+.ld-textarea-wrapper:focus-within .ld-textarea-fullscreen-btn {
+  opacity: 1;
+}
+
+.ld-textarea-fullscreen-btn:hover {
+  background-color: #eef2ff;
+  border-color: #c7d2fe;
+}
+
+.ld-textarea-fullscreen-btn .material-icons-round {
+  font-size: 16px;
+  color: #4f46e5;
+}
+
+/* Kbd styling */
+kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Modal animation */
+#fullscreen-textarea-modal:not(.hidden) {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+</style>
+
+<script>
+// Fullscreen Textarea System
+(function() {
+  'use strict';
+
+  let currentTextarea = null;
+  let originalValue = '';
+
+  const modal = document.getElementById('fullscreen-textarea-modal');
+  const modalTitle = document.getElementById('fullscreen-textarea-title');
+  const modalContent = document.getElementById('fullscreen-textarea-content');
+  const modalCharCount = document.getElementById('fullscreen-textarea-charcount');
+  const btnClose = document.getElementById('fullscreen-textarea-close');
+  const btnCancel = document.getElementById('fullscreen-textarea-cancel');
+  const btnSave = document.getElementById('fullscreen-textarea-save');
+
+  // Selectors for textarea fields to enhance
+  const TEXTAREA_SELECTORS = [
+    '.step-input-objective',
+    '.step-input-tasks',
+    '.step-input-trainer-tasks',
+    '.step-input-notes',
+    '.step-input-linksrefs',
+    '.activity-description',    // Objectif(s) du module
+    '.module-notes',            // Notes du module
+    '.submoment-notes'          // Notes du sous-moment
+  ];
+
+  function updateCharCount() {
+    const count = modalContent.value.length;
+    modalCharCount.textContent = `${count} caractère${count > 1 ? 's' : ''}`;
+  }
+
+  function openFullscreen(textarea) {
+    if (!textarea) return;
+    
+    currentTextarea = textarea;
+    originalValue = textarea.value;
+    
+    // Set modal content
+    modalContent.value = originalValue;
+    
+    // Set title based on textarea placeholder or label
+    const placeholder = textarea.getAttribute('placeholder') || textarea.getAttribute('data-i18n-placeholder') || 'Édition';
+    modalTitle.textContent = placeholder;
+    
+    // Update char count
+    updateCharCount();
+    
+    // Show modal
+    modal.classList.remove('hidden');
+    
+    // Focus on textarea
+    setTimeout(() => {
+      modalContent.focus();
+      modalContent.setSelectionRange(modalContent.value.length, modalContent.value.length);
+    }, 100);
+    
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeFullscreen(save = false) {
+    if (!currentTextarea) return;
+    
+    if (save) {
+      // Save content back to original textarea
+      currentTextarea.value = modalContent.value;
+      
+      // Trigger input event for any listeners
+      const event = new Event('input', { bubbles: true });
+      currentTextarea.dispatchEvent(event);
+      
+      // Update subsection counters if applicable
+      try {
+        const stepEl = currentTextarea.closest('.step-card');
+        if (stepEl && typeof updateSubsectionCounters === 'function') {
+          updateSubsectionCounters(stepEl);
+        }
+      } catch(_) {}
+    }
+    
+    // Hide modal
+    modal.classList.add('hidden');
+    
+    // Restore body scroll
+    document.body.style.overflow = '';
+    
+    // Clear state
+    currentTextarea = null;
+    originalValue = '';
+    modalContent.value = '';
+  }
+
+  function wrapTextareas() {
+    TEXTAREA_SELECTORS.forEach(selector => {
+      document.querySelectorAll(selector).forEach(textarea => {
+        // Skip if already wrapped
+        if (textarea.closest('.ld-textarea-wrapper')) return;
+        
+        // Create wrapper
+        const wrapper = document.createElement('div');
+        wrapper.className = 'ld-textarea-wrapper';
+        
+        // Create fullscreen button
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'ld-textarea-fullscreen-btn';
+        btn.title = 'Éditer en plein écran';
+        btn.innerHTML = '<span class="material-icons-round">fullscreen</span>';
+        
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openFullscreen(textarea);
+        });
+        
+        // Wrap textarea
+        textarea.parentNode.insertBefore(wrapper, textarea);
+        wrapper.appendChild(textarea);
+        wrapper.appendChild(btn);
+      });
+    });
+  }
+
+  // Event listeners
+  if (btnClose) btnClose.addEventListener('click', () => closeFullscreen(false));
+  if (btnCancel) btnCancel.addEventListener('click', () => closeFullscreen(false));
+  if (btnSave) btnSave.addEventListener('click', () => closeFullscreen(true));
+  
+  if (modalContent) {
+    modalContent.addEventListener('input', updateCharCount);
+  }
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    if (!modal || modal.classList.contains('hidden')) return;
+    
+    // Escape to close
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeFullscreen(false);
+    }
+    
+    // Ctrl/Cmd + S to save
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      closeFullscreen(true);
+    }
+  });
+
+  // Click outside to close
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeFullscreen(false);
+      }
+    });
+  }
+
+  // Initialize on DOM ready
+  function init() {
+    wrapTextareas();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  // Re-wrap when new steps are added
+  const observer = new MutationObserver((mutations) => {
+    let shouldWrap = false;
+    mutations.forEach(mutation => {
+      mutation.addedNodes.forEach(node => {
+        if (node.nodeType === 1) {
+          // Check for step cards, submoment cards, or activity groups
+          if (node.classList.contains('step-card') || 
+              node.classList.contains('submoment-card') ||
+              node.classList.contains('activity-group') ||
+              node.querySelector('.step-card') ||
+              node.querySelector('.submoment-card') ||
+              node.querySelector('.activity-group')) {
+            shouldWrap = true;
+          }
+        }
+      });
+    });
+    if (shouldWrap) {
+      setTimeout(wrapTextareas, 100);
+    }
+  });
+
+  const root = document.getElementById('activities-root');
+  if (root) {
+    observer.observe(root, { childList: true, subtree: true });
+  }
+
+  // Expose for external use if needed
+  window.__ldOpenFullscreenTextarea = openFullscreen;
+})();
+</script>
+
 
 </body>
 </html>
