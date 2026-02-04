@@ -2588,114 +2588,134 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 <div id="kpwiz-steps-wrapper">
 <section class="kpwiz-step" id="kpwiz-step-1">
-<div class="p-3 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-<div>
-<label class="compact-label block" data-i18n="label_course_name">
-        Nom de la formation
-       </label>
-<input class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" data-i18n-placeholder="ph_course_name" id="param-name" placeholder="Entrez le nom de la formation..." type="text"/>
-</div><div class="flex-1">
-<label class="compact-label block" data-i18n="label_learning_time">
-         Temps d'Apprentissage (Cible)
+  
+  <!-- PRIMARY INFORMATION -->
+  <div class="p-3 border-t border-slate-100">
+    <h3 class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+      <span class="material-icons-round text-[14px] text-slate-400">info</span>
+      Informations principales
+    </h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div>
+        <label class="compact-label block" data-i18n="label_course_name">
+          Nom de la formation
         </label>
-<div class="flex gap-1">
-<input class="w-2/3 px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" id="param-learning-val" min="0" data-action-input="update-stats-debounced" placeholder="0" type="number"/>
-<select class="w-1/3 px-1 py-1 text-xs border border-slate-200 rounded bg-slate-50 focus:ring-1 focus:ring-indigo-500 outline-none" id="param-learning-unit" data-action-change="update-stats">
-<option data-i18n="unit_mins" value="mins">
-           min
-          </option>
-<option data-i18n="unit_hours" value="hours">
-           Heures
-          </option>
-<option data-i18n="unit_days" value="days">
-           Jours
-          </option>
-<option data-i18n="unit_weeks" value="weeks">
-           Semaines
-          </option>
-<option data-i18n="unit_months" value="months">
-           Mois
-          </option>
-</select>
-</div>
-</div>
-
-<div class="flex-1">
-  <label class="compact-label block">Unité préférée (Modules / Moments / Activités)</label>
-  <select class="w-full px-2 py-1 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" id="param-preferred-unit">
-    <option value="60" data-i18n="unit_mins">min</option>
-    <option value="3600" data-i18n="unit_hours">Heures</option>
-    <option value="86400" data-i18n="unit_days">Jours</option>
-    <option value="604800" data-i18n="unit_weeks">Semaines</option>
-    <option value="2592000" data-i18n="unit_months">Mois</option>
-  </select>
-  <p class="text-[11px] text-slate-400 mt-1">Défaut pour l’unité affichée et saisie dans les blocs. Vous pouvez modifier une unité localement si nécessaire.</p>
-</div>
-
-
-<div class="flex-1">
-<label class="compact-label block" data-i18n="label_designed_time">
-         Temps Conçu (Planifié)
+        <input class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" data-i18n-placeholder="ph_course_name" id="param-name" placeholder="Entrez le nom de la formation..." type="text"/>
+      </div>
+      <div>
+        <label class="compact-label block" data-i18n="label_topic">
+          Thème
         </label>
-<div class="flex gap-1 items-center">
-<input class="w-2/3 px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none bg-slate-100 text-slate-500" id="param-designed-val" min="0" placeholder="0" readonly="" type="number"/>
-<span class="w-1/3 text-xs text-slate-600 font-bold px-1" id="param-designed-unit-display">
-          min
-         </span>
-<input id="param-designed-time" type="number" class="hidden" aria-hidden="true" tabindex="-1"/>
-<select id="param-designed-unit" class="hidden" aria-hidden="true" tabindex="-1">
-  <option data-i18n="unit_mins" value="mins">min</option>
-  <option data-i18n="unit_hours" value="hours">heures</option>
-  <option data-i18n="unit_days" value="days">jours</option>
-  <option data-i18n="unit_weeks" value="weeks">semaines</option>
-  <option data-i18n="unit_months" value="months">mois</option>
-</select>
-</div>
-</div>
-</div>
-<div class="p-3 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"><div>
-<label class="compact-label block" data-i18n="label_topic">
-       Thème
-      </label>
-<input class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" data-i18n-placeholder="ph_topic" id="param-topic" placeholder="Entrez le thème..." type="text"/>
-</div><div>
-<label class="compact-label block" data-i18n="label_mode">
-       Modalité
-      </label>
-<select class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none bg-white" id="param-mode">
-<option data-i18n="opt_mode_placeholder" disabled="" selected="" value="">
-        Sélectionnez une modalité...
-       </option>
-<option data-i18n="opt_mode_classroom" value="classroom">
-        Présentiel (sur site)
-       </option>
-<option data-i18n="opt_mode_online" value="online">
-        Distanciel (en ligne)
-       </option>
-<option data-i18n="opt_mode_blended" value="blended">
-        Hybride (sur site et en ligne)
-       </option>
-</select>
-</div><div>
-<label class="compact-label block" data-i18n="label_authors">
-        Concepteurs(s)
-       </label>
-<input class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" data-i18n-placeholder="ph_authors" id="param-authors" placeholder="Entrez le nom du/des concepteurs..." type="text"/>
-</div>
-<div>
-<label class="compact-label block" data-i18n="label_trainers">
-        Formateur(s)
-       </label>
-<input class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" data-i18n-placeholder="ph_trainers" id="param-trainers" placeholder="Entrez le nom du/des formateur(s)..." type="text"/>
-</div>
-<div class="md:col-span-2 lg:col-span-3">
-<label class="compact-label block" data-i18n="label_description">
+        <input class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" data-i18n-placeholder="ph_topic" id="param-topic" placeholder="Entrez le thème..." type="text"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIME CONFIGURATION -->
+  <div class="p-3 border-t border-slate-100">
+    <h3 class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+      <span class="material-icons-round text-[14px] text-slate-400">schedule</span>
+      Configuration des temps
+    </h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div>
+        <label class="compact-label block" data-i18n="label_learning_time">
+          Temps d'Apprentissage (Cible)
+        </label>
+        <div class="flex gap-1">
+          <input class="w-2/3 px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" id="param-learning-val" min="0" data-action-input="update-stats-debounced" placeholder="0" type="number"/>
+          <select class="w-1/3 px-1 py-1 text-xs border border-slate-200 rounded bg-slate-50 focus:ring-1 focus:ring-indigo-500 outline-none" id="param-learning-unit" data-action-change="update-stats">
+            <option data-i18n="unit_mins" value="mins">min</option>
+            <option data-i18n="unit_hours" value="hours">Heures</option>
+            <option data-i18n="unit_days" value="days">Jours</option>
+            <option data-i18n="unit_weeks" value="weeks">Semaines</option>
+            <option data-i18n="unit_months" value="months">Mois</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="compact-label block">Unité préférée (Modules / Moments / Activités)</label>
+        <select class="w-full px-2 py-1 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" id="param-preferred-unit">
+          <option value="60" data-i18n="unit_mins">min</option>
+          <option value="3600" data-i18n="unit_hours">Heures</option>
+          <option value="86400" data-i18n="unit_days">Jours</option>
+          <option value="604800" data-i18n="unit_weeks">Semaines</option>
+          <option value="2592000" data-i18n="unit_months">Mois</option>
+        </select>
+        <p class="text-[11px] text-slate-400 mt-1">Défaut pour l'unité affichée et saisie dans les blocs. Vous pouvez modifier une unité localement si nécessaire.</p>
+      </div>
+
+      <div>
+        <label class="compact-label block" data-i18n="label_designed_time">
+          Temps Conçu (Planifié)
+        </label>
+        <div class="flex gap-1 items-center">
+          <input class="w-2/3 px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none bg-slate-100 text-slate-500" id="param-designed-val" min="0" placeholder="0" readonly="" type="number"/>
+          <span class="w-1/3 text-xs text-slate-600 font-bold px-1" id="param-designed-unit-display">min</span>
+          <input id="param-designed-time" type="number" class="hidden" aria-hidden="true" tabindex="-1"/>
+          <select id="param-designed-unit" class="hidden" aria-hidden="true" tabindex="-1">
+            <option data-i18n="unit_mins" value="mins">min</option>
+            <option data-i18n="unit_hours" value="hours">heures</option>
+            <option data-i18n="unit_days" value="days">jours</option>
+            <option data-i18n="unit_weeks" value="weeks">semaines</option>
+            <option data-i18n="unit_months" value="months">mois</option>
+          </select>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-1 italic">Calculé automatiquement à partir des activités</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PEOPLE & MODE -->
+  <div class="p-3 border-t border-slate-100">
+    <h3 class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+      <span class="material-icons-round text-[14px] text-slate-400">people</span>
+      Équipe et modalité
+    </h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div>
+        <label class="compact-label block" data-i18n="label_authors">
+          Concepteurs(s)
+        </label>
+        <input class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" data-i18n-placeholder="ph_authors" id="param-authors" placeholder="Entrez le nom du/des concepteurs..." type="text"/>
+      </div>
+      <div>
+        <label class="compact-label block" data-i18n="label_trainers">
+          Formateur(s)
+        </label>
+        <input class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" data-i18n-placeholder="ph_trainers" id="param-trainers" placeholder="Entrez le nom du/des formateur(s)..." type="text"/>
+      </div>
+      <div>
+        <label class="compact-label block" data-i18n="label_mode">
+          Modalité
+        </label>
+        <select class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none bg-white" id="param-mode">
+          <option data-i18n="opt_mode_placeholder" disabled="" selected="" value="">Sélectionnez une modalité...</option>
+          <option data-i18n="opt_mode_classroom" value="classroom">Présentiel (sur site)</option>
+          <option data-i18n="opt_mode_online" value="online">Distanciel (en ligne)</option>
+          <option data-i18n="opt_mode_blended" value="blended">Hybride (sur site et en ligne)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- DESCRIPTION -->
+  <div class="p-3 border-t border-slate-100">
+    <h3 class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+      <span class="material-icons-round text-[14px] text-slate-400">description</span>
+      Description
+    </h3>
+    <div>
+      <label class="compact-label block" data-i18n="label_description">
         Description générale
-       </label>
-<textarea class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y" data-i18n-placeholder="ph_description" id="param-description" placeholder="Description détaillée..." rows="1"></textarea>
-</div>
-</div>
+      </label>
+      <textarea class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y" data-i18n-placeholder="ph_description" id="param-description" placeholder="Description détaillée..." rows="3"></textarea>
+    </div>
+  </div>
+
 </section>
+
 <section class="kpwiz-step hidden" id="kpwiz-step-2">
 <div class="p-3 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
 <div class="md:col-span-2 lg:col-span-3">
@@ -28420,7 +28440,11 @@ kbd {
     '.step-input-linksrefs',
     '.activity-description',    // Objectif(s) du module
     '.module-notes',            // Notes du module
-    '.submoment-notes'          // Notes du sous-moment
+    '.submoment-notes',         // Notes du sous-moment
+    '#param-description',       // Informations et paramètres - Description générale
+    '#param-target-audience',   // Informations et paramètres - Public cible
+    '#param-prerequisites',     // Informations et paramètres - Prérequis
+    '#param-tools-materials-notes'  // Informations et paramètres - Notes outils/matériel
   ];
 
   function updateCharCount() {
