@@ -8712,8 +8712,8 @@ function initSortableSubmoments(container) {
     if (container.__ldSortableSubmoments) return;
 
     container.__ldSortableSubmoments = new Sortable(container, {
-        // Keep reordering inside a moment only (no cross-moment moves)
-        group: { name: 'submoments', pull: false, put: false },
+        // Allow drag-and-drop between different moments
+        group: 'submoments',
         animation: 150,
         handle: '.drag-handle-submoment',
         ghostClass: 'sortable-ghost',
