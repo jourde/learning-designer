@@ -19,9 +19,12 @@ N.B. : Cette application a été développée avec l'aide de chatbots d'IA gén�
 🔥 *Point de vigilance : bien que globalement fonctionnel, l'outil reste expérimental et peut présenter des anomalies. Je vous conseille notamment de télécharger la version que vous utilisez (fichier "main.html") afin d'assurer la compatibilité avec vos sauvegardes, en cas de mise à jour du fichier sur ce dépôt.*
 
 ## Ressources
+### Guides
 - **Guide d'utilisation** : [https://github.com/jourde/learning-designer/wiki](https://github.com/jourde/learning-designer/wiki)
+### Outils
 - **Application de création de requête d'amélioration d'un scénario**: [https://jourde.github.io/learning-designer/development/enhacement-prompt-builder.html](https://jourde.github.io/learning-designer/development/enhacement-prompt-builder.html)
- 
+- **Application de conversion de scénario vers JSON**: [https://jourde.github.io/learning-designer/development/ld_parser.html](https://jourde.github.io/learning-designer/development/ld_parser.html)
+### Autres 
 - **Page web associée** : [https://jourde.github.io/learning-designer/](https://jourde.github.io/learning-designer/)
 
 - **Dépôt GitHub du projet** : [https://github.com/jourde/learning-designer](https://github.com/jourde/learning-designer). Vous pouvez créer des adaptations de l'application (merci de m'en tenir informé si possible).
