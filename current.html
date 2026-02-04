@@ -6012,7 +6012,7 @@ function initViewLevelSegmentedUI() {
             li.setAttribute('data-item', item);
 
             li.innerHTML = `
-                <span class="material-icons-round text-slate-400 text-sm cursor-grab drag-handle-tools-materials drag-handle mt-1" title="Glisser-déposer pour réorganiser" aria-label="Glisser-déposer pour réorganiser">drag_indicator</span>
+                <span class="material-icons-round text-slate-500 hover:text-slate-700 text-base cursor-grab drag-handle-tools-materials drag-handle mt-0.5 transition-colors" title="Glisser-déposer pour réorganiser" aria-label="Glisser-déposer pour réorganiser">drag_indicator</span>
                 <div class="flex flex-col sm:flex-row gap-1 flex-1 min-w-0">
                     <input class="tm-cat-input px-2 py-1 border border-slate-200 rounded text-xs w-full sm:w-[28%]" placeholder="Catégorie..." value="${escapeHtml(cat)}" />
                     <input class="tm-subcat-input px-2 py-1 border border-slate-200 rounded text-xs w-full sm:w-[28%]" placeholder="Sous-catégorie..." value="${escapeHtml(sub)}" />
@@ -8372,6 +8372,7 @@ label_search: "Rechercher",
         };
 
         
+        window.addEventListener('load', function() {
         try { if (typeof Sortable !== 'undefined' && root) {
             new Sortable(root, {
                 animation: 150,
@@ -8458,6 +8459,7 @@ label_search: "Rechercher",
             }
 
 } } catch (e) { console.warn('Sortable init failed', e); }
+});
 
 function initSortableSteps(container) {
             if (typeof Sortable === 'undefined' || !container) return;
