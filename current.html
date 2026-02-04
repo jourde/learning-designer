@@ -3296,6 +3296,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="competences" data-i18n="tab_competences">Compétences</button>
 <button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="aims" data-i18n="tab_aims">Objectifs</button>
 <button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="outcomes" data-i18n="tab_outcomes">Résultats</button>
+<button aria-selected="false" class="analysis-tab-btn" data-analysis-tab="tools" data-i18n="tab_tools">Outils</button>
 </div>
 </div><div class="p-2 pt-1" id="analysis-tabs-content">
 <div class="analysis-tab-pane" data-analysis-pane="competences" id="analysis-pane-competences">
@@ -3536,6 +3537,94 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div>
 </div>
 <div class="mt-1 text-[11px] text-slate-500">Ces graphiques analysent les résultats sélectionnés dans les activités. La liste de référence provient de « Informations et paramètres → 3. Objectifs et résultats ».</div>
+</div>
+</div>
+<div class="analysis-tab-pane" data-analysis-pane="tools" id="analysis-pane-tools">
+<div class="panel-content w-full flex flex-col gap-1 mt-1 p-1 rounded-lg border border-slate-200 bg-slate-50" id="tools-charts-panel">
+<div class="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-2" id="tools-analysis-grid">
+<!-- Couverture + non utilisés -->
+<div class="bg-white rounded-xl border border-slate-200 p-2">
+<div class="flex items-center justify-between">
+<div class="text-xs font-bold text-slate-600">Outils et matériel</div>
+<div class="text-[11px] text-slate-500">Couverture</div>
+</div>
+<div class="mt-2 space-y-1 text-[11px] text-slate-700">
+<div class="flex items-center justify-between gap-2"><span class="font-semibold">Utilisés dans les activités</span><span class="font-mono" id="tools-coverage">0/0 (0%)</span></div>
+</div>
+<details class="mt-2 border border-slate-200 rounded-lg bg-slate-50" id="tools-unused-details">
+<summary class="text-[11px] cursor-pointer select-none px-2 py-1.5 flex items-center gap-1">
+<span class="material-icons-round text-[14px] text-slate-400">rule</span>
+<span class="font-semibold text-slate-600">Outils non utilisés</span>
+<span class="ml-auto text-slate-400" id="tools-unused-count">0</span>
+</summary>
+<div class="px-2 pb-2 pt-1">
+<ul class="text-[11px] text-slate-700 list-disc ml-4 space-y-0.5" id="tools-unused"></ul>
+</div>
+</details>
+</div>
+<!-- Top outils -->
+<div class="bg-white rounded-xl border border-slate-200 p-2">
+<div class="flex items-center justify-between">
+<div class="text-xs font-bold text-slate-600">Top outils</div>
+<div class="text-[11px] text-slate-500">(nb d'activités)</div>
+</div>
+<div class="mt-2">
+<div class="w-full" id="chart-tools-top-html"></div>
+<details class="mt-2">
+<summary class="text-[11px] cursor-pointer select-none text-slate-500">Détails (table)</summary>
+<div class="mt-1 border border-slate-200 rounded-lg overflow-hidden">
+<table class="w-full text-[11px]"><tbody id="tools-top-table"></tbody></table>
+</div>
+</details>
+</div>
+</div>
+</div>
+<div class="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-2">
+<!-- Répartition par catégorie -->
+<div class="bg-white rounded-xl border border-slate-200 p-2" id="tools-by-category-card">
+<div class="flex items-center justify-between">
+<div class="text-xs font-bold text-slate-600">Répartition par catégorie</div>
+<div class="text-[11px] text-slate-500">(nb de sélections)</div>
+</div>
+<div class="mt-2">
+<div class="w-full" id="chart-tools-by-category-html"></div>
+</div>
+</div>
+<!-- Répartition par module -->
+<div class="bg-white rounded-xl border border-slate-200 p-2" id="tools-by-module-card">
+<div class="flex items-center justify-between">
+<div class="text-xs font-bold text-slate-600">Répartition par module</div>
+<div class="text-[11px] text-slate-500">(nb de sélections)</div>
+</div>
+<div class="mt-2">
+<div class="w-full" id="chart-tools-by-module-html"></div>
+</div>
+</div>
+</div>
+<!-- Diversité technologique -->
+<div class="mt-2">
+<div class="bg-white rounded-xl border border-slate-200 p-2">
+<div class="flex items-center justify-between">
+<div class="text-xs font-bold text-slate-600">Diversité technologique</div>
+<div class="text-[11px] text-slate-500">Métriques</div>
+</div>
+<div class="mt-2 grid grid-cols-1 md:grid-cols-3 gap-3 text-[11px] text-slate-700">
+<div class="flex flex-col gap-1">
+<span class="text-slate-500 font-semibold">Outils différents</span>
+<span class="text-lg font-bold text-indigo-600" id="tools-diversity-unique">0</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-slate-500 font-semibold">Moyenne par activité</span>
+<span class="text-lg font-bold text-indigo-600" id="tools-diversity-avg">0</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-slate-500 font-semibold">Module le plus diversifié</span>
+<span class="text-sm font-bold text-slate-700" id="tools-diversity-top-module">—</span>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-1 text-[11px] text-slate-500">Ces graphiques analysent les outils sélectionnés dans les activités. La liste de référence provient de « Informations et paramètres → 5. Outils et matériel ».</div>
 </div>
 </div>
 <div class="analysis-tab-pane is-active" data-analysis-pane="modalites" id="analysis-pane-modalites">
@@ -8213,6 +8302,7 @@ label_search: "Rechercher",
                 tab_modalities: "Modalités",
                 tab_outcomes: "Résultats",
                 tab_resources: "Ressources",
+                tab_tools: "Outils",
                 tab_visual: "VISUALISATIONS DES SÉQUENCES"
             }
         };
@@ -24018,6 +24108,191 @@ function updateOutcomesStats() {
   }
 }
 
+function updateToolsStats() {
+  try {
+    const grid = document.getElementById('tools-analysis-grid');
+    if (!grid) return;
+
+    // Catalogue des outils (from UI list with Catégorie/Sous-catégorie/Outil)
+    const items = (typeof getToolsMaterialsItemsFromUI === 'function') ? (getToolsMaterialsItemsFromUI() || []) : [];
+    const fmt = (typeof _formatCatSubItemLine === 'function') ? _formatCatSubItemLine : function(cat, sub, item){
+      const c = String(cat||'').trim();
+      const s = String(sub||'').trim();
+      const it = String(item||'').trim();
+      if (!it) return '';
+      if (!c && !s) return it;
+      if (c && !s) return `${c} — ${it}`;
+      if (!c && s) return `${s} — ${it}`;
+      return `${c} / ${s} — ${it}`;
+    };
+
+    const defined = items.map(o => fmt(o.categorie, o.sousCategorie, o.item)).filter(Boolean);
+    const definedSet = new Set(defined.map(s => String(s||'').trim()).filter(Boolean));
+
+    const metaByLine = new Map();
+    items.forEach(o => {
+      const line = fmt(o.categorie, o.sousCategorie, o.item);
+      if (!line) return;
+      metaByLine.set(line, { cat: String(o.categorie||'').trim(), sub: String(o.sousCategorie||'').trim(), item: String(o.item||'').trim() });
+    });
+
+    // Collect selected tools from all steps
+    const used = new Set();
+    const freq = new Map();
+    const steps = Array.from(__ldFilterStepNodeList(document.querySelectorAll('.step-card')));
+    steps.forEach(step => {
+      const sel = step.querySelector('.step-tools-materials-select');
+      Array.from(sel?.selectedOptions || []).forEach(opt => {
+        const v = String(opt.value||'').trim();
+        if (!v) return;
+        used.add(v);
+        freq.set(v, (freq.get(v) || 0) + 1);
+      });
+    });
+
+    // Coverage
+    const definedCount = definedSet.size;
+    const usedCount = Array.from(definedSet).filter(v => used.has(v)).length;
+    const pct = definedCount ? Math.round((usedCount / definedCount) * 100) : 0;
+    const covEl = document.getElementById('tools-coverage');
+    if (covEl) covEl.textContent = `${usedCount}/${definedCount} (${pct}%)`;
+
+    // Unused list
+    const ul = document.getElementById('tools-unused');
+    let unusedCount = 0;
+    if (ul) {
+      const unused = Array.from(definedSet).filter(v => !used.has(v));
+      unusedCount = unused.length;
+      ul.innerHTML = '';
+      if (!unused.length) {
+        const li = document.createElement('li');
+        li.className = 'text-slate-400 italic list-none ml-0';
+        li.textContent = 'Aucun';
+        ul.appendChild(li);
+      } else {
+        unused.slice(0, 30).forEach(v => {
+          const li = document.createElement('li');
+          li.textContent = v;
+          ul.appendChild(li);
+        });
+        if (unused.length > 30) {
+          const li = document.createElement('li');
+          li.className = 'text-slate-400 italic list-none ml-0';
+          li.textContent = `… +${unused.length - 30} autres`;
+          ul.appendChild(li);
+        }
+      }
+    }
+    const unusedCountEl = document.getElementById('tools-unused-count');
+    if (unusedCountEl) unusedCountEl.textContent = String(unusedCount);
+
+    // Top tools table + bars
+    const topRows = Array.from(freq.entries())
+      .filter(([k, n]) => k && (n || 0) > 0)
+      .sort((a, b) => (b[1] - a[1]) || String(a[0]).localeCompare(String(b[0])))
+      .slice(0, 10)
+      .map(([k, n]) => ({ label: k, value: n }));
+
+    try { renderCountBarsText('chart-tools-top-html', topRows, { kind: 'tools' }); } catch(_){ __ldSilentErr(_); }
+
+    const tb = document.getElementById('tools-top-table');
+    if (tb) {
+      tb.innerHTML = '';
+      if (!topRows.length) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="px-2 py-1 text-slate-400 italic" colspan="2">Aucune sélection</td>`;
+        tb.appendChild(tr);
+      } else {
+        topRows.forEach(r => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td class="px-2 py-1 border-t border-slate-100">${__escapeHtmlLite(String(r.label||''))}</td><td class="px-2 py-1 border-t border-slate-100 text-right font-mono">${__escapeHtmlLite(String(r.value||0))}</td>`;
+          tb.appendChild(tr);
+        });
+      }
+    }
+
+    // By category (based on catalogue metadata)
+    function catForLine(line) {
+      const m = metaByLine.get(line);
+      if (m && m.cat) return m.cat;
+      // Fallback: try parse "Cat / Sub — Item" or "Cat — Item"
+      const s = String(line || '').trim();
+      if (!s) return 'Non catégorisé';
+      const parts = s.split('—');
+      if (parts.length < 2) return 'Non catégorisé';
+      const left = parts[0].trim();
+      if (!left) return 'Non catégorisé';
+      // If "Cat / Sub" keep Cat
+      return left.split('/')[0].trim() || 'Non catégorisé';
+    }
+
+    const catFreq = new Map();
+    used.forEach(line => {
+      const c = catForLine(line);
+      catFreq.set(c, (catFreq.get(c) || 0) + 1);
+    });
+
+    const catRows = Array.from(catFreq.entries())
+      .sort((a, b) => (b[1] - a[1]) || String(a[0]).localeCompare(String(b[0])))
+      .slice(0, 12)
+      .map(([label, value]) => ({ label, value }));
+    
+    try { renderCountBarsText('chart-tools-by-category-html', catRows, { kind: 'tools' }); } catch(_){ __ldSilentErr(_); }
+
+    // By module (count of selected tools across activities)
+    const moduleRows = [];
+    const modules = Array.from(document.querySelectorAll('#activities-root .activity-group'));
+    modules.forEach((mod, i) => {
+      const title = (mod.querySelector('.activity-title')?.value || '').trim() || `Module ${i + 1}`;
+      const steps = Array.from(__ldFilterStepNodeList(mod.querySelectorAll('.step-card')));
+      let total = 0;
+      steps.forEach(step => {
+        total += Array.from(step.querySelector('.step-tools-materials-select')?.selectedOptions || []).map(o => String(o.value||'').trim()).filter(Boolean).length;
+      });
+      moduleRows.push({ label: title, value: total });
+    });
+    // Sort by value descending for readability
+    moduleRows.sort((a, b) => (b.value - a.value) || String(a.label).localeCompare(String(b.label)));
+    try { renderCountBarsText('chart-tools-by-module-html', moduleRows.slice(0, 12), { kind: 'tools' }); } catch(_){ __ldSilentErr(_); }
+
+    // Diversity metrics
+    const uniqueTools = used.size;
+    const totalActivities = steps.length;
+    const avgPerActivity = totalActivities > 0 ? (Array.from(freq.values()).reduce((sum, n) => sum + n, 0) / totalActivities).toFixed(1) : '0';
+
+    const uniqueToolsEl = document.getElementById('tools-diversity-unique');
+    if (uniqueToolsEl) uniqueToolsEl.textContent = String(uniqueTools);
+    
+    const avgEl = document.getElementById('tools-diversity-avg');
+    if (avgEl) avgEl.textContent = avgPerActivity;
+
+    // Find module with most diversity (unique tools)
+    let topModule = { title: '—', count: 0 };
+    modules.forEach((mod, i) => {
+      const title = (mod.querySelector('.activity-title')?.value || '').trim() || `Module ${i + 1}`;
+      const steps = Array.from(__ldFilterStepNodeList(mod.querySelectorAll('.step-card')));
+      const toolsInModule = new Set();
+      steps.forEach(step => {
+        Array.from(step.querySelector('.step-tools-materials-select')?.selectedOptions || []).forEach(opt => {
+          const v = String(opt.value||'').trim();
+          if (v) toolsInModule.add(v);
+        });
+      });
+      if (toolsInModule.size > topModule.count) {
+        topModule = { title, count: toolsInModule.size };
+      }
+    });
+
+    const topModuleEl = document.getElementById('tools-diversity-top-module');
+    if (topModuleEl) {
+      topModuleEl.textContent = topModule.count > 0 ? `${topModule.title} (${topModule.count} outils)` : '—';
+    }
+
+  } catch (err) {
+    console.error('updateToolsStats failed', err);
+  }
+}
+
 function updateCharts() {
     drawPie('chart-learning-types', tallyDuration('.learning-type-select'));
     drawBars('chart-group-modes', tallyDurationMeta('.step-group-mode', 'group'));
@@ -24027,6 +24302,7 @@ function updateCharts() {
     updateCompetenceStats();
     updateAimsStats();
     updateOutcomesStats();
+    updateToolsStats();
   }
 
   // Throttled scheduling (avoid chart recompute storms on large DOM mutations / imports)
