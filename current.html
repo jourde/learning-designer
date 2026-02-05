@@ -436,6 +436,28 @@ input, select, textarea {
           background-color: var(--ld-control-bg-hover) !important;
         }
 
+        /* Unified view level menu styles */
+        #view-level-menu > summary {
+          background-color: #ffffff !important;
+        }
+        #view-level-menu > summary:hover {
+          background-color: var(--ld-control-bg-hover) !important;
+        }
+        #view-level-menu[open] > summary {
+          background-color: var(--ld-control-bg-hover) !important;
+        }
+        
+        .ld-view-level-option {
+          font-size: 0.875rem;
+        }
+        .ld-view-level-option .level-check {
+          color: #4f46e5; /* indigo-600 */
+          transition: opacity 0.15s ease;
+        }
+        .ld-view-level-option.bg-indigo-50 {
+          font-weight: 600;
+        }
+
         /* Select standard de la toolbar */
         .ld-control-select {
           height: 28px;
@@ -3813,19 +3835,51 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
   <!-- SECTION 2: CONTRÔLES D'AFFICHAGE -->
   <div class="flex flex-wrap items-center justify-end gap-2 flex-grow">
 
-    <!-- GROUPE: Tout replier -->
+    <!-- GROUPE: Niveau d'affichage (unifié) -->
     <div class="ld-control-group">
-      <button class="ld-control-btn" id="btn-toggle-all-main" data-action="toggle-all-activities" aria-label="Replier ou déplier tous les modules" title="Replier ou déplier tous les modules">
-        <span class="material-icons-round text-base" id="icon-toggle-all-main">unfold_less</span>
-        <span class="hidden xl:inline" data-i18n="btn_collapse_all" id="text-toggle-all-main">Tout replier</span>
-      </button>
-    </div>
-
-    <!-- GROUPE: Affichage -->
-    <div class="ld-control-group">
-      <span class="hidden md:inline text-xs text-slate-500 font-extrabold" aria-hidden="true">Affichage</span>
-
-      <select id="ld-view-level-select" class="ld-control-select" aria-label="Sélection du affichage">
+      <details class="relative" id="view-level-menu">
+        <summary class="ld-control-btn list-none cursor-pointer select-none">
+          <span class="material-icons-round text-[16px]">view_agenda</span>
+          <span class="hidden md:inline" id="current-view-level-label">Activités</span>
+          <span class="material-icons-round text-[14px] ml-0.5">expand_more</span>
+        </summary>
+        <div class="absolute right-0 mt-1 w-64 bg-white border border-slate-200 rounded-md shadow-lg z-50">
+          <!-- Niveaux d'affichage -->
+          <div class="p-1 border-b border-slate-100">
+            <div class="px-2 py-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Niveau d'affichage</div>
+            <button class="ld-view-level-option w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" data-level="activities" data-i18n="btn_view_activities">
+              <span class="material-icons-round text-[16px] opacity-0 level-check">check</span>
+              <span>Activités</span>
+            </button>
+            <button class="ld-view-level-option w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" data-level="submoments" data-i18n="btn_view_submoments">
+              <span class="material-icons-round text-[16px] opacity-0 level-check">check</span>
+              <span>Sous-moments</span>
+            </button>
+            <button class="ld-view-level-option w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" data-level="moments" data-i18n="btn_view_moments">
+              <span class="material-icons-round text-[16px] opacity-0 level-check">check</span>
+              <span>Moments</span>
+            </button>
+            <button class="ld-view-level-option w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" data-level="modules" data-i18n="btn_view_modules">
+              <span class="material-icons-round text-[16px] opacity-0 level-check">check</span>
+              <span>Modules</span>
+            </button>
+            <button class="ld-view-level-option w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" data-level="panorama" data-i18n="btn_view_panorama">
+              <span class="material-icons-round text-[16px] opacity-0 level-check">check</span>
+              <span>Panorama</span>
+            </button>
+          </div>
+          <!-- Action replier/déplier -->
+          <div class="p-1">
+            <button id="btn-toggle-all-main" data-action="toggle-all-activities" class="w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" aria-label="Replier ou déplier tous les modules" title="Replier ou déplier tous les modules">
+              <span class="material-icons-round text-[16px]" id="icon-toggle-all-main">unfold_less</span>
+              <span data-i18n="btn_collapse_all" id="text-toggle-all-main">Tout replier</span>
+            </button>
+          </div>
+        </div>
+      </details>
+      
+      <!-- Hidden select for compatibility with existing code -->
+      <select id="ld-view-level-select" class="hidden" aria-label="Sélection du affichage">
         <option value="activities" data-i18n="btn_view_activities" selected>Activités</option>
         <option value="submoments" data-i18n="btn_view_submoments">Sous-moments</option>
         <option value="moments" data-i18n="btn_view_moments">Moments</option>
@@ -5278,6 +5332,80 @@ document.addEventListener('DOMContentLoaded', () => {
     applyViewLevel(savedLevel); // Apply the view level (sets body attribute and updates UI)
   } catch(_){ __ldSilentErr(_); }
 }, { once: true });
+
+// ---- Unified View Level Menu (dropdown with level + toggle-all) ----
+function __ldUpdateViewLevelMenuUI(level) {
+  try {
+    const currentLabel = document.getElementById('current-view-level-label');
+    if (!currentLabel) return;
+    
+    const normalizedLevel = String(level || 'activities').trim();
+    
+    // Update the label text based on the current level
+    const levelLabels = {
+      'activities': 'Activités',
+      'submoments': 'Sous-moments',
+      'moments': 'Moments',
+      'modules': 'Modules',
+      'panorama': 'Panorama'
+    };
+    
+    currentLabel.textContent = levelLabels[normalizedLevel] || 'Activités';
+    
+    // Update check marks in the menu
+    const allOptions = document.querySelectorAll('.ld-view-level-option');
+    allOptions.forEach(option => {
+      const optionLevel = option.getAttribute('data-level');
+      const checkMark = option.querySelector('.level-check');
+      if (checkMark) {
+        checkMark.style.opacity = (optionLevel === normalizedLevel) ? '1' : '0';
+      }
+      
+      // Highlight the active option
+      if (optionLevel === normalizedLevel) {
+        option.classList.add('bg-indigo-50', 'text-indigo-700');
+      } else {
+        option.classList.remove('bg-indigo-50', 'text-indigo-700');
+      }
+    });
+  } catch(_){ __ldSilentErr(_); }
+}
+
+// Override the existing function to also update the new menu UI
+const __ldOriginalUpdateViewLevelSegmentedUI = __ldUpdateViewLevelSegmentedUI;
+__ldUpdateViewLevelSegmentedUI = function(level) {
+  __ldOriginalUpdateViewLevelSegmentedUI(level);
+  __ldUpdateViewLevelMenuUI(level);
+};
+
+// Initialize the view level menu on page load
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    // Update initial state
+    const savedLevel = localStorage.getItem('ld_view_level') || 'activities';
+    __ldUpdateViewLevelMenuUI(savedLevel);
+    
+    // Add click handlers for view level options
+    const viewLevelOptions = document.querySelectorAll('.ld-view-level-option');
+    viewLevelOptions.forEach(option => {
+      option.addEventListener('click', (e) => {
+        e.preventDefault();
+        const level = option.getAttribute('data-level');
+        if (level) {
+          applyViewLevel(level);
+          
+          // Close the menu after selection
+          const menu = document.getElementById('view-level-menu');
+          if (menu) menu.open = false;
+        }
+      });
+    });
+    
+    // The toggle-all button is already handled by the existing event delegation system
+    // (data-action="toggle-all-activities"), so no additional handler needed
+    
+  } catch(_){ __ldSilentErr(_); }
+}, { once: false });
 
 // ---- Panorama view (tableau compact) ----
 function __ldGetSelectedOptionText(sel) {
