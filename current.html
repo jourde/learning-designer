@@ -251,6 +251,78 @@ textarea{resize:vertical;}
             background-image: repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,255,255,0.3) 2px, rgba(255,255,255,0.3) 4px);
         }
 
+        /* Export tree styles */
+        .export-tree-item {
+            margin-bottom: 2px;
+        }
+        .export-tree-item-header {
+            display: flex;
+            align-items: center;
+            padding: 6px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.15s;
+        }
+        .export-tree-item-header:hover {
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        .export-tree-item-header.selected {
+            background-color: rgba(99, 102, 241, 0.1);
+        }
+        .export-tree-toggle {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 4px;
+            flex-shrink: 0;
+        }
+        .export-tree-toggle .material-icons-round {
+            font-size: 16px;
+            color: #64748b;
+            transition: transform 0.2s;
+        }
+        .export-tree-item.collapsed .export-tree-toggle .material-icons-round {
+            transform: rotate(-90deg);
+        }
+        .export-tree-children {
+            margin-left: 24px;
+            border-left: 1px solid #e2e8f0;
+            padding-left: 8px;
+            margin-top: 2px;
+        }
+        .export-tree-item.collapsed .export-tree-children {
+            display: none;
+        }
+        .export-tree-checkbox {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .export-tree-icon {
+            width: 18px;
+            height: 18px;
+            margin-right: 6px;
+            flex-shrink: 0;
+        }
+        .export-tree-icon .material-icons-round {
+            font-size: 18px;
+        }
+        .export-tree-label {
+            flex: 1;
+            font-size: 13px;
+            color: #334155;
+            user-select: none;
+        }
+        .export-tree-count {
+            font-size: 11px;
+            color: #64748b;
+            margin-left: 6px;
+        }
+
         .pattern-grid-dark {
              background-image: linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px),
             linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px);
@@ -2496,40 +2568,13 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="w-px bg-slate-200 my-1 mx-0.5">
 </div>
 <div class="relative group">
-<div class="flex items-center">
-<span class="material-icons-round text-slate-600 absolute left-1.5 pointer-events-none text-lg z-10 group-hover:text-indigo-600 transition-colors">
-          download
-         </span>
-<select class="appearance-none bg-transparent hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 pl-7 pr-6 py-1 rounded transition-colors outline-none cursor-pointer text-xs font-medium h-[26px]" data-i18n-title="title_export_dropdown" data-action-change="handle-export" style="width: 10rem; min-width: 0;">
-<option data-i18n="btn_export_dropdown" disabled="" selected="" value="">
-           Exporter...
-          </option>
-<option data-i18n="opt_md" value="markdown">
-           Markdown (conseillé pour l'IA)
-          </option>
-<option data-i18n="opt_presentation_md" value="presentation-markdown">
-           Markdown Présentation (diaporama)
-          </option>
-<option data-i18n="opt_csv" value="csv">
-           CSV (modules/moments/activités)
-          </option>
-<option data-i18n="opt_real_rtf" value="rtf">
-           Texte (.rtf)
-          </option>
-<option value="docx">
-           Word (.docx)
-          </option>
-<option data-i18n="opt_pdf" value="pdf">
-           PDF (pour imprimer)
-          </option>
-<option data-i18n="opt_rtf" value="richtext">
-           Page Web HTML (contient les graphiques)
-          </option>
-</select>
-<span class="material-icons-round text-slate-400 pointer-events-none absolute right-1 text-sm">
-          expand_more
-         </span>
-</div>
+<button id="open-export-modal-btn"
+        class="flex items-center gap-1 bg-transparent hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 pl-2 pr-3 py-1 rounded transition-colors text-xs font-medium h-[26px]"
+        data-i18n-title="title_export_dropdown"
+        type="button">
+  <span class="material-icons-round text-lg">download</span>
+  <span data-i18n="btn_export_dropdown">Exporter...</span>
+</button>
 </div>
 <button id="open-global-search-btn"
         class="text-slate-600 hover:text-indigo-700 hover:bg-indigo-50 rounded px-2 py-1 flex items-center gap-1"
@@ -4236,6 +4281,89 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <div class="flex justify-end gap-2 mt-4">
 <button class="px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded text-xs font-medium transition-colors" id="module-selection-modal-cancel" data-i18n="btn_cancel">Annuler</button>
 <button class="px-3 py-1.5 bg-slate-700 text-white hover:bg-slate-800 rounded text-xs font-medium transition-colors" id="module-selection-modal-apply" data-i18n="btn_apply">Appliquer</button>
+</div>
+</div>
+</div>
+<!-- Export Selection Modal -->
+<div aria-labelledby="export-selection-modal-title" aria-modal="true" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 z-[120] flex items-center justify-center p-4" id="export-selection-modal" role="dialog">
+<div class="bg-white rounded-lg shadow-lg p-5 max-w-3xl w-full max-h-[90vh] flex flex-col">
+<h3 class="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2" id="export-selection-modal-title">
+<span class="material-icons-round text-indigo-600">download</span>
+<span>Sélectionner les éléments à exporter</span>
+</h3>
+<div class="text-xs text-slate-600 mb-3">
+Cochez les éléments que vous souhaitez inclure dans l'export. Les éléments parents incluent automatiquement leurs enfants.
+</div>
+
+<!-- Selection toolbar -->
+<div class="flex gap-2 mb-3 pb-3 border-b border-slate-200">
+<button type="button" id="export-select-all-btn" class="px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded text-xs font-medium transition-colors flex items-center gap-1">
+<span class="material-icons-round text-sm">check_box</span>
+<span>Tout sélectionner</span>
+</button>
+<button type="button" id="export-deselect-all-btn" class="px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded text-xs font-medium transition-colors flex items-center gap-1">
+<span class="material-icons-round text-sm">check_box_outline_blank</span>
+<span>Tout désélectionner</span>
+</button>
+<button type="button" id="export-expand-all-btn" class="px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded text-xs font-medium transition-colors flex items-center gap-1">
+<span class="material-icons-round text-sm">unfold_more</span>
+<span>Tout déplier</span>
+</button>
+<button type="button" id="export-collapse-all-btn" class="px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded text-xs font-medium transition-colors flex items-center gap-1">
+<span class="material-icons-round text-sm">unfold_less</span>
+<span>Tout replier</span>
+</button>
+</div>
+
+<!-- Tree container -->
+<div class="flex-1 overflow-y-auto border border-slate-200 rounded-lg p-3 bg-slate-50" id="export-tree-container" style="min-height: 300px; max-height: 400px;">
+<!-- Tree will be dynamically populated -->
+</div>
+
+<!-- Format selection -->
+<div class="mt-4 pt-3 border-t border-slate-200">
+<label class="block text-sm font-medium text-slate-700 mb-2">Format d'export :</label>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+<label class="flex items-center gap-2 p-2 border border-slate-200 rounded hover:bg-indigo-50 hover:border-indigo-300 cursor-pointer transition-colors">
+<input type="radio" name="export-format" value="markdown" class="text-indigo-600" checked>
+<span class="text-xs">Markdown (IA)</span>
+</label>
+<label class="flex items-center gap-2 p-2 border border-slate-200 rounded hover:bg-indigo-50 hover:border-indigo-300 cursor-pointer transition-colors">
+<input type="radio" name="export-format" value="presentation-markdown" class="text-indigo-600">
+<span class="text-xs">Markdown Présentation</span>
+</label>
+<label class="flex items-center gap-2 p-2 border border-slate-200 rounded hover:bg-indigo-50 hover:border-indigo-300 cursor-pointer transition-colors">
+<input type="radio" name="export-format" value="csv" class="text-indigo-600">
+<span class="text-xs">CSV</span>
+</label>
+<label class="flex items-center gap-2 p-2 border border-slate-200 rounded hover:bg-indigo-50 hover:border-indigo-300 cursor-pointer transition-colors">
+<input type="radio" name="export-format" value="rtf" class="text-indigo-600">
+<span class="text-xs">Texte (.rtf)</span>
+</label>
+<label class="flex items-center gap-2 p-2 border border-slate-200 rounded hover:bg-indigo-50 hover:border-indigo-300 cursor-pointer transition-colors">
+<input type="radio" name="export-format" value="docx" class="text-indigo-600">
+<span class="text-xs">Word (.docx)</span>
+</label>
+<label class="flex items-center gap-2 p-2 border border-slate-200 rounded hover:bg-indigo-50 hover:border-indigo-300 cursor-pointer transition-colors">
+<input type="radio" name="export-format" value="pdf" class="text-indigo-600">
+<span class="text-xs">PDF</span>
+</label>
+<label class="flex items-center gap-2 p-2 border border-slate-200 rounded hover:bg-indigo-50 hover:border-indigo-300 cursor-pointer transition-colors">
+<input type="radio" name="export-format" value="richtext" class="text-indigo-600">
+<span class="text-xs">Page Web HTML</span>
+</label>
+</div>
+</div>
+
+<!-- Action buttons -->
+<div class="flex justify-between items-center gap-3 mt-4">
+<div class="text-xs text-slate-600">
+<span id="export-selected-count">0</span> élément(s) sélectionné(s)
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded text-sm font-medium transition-colors" id="export-modal-cancel" type="button">Annuler</button>
+<button class="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed" id="export-modal-confirm" type="button">Exporter</button>
+</div>
 </div>
 </div>
 </div>
@@ -12353,6 +12481,11 @@ objectifActivite: stepEl.querySelector('.step-input-objective').value,
 
 function buildExportProjectData() {
             // Build a complete, portable representation of the current design (used for file save and autosave)
+            
+            // Check if we're in filtered export mode
+            const isFiltered = window.__ldExportFilteredMode && window.__ldExportFilteredData;
+            const filteredData = window.__ldExportFilteredData;
+            
             const outcomes = [];
             document.querySelectorAll('#outcomes-list li').forEach(li => {
                 outcomes.push({
@@ -12401,7 +12534,19 @@ function buildExportProjectData() {
                 modules: []
             };
 
-            document.querySelectorAll('.activity-group').forEach(actEl => {
+            document.querySelectorAll('.activity-group').forEach((actEl, moduleIndex) => {
+                // Check if this module should be included in filtered export
+                if (isFiltered) {
+                    const moduleId = `module-${moduleIndex}`;
+                    const isModuleSelected = filteredData.selectedIds.includes(moduleId);
+                    const hasSelectedChildren = filteredData.selectedIds.some(id => id.startsWith(moduleId + '-'));
+                    
+                    // Skip if neither module nor its children are selected
+                    if (!isModuleSelected && !hasSelectedChildren) {
+                        return;
+                    }
+                }
+                
                 const moduleData = {
                     titre: actEl.querySelector('.activity-title').value,
                     description: actEl.querySelector('.activity-description').value,
@@ -12420,7 +12565,19 @@ function buildExportProjectData() {
                 const momentEls = momentsRoot ? Array.from(momentsRoot.querySelectorAll('.moment-group')) : [];
 
                 if (momentEls && momentEls.length) {
-                    momentEls.forEach(momentEl => {
+                    momentEls.forEach((momentEl, momentIndex) => {
+                        // Check if this moment should be included in filtered export
+                        if (isFiltered) {
+                            const momentId = `module-${moduleIndex}-moment-${momentIndex}`;
+                            const isMomentSelected = filteredData.selectedIds.includes(momentId);
+                            const hasSelectedChildren = filteredData.selectedIds.some(id => id.startsWith(momentId + '-'));
+                            
+                            // Skip if neither moment nor its children are selected
+                            if (!isMomentSelected && !hasSelectedChildren) {
+                                return;
+                            }
+                        }
+                        
                         const momentData = {
                             ignored: (typeof __ldIsSelfIgnored === 'function') ? __ldIsSelfIgnored(momentEl) : false,
                             titre: momentEl.querySelector('.moment-title')?.value || "",
@@ -12440,7 +12597,19 @@ function buildExportProjectData() {
                             if (smEls && smEls.length) {
                                 momentData.sousMoments = [];
                                 momentData.subMoments = [];
-                                smEls.forEach(smEl => {
+                                smEls.forEach((smEl, submomentIndex) => {
+                                    // Check if this submoment should be included in filtered export
+                                    if (isFiltered) {
+                                        const submomentId = `module-${moduleIndex}-moment-${momentIndex}-submoment-${submomentIndex}`;
+                                        const isSubmomentSelected = filteredData.selectedIds.includes(submomentId);
+                                        const hasSelectedChildren = filteredData.selectedIds.some(id => id.startsWith(submomentId + '-'));
+                                        
+                                        // Skip if neither submoment nor its children are selected
+                                        if (!isSubmomentSelected && !hasSelectedChildren) {
+                                            return;
+                                        }
+                                    }
+                                    
                                     const smTitleVal = smEl.querySelector('.submoment-title')?.value || "";
                                     const smTargetTime = smEl.querySelector('.submoment-target-time')?.value || "";
                                     const smTargetUnit = smEl.querySelector('.submoment-target-unit')?.value || getDefaultDurationUnitSecs();
@@ -12460,7 +12629,15 @@ function buildExportProjectData() {
                                         targetUnit: String(smTargetUnit),
                                         steps: []
                                     };
-                                    __ldQueryAllDesignedStepCards(smEl).forEach(stepEl => {
+                                    __ldQueryAllDesignedStepCards(smEl).forEach((stepEl, activityIndex) => {
+                                        // Check if this activity should be included in filtered export
+                                        if (isFiltered) {
+                                            const activityId = `module-${moduleIndex}-moment-${momentIndex}-submoment-${submomentIndex}-activity-${activityIndex}`;
+                                            if (!filteredData.selectedIds.includes(activityId)) {
+                                                return;
+                                            }
+                                        }
+                                        
                                         const stepObj = __ldSerializeStepFromEl(stepEl);
                                         smLegacy.activites.push(stepObj);
                                         smCanon.steps.push({ ...stepObj });
@@ -17136,12 +17313,131 @@ function handleExport(select) {
             }
         }
 
+function filterExportDataBySelection(projectData) {
+    // If nothing is selected, export everything.
+    const selected = window.__exportSelectedItems;
+    const hasSelection = !!(selected && (
+        (selected.modules && selected.modules.size) ||
+        (selected.moments && selected.moments.size) ||
+        (selected.submoments && selected.submoments.size) ||
+        (selected.activities && selected.activities.size)
+    ));
+    if (!hasSelection) return projectData;
+
+    try {
+        // One-shot selection: clear it once we build the export
+        delete window.__exportSelectedItems;
+
+        const shouldInclude = (id, type) => id && selected && selected[type + 's'] && selected[type + 's'].has(id);
+
+        const activitiesRoot = document.getElementById('activities-root');
+        if (!activitiesRoot) return projectData;
+
+        const moduleElements = Array.from(activitiesRoot.querySelectorAll('.activity-group'));
+        const filteredModules = [];
+
+        (projectData.modules || []).forEach((moduleData, moduleIdx) => {
+            const moduleEl = moduleElements[moduleIdx];
+            if (!moduleEl) return;
+
+            const moduleId = moduleEl.getAttribute('data-export-id');
+            const includeModule = shouldInclude(moduleId, 'module');
+
+            const momentElements = Array.from(moduleEl.querySelectorAll('.moment-group'));
+            const filteredMoments = [];
+
+            (moduleData.moments || []).forEach((momentData, momentIdx) => {
+                const momentEl = momentElements[momentIdx];
+                if (!momentEl) return;
+
+                const momentId = momentEl.getAttribute('data-export-id');
+                const includeMoment = includeModule || shouldInclude(momentId, 'moment');
+
+                // 1) Direct steps at moment level (no submoment wrapper)
+                const directStepEls = Array.from(momentEl.querySelectorAll('.moment-direct-steps .step-card, .activity-steps-container .step-card'));
+                const directStepsRaw = Array.isArray(momentData.activites) ? momentData.activites : (Array.isArray(momentData.activities) ? momentData.activities : []);
+                const filteredDirectSteps = [];
+                directStepsRaw.forEach((activityData, activityIdx) => {
+                    const activityEl = directStepEls[activityIdx];
+                    if (!activityEl) return;
+                    const activityId = activityEl.getAttribute('data-export-id');
+                    const includeActivity = includeMoment || shouldInclude(activityId, 'activity');
+                    if (includeActivity) filteredDirectSteps.push(activityData);
+                });
+
+                // 2) Steps inside submoments
+                const submomentElements = Array.from(momentEl.querySelectorAll('.submoment-card'));
+                const rawCanon = Array.isArray(momentData.subMoments) ? momentData.subMoments : [];
+                const rawLegacy = Array.isArray(momentData.sousMoments) ? momentData.sousMoments : [];
+
+                const filteredCanon = [];
+                const filteredLegacy = [];
+
+                const count = Math.max(submomentElements.length, rawCanon.length, rawLegacy.length);
+
+                for (let subIdx = 0; subIdx < count; subIdx++) {
+                    const subEl = submomentElements[subIdx];
+                    const smCanon = rawCanon[subIdx];
+                    const smLegacy = rawLegacy[subIdx];
+
+                    // If there's no DOM element for this submoment, we can't map IDs reliably -> skip
+                    if (!subEl) continue;
+
+                    const subId = subEl.getAttribute('data-export-id');
+                    const includeSubmoment = includeMoment || shouldInclude(subId, 'submoment');
+
+                    const stepEls = Array.from(subEl.querySelectorAll('.steps-container .step-card'));
+                    const stepsRaw = (smCanon && Array.isArray(smCanon.steps)) ? smCanon.steps :
+                                     (smLegacy && Array.isArray(smLegacy.activites)) ? smLegacy.activites : [];
+
+                    const filteredSteps = [];
+                    stepsRaw.forEach((activityData, activityIdx) => {
+                        const activityEl = stepEls[activityIdx];
+                        if (!activityEl) return;
+                        const activityId = activityEl.getAttribute('data-export-id');
+                        const includeActivity = includeSubmoment || shouldInclude(activityId, 'activity');
+                        if (includeActivity) filteredSteps.push(activityData);
+                    });
+
+                    if (filteredSteps.length) {
+                        if (smCanon) filteredCanon.push({ ...smCanon, steps: filteredSteps });
+                        if (smLegacy) filteredLegacy.push({ ...smLegacy, activites: filteredSteps });
+                    }
+                }
+
+                const keepMoment = includeMoment || filteredDirectSteps.length || filteredCanon.length || filteredLegacy.length;
+
+                if (keepMoment) {
+                    const out = { ...momentData };
+
+                    // Preserve both schemas if they exist, to keep downstream code compatible.
+                    if ('activites' in out || Array.isArray(momentData.activites)) out.activites = filteredDirectSteps;
+                    if ('activities' in out || Array.isArray(momentData.activities)) out.activities = filteredDirectSteps;
+
+                    if (Array.isArray(momentData.subMoments)) out.subMoments = filteredCanon;
+                    if (Array.isArray(momentData.sousMoments)) out.sousMoments = filteredLegacy;
+
+                    filteredMoments.push(out);
+                }
+            });
+
+            const keepModule = includeModule || filteredMoments.length;
+            if (keepModule) filteredModules.push({ ...moduleData, moments: filteredMoments });
+        });
+
+        return { ...projectData, modules: filteredModules };
+    } catch (err) {
+        if (typeof __ldSilentErr === 'function') __ldSilentErr(err);
+        return projectData;
+    }
+}
+
 function buildExportModel() {
     // Centralised export model derived from the same source as project save (single point of truth).
     // This model is used by XLSX/DOCX exports and aims to keep a stable, explicit structure:
     // Modules → Moments → Sub-moments → Activities.
     const t = translations[currentLang] || translations.fr;
-    const project = buildExportProjectData();
+    const project = filterExportDataBySelection(buildExportProjectData());
 
     const __compMap = new Map(((project.parametres?.competences) || []).map(c => [String(c?.id || '').trim(), String(c?.label || c?.id || '').trim()]));
     const __compTMap = new Map(((project.parametres?.competencesTransversales) || []).map(c => [String(c?.id || '').trim(), String(c?.label || c?.id || '').trim()]));
@@ -17249,82 +17545,89 @@ function buildExportModel() {
     };
 
     const modules = (project.modules || []).map((m) => {
-        const __rawMoments = (m.moments || []);
-        const __momentsSource = (__rawMoments && __rawMoments.length) ? __rawMoments : [{
-            titre: '',
-            description: '',
-            dureeCible: '',
-            uniteDureeCible: '',
-            activites: (m.activites || [])
-        }];
+        const modTitle = asStr(m.titre ?? m.title);
+        const modDesc = asStr(m.description);
+        const modNotes = asStr(m.notes);
 
-        const moments = (__momentsSource || []).map((mo) => {
-            // Normalise sub-moments (keep both legacy FR keys and canonical EN keys)
-            let smSrc = [];
-            if (Array.isArray(mo.sousMoments) && mo.sousMoments.length) smSrc = mo.sousMoments;
-            else if (Array.isArray(mo.subMoments) && mo.subMoments.length) smSrc = mo.subMoments;
+        const modTargetTime = asStr(m.dureeCible ?? m.targetTime);
+        const modTargetUnit = asStr(m.uniteDureeCible ?? m.targetUnit);
 
-            const momentObj = {
-                title: ((mo && mo.ignored) ? '[IGNORÉ] ' : '') + asStr(mo.titre),
-                description: asStr(mo.description),
-                target: fmtTarget(mo.dureeCible, mo.uniteDureeCible),
-                targetRaw: { value: asStr(mo.dureeCible), unit: asStr(mo.uniteDureeCible) },
-                submoments: []
+        const aimsTargets = Array.isArray(m.objectifsApprentissageModule) ? m.objectifsApprentissageModule : (Array.isArray(m.aimsTargets) ? m.aimsTargets : []);
+        const outcomesTargets = Array.isArray(m.resultatsApprentissageModule) ? m.resultatsApprentissageModule : (Array.isArray(m.outcomesTargets) ? m.outcomesTargets : []);
+
+        const compSujetIds = Array.isArray(m.competencesModuleSujet) ? m.competencesModuleSujet : [];
+        const compTransIds = Array.isArray(m.competencesModuleTransversales) ? m.competencesModuleTransversales : [];
+
+        const compSujetLabels = __idsToLabels(compSujetIds, __compMap);
+        const compTransLabels = __idsToLabels(compTransIds, __compTMap);
+
+        const momentsSource = (Array.isArray(m.moments) && m.moments.length)
+            ? m.moments
+            : [{
+                titre: '',
+                description: '',
+                dureeCible: '',
+                uniteDureeCible: (typeof getDefaultDurationUnitSecs === 'function') ? getDefaultDurationUnitSecs() : 60,
+                activites: [],
+                sousMoments: [],
+                subMoments: []
+            }];
+
+        const moments = (momentsSource || []).map((mom) => {
+            const momTitle = asStr(mom.titre ?? mom.title);
+            const momDesc = asStr(mom.description);
+
+            const momTargetTime = asStr(mom.dureeCible ?? mom.targetTime);
+            const momTargetUnit = asStr(mom.uniteDureeCible ?? mom.targetUnit);
+
+            // Activities directly under the moment (i.e., no submoment wrapper)
+            const momActivitiesRaw = Array.isArray(mom.activites) ? mom.activites : (Array.isArray(mom.activities) ? mom.activities : []);
+            const momActivities = (momActivitiesRaw || []).map(__mapActivity);
+
+            // Submoments (prefer canonical subMoments if present)
+            const subCanon = Array.isArray(mom.subMoments) ? mom.subMoments : [];
+            const subLegacy = Array.isArray(mom.sousMoments) ? mom.sousMoments : [];
+            const subSource = (subCanon && subCanon.length) ? subCanon : subLegacy;
+
+            const submoments = (subSource || []).map((sm) => {
+                const smTitle = asStr(sm.titre ?? sm.title);
+                const smDesc = asStr(sm.description);
+
+                const smTargetTime = asStr(sm.dureeCible ?? sm.targetTime);
+                const smTargetUnit = asStr(sm.uniteDureeCible ?? sm.targetUnit);
+
+                const smActivitiesRaw = Array.isArray(sm.activites) ? sm.activites : (Array.isArray(sm.steps) ? sm.steps : (Array.isArray(sm.activities) ? sm.activities : []));
+                const smActivities = (smActivitiesRaw || []).map(__mapActivity);
+
+                return {
+                    title: ((sm && sm.ignored) ? '[IGNORÉ] ' : '') + smTitle,
+                    description: smDesc,
+                    target: fmtTarget(smTargetTime, smTargetUnit),
+                    activities: smActivities
+                };
+            });
+
+            return {
+                title: ((mom && mom.ignored) ? '[IGNORÉ] ' : '') + momTitle,
+                description: momDesc,
+                target: fmtTarget(momTargetTime, momTargetUnit),
+                activities: momActivities,
+                submoments: submoments
             };
-
-            if (smSrc && smSrc.length) {
-                momentObj.submoments = smSrc.map((sm) => {
-                    // Support both shapes:
-                    // - legacy: {titre, dureeCible, uniteDureeCible, activites:[...]}
-                    // - canonical: {title, targetTime, targetUnit, steps:[...]}
-                    const smTitle = (((sm && sm.ignored) ? '[IGNORÉ] ' : '') + asStr(sm.titre ?? sm.title));
-                    const smTargetVal = asStr(sm.dureeCible ?? sm.targetTime);
-                    const smTargetUnit = asStr(sm.uniteDureeCible ?? sm.targetUnit);
-                    const acts = (sm.activites || sm.steps || []);
-                    return {
-                        title: smTitle,
-                        description: asStr(sm.description || ''),
-                        target: fmtTarget(smTargetVal, smTargetUnit),
-                        targetRaw: { value: smTargetVal, unit: smTargetUnit },
-                        activities: (acts || []).map(__mapActivity)
-                    };
-                });
-            } else {
-                // No sub-moments: keep a single implicit sub-moment to preserve a stable depth
-                const acts = (mo.activites || []);
-                momentObj.submoments = [{
-                    title: '',
-                    description: '',
-                    target: '',
-                    targetRaw: { value: '', unit: '' },
-                    activities: (acts || []).map(__mapActivity)
-                }];
-            }
-
-            // Backward-compatible flattened list (some exporters may still rely on it)
-            momentObj.activities = momentObj.submoments.reduce((acc, sm) => acc.concat(sm.activities || []), []);
-            return momentObj;
         });
 
         return {
-            title: asStr(m.titre),
-            description: asStr(m.description),
-            notes: asStr(m.notes),
-            target: fmtTarget(m.dureeCible, m.uniteDureeCible),
-            targetRaw: { value: asStr(m.dureeCible), unit: asStr(m.uniteDureeCible) },
-            aimsTargets: Array.isArray(m.objectifsApprentissageModule) ? m.objectifsApprentissageModule : [],
-            outcomesTargets: Array.isArray(m.resultatsApprentissageModule) ? m.resultatsApprentissageModule : [],
-            competencesSujetIds: Array.isArray(m.competencesModuleSujet) ? m.competencesModuleSujet : [],
-            competencesTransversalesIds: Array.isArray(m.competencesModuleTransversales) ? m.competencesModuleTransversales : [],
-            competencesSujetLabels: __idsToLabels(m.competencesModuleSujet, __compMap),
-            competencesTransversalesLabels: __idsToLabels(m.competencesModuleTransversales, __compTMap),
-            competencesSujetText: __idsToLabels(m.competencesModuleSujet, __compMap).join(', '),
-            competencesTransversalesText: __idsToLabels(m.competencesModuleTransversales, __compTMap).join(', '),
-            moments
+            title: ((m && m.ignored) ? '[IGNORÉ] ' : '') + modTitle,
+            description: modDesc,
+            notes: modNotes,
+            target: fmtTarget(modTargetTime, modTargetUnit),
+            aimsTargets: aimsTargets,
+            outcomesTargets: outcomesTargets,
+            competencesSujetText: compSujetLabels.join(', '),
+            competencesTransversalesText: compTransLabels.join(', '),
+            moments: moments
         };
-    });
-
-    const meta = {
+    });    const meta = {
         courseName: asStr(project.parametres?.nom),
         topic: asStr(project.parametres?.theme),
         authors: asStr(project.parametres?.auteurs),
@@ -29815,6 +30118,455 @@ kbd {
 
   // Expose for external use if needed
   window.__ldOpenFullscreenTextarea = openFullscreen;
+})();
+</script>
+
+<script>
+// =========================
+// Export Selection Modal
+// =========================
+(function initExportSelectionModal() {
+  'use strict';
+
+  const modal = document.getElementById('export-selection-modal');
+  const treeContainer = document.getElementById('export-tree-container');
+  const btnCancel = document.getElementById('export-modal-cancel');
+  const btnConfirm = document.getElementById('export-modal-confirm');
+  const btnSelectAll = document.getElementById('export-select-all-btn');
+  const btnDeselectAll = document.getElementById('export-deselect-all-btn');
+  const btnExpandAll = document.getElementById('export-expand-all-btn');
+  const btnCollapseAll = document.getElementById('export-collapse-all-btn');
+  const selectedCountEl = document.getElementById('export-selected-count');
+  const openBtn = document.getElementById('open-export-modal-btn');
+
+  let selectedItems = new Set();
+  let treeData = [];
+
+  // Open modal
+  function openModal() {
+    buildTree();
+    modal.classList.remove('hidden');
+    updateSelectedCount();
+  }
+
+  // Close modal
+  function closeModal() {
+    modal.classList.add('hidden');
+    selectedItems.clear();
+  }
+
+  // Build tree from DOM structure
+  function buildTree() {
+    treeData = [];
+    const root = document.getElementById('activities-root');
+    if (!root) return;
+
+    const modules = Array.from(root.querySelectorAll('.activity-group'));
+    
+    modules.forEach((moduleEl, moduleIndex) => {
+      const moduleTitleInput = moduleEl.querySelector('[data-module-title]');
+      const moduleTitle = moduleTitleInput ? moduleTitleInput.value.trim() : `Module ${moduleIndex + 1}`;
+      
+      const moduleNode = {
+        id: `module-${moduleIndex}`,
+        type: 'module',
+        label: moduleTitle,
+        element: moduleEl,
+        children: []
+      };
+
+      const momentsContainer = moduleEl.querySelector('.activity-moments-container');
+      if (momentsContainer) {
+        const moments = Array.from(momentsContainer.querySelectorAll('.moment-group'));
+        
+        moments.forEach((momentEl, momentIndex) => {
+          const momentTitleInput = momentEl.querySelector('[data-moment-title]');
+          const momentTitle = momentTitleInput ? momentTitleInput.value.trim() : `Moment ${momentIndex + 1}`;
+          
+          const momentNode = {
+            id: `module-${moduleIndex}-moment-${momentIndex}`,
+            type: 'moment',
+            label: momentTitle,
+            element: momentEl,
+            children: []
+          };
+
+          const submomentsContainer = momentEl.querySelector('.submoments-container');
+          if (submomentsContainer) {
+            const submoments = Array.from(submomentsContainer.querySelectorAll('.submoment-card'));
+            
+            submoments.forEach((submomentEl, submomentIndex) => {
+              const submomentTitleInput = submomentEl.querySelector('[data-submoment-title]');
+              const submomentTitle = submomentTitleInput ? submomentTitleInput.value.trim() : `Sous-moment ${submomentIndex + 1}`;
+              
+              const submomentNode = {
+                id: `module-${moduleIndex}-moment-${momentIndex}-submoment-${submomentIndex}`,
+                type: 'submoment',
+                label: submomentTitle,
+                element: submomentEl,
+                children: []
+              };
+
+              const activitiesContainer = submomentEl.querySelector('.submoment-steps-list');
+              if (activitiesContainer) {
+                const activities = Array.from(activitiesContainer.querySelectorAll('.step-card'));
+                
+                activities.forEach((activityEl, activityIndex) => {
+                  const activityTitleInput = activityEl.querySelector('[data-step-title]');
+                  const activityTitle = activityTitleInput ? activityTitleInput.value.trim() : `Activité ${activityIndex + 1}`;
+                  
+                  const activityNode = {
+                    id: `module-${moduleIndex}-moment-${momentIndex}-submoment-${submomentIndex}-activity-${activityIndex}`,
+                    type: 'activity',
+                    label: activityTitle,
+                    element: activityEl,
+                    children: []
+                  };
+
+                  submomentNode.children.push(activityNode);
+                });
+              }
+
+              momentNode.children.push(submomentNode);
+            });
+          }
+
+          moduleNode.children.push(momentNode);
+        });
+      }
+
+      treeData.push(moduleNode);
+    });
+
+    renderTree();
+  }
+
+  // Render tree UI
+  function renderTree() {
+    treeContainer.innerHTML = '';
+    
+    if (treeData.length === 0) {
+      treeContainer.innerHTML = '<div class="text-center text-slate-500 py-8">Aucun contenu à exporter</div>';
+      return;
+    }
+
+    treeData.forEach(node => {
+      const nodeEl = createTreeNode(node);
+      treeContainer.appendChild(nodeEl);
+    });
+  }
+
+  // Create tree node element
+  function createTreeNode(node, level = 0) {
+    const itemDiv = document.createElement('div');
+    itemDiv.className = 'export-tree-item';
+    itemDiv.dataset.nodeId = node.id;
+    itemDiv.dataset.nodeType = node.type;
+
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'export-tree-item-header';
+
+    // Toggle button (for nodes with children)
+    if (node.children && node.children.length > 0) {
+      const toggleBtn = document.createElement('div');
+      toggleBtn.className = 'export-tree-toggle';
+      toggleBtn.innerHTML = '<span class="material-icons-round">expand_more</span>';
+      toggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        itemDiv.classList.toggle('collapsed');
+      });
+      headerDiv.appendChild(toggleBtn);
+    } else {
+      const spacer = document.createElement('div');
+      spacer.className = 'export-tree-toggle';
+      headerDiv.appendChild(spacer);
+    }
+
+    // Checkbox
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'export-tree-checkbox';
+    checkbox.dataset.nodeId = node.id;
+    checkbox.addEventListener('change', () => handleCheckboxChange(node, checkbox.checked));
+    headerDiv.appendChild(checkbox);
+
+    // Icon
+    const iconDiv = document.createElement('div');
+    iconDiv.className = 'export-tree-icon';
+    const iconName = getIconForType(node.type);
+    iconDiv.innerHTML = `<span class="material-icons-round" style="color: ${getColorForType(node.type)}">${iconName}</span>`;
+    headerDiv.appendChild(iconDiv);
+
+    // Label
+    const labelDiv = document.createElement('div');
+    labelDiv.className = 'export-tree-label';
+    labelDiv.textContent = node.label || `${node.type} sans titre`;
+    headerDiv.appendChild(labelDiv);
+
+    // Count (for nodes with children)
+    if (node.children && node.children.length > 0) {
+      const countDiv = document.createElement('div');
+      countDiv.className = 'export-tree-count';
+      countDiv.textContent = `(${node.children.length})`;
+      headerDiv.appendChild(countDiv);
+    }
+
+    itemDiv.appendChild(headerDiv);
+
+    // Children
+    if (node.children && node.children.length > 0) {
+      const childrenDiv = document.createElement('div');
+      childrenDiv.className = 'export-tree-children';
+      
+      node.children.forEach(child => {
+        const childNode = createTreeNode(child, level + 1);
+        childrenDiv.appendChild(childNode);
+      });
+
+      itemDiv.appendChild(childrenDiv);
+    }
+
+    return itemDiv;
+  }
+
+  // Get icon for node type
+  function getIconForType(type) {
+    const icons = {
+      module: 'folder',
+      moment: 'schedule',
+      submoment: 'event_note',
+      activity: 'assignment'
+    };
+    return icons[type] || 'circle';
+  }
+
+  // Get color for node type
+  function getColorForType(type) {
+    const colors = {
+      module: '#4f46e5',    // indigo
+      moment: '#0891b2',     // cyan
+      submoment: '#059669',  // emerald
+      activity: '#ea580c'    // orange
+    };
+    return colors[type] || '#64748b';
+  }
+
+  // Handle checkbox change
+  function handleCheckboxChange(node, isChecked) {
+    if (isChecked) {
+      selectedItems.add(node.id);
+      // Select all children
+      selectAllChildren(node);
+    } else {
+      selectedItems.delete(node.id);
+      // Deselect all children
+      deselectAllChildren(node);
+    }
+
+    updateCheckboxStates();
+    updateSelectedCount();
+  }
+
+  // Select all children recursively
+  function selectAllChildren(node) {
+    if (node.children) {
+      node.children.forEach(child => {
+        selectedItems.add(child.id);
+        selectAllChildren(child);
+      });
+    }
+  }
+
+  // Deselect all children recursively
+  function deselectAllChildren(node) {
+    if (node.children) {
+      node.children.forEach(child => {
+        selectedItems.delete(child.id);
+        deselectAllChildren(child);
+      });
+    }
+  }
+
+  // Update checkbox states in UI
+  function updateCheckboxStates() {
+    const checkboxes = treeContainer.querySelectorAll('.export-tree-checkbox');
+    checkboxes.forEach(cb => {
+      const nodeId = cb.dataset.nodeId;
+      cb.checked = selectedItems.has(nodeId);
+      
+      const header = cb.closest('.export-tree-item-header');
+      if (cb.checked) {
+        header.classList.add('selected');
+      } else {
+        header.classList.remove('selected');
+      }
+    });
+  }
+
+  // Update selected count
+  function updateSelectedCount() {
+    selectedCountEl.textContent = selectedItems.size;
+    btnConfirm.disabled = selectedItems.size === 0;
+  }
+
+  // Select all items
+  function selectAll() {
+    selectedItems.clear();
+    const addAllNodes = (nodes) => {
+      nodes.forEach(node => {
+        selectedItems.add(node.id);
+        if (node.children) {
+          addAllNodes(node.children);
+        }
+      });
+    };
+    addAllNodes(treeData);
+    updateCheckboxStates();
+    updateSelectedCount();
+  }
+
+  // Deselect all items
+  function deselectAll() {
+    selectedItems.clear();
+    updateCheckboxStates();
+    updateSelectedCount();
+  }
+
+  // Expand all items
+  function expandAll() {
+    const items = treeContainer.querySelectorAll('.export-tree-item');
+    items.forEach(item => item.classList.remove('collapsed'));
+  }
+
+  // Collapse all items
+  function collapseAll() {
+    const items = treeContainer.querySelectorAll('.export-tree-item');
+    items.forEach(item => {
+      if (item.querySelector('.export-tree-children')) {
+        item.classList.add('collapsed');
+      }
+    });
+  }
+
+  // Handle export confirmation
+  function handleExportConfirm() {
+    if (selectedItems.size === 0) return;
+
+    // Get selected format
+    const formatRadios = document.querySelectorAll('input[name="export-format"]');
+    let selectedFormat = 'markdown';
+    formatRadios.forEach(radio => {
+      if (radio.checked) selectedFormat = radio.value;
+    });
+
+    // Build filtered export data
+    const filteredData = buildFilteredExportData();
+
+    // Store the filtered data temporarily
+    window.__ldExportFilteredData = filteredData;
+    window.__ldExportFilteredMode = true;
+
+    // Close modal
+    closeModal();
+
+    // Trigger export with selected format
+    setTimeout(() => {
+      if (selectedFormat === 'markdown') {
+        runExport(exportMarkdown);
+      } else if (selectedFormat === 'presentation-markdown') {
+        runExport(exportPresentationMarkdown);
+      } else if (selectedFormat === 'pdf') {
+        runExport(exportPDFPrintFull);
+      } else if (selectedFormat === 'richtext') {
+        runExport(exportRichText);
+      } else if (selectedFormat === 'rtf') {
+        runExport(exportRTF);
+      } else if (selectedFormat === 'csv') {
+        runExport(exportCSV);
+      } else if (selectedFormat === 'docx') {
+        runExport(exportDOCX);
+      }
+
+      // Clean up
+      delete window.__ldExportFilteredData;
+      delete window.__ldExportFilteredMode;
+    }, 100);
+  }
+
+  // Build filtered export data based on selected items
+  function buildFilteredExportData() {
+    const filtered = {
+      selectedIds: Array.from(selectedItems),
+      selectedElements: []
+    };
+
+    // Collect selected elements
+    selectedItems.forEach(id => {
+      const node = findNodeById(id, treeData);
+      if (node && node.element) {
+        filtered.selectedElements.push({
+          id: id,
+          type: node.type,
+          element: node.element
+        });
+      }
+    });
+
+    return filtered;
+  }
+
+  // Find node by ID in tree
+  function findNodeById(id, nodes) {
+    for (const node of nodes) {
+      if (node.id === id) return node;
+      if (node.children) {
+        const found = findNodeById(id, node.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  // Event listeners
+  if (openBtn) {
+    openBtn.addEventListener('click', openModal);
+  }
+
+  if (btnCancel) {
+    btnCancel.addEventListener('click', closeModal);
+  }
+
+  if (btnConfirm) {
+    btnConfirm.addEventListener('click', handleExportConfirm);
+  }
+
+  if (btnSelectAll) {
+    btnSelectAll.addEventListener('click', selectAll);
+  }
+
+  if (btnDeselectAll) {
+    btnDeselectAll.addEventListener('click', deselectAll);
+  }
+
+  if (btnExpandAll) {
+    btnExpandAll.addEventListener('click', expandAll);
+  }
+
+  if (btnCollapseAll) {
+    btnCollapseAll.addEventListener('click', collapseAll);
+  }
+
+  // Close on background click
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    });
+  }
+
+  // Expose for external use
+  window.__ldOpenExportModal = openModal;
 })();
 </script>
 
