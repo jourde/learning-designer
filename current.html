@@ -12481,11 +12481,6 @@ objectifActivite: stepEl.querySelector('.step-input-objective').value,
 
 function buildExportProjectData() {
             // Build a complete, portable representation of the current design (used for file save and autosave)
-            
-            // Check if we're in filtered export mode
-            const isFiltered = window.__ldExportFilteredMode && window.__ldExportFilteredData;
-            const filteredData = window.__ldExportFilteredData;
-            
             const outcomes = [];
             document.querySelectorAll('#outcomes-list li').forEach(li => {
                 outcomes.push({
@@ -12534,19 +12529,7 @@ function buildExportProjectData() {
                 modules: []
             };
 
-            document.querySelectorAll('.activity-group').forEach((actEl, moduleIndex) => {
-                // Check if this module should be included in filtered export
-                if (isFiltered) {
-                    const moduleId = `module-${moduleIndex}`;
-                    const isModuleSelected = filteredData.selectedIds.includes(moduleId);
-                    const hasSelectedChildren = filteredData.selectedIds.some(id => id.startsWith(moduleId + '-'));
-                    
-                    // Skip if neither module nor its children are selected
-                    if (!isModuleSelected && !hasSelectedChildren) {
-                        return;
-                    }
-                }
-                
+            document.querySelectorAll('.activity-group').forEach(actEl => {
                 const moduleData = {
                     titre: actEl.querySelector('.activity-title').value,
                     description: actEl.querySelector('.activity-description').value,
@@ -12565,19 +12548,7 @@ function buildExportProjectData() {
                 const momentEls = momentsRoot ? Array.from(momentsRoot.querySelectorAll('.moment-group')) : [];
 
                 if (momentEls && momentEls.length) {
-                    momentEls.forEach((momentEl, momentIndex) => {
-                        // Check if this moment should be included in filtered export
-                        if (isFiltered) {
-                            const momentId = `module-${moduleIndex}-moment-${momentIndex}`;
-                            const isMomentSelected = filteredData.selectedIds.includes(momentId);
-                            const hasSelectedChildren = filteredData.selectedIds.some(id => id.startsWith(momentId + '-'));
-                            
-                            // Skip if neither moment nor its children are selected
-                            if (!isMomentSelected && !hasSelectedChildren) {
-                                return;
-                            }
-                        }
-                        
+                    momentEls.forEach(momentEl => {
                         const momentData = {
                             ignored: (typeof __ldIsSelfIgnored === 'function') ? __ldIsSelfIgnored(momentEl) : false,
                             titre: momentEl.querySelector('.moment-title')?.value || "",
@@ -12597,19 +12568,7 @@ function buildExportProjectData() {
                             if (smEls && smEls.length) {
                                 momentData.sousMoments = [];
                                 momentData.subMoments = [];
-                                smEls.forEach((smEl, submomentIndex) => {
-                                    // Check if this submoment should be included in filtered export
-                                    if (isFiltered) {
-                                        const submomentId = `module-${moduleIndex}-moment-${momentIndex}-submoment-${submomentIndex}`;
-                                        const isSubmomentSelected = filteredData.selectedIds.includes(submomentId);
-                                        const hasSelectedChildren = filteredData.selectedIds.some(id => id.startsWith(submomentId + '-'));
-                                        
-                                        // Skip if neither submoment nor its children are selected
-                                        if (!isSubmomentSelected && !hasSelectedChildren) {
-                                            return;
-                                        }
-                                    }
-                                    
+                                smEls.forEach(smEl => {
                                     const smTitleVal = smEl.querySelector('.submoment-title')?.value || "";
                                     const smTargetTime = smEl.querySelector('.submoment-target-time')?.value || "";
                                     const smTargetUnit = smEl.querySelector('.submoment-target-unit')?.value || getDefaultDurationUnitSecs();
@@ -12629,15 +12588,7 @@ function buildExportProjectData() {
                                         targetUnit: String(smTargetUnit),
                                         steps: []
                                     };
-                                    __ldQueryAllDesignedStepCards(smEl).forEach((stepEl, activityIndex) => {
-                                        // Check if this activity should be included in filtered export
-                                        if (isFiltered) {
-                                            const activityId = `module-${moduleIndex}-moment-${momentIndex}-submoment-${submomentIndex}-activity-${activityIndex}`;
-                                            if (!filteredData.selectedIds.includes(activityId)) {
-                                                return;
-                                            }
-                                        }
-                                        
+                                    __ldQueryAllDesignedStepCards(smEl).forEach(stepEl => {
                                         const stepObj = __ldSerializeStepFromEl(stepEl);
                                         smLegacy.activites.push(stepObj);
                                         smCanon.steps.push({ ...stepObj });
@@ -17313,125 +17264,6 @@ function handleExport(select) {
             }
         }
 
-function filterExportDataBySelection(projectData) {
-    // If nothing is selected, export everything.
-    const selected = window.__exportSelectedItems;
-    const hasSelection = !!(selected && (
-        (selected.modules && selected.modules.size) ||
-        (selected.moments && selected.moments.size) ||
-        (selected.submoments && selected.submoments.size) ||
-        (selected.activities && selected.activities.size)
-    ));
-    if (!hasSelection) return projectData;
-
-    try {
-        // One-shot selection: clear it once we build the export
-        delete window.__exportSelectedItems;
-
-        const shouldInclude = (id, type) => id && selected && selected[type + 's'] && selected[type + 's'].has(id);
-
-        const activitiesRoot = document.getElementById('activities-root');
-        if (!activitiesRoot) return projectData;
-
-        const moduleElements = Array.from(activitiesRoot.querySelectorAll('.activity-group'));
-        const filteredModules = [];
-
-        (projectData.modules || []).forEach((moduleData, moduleIdx) => {
-            const moduleEl = moduleElements[moduleIdx];
-            if (!moduleEl) return;
-
-            const moduleId = moduleEl.getAttribute('data-export-id');
-            const includeModule = shouldInclude(moduleId, 'module');
-
-            const momentElements = Array.from(moduleEl.querySelectorAll('.moment-group'));
-            const filteredMoments = [];
-
-            (moduleData.moments || []).forEach((momentData, momentIdx) => {
-                const momentEl = momentElements[momentIdx];
-                if (!momentEl) return;
-
-                const momentId = momentEl.getAttribute('data-export-id');
-                const includeMoment = includeModule || shouldInclude(momentId, 'moment');
-
-                // 1) Direct steps at moment level (no submoment wrapper)
-                const directStepEls = Array.from(momentEl.querySelectorAll('.moment-direct-steps .step-card, .activity-steps-container .step-card'));
-                const directStepsRaw = Array.isArray(momentData.activites) ? momentData.activites : (Array.isArray(momentData.activities) ? momentData.activities : []);
-                const filteredDirectSteps = [];
-                directStepsRaw.forEach((activityData, activityIdx) => {
-                    const activityEl = directStepEls[activityIdx];
-                    if (!activityEl) return;
-                    const activityId = activityEl.getAttribute('data-export-id');
-                    const includeActivity = includeMoment || shouldInclude(activityId, 'activity');
-                    if (includeActivity) filteredDirectSteps.push(activityData);
-                });
-
-                // 2) Steps inside submoments
-                const submomentElements = Array.from(momentEl.querySelectorAll('.submoment-card'));
-                const rawCanon = Array.isArray(momentData.subMoments) ? momentData.subMoments : [];
-                const rawLegacy = Array.isArray(momentData.sousMoments) ? momentData.sousMoments : [];
-
-                const filteredCanon = [];
-                const filteredLegacy = [];
-
-                const count = Math.max(submomentElements.length, rawCanon.length, rawLegacy.length);
-
-                for (let subIdx = 0; subIdx < count; subIdx++) {
-                    const subEl = submomentElements[subIdx];
-                    const smCanon = rawCanon[subIdx];
-                    const smLegacy = rawLegacy[subIdx];
-
-                    // If there's no DOM element for this submoment, we can't map IDs reliably -> skip
-                    if (!subEl) continue;
-
-                    const subId = subEl.getAttribute('data-export-id');
-                    const includeSubmoment = includeMoment || shouldInclude(subId, 'submoment');
-
-                    const stepEls = Array.from(subEl.querySelectorAll('.steps-container .step-card'));
-                    const stepsRaw = (smCanon && Array.isArray(smCanon.steps)) ? smCanon.steps :
-                                     (smLegacy && Array.isArray(smLegacy.activites)) ? smLegacy.activites : [];
-
-                    const filteredSteps = [];
-                    stepsRaw.forEach((activityData, activityIdx) => {
-                        const activityEl = stepEls[activityIdx];
-                        if (!activityEl) return;
-                        const activityId = activityEl.getAttribute('data-export-id');
-                        const includeActivity = includeSubmoment || shouldInclude(activityId, 'activity');
-                        if (includeActivity) filteredSteps.push(activityData);
-                    });
-
-                    if (filteredSteps.length) {
-                        if (smCanon) filteredCanon.push({ ...smCanon, steps: filteredSteps });
-                        if (smLegacy) filteredLegacy.push({ ...smLegacy, activites: filteredSteps });
-                    }
-                }
-
-                const keepMoment = includeMoment || filteredDirectSteps.length || filteredCanon.length || filteredLegacy.length;
-
-                if (keepMoment) {
-                    const out = { ...momentData };
-
-                    // Preserve both schemas if they exist, to keep downstream code compatible.
-                    if ('activites' in out || Array.isArray(momentData.activites)) out.activites = filteredDirectSteps;
-                    if ('activities' in out || Array.isArray(momentData.activities)) out.activities = filteredDirectSteps;
-
-                    if (Array.isArray(momentData.subMoments)) out.subMoments = filteredCanon;
-                    if (Array.isArray(momentData.sousMoments)) out.sousMoments = filteredLegacy;
-
-                    filteredMoments.push(out);
-                }
-            });
-
-            const keepModule = includeModule || filteredMoments.length;
-            if (keepModule) filteredModules.push({ ...moduleData, moments: filteredMoments });
-        });
-
-        return { ...projectData, modules: filteredModules };
-    } catch (err) {
-        if (typeof __ldSilentErr === 'function') __ldSilentErr(err);
-        return projectData;
-    }
-}
-
 function buildExportModel() {
     // Centralised export model derived from the same source as project save (single point of truth).
     // This model is used by XLSX/DOCX exports and aims to keep a stable, explicit structure:
@@ -17545,89 +17377,98 @@ function buildExportModel() {
     };
 
     const modules = (project.modules || []).map((m) => {
-        const modTitle = asStr(m.titre ?? m.title);
-        const modDesc = asStr(m.description);
-        const modNotes = asStr(m.notes);
+        const __rawMoments = (m.moments || []);
+        const __momentsSource = (__rawMoments && __rawMoments.length) ? __rawMoments : [{
+            titre: '',
+            description: '',
+            dureeCible: '',
+            uniteDureeCible: '',
+function filterExportDataBySelection(projectData) {
+    if (!window.__exportSelectedItems || !projectData || !projectData.modules) {
+        if (window.__exportSelectedItems) delete window.__exportSelectedItems;
+        return projectData;
+    }
+    
+    const selected = window.__exportSelectedItems;
+    const hasSelection = selected.modules.size > 0 || selected.moments.size > 0 || 
+                       selected.submoments.size > 0 || selected.activities.size > 0;
+    
+    if (!hasSelection) {
+        delete window.__exportSelectedItems;
+        return projectData;
+    }
 
-        const modTargetTime = asStr(m.dureeCible ?? m.targetTime);
-        const modTargetUnit = asStr(m.uniteDureeCible ?? m.targetUnit);
+    const shouldInclude = (id, type) => id && selected[type + 's'].has(id);
+    const root = document.getElementById('activities-root');
+    if (!root) {
+        delete window.__exportSelectedItems;
+        return projectData;
+    }
 
-        const aimsTargets = Array.isArray(m.objectifsApprentissageModule) ? m.objectifsApprentissageModule : (Array.isArray(m.aimsTargets) ? m.aimsTargets : []);
-        const outcomesTargets = Array.isArray(m.resultatsApprentissageModule) ? m.resultatsApprentissageModule : (Array.isArray(m.outcomesTargets) ? m.outcomesTargets : []);
+    const moduleElements = Array.from(root.querySelectorAll('.activity-group'));
+    const filteredModules = [];
 
-        const compSujetIds = Array.isArray(m.competencesModuleSujet) ? m.competencesModuleSujet : [];
-        const compTransIds = Array.isArray(m.competencesModuleTransversales) ? m.competencesModuleTransversales : [];
+    projectData.modules.forEach((moduleData, moduleIdx) => {
+        const moduleEl = moduleElements[moduleIdx];
+        if (!moduleEl) return;
+        
+        const moduleId = moduleEl.getAttribute('data-export-id');
+        const includeModule = shouldInclude(moduleId, 'module');
+        
+        const momentElements = Array.from(moduleEl.querySelectorAll('.activity-moments-container .moment-group'));
+        const filteredMoments = [];
 
-        const compSujetLabels = __idsToLabels(compSujetIds, __compMap);
-        const compTransLabels = __idsToLabels(compTransIds, __compTMap);
+        (moduleData.moments || []).forEach((momentData, momentIdx) => {
+            const momentEl = momentElements[momentIdx];
+            if (!momentEl) return;
+            
+            const momentId = momentEl.getAttribute('data-export-id');
+            const includeMoment = includeModule || shouldInclude(momentId, 'moment');
+            
+            const submomentElements = Array.from(momentEl.querySelectorAll('.submoments-container .submoment-card'));
+            const filteredSubmoments = [];
 
-        const momentsSource = (Array.isArray(m.moments) && m.moments.length)
-            ? m.moments
-            : [{
-                titre: '',
-                description: '',
-                dureeCible: '',
-                uniteDureeCible: (typeof getDefaultDurationUnitSecs === 'function') ? getDefaultDurationUnitSecs() : 60,
-                activites: [],
-                sousMoments: [],
-                subMoments: []
-            }];
+            (momentData.sousMoments || []).forEach((submomentData, submomentIdx) => {
+                const submomentEl = submomentElements[submomentIdx];
+                if (!submomentEl) return;
+                
+                const submomentId = submomentEl.getAttribute('data-export-id');
+                const includeSubmoment = includeMoment || shouldInclude(submomentId, 'submoment');
+                
+                const activityElements = Array.from(submomentEl.querySelectorAll('.steps-container .step-card'));
+                const filteredActivities = [];
 
-        const moments = (momentsSource || []).map((mom) => {
-            const momTitle = asStr(mom.titre ?? mom.title);
-            const momDesc = asStr(mom.description);
+                (submomentData.steps || []).forEach((activityData, activityIdx) => {
+                    const activityEl = activityElements[activityIdx];
+                    if (!activityEl) return;
+                    
+                    const activityId = activityEl.getAttribute('data-export-id');
+                    const includeActivity = includeSubmoment || shouldInclude(activityId, 'activity');
+                    
+                    if (includeActivity) filteredActivities.push(activityData);
+                });
 
-            const momTargetTime = asStr(mom.dureeCible ?? mom.targetTime);
-            const momTargetUnit = asStr(mom.uniteDureeCible ?? mom.targetUnit);
-
-            // Activities directly under the moment (i.e., no submoment wrapper)
-            const momActivitiesRaw = Array.isArray(mom.activites) ? mom.activites : (Array.isArray(mom.activities) ? mom.activities : []);
-            const momActivities = (momActivitiesRaw || []).map(__mapActivity);
-
-            // Submoments (prefer canonical subMoments if present)
-            const subCanon = Array.isArray(mom.subMoments) ? mom.subMoments : [];
-            const subLegacy = Array.isArray(mom.sousMoments) ? mom.sousMoments : [];
-            const subSource = (subCanon && subCanon.length) ? subCanon : subLegacy;
-
-            const submoments = (subSource || []).map((sm) => {
-                const smTitle = asStr(sm.titre ?? sm.title);
-                const smDesc = asStr(sm.description);
-
-                const smTargetTime = asStr(sm.dureeCible ?? sm.targetTime);
-                const smTargetUnit = asStr(sm.uniteDureeCible ?? sm.targetUnit);
-
-                const smActivitiesRaw = Array.isArray(sm.activites) ? sm.activites : (Array.isArray(sm.steps) ? sm.steps : (Array.isArray(sm.activities) ? sm.activities : []));
-                const smActivities = (smActivitiesRaw || []).map(__mapActivity);
-
-                return {
-                    title: ((sm && sm.ignored) ? '[IGNORÉ] ' : '') + smTitle,
-                    description: smDesc,
-                    target: fmtTarget(smTargetTime, smTargetUnit),
-                    activities: smActivities
-                };
+                if (filteredActivities.length > 0) {
+                    filteredSubmoments.push({...submomentData, steps: filteredActivities});
+                }
             });
 
-            return {
-                title: ((mom && mom.ignored) ? '[IGNORÉ] ' : '') + momTitle,
-                description: momDesc,
-                target: fmtTarget(momTargetTime, momTargetUnit),
-                activities: momActivities,
-                submoments: submoments
-            };
+            if (filteredSubmoments.length > 0) {
+                filteredMoments.push({...momentData, sousMoments: filteredSubmoments});
+            }
         });
 
-        return {
-            title: ((m && m.ignored) ? '[IGNORÉ] ' : '') + modTitle,
-            description: modDesc,
-            notes: modNotes,
-            target: fmtTarget(modTargetTime, modTargetUnit),
-            aimsTargets: aimsTargets,
-            outcomesTargets: outcomesTargets,
-            competencesSujetText: compSujetLabels.join(', '),
-            competencesTransversalesText: compTransLabels.join(', '),
-            moments: moments
-        };
-    });    const meta = {
+        if (filteredMoments.length > 0) {
+            filteredModules.push({...moduleData, moments: filteredMoments});
+        }
+    });
+
+    delete window.__exportSelectedItems;
+    return {...projectData, modules: filteredModules};
+}
+    });
+
+    const meta = {
         courseName: asStr(project.parametres?.nom),
         topic: asStr(project.parametres?.theme),
         authors: asStr(project.parametres?.auteurs),
@@ -30139,8 +29980,21 @@ kbd {
   const selectedCountEl = document.getElementById('export-selected-count');
   const openBtn = document.getElementById('open-export-modal-btn');
 
-  let selectedItems = new Set();
+  // Selection storage in the format expected by filterExportDataBySelection
+  let selectedItems = {
+    modules: new Set(),
+    moments: new Set(),
+    submoments: new Set(),
+    activities: new Set()
+  };
+  
   let treeData = [];
+  let idCounter = 0;
+
+  // Generate unique export ID
+  function generateExportId() {
+    return `export-id-${Date.now()}-${idCounter++}`;
+  }
 
   // Open modal
   function openModal() {
@@ -30152,23 +30006,37 @@ kbd {
   // Close modal
   function closeModal() {
     modal.classList.add('hidden');
-    selectedItems.clear();
+    // Clear selections
+    selectedItems = {
+      modules: new Set(),
+      moments: new Set(),
+      submoments: new Set(),
+      activities: new Set()
+    };
   }
 
   // Build tree from DOM structure
   function buildTree() {
     treeData = [];
+    idCounter = 0;
     const root = document.getElementById('activities-root');
     if (!root) return;
 
     const modules = Array.from(root.querySelectorAll('.activity-group'));
     
     modules.forEach((moduleEl, moduleIndex) => {
+      // Add or get export ID
+      let moduleExportId = moduleEl.getAttribute('data-export-id');
+      if (!moduleExportId) {
+        moduleExportId = generateExportId();
+        moduleEl.setAttribute('data-export-id', moduleExportId);
+      }
+
       const moduleTitleInput = moduleEl.querySelector('[data-module-title]');
       const moduleTitle = moduleTitleInput ? moduleTitleInput.value.trim() : `Module ${moduleIndex + 1}`;
       
       const moduleNode = {
-        id: `module-${moduleIndex}`,
+        id: moduleExportId,
         type: 'module',
         label: moduleTitle,
         element: moduleEl,
@@ -30180,14 +30048,22 @@ kbd {
         const moments = Array.from(momentsContainer.querySelectorAll('.moment-group'));
         
         moments.forEach((momentEl, momentIndex) => {
+          // Add or get export ID
+          let momentExportId = momentEl.getAttribute('data-export-id');
+          if (!momentExportId) {
+            momentExportId = generateExportId();
+            momentEl.setAttribute('data-export-id', momentExportId);
+          }
+
           const momentTitleInput = momentEl.querySelector('[data-moment-title]');
           const momentTitle = momentTitleInput ? momentTitleInput.value.trim() : `Moment ${momentIndex + 1}`;
           
           const momentNode = {
-            id: `module-${moduleIndex}-moment-${momentIndex}`,
+            id: momentExportId,
             type: 'moment',
             label: momentTitle,
             element: momentEl,
+            parentId: moduleExportId,
             children: []
           };
 
@@ -30196,14 +30072,22 @@ kbd {
             const submoments = Array.from(submomentsContainer.querySelectorAll('.submoment-card'));
             
             submoments.forEach((submomentEl, submomentIndex) => {
+              // Add or get export ID
+              let submomentExportId = submomentEl.getAttribute('data-export-id');
+              if (!submomentExportId) {
+                submomentExportId = generateExportId();
+                submomentEl.setAttribute('data-export-id', submomentExportId);
+              }
+
               const submomentTitleInput = submomentEl.querySelector('[data-submoment-title]');
               const submomentTitle = submomentTitleInput ? submomentTitleInput.value.trim() : `Sous-moment ${submomentIndex + 1}`;
               
               const submomentNode = {
-                id: `module-${moduleIndex}-moment-${momentIndex}-submoment-${submomentIndex}`,
+                id: submomentExportId,
                 type: 'submoment',
                 label: submomentTitle,
                 element: submomentEl,
+                parentId: momentExportId,
                 children: []
               };
 
@@ -30212,14 +30096,22 @@ kbd {
                 const activities = Array.from(activitiesContainer.querySelectorAll('.step-card'));
                 
                 activities.forEach((activityEl, activityIndex) => {
+                  // Add or get export ID
+                  let activityExportId = activityEl.getAttribute('data-export-id');
+                  if (!activityExportId) {
+                    activityExportId = generateExportId();
+                    activityEl.setAttribute('data-export-id', activityExportId);
+                  }
+
                   const activityTitleInput = activityEl.querySelector('[data-step-title]');
                   const activityTitle = activityTitleInput ? activityTitleInput.value.trim() : `Activité ${activityIndex + 1}`;
                   
                   const activityNode = {
-                    id: `module-${moduleIndex}-moment-${momentIndex}-submoment-${submomentIndex}-activity-${activityIndex}`,
+                    id: activityExportId,
                     type: 'activity',
                     label: activityTitle,
                     element: activityEl,
+                    parentId: submomentExportId,
                     children: []
                   };
 
@@ -30287,6 +30179,7 @@ kbd {
     checkbox.type = 'checkbox';
     checkbox.className = 'export-tree-checkbox';
     checkbox.dataset.nodeId = node.id;
+    checkbox.dataset.nodeType = node.type;
     checkbox.addEventListener('change', () => handleCheckboxChange(node, checkbox.checked));
     headerDiv.appendChild(checkbox);
 
@@ -30353,12 +30246,14 @@ kbd {
 
   // Handle checkbox change
   function handleCheckboxChange(node, isChecked) {
+    const typeKey = node.type + 's'; // module -> modules, etc.
+    
     if (isChecked) {
-      selectedItems.add(node.id);
+      selectedItems[typeKey].add(node.id);
       // Select all children
       selectAllChildren(node);
     } else {
-      selectedItems.delete(node.id);
+      selectedItems[typeKey].delete(node.id);
       // Deselect all children
       deselectAllChildren(node);
     }
@@ -30371,7 +30266,8 @@ kbd {
   function selectAllChildren(node) {
     if (node.children) {
       node.children.forEach(child => {
-        selectedItems.add(child.id);
+        const childTypeKey = child.type + 's';
+        selectedItems[childTypeKey].add(child.id);
         selectAllChildren(child);
       });
     }
@@ -30381,7 +30277,8 @@ kbd {
   function deselectAllChildren(node) {
     if (node.children) {
       node.children.forEach(child => {
-        selectedItems.delete(child.id);
+        const childTypeKey = child.type + 's';
+        selectedItems[childTypeKey].delete(child.id);
         deselectAllChildren(child);
       });
     }
@@ -30392,7 +30289,10 @@ kbd {
     const checkboxes = treeContainer.querySelectorAll('.export-tree-checkbox');
     checkboxes.forEach(cb => {
       const nodeId = cb.dataset.nodeId;
-      cb.checked = selectedItems.has(nodeId);
+      const nodeType = cb.dataset.nodeType;
+      const typeKey = nodeType + 's';
+      
+      cb.checked = selectedItems[typeKey].has(nodeId);
       
       const header = cb.closest('.export-tree-item-header');
       if (cb.checked) {
@@ -30405,16 +30305,27 @@ kbd {
 
   // Update selected count
   function updateSelectedCount() {
-    selectedCountEl.textContent = selectedItems.size;
-    btnConfirm.disabled = selectedItems.size === 0;
+    const totalCount = selectedItems.modules.size + 
+                      selectedItems.moments.size + 
+                      selectedItems.submoments.size + 
+                      selectedItems.activities.size;
+    selectedCountEl.textContent = totalCount;
+    btnConfirm.disabled = totalCount === 0;
   }
 
   // Select all items
   function selectAll() {
-    selectedItems.clear();
+    selectedItems = {
+      modules: new Set(),
+      moments: new Set(),
+      submoments: new Set(),
+      activities: new Set()
+    };
+    
     const addAllNodes = (nodes) => {
       nodes.forEach(node => {
-        selectedItems.add(node.id);
+        const typeKey = node.type + 's';
+        selectedItems[typeKey].add(node.id);
         if (node.children) {
           addAllNodes(node.children);
         }
@@ -30427,7 +30338,12 @@ kbd {
 
   // Deselect all items
   function deselectAll() {
-    selectedItems.clear();
+    selectedItems = {
+      modules: new Set(),
+      moments: new Set(),
+      submoments: new Set(),
+      activities: new Set()
+    };
     updateCheckboxStates();
     updateSelectedCount();
   }
@@ -30450,7 +30366,12 @@ kbd {
 
   // Handle export confirmation
   function handleExportConfirm() {
-    if (selectedItems.size === 0) return;
+    const totalCount = selectedItems.modules.size + 
+                      selectedItems.moments.size + 
+                      selectedItems.submoments.size + 
+                      selectedItems.activities.size;
+    
+    if (totalCount === 0) return;
 
     // Get selected format
     const formatRadios = document.querySelectorAll('input[name="export-format"]');
@@ -30459,12 +30380,13 @@ kbd {
       if (radio.checked) selectedFormat = radio.value;
     });
 
-    // Build filtered export data
-    const filteredData = buildFilteredExportData();
-
-    // Store the filtered data temporarily
-    window.__ldExportFilteredData = filteredData;
-    window.__ldExportFilteredMode = true;
+    // Store selections in the format expected by filterExportDataBySelection
+    window.__exportSelectedItems = {
+      modules: new Set(selectedItems.modules),
+      moments: new Set(selectedItems.moments),
+      submoments: new Set(selectedItems.submoments),
+      activities: new Set(selectedItems.activities)
+    };
 
     // Close modal
     closeModal();
@@ -30486,45 +30408,9 @@ kbd {
       } else if (selectedFormat === 'docx') {
         runExport(exportDOCX);
       }
-
-      // Clean up
-      delete window.__ldExportFilteredData;
-      delete window.__ldExportFilteredMode;
+      
+      // Note: __exportSelectedItems is deleted by filterExportDataBySelection after use
     }, 100);
-  }
-
-  // Build filtered export data based on selected items
-  function buildFilteredExportData() {
-    const filtered = {
-      selectedIds: Array.from(selectedItems),
-      selectedElements: []
-    };
-
-    // Collect selected elements
-    selectedItems.forEach(id => {
-      const node = findNodeById(id, treeData);
-      if (node && node.element) {
-        filtered.selectedElements.push({
-          id: id,
-          type: node.type,
-          element: node.element
-        });
-      }
-    });
-
-    return filtered;
-  }
-
-  // Find node by ID in tree
-  function findNodeById(id, nodes) {
-    for (const node of nodes) {
-      if (node.id === id) return node;
-      if (node.children) {
-        const found = findNodeById(id, node.children);
-        if (found) return found;
-      }
-    }
-    return null;
   }
 
   // Event listeners
