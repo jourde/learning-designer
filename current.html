@@ -110,8 +110,91 @@ textarea{resize:vertical;}
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  padding: 0.5rem;
+}
+.step-tabpanel[data-step-panel="description"] .compact-label {
+  flex-shrink: 0;
 }
 .step-tabpanel[data-step-panel="description"] .step-input-objective {
+  flex: 1;
+  min-height: 120px;
+}
+
+/* Presentation field: expand to fill available space */
+.step-tabpanel[data-step-panel="presentation"] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.step-tabpanel[data-step-panel="presentation"] .step-right-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 0.5rem;
+}
+.step-tabpanel[data-step-panel="presentation"] .compact-label {
+  flex-shrink: 0;
+}
+.step-tabpanel[data-step-panel="presentation"] .step-input-presentation {
+  flex: 1;
+  min-height: 120px;
+}
+
+/* Evaluation field: expand to fill available space */
+.step-tabpanel[data-step-panel="evaluation"] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.step-tabpanel[data-step-panel="evaluation"] .step-right-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.step-tabpanel[data-step-panel="evaluation"] details {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.step-tabpanel[data-step-panel="evaluation"] details > div {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.step-tabpanel[data-step-panel="evaluation"] .step-input-eval-followup {
+  flex: 1;
+  min-height: 120px;
+}
+
+/* Notes field: expand to fill available space */
+.step-tabpanel[data-step-panel="notes"] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.step-tabpanel[data-step-panel="notes"] .step-right-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.step-tabpanel[data-step-panel="notes"] details {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.step-tabpanel[data-step-panel="notes"] details > div {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.step-tabpanel[data-step-panel="notes"] .step-input-notes {
   flex: 1;
   min-height: 120px;
 }
@@ -405,7 +488,7 @@ input, select, textarea {
           height: 28px;
           padding: 0 0.5rem;
           font-size: 0.75rem;
-          font-weight: 800;
+          font-weight: 700;
           line-height: 1;
           border-radius: 0.375rem;
           border: 1px solid var(--ld-control-border);
@@ -485,7 +568,7 @@ input, select, textarea {
           height: 28px;
           padding: 0 0.5rem;
           font-size: 0.75rem;
-          font-weight: 800;
+          font-weight: 700;
           line-height: 1;
           color: var(--ld-control-text);
           background-color: transparent;
@@ -781,7 +864,7 @@ body.hc #timeline-ruler .timeline-ruler-label { border-color: #94a3b8; backgroun
     box-shadow: 0 2px 10px rgba(15, 23, 42, 0.35);
      color: #ffffff;
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 700;
     line-height: 1;
     letter-spacing: 0.2px;
     text-transform: uppercase;
@@ -1309,7 +1392,7 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
   height: 18px;
   border: 1px solid rgba(226,232,240,1);
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
   flex: 0 0 auto;
 }
@@ -2248,7 +2331,7 @@ document.addEventListener('DOMContentLoaded', __ldEnablePlainTextPaste);
     user-select: none;
     cursor: pointer;
     font-size: 10px;
-    font-weight: 800;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     line-height: 1.15;
@@ -2423,6 +2506,9 @@ document.addEventListener('DOMContentLoaded', function() {
           </option>
 <option data-i18n="opt_md" value="markdown">
            Markdown (conseillé pour l'IA)
+          </option>
+<option data-i18n="opt_presentation_md" value="presentation-markdown">
+           Markdown Présentation (diaporama)
           </option>
 <option data-i18n="opt_csv" value="csv">
            CSV (modules/moments/activités)
@@ -3848,23 +3934,18 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
           <div class="p-1 border-b border-slate-100">
             <div class="px-2 py-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Niveau d'affichage</div>
             <button class="ld-view-level-option w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" data-level="activities" data-i18n="btn_view_activities">
-              <span class="material-icons-round text-[16px] opacity-0 level-check">check</span>
               <span>Activités</span>
             </button>
             <button class="ld-view-level-option w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" data-level="submoments" data-i18n="btn_view_submoments">
-              <span class="material-icons-round text-[16px] opacity-0 level-check">check</span>
               <span>Sous-moments</span>
             </button>
             <button class="ld-view-level-option w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" data-level="moments" data-i18n="btn_view_moments">
-              <span class="material-icons-round text-[16px] opacity-0 level-check">check</span>
               <span>Moments</span>
             </button>
             <button class="ld-view-level-option w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" data-level="modules" data-i18n="btn_view_modules">
-              <span class="material-icons-round text-[16px] opacity-0 level-check">check</span>
               <span>Modules</span>
             </button>
             <button class="ld-view-level-option w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" data-level="panorama" data-i18n="btn_view_panorama">
-              <span class="material-icons-round text-[16px] opacity-0 level-check">check</span>
               <span>Panorama</span>
             </button>
           </div>
@@ -4527,6 +4608,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
         <div class="drag-handle-submoment drag-handle text-slate-300 hover:text-slate-500 no-print flex items-center justify-center w-6 h-6 cursor-grab">
           <span class="material-icons-round text-lg">drag_indicator</span>
         </div>
+        <div class="h-5 w-5 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-700 submoment-index shrink-0 text-[10px]">1</div>
         <input class="submoment-title flex-1 min-w-0 text-sm font-semibold bg-transparent border border-transparent focus:border-indigo-300 rounded px-2 py-1 outline-none" placeholder="Titre du sous-moment" />
       </div>
       <div class="flex items-center gap-2">
@@ -4592,6 +4674,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <label class="no-print flex items-center justify-center mr-1" title="Sélectionner l’activité (actions groupées)">
   <input type="checkbox" class="step-batch-select w-4 h-4 accent-indigo-600" aria-label="Sélectionner l’activité"/>
 </label>
+<div class="h-5 w-5 rounded-full bg-slate-100 flex items-center justify-center font-semibold text-slate-600 step-index shrink-0 text-[10px]">1</div>
 <span class="material-icons-round text-amber-500 text-[18px] step-coherence-indicator hidden no-print" title="">warning_amber</span>
 <div class="flex-1">
 <input class="step-input-title w-full px-1 py-0.5 text-sm font-semibold text-slate-800 border-none bg-transparent focus:ring-0 outline-none" data-i18n-placeholder="ph_step_title" placeholder="Titre de l'activité..." type="text"/>
@@ -4792,8 +4875,9 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
   <!-- Onglets : Déroulé / Alignement / Ressources -->
   <div class="step-tabs" role="tablist" aria-label="Panneaux de l'activité">
             <button class="step-tab" type="button" role="tab" aria-selected="true" tabindex="0" data-step-tab="description" data-i18n="tab_description">Description</button>
-    <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="contenu" data-i18n="tab_contenu">Contenu</button>
+    <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="presentation" data-i18n="tab_presentation">Présentation</button>
     <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="flow" data-i18n="tab_flow">Déroulé</button>
+    <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="evaluation" data-i18n="tab_evaluation">Évaluation / suivi</button>
     <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="alignment" data-i18n="tab_alignment">Alignement</button>
     <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="resources" data-i18n="tab_resources">Ressources</button>
     <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="notes" data-i18n="label_notes">Notes</button>
@@ -4811,14 +4895,14 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
       </div>
     </div>
 
-    <!-- Contenu -->
-    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="contenu" hidden>
+    <!-- Présentation -->
+    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="presentation" hidden>
       <div class="step-right-section border border-slate-200 rounded-lg bg-white p-2">
         <div class="compact-label flex items-center gap-1 mb-1">
-          <span class="material-icons-round text-[10px] text-slate-400">article</span>
-          <span data-i18n="label_step_contenu">Contenu de l'activité</span>
+          <span class="material-icons-round text-[10px] text-slate-400">slideshow</span>
+          <span data-i18n="label_step_presentation">Présentation (diaporama)</span>
         </div>
-        <textarea class="step-input-contenu w-full px-2 py-1.5 text-[12px] border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 bg-slate-50 text-slate-700" data-i18n-placeholder="ph_step_contenu" placeholder="Décrivez le contenu détaillé de l'activité..." rows="6"></textarea>
+        <textarea class="step-input-presentation w-full px-2 py-1.5 text-[12px] border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 bg-slate-50 text-slate-700" data-i18n-placeholder="ph_step_presentation" placeholder="Éléments à afficher dans le diaporama..." rows="6"></textarea>
       </div>
     </div>
 
@@ -4849,6 +4933,23 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
         </summary>
         <div class="px-2 pb-2 pt-1">
           <textarea class="step-input-trainer-tasks w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y leading-relaxed bg-slate-50" data-i18n-placeholder="ph_trainer_tasks" placeholder="Décrivez les actions attendues du formateur..." rows="2"></textarea>
+        </div>
+      </details>
+    </div>
+
+    <!-- Évaluation / suivi -->
+    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="evaluation" hidden>
+      <details class="step-right-section border border-slate-200 rounded-lg bg-white" open>
+        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
+          <span class="material-icons-round text-[10px] text-slate-400">assignment_turned_in</span>
+          <span data-i18n="label_eval_followup">Évaluation et suivi</span>
+          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
+            <span>Afficher</span>
+            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
+          </span>
+        </summary>
+        <div class="px-2 pb-2 pt-1">
+          <textarea class="step-input-eval-followup w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y leading-relaxed bg-white" data-i18n-placeholder="ph_eval_followup" placeholder="Critères d'évaluation, grilles, modalités de suivi..." rows="4"></textarea>
         </div>
       </details>
     </div>
@@ -4998,7 +5099,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
           </span>
         </summary>
         <div class="px-2 pb-2 pt-1">
-          <textarea class="step-input-notes w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y bg-slate-50 text-slate-600 italic" data-i18n-placeholder="ph_notes" placeholder="Notes formateur, ressources ou liens..." rows="2"></textarea>
+          <textarea class="step-input-notes w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y bg-slate-50 text-slate-600" data-i18n-placeholder="ph_notes" placeholder="Notes formateur, ressources ou liens..." rows="2"></textarea>
         </div>
       </details>
     </div>
@@ -8124,6 +8225,7 @@ title_ui_language_select: "Choisir la langue de l’interface",
 btn_export_dropdown: "Exporter...",
                 title_export_dropdown: "Choisir le format d'export",
                 opt_md: "Markdown (conseillé pour l'IA)",
+                opt_presentation_md: "Markdown Présentation (diaporama)",
                 opt_csv: "CSV (modules/moments/activités)",
                 opt_pdf: "PDF (pour imprimer)",
                 opt_rtf: "Page Web HTML (contient les graphiques)",
@@ -8173,12 +8275,14 @@ btn_export_dropdown: "Exporter...",
                 opt_async: "Asynchrone",
                 label_step_objective: "Description de l'activité",
                 ph_step_objective: "Décrivez l'activité...",
-                label_step_contenu: "Contenu de l'activité",
-                ph_step_contenu: "Décrivez le contenu détaillé de l'activité...",
+                label_step_presentation: "Présentation (diaporama)",
+                ph_step_presentation: "Éléments à afficher dans le diaporama...",
                 label_tasks: "Ce que les apprenants doivent faire",
                 ph_tasks: "Décrivez les étapes, instructions et tâches...",
                 label_trainer_tasks: "Ce que le ou les formateurs doivent faire",
                 ph_trainer_tasks: "Décrivez les actions attendues du formateur...",
+                label_eval_followup: "Évaluation et suivi",
+                ph_eval_followup: "Critères d'évaluation, grilles, modalités de suivi...",
                 label_notes: "Notes",
                 ph_notes: "Notes formateur, ressources ou liens...",
                 type_none: "Aucun",
@@ -8554,9 +8658,10 @@ label_search: "Rechercher",
                 tab_alignment: "Alignement",
                 tab_analysis: "GRAPHIQUES D'ANALYSE",
                 tab_competences: "Compétences",
-                tab_contenu: "Contenu",
                 tab_description: "Description",
+                tab_presentation: "Présentation",
                  tab_flow: "Déroulé",
+                tab_evaluation: "Évaluation / suivi",
                 tab_info: "INFORMATIONS ET PARAMÈTRES DE LA FORMATION",
                 tab_modalities: "Modalités",
                 tab_outcomes: "Résultats",
@@ -15947,7 +16052,92 @@ function formatAdaptiveDurationFromSecs(totalSecs) {
         }
 
 
+// Update hierarchical numbering for all elements (modules, moments, submoments, activities)
+function updateAllIndexes() {
+    try {
+        const root = document.getElementById('activities-root');
+        if (!root) return;
+
+        const modules = Array.from(root.querySelectorAll(':scope > .activity-group'));
+        
+        modules.forEach((module, moduleIdx) => {
+            const moduleNum = moduleIdx + 1;
+            
+            // Update module index
+            const moduleIndexEl = module.querySelector('.activity-index');
+            if (moduleIndexEl) {
+                moduleIndexEl.textContent = moduleNum;
+            }
+            
+            // Get all moments in this module
+            const moments = Array.from(module.querySelectorAll('.activity-moments-container > .moment-group'));
+            
+            moments.forEach((moment, momentIdx) => {
+                const momentNum = momentIdx + 1;
+                const momentFullNum = `${moduleNum}.${momentNum}`;
+                
+                // Update moment index
+                const momentIndexEl = moment.querySelector('.moment-index');
+                if (momentIndexEl) {
+                    momentIndexEl.textContent = momentFullNum;
+                }
+                
+                // Get all submoments in this moment
+                const submoments = Array.from(moment.querySelectorAll('.submoments-container > .submoment-card'));
+                
+                if (submoments.length > 0) {
+                    // Moment has submoments
+                    submoments.forEach((submoment, submomentIdx) => {
+                        const submomentNum = submomentIdx + 1;
+                        const submomentFullNum = `${momentFullNum}.${submomentNum}`;
+                        
+                        // Update submoment index
+                        const submomentIndexEl = submoment.querySelector('.submoment-index');
+                        if (submomentIndexEl) {
+                            submomentIndexEl.textContent = submomentFullNum;
+                        }
+                        
+                        // Get all activities in this submoment
+                        const activities = Array.from(submoment.querySelectorAll('.submoment-steps > .step-card'));
+                        
+                        activities.forEach((activity, activityIdx) => {
+                            const activityNum = activityIdx + 1;
+                            const activityFullNum = `${submomentFullNum}.${activityNum}`;
+                            
+                            // Update activity index
+                            const activityIndexEl = activity.querySelector('.step-index');
+                            if (activityIndexEl) {
+                                activityIndexEl.textContent = activityFullNum;
+                            }
+                        });
+                    });
+                } else {
+                    // Moment has no submoments, activities are directly under moment
+                    const activities = Array.from(moment.querySelectorAll('.moment-direct-steps > .activity-steps-container > .step-card'));
+                    
+                    activities.forEach((activity, activityIdx) => {
+                        const activityNum = activityIdx + 1;
+                        const activityFullNum = `${momentFullNum}.${activityNum}`;
+                        
+                        // Update activity index
+                        const activityIndexEl = activity.querySelector('.step-index');
+                        if (activityIndexEl) {
+                            activityIndexEl.textContent = activityFullNum;
+                        }
+                    });
+                }
+            });
+        });
+    } catch (e) {
+        __ldSilentErr(e);
+    }
+}
+
+
 function updateStats() {
+            // Update hierarchical numbering
+            try { updateAllIndexes(); } catch(_){ __ldSilentErr(_); }
+            
             const totals = getTotals();
             // Sync user-defined duration tolerance (% only)
             try {
@@ -16931,6 +17121,8 @@ function handleExport(select) {
 
             if (value === 'markdown') {
                 runExport(exportMarkdown);
+            } else if (value === 'presentation-markdown') {
+                runExport(exportPresentationMarkdown);
             } else if (value === 'pdf') {
                 runExport(exportPDFPrintFull);
             } else if (value === 'richtext') {
@@ -21994,6 +22186,13 @@ ${evalFollowup}
 ${notes}
 
 `;
+                        const presentation = (step.querySelector('.step-input-presentation')?.value || '').trim();
+                        if (presentation) {
+                            md += `**Présentation (diaporama) :**
+${presentation}
+
+`;
+                        }
                         const linksRefs = (step.querySelector('.step-input-linksrefs')?.value || '').trim();
                         if (linksRefs) {
                             md += `**Liens / références :**
@@ -22056,6 +22255,10 @@ ${linksRefs}
                                 const smTgtUnitTxt = smEl.querySelector('.submoment-target-unit')?.selectedOptions?.[0]?.innerText || '';
                                 if (smTgtVal) md += `- **Durée cible :** ${__esc(smTgtVal)} ${__esc(smTgtUnitTxt)}
 `;
+                                const smNotes = (smEl.querySelector('.submoment-notes')?.value || '').trim();
+                                if (smNotes) md += `- **Description / Notes :**
+${smNotes}
+`;
                                 md += `
 
 `;
@@ -22111,6 +22314,110 @@ ${linksRefs}
             const a = document.createElement('a');
             a.href = url;
             a.download = window.__ldBuildExportFilename('md');
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportPresentationMarkdown() {
+            const t = translations[currentLang] || translations.fr;
+            const trainingTitle = document.getElementById('param-name')?.value || 'Formation';
+            const trainingDesc = document.getElementById('param-description')?.value || '';
+            
+            let md = `# ${trainingTitle}\n\n`;
+            
+            if (trainingDesc.trim()) {
+                md += `${trainingDesc}\n\n---\n\n`;
+            }
+
+            // Parcourir tous les modules
+            document.querySelectorAll('.activity-group').forEach((module, moduleIdx) => {
+                const moduleTitle = module.querySelector('.activity-title')?.value || `Module ${moduleIdx + 1}`;
+                const moduleObjectives = module.querySelector('.activity-description')?.value || '';
+
+                md += `## Module ${moduleIdx + 1} : ${moduleTitle}\n\n`;
+                
+                if (moduleObjectives.trim()) {
+                    md += `**Objectif(s) :**\n\n${moduleObjectives}\n\n`;
+                }
+                
+                md += `---\n\n`;
+
+                // Parcourir tous les moments du module
+                module.querySelectorAll('.moment-group').forEach((moment, momentIdx) => {
+                    const momentTitle = moment.querySelector('.moment-title')?.value || `Moment ${momentIdx + 1}`;
+                    const momentDesc = moment.querySelector('.moment-description')?.value || '';
+
+                    md += `### Moment ${moduleIdx + 1}.${momentIdx + 1} : ${momentTitle}\n\n`;
+                    
+                    if (momentDesc.trim()) {
+                        md += `**Description :**\n\n${momentDesc}\n\n`;
+                    }
+                    
+                    md += `---\n\n`;
+
+                    // Parcourir tous les sous-moments
+                    moment.querySelectorAll('.submoment-card').forEach((submoment, submomentIdx) => {
+                        const submomentTitle = submoment.querySelector('.submoment-title')?.value || `Sous-moment ${submomentIdx + 1}`;
+                        const submomentDesc = submoment.querySelector('.submoment-notes')?.value || '';
+
+                        md += `#### Sous-moment ${moduleIdx + 1}.${momentIdx + 1}.${submomentIdx + 1} : ${submomentTitle}\n\n`;
+                        
+                        if (submomentDesc.trim()) {
+                            md += `**Description :**\n\n${submomentDesc}\n\n`;
+                        }
+                        
+                        md += `---\n\n`;
+
+                        // Parcourir toutes les activités du sous-moment
+                        submoment.querySelectorAll('.step-card').forEach((activity, activityIdx) => {
+                            const activityTitle = activity.querySelector('.step-input-title')?.value || `Activité ${activityIdx + 1}`;
+                            const activityDescription = activity.querySelector('.step-input-objective')?.value || '';
+                            const activityPresentation = activity.querySelector('.step-input-presentation')?.value || '';
+
+                            md += `##### Activité ${moduleIdx + 1}.${momentIdx + 1}.${submomentIdx + 1}.${activityIdx + 1} : ${activityTitle}\n\n`;
+                            
+                            if (activityDescription.trim()) {
+                                md += `**Description :**\n\n${activityDescription}\n\n`;
+                            }
+                            
+                            if (activityPresentation.trim()) {
+                                md += `**Présentation :**\n\n${activityPresentation}\n\n`;
+                            }
+                            
+                            md += `---\n\n`;
+                        });
+                    });
+
+                    // Parcourir les activités directes du moment (sans sous-moment)
+                    const directSteps = moment.querySelector('.moment-direct-steps');
+                    if (directSteps) {
+                        directSteps.querySelectorAll('.step-card').forEach((activity, activityIdx) => {
+                            const activityTitle = activity.querySelector('.step-input-title')?.value || `Activité ${activityIdx + 1}`;
+                            const activityDescription = activity.querySelector('.step-input-objective')?.value || '';
+                            const activityPresentation = activity.querySelector('.step-input-presentation')?.value || '';
+
+                            md += `#### Activité ${moduleIdx + 1}.${momentIdx + 1}.${activityIdx + 1} : ${activityTitle}\n\n`;
+                            
+                            if (activityDescription.trim()) {
+                                md += `**Description :**\n\n${activityDescription}\n\n`;
+                            }
+                            
+                            if (activityPresentation.trim()) {
+                                md += `**Présentation :**\n\n${activityPresentation}\n\n`;
+                            }
+                            
+                            md += `---\n\n`;
+                        });
+                    }
+                });
+            });
+
+            // Télécharger le fichier
+            const blob = new Blob([md], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = window.__ldBuildExportFilename('md', 'presentation');
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -29189,7 +29496,7 @@ kbd {
   // Selectors for textarea fields to enhance
   const TEXTAREA_SELECTORS = [
     '.step-input-objective',
-    '.step-input-contenu',
+    '.step-input-presentation',
     '.step-input-tasks',
     '.step-input-trainer-tasks',
     '.step-input-notes',
