@@ -4792,6 +4792,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
   <!-- Onglets : Déroulé / Alignement / Ressources -->
   <div class="step-tabs" role="tablist" aria-label="Panneaux de l'activité">
             <button class="step-tab" type="button" role="tab" aria-selected="true" tabindex="0" data-step-tab="description" data-i18n="tab_description">Description</button>
+    <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="contenu" data-i18n="tab_contenu">Contenu</button>
     <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="flow" data-i18n="tab_flow">Déroulé</button>
     <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="alignment" data-i18n="tab_alignment">Alignement</button>
     <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="resources" data-i18n="tab_resources">Ressources</button>
@@ -4807,6 +4808,17 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
           <span data-i18n="label_step_objective">Description de l'activité</span>
         </div>
         <textarea class="step-input-objective w-full px-2 py-1.5 text-[12px] border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 bg-slate-50 text-slate-700" data-i18n-placeholder="ph_step_objective" placeholder="Décrivez l'activité..." rows="2"></textarea>
+      </div>
+    </div>
+
+    <!-- Contenu -->
+    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="contenu" hidden>
+      <div class="step-right-section border border-slate-200 rounded-lg bg-white p-2">
+        <div class="compact-label flex items-center gap-1 mb-1">
+          <span class="material-icons-round text-[10px] text-slate-400">article</span>
+          <span data-i18n="label_step_contenu">Contenu de l'activité</span>
+        </div>
+        <textarea class="step-input-contenu w-full px-2 py-1.5 text-[12px] border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 bg-slate-50 text-slate-700" data-i18n-placeholder="ph_step_contenu" placeholder="Décrivez le contenu détaillé de l'activité..." rows="6"></textarea>
       </div>
     </div>
 
@@ -8161,6 +8173,8 @@ btn_export_dropdown: "Exporter...",
                 opt_async: "Asynchrone",
                 label_step_objective: "Description de l'activité",
                 ph_step_objective: "Décrivez l'activité...",
+                label_step_contenu: "Contenu de l'activité",
+                ph_step_contenu: "Décrivez le contenu détaillé de l'activité...",
                 label_tasks: "Ce que les apprenants doivent faire",
                 ph_tasks: "Décrivez les étapes, instructions et tâches...",
                 label_trainer_tasks: "Ce que le ou les formateurs doivent faire",
@@ -8540,6 +8554,7 @@ label_search: "Rechercher",
                 tab_alignment: "Alignement",
                 tab_analysis: "GRAPHIQUES D'ANALYSE",
                 tab_competences: "Compétences",
+                tab_contenu: "Contenu",
                 tab_description: "Description",
                  tab_flow: "Déroulé",
                 tab_info: "INFORMATIONS ET PARAMÈTRES DE LA FORMATION",
@@ -29174,6 +29189,7 @@ kbd {
   // Selectors for textarea fields to enhance
   const TEXTAREA_SELECTORS = [
     '.step-input-objective',
+    '.step-input-contenu',
     '.step-input-tasks',
     '.step-input-trainer-tasks',
     '.step-input-notes',
