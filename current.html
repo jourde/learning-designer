@@ -12662,13 +12662,273 @@ moduleData.moments.push(momentData);
             return exportProject;
         }
 
+// ==========================================================
+// Canonical-only JSON export (Option 3)
+// - Export: canonical keys only (English), no legacy duplicates.
+// - Import: remains backward-compatible (loader accepts legacy FR/mixed/canonical).
+// ==========================================================
+function __ldBuildKeyParamsCanonical(project) {
+    const kp0 = (project && project.keyParams && typeof project.keyParams === 'object') ? project.keyParams : {};
+    const p = (project && project.parametres && typeof project.parametres === 'object') ? project.parametres : {};
+    const kp = { ...kp0 };
+
+    const setIfEmpty = (k, v) => {
+        if (v == null) return;
+        const cur = kp[k];
+        if (cur == null || String(cur).trim() === "") kp[k] = v;
+    };
+
+    // General
+    setIfEmpty('name', p.nom || p.titre || kp.title || '');
+    setIfEmpty('title', kp.title || p.titre || p.nom || '');
+    setIfEmpty('topic', p.theme || '');
+    setIfEmpty('authors', p.auteurs || '');
+    setIfEmpty('trainers', p.formateurs || '');
+    setIfEmpty('level', p.niveau || 'unspecified');
+    setIfEmpty('targetAudience', p.publicCible || '');
+    setIfEmpty('prerequisites', p.prerequis || '');
+    setIfEmpty('mode', p.modalite || '');
+    if (kp.cohortSize == null || String(kp.cohortSize).trim() === "") kp.cohortSize = (p.tailleCohorte != null ? p.tailleCohorte : kp.cohortSize);
+
+    // Time + tolerance
+    setIfEmpty('learningTimeVal', p.dureeApprentissageValeur || '');
+    setIfEmpty('learningTimeUnit', p.dureeApprentissageUnite || kp.learningTimeUnit || 'mins');
+    setIfEmpty('designedTimeVal', p.dureeConcueValeur || '');
+    setIfEmpty('designedTimeUnit', p.dureeConcueUnite || p.dureeApprentissageUnite || kp.designedTimeUnit || 'mins');
+    setIfEmpty('durationToleranceRelPct', p.toleranceRelativePct || '');
+
+    // Aims / outcomes / tools
+    setIfEmpty('aims', p.objectifs || '');
+    try { if (!kp.aimsItems && Array.isArray(p.objectifsItems)) kp.aimsItems = p.objectifsItems; } catch(_) { /* no-op */ }
+
+    setIfEmpty('outcomesText', p.resultatsTexte || '');
+    try { if (!kp.outcomesTextItems && Array.isArray(p.resultatsTexteItems)) kp.outcomesTextItems = p.resultatsTexteItems; } catch(_) { /* no-op */ }
+
+    setIfEmpty('toolsMaterials', p.outilsMateriel || '');
+    try { if (!kp.toolsMaterialsItems && Array.isArray(p.outilsMaterielItems)) kp.toolsMaterialsItems = p.outilsMaterielItems; } catch(_) { /* no-op */ }
+    setIfEmpty('toolsMaterialsNotes', p.outilsMaterielNotes || '');
+
+    setIfEmpty('description', p.description || '');
+
+    // Outcomes list (canonical shape required by addOutcome: {text, level, sub})
+    try {
+        const src = Array.isArray(kp.outcomes) ? kp.outcomes : (Array.isArray(p.resultats) ? p.resultats : []);
+        kp.outcomes = (Array.isArray(src) ? src : []).map(o => {
+            if (typeof o === 'string') return { text: o, level: '', sub: '' };
+            const text = (o && (o.text ?? o.texte)) || '';
+            const level = (o && (o.level ?? o.niveau)) || '';
+            const sub = (o && (o.sub ?? o.sousNiveau)) || '';
+            return {
+                text: String(text || '').trim(),
+                level: String(level || '').trim(),
+                sub: String(sub || '').trim()
+            };
+        }).filter(x => x && x.text);
+    } catch (e) {
+        kp.outcomes = [];
+    }
+
+    // Competence catalogues (keep full object for UI: id/label/categorie/sousCategorie)
+    try { if (!Array.isArray(kp.competences) && Array.isArray(p.competences)) kp.competences = p.competences; } catch(_) {}
+    try { if (!Array.isArray(kp.competencesTransversales) && Array.isArray(p.competencesTransversales)) kp.competencesTransversales = p.competencesTransversales; } catch(_) {}
+
+    return kp;
+}
+
+function __ldStripStepToCanonical(s) {
+    if (!s || typeof s !== 'object') return null;
+    const out = {
+        id: s.id,
+        ignored: !!(s.ignored ?? s.ignore ?? s.isIgnored ?? s.ldIgnored),
+        title: s.title ?? s.titre ?? '',
+        type: s.type ?? '',
+        duration: s.duration ?? s.duree ?? '',
+        unit: s.unit ?? s.unite ?? '',
+        status: s.status ?? s.etat ?? s.state ?? '',
+        groupMode: s.groupMode ?? s.regroupement ?? 'class',
+        groupCount: s.groupCount ?? s.nombreGroupes ?? '',
+        groupSize: s.groupSize ?? s.tailleGroupe ?? '',
+        groupDetails: s.groupDetails ?? s.detailsRegroupement ?? '',
+        trainer: s.trainer ?? s.formateur ?? 'present',
+        place: s.place ?? s.lieu ?? 'situ',
+        time: s.time ?? s.temps ?? 'sync',
+        evaluation: s.evaluation ?? 'Aucune',
+        objective: s.objective ?? s.objectifActivite ?? s.objectif ?? '',
+        tasks: s.tasks ?? s.aFaire ?? '',
+        trainerTasks: s.trainerTasks ?? s.aFaireFormateur ?? '',
+        presentation: s.presentation ?? '',
+        notes: s.notes ?? '',
+        linksReferences: s.linksReferences ?? s.liensReferences ?? '',
+        evaluationSuivi: s.evaluationSuivi ?? s.suiviEvaluation ?? '',
+        competences: Array.isArray(s.competences) ? s.competences : (Array.isArray(s.competencesSujet) ? s.competencesSujet : []),
+        competencesTransversales: Array.isArray(s.competencesTransversales) ? s.competencesTransversales : [],
+        aimsTargets: Array.isArray(s.aimsTargets) ? s.aimsTargets : (Array.isArray(s.objectifsCibles) ? s.objectifsCibles : []),
+        outcomesTargets: Array.isArray(s.outcomesTargets) ? s.outcomesTargets : (Array.isArray(s.resultatsApprentissageCibles) ? s.resultatsApprentissageCibles : []),
+        toolsMaterialsTargets: Array.isArray(s.toolsMaterialsTargets) ? s.toolsMaterialsTargets : (Array.isArray(s.outilsMaterielCibles) ? s.outilsMaterielCibles : []),
+        toolsMaterialsNotes: (s.toolsMaterialsNotes ?? s.outilsMaterielNotes ?? {})
+    };
+
+    // Trim obvious empties for a smaller file
+    try {
+        if (!out.id) delete out.id;
+        if (!out.status) delete out.status;
+        if (!out.groupCount && out.groupCount !== 0) delete out.groupCount;
+        if (!out.groupSize && out.groupSize !== 0) delete out.groupSize;
+        if (!out.groupDetails) delete out.groupDetails;
+        if (!out.objective) delete out.objective;
+        if (!out.tasks) delete out.tasks;
+        if (!out.trainerTasks) delete out.trainerTasks;
+        if (!out.presentation) delete out.presentation;
+        if (!out.notes) delete out.notes;
+        if (!out.linksReferences) delete out.linksReferences;
+        if (!out.evaluationSuivi) delete out.evaluationSuivi;
+        if (!Array.isArray(out.competences) || !out.competences.length) delete out.competences;
+        if (!Array.isArray(out.competencesTransversales) || !out.competencesTransversales.length) delete out.competencesTransversales;
+        if (!Array.isArray(out.aimsTargets) || !out.aimsTargets.length) delete out.aimsTargets;
+        if (!Array.isArray(out.outcomesTargets) || !out.outcomesTargets.length) delete out.outcomesTargets;
+        if (!Array.isArray(out.toolsMaterialsTargets) || !out.toolsMaterialsTargets.length) delete out.toolsMaterialsTargets;
+        if (!out.toolsMaterialsNotes || (typeof out.toolsMaterialsNotes === 'object' && Object.keys(out.toolsMaterialsNotes).length === 0)) delete out.toolsMaterialsNotes;
+    } catch (_) {}
+
+    return out;
+}
+
+function __ldStripSubMomentToCanonical(sm) {
+    if (!sm || typeof sm !== 'object') return null;
+    const out = {
+        id: sm.id,
+        ignored: !!(sm.ignored ?? sm.ignore ?? sm.isIgnored ?? sm.ldIgnored),
+        title: sm.title ?? sm.titre ?? '',
+        description: sm.description ?? '',
+        targetTime: sm.targetTime ?? sm.dureeCible ?? sm.tempsCible ?? '',
+        targetUnit: sm.targetUnit ?? sm.uniteDureeCible ?? sm.uniteCible ?? '',
+        steps: []
+    };
+    const steps = Array.isArray(sm.steps) ? sm.steps : (Array.isArray(sm.activites) ? sm.activites : (Array.isArray(sm.activities) ? sm.activities : []));
+    out.steps = (steps || []).map(__ldStripStepToCanonical).filter(Boolean);
+    try { if (!out.id) delete out.id; if (!out.description) delete out.description; if (!out.steps.length) delete out.steps; } catch(_) {}
+    return out;
+}
+
+function __ldStripMomentToCanonical(m) {
+    if (!m || typeof m !== 'object') return null;
+    const out = {
+        id: m.id,
+        ignored: !!(m.ignored ?? m.ignore ?? m.isIgnored ?? m.ldIgnored),
+        title: m.title ?? m.titre ?? '',
+        description: m.description ?? '',
+        targetTime: m.targetTime ?? m.dureeCible ?? m.tempsCible ?? '',
+        targetUnit: m.targetUnit ?? m.uniteDureeCible ?? m.uniteCible ?? '',
+        steps: [],
+        subMoments: []
+    };
+    const steps = Array.isArray(m.steps) ? m.steps : (Array.isArray(m.activites) ? m.activites : (Array.isArray(m.activities) ? m.activities : []));
+    out.steps = (steps || []).map(__ldStripStepToCanonical).filter(Boolean);
+
+    const sms = Array.isArray(m.subMoments) ? m.subMoments : (Array.isArray(m.sousMoments) ? m.sousMoments : []);
+    out.subMoments = (sms || []).map(__ldStripSubMomentToCanonical).filter(Boolean);
+
+    try {
+        if (!out.id) delete out.id;
+        if (!out.description) delete out.description;
+        if (!out.steps.length) delete out.steps;
+        if (!out.subMoments.length) delete out.subMoments;
+    } catch (_) {}
+    return out;
+}
+
+function __ldStripModuleToCanonical(mod) {
+    if (!mod || typeof mod !== 'object') return null;
+    const out = {
+        id: mod.id,
+        ignored: !!(mod.ignored ?? mod.ignore ?? mod.isIgnored ?? mod.ldIgnored),
+        title: mod.title ?? mod.titre ?? '',
+        description: mod.description ?? '',
+        notes: mod.notes ?? mod.moduleNotes ?? '',
+        targetTime: mod.targetTime ?? mod.dureeCible ?? mod.tempsCible ?? '',
+        targetUnit: mod.targetUnit ?? mod.uniteDureeCible ?? mod.uniteCible ?? ''
+    };
+
+    // Module-level targeting selections: canonical (English) keys
+    const aims = Array.isArray(mod.learningAimsModule) ? mod.learningAimsModule
+        : (Array.isArray(mod.objectifsApprentissageModule) ? mod.objectifsApprentissageModule
+        : (Array.isArray(mod.aimsTargets) ? mod.aimsTargets : []));
+    if (Array.isArray(aims) && aims.length) out.learningAimsModule = aims;
+
+    const outs = Array.isArray(mod.learningOutcomesModule) ? mod.learningOutcomesModule
+        : (Array.isArray(mod.resultatsApprentissageModule) ? mod.resultatsApprentissageModule
+        : (Array.isArray(mod.outcomesTargets) ? mod.outcomesTargets : []));
+    if (Array.isArray(outs) && outs.length) out.learningOutcomesModule = outs;
+
+    const cs = Array.isArray(mod.moduleCompetencesSubject) ? mod.moduleCompetencesSubject
+        : (Array.isArray(mod.competencesModuleSujet) ? mod.competencesModuleSujet
+        : (Array.isArray(mod.moduleCompetencesSujet) ? mod.moduleCompetencesSujet : []));
+    if (Array.isArray(cs) && cs.length) out.moduleCompetencesSubject = cs;
+
+    const ct = Array.isArray(mod.moduleCompetencesTransversal) ? mod.moduleCompetencesTransversal
+        : (Array.isArray(mod.competencesModuleTransversales) ? mod.competencesModuleTransversales
+        : (Array.isArray(mod.moduleCompetencesTransversales) ? mod.moduleCompetencesTransversales : []));
+    if (Array.isArray(ct) && ct.length) out.moduleCompetencesTransversal = ct;
+
+    if (Array.isArray(mod.moments) && mod.moments.length) {
+        out.moments = mod.moments.map(__ldStripMomentToCanonical).filter(Boolean);
+    } else if (Array.isArray(mod.steps) && mod.steps.length) {
+        // Legacy / no-moment modules: keep root steps for backward compatibility.
+        out.steps = mod.steps.map(__ldStripStepToCanonical).filter(Boolean);
+    } else {
+        out.moments = [];
+    }
+
+    try {
+        if (!out.id) delete out.id;
+        if (!out.description) delete out.description;
+        if (!out.notes) delete out.notes;
+        if (!out.moments || !out.moments.length) delete out.moments;
+        if (!out.steps || !out.steps.length) delete out.steps;
+    } catch (_) {}
+    return out;
+}
+
+function __ldStripProjectToCanonical(project) {
+    const out = {
+        version: (project && project.version) ? project.version : "1.8",
+        schemaVersion: (project && project.schemaVersion) ? project.schemaVersion : 2,
+        exportedAt: new Date().toISOString(),
+        keyParams: __ldBuildKeyParamsCanonical(project),
+        activities: []
+    };
+    try { if (project && project.i18n) out.i18n = project.i18n; } catch(_) {}
+
+    const acts = Array.isArray(project.activities) ? project.activities : (Array.isArray(project.modules) ? project.modules : []);
+    out.activities = (acts || []).map(__ldStripModuleToCanonical).filter(Boolean);
+    return out;
+}
+
+function buildExportProjectDataCanonicalOnly() {
+    let exportProject = buildExportProjectData();
+
+    // Normalise first (fills canonical keys, repairs IDs, resolves collisions)
+    try {
+        const norm = normaliseAndRepairProject(exportProject);
+        if (norm && norm.ok && norm.data) exportProject = norm.data;
+    } catch (e) {
+        console.warn('Canonical export normalisation failed:', e);
+    }
+
+    // Strip to canonical-only shape
+    try {
+        exportProject = __ldStripProjectToCanonical(exportProject);
+    } catch (e) {
+        console.warn('Canonical export strip failed:', e);
+    }
+
+    return exportProject;
+}
+
 function saveProject() {
-            let exportProject = buildExportProjectData();
-            const __normSave = normaliseAndRepairProject(exportProject);
-            if (__normSave && __normSave.ok) {
-                if (__normSave.warnings && __normSave.warnings.length) console.warn('Save normalisation warnings:', __normSave.warnings);
-                exportProject = __normSave.data;
-            }
+            // Canonical-only JSON export (Option 3)
+            // Keeps import backward-compatible, while producing a smaller/cleaner saved file.
+            const exportProject = buildExportProjectDataCanonicalOnly();
 
             const blob = new Blob([JSON.stringify(exportProject, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -12681,6 +12941,7 @@ function saveProject() {
             a.click();
             URL.revokeObjectURL(url);
         }
+
         window.triggerFileLoad = function triggerFileLoad() {
             // Guard against double-trigger (inline onclick + JS-bound listener can both fire).
             // Prevents the OS file picker from opening twice.
@@ -13386,7 +13647,7 @@ function normaliseAndRepairProject(project) {
             let cid = String(norm.id || '').trim();
             if (!cid || seen.has(cid)) cid = _genId(prefix);
             seen.add(cid);
-            out.push({ id: cid, label: _trimText(norm.label, 400) });
+            out.push({ id: cid, label: _trimText(norm.label, 400), categorie: _trimText(norm.categorie, 120), sousCategorie: _trimText(norm.sousCategorie, 120) });
         }
         return out;
     };
@@ -14630,19 +14891,28 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
             try { __ldApplyUnitLabelFormat(); } catch(_){ __ldSilentErr(_); }
             // Restore module-level learning goals/outcomes selections (optional)
             try {
-                if (Array.isArray(data.objectifsApprentissageModule)) {
-                    setModuleSelectedAims(actEl, data.objectifsApprentissageModule);
-                }
-                if (Array.isArray(data.resultatsApprentissageModule)) {
-                    setModuleSelectedOutcomes(actEl, data.resultatsApprentissageModule);
-                }
+                const __modAims = Array.isArray(data.objectifsApprentissageModule) ? data.objectifsApprentissageModule
+                    : (Array.isArray(data.learningAimsModule) ? data.learningAimsModule
+                    : (Array.isArray(data.aimsTargets) ? data.aimsTargets : []));
+                if (Array.isArray(__modAims)) setModuleSelectedAims(actEl, __modAims);
+
+                const __modOuts = Array.isArray(data.resultatsApprentissageModule) ? data.resultatsApprentissageModule
+                    : (Array.isArray(data.learningOutcomesModule) ? data.learningOutcomesModule
+                    : (Array.isArray(data.outcomesTargets) ? data.outcomesTargets : []));
+                if (Array.isArray(__modOuts)) setModuleSelectedOutcomes(actEl, __modOuts);
             } catch(_){ __ldSilentErr(_); }
             try { updateModuleAimsSummary(actEl); } catch(_){ __ldSilentErr(_); }
             try { updateModuleOutcomesSummary(actEl); } catch(_){ __ldSilentErr(_); }
 
             // Restore module-level targeted competences selections (optional)
-            try { populateModuleTargetCompetencesSujetSelect(actEl, data.competencesModuleSujet || []); } catch(_){ __ldSilentErr(_); }
-            try { populateModuleTargetCompetencesTransvSelect(actEl, data.competencesModuleTransversales || []); } catch(_){ __ldSilentErr(_); }
+            try {
+                const __cs = (data.competencesModuleSujet || data.moduleCompetencesSubject || data.moduleCompetencesSujet || data.competencesModule || []);
+                populateModuleTargetCompetencesSujetSelect(actEl, __cs || []);
+            } catch(_){ __ldSilentErr(_); }
+            try {
+                const __ct = (data.competencesModuleTransversales || data.moduleCompetencesTransversal || data.moduleCompetencesTransversales || data.competencesModuleTransversal || []);
+                populateModuleTargetCompetencesTransvSelect(actEl, __ct || []);
+            } catch(_){ __ldSilentErr(_); }
             try { updateModuleTargetCompetencesSummary(actEl); } catch(_){ __ldSilentErr(_); }
             try { __ldRefreshIgnoreCascade(); } catch(_){ __ldSilentErr(_); }
             syncSoloMomentUI(actEl);
@@ -14683,8 +14953,8 @@ stepEl.querySelector('.step-input-objective').value = data.objective || "";
             const __ef = stepEl.querySelector('.step-input-eval-followup'); if (__ef) __ef.value = data.evaluationSuivi || data.evaluation || data.suiviEvaluation || data.followUp || data.evalFollowUp || "";
             try { populateStepCompetencesSelect(stepEl, data.competencesSujet || data.competences || data.competenceIds || data.competencies || data.competencesCiblees || []); } catch(_){ __ldSilentErr(_); }
             try { populateStepCompetencesTransversalesSelect(stepEl, data.competencesTransversales || data.transversalCompetences || data.competences_transversales || []); } catch(_){ __ldSilentErr(_); }
-            try { populateStepAimsSelect(stepEl, data.objectifsCibles || data.aimsTargeted || data.objectifsCiblesActivite || data.objectifs || []); } catch(_){ __ldSilentErr(_); }
-            try { populateStepOutcomesSelect(stepEl, data.resultatsApprentissageCibles || data.outcomesTargeted || data.resultatsCibles || data.resultats || []); } catch(_){ __ldSilentErr(_); }
+            try { populateStepAimsSelect(stepEl, data.objectifsCibles || data.aimsTargets || data.aimsTargeted || data.objectifsCiblesActivite || data.objectifs || []); } catch(_){ __ldSilentErr(_); }
+            try { populateStepOutcomesSelect(stepEl, data.resultatsApprentissageCibles || data.outcomesTargets || data.outcomesTargeted || data.resultatsCibles || data.resultats || []); } catch(_){ __ldSilentErr(_); }
                         try {
                 const rawNotes = (data.outilsMaterielNotes || data.toolsMaterialsNotes || data.toolsMaterialsNotesByItem || {});
                 __setStepToolMatNotesMap(stepEl, __normaliseToolsMaterialsNotes(rawNotes));
