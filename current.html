@@ -12481,6 +12481,11 @@ objectifActivite: stepEl.querySelector('.step-input-objective').value,
 
 function buildExportProjectData() {
             // Build a complete, portable representation of the current design (used for file save and autosave)
+            
+            // Check if we're in filtered export mode
+            const isFiltered = window.__ldExportFilteredMode && window.__ldExportFilteredData;
+            const filteredData = window.__ldExportFilteredData;
+            
             const outcomes = [];
             document.querySelectorAll('#outcomes-list li').forEach(li => {
                 outcomes.push({
@@ -12529,7 +12534,19 @@ function buildExportProjectData() {
                 modules: []
             };
 
-            document.querySelectorAll('.activity-group').forEach(actEl => {
+            document.querySelectorAll('.activity-group').forEach((actEl, moduleIndex) => {
+                // Check if this module should be included in filtered export
+                if (isFiltered) {
+                    const moduleId = `module-${moduleIndex}`;
+                    const isModuleSelected = filteredData.selectedIds.includes(moduleId);
+                    const hasSelectedChildren = filteredData.selectedIds.some(id => id.startsWith(moduleId + '-'));
+                    
+                    // Skip if neither module nor its children are selected
+                    if (!isModuleSelected && !hasSelectedChildren) {
+                        return;
+                    }
+                }
+                
                 const moduleData = {
                     titre: actEl.querySelector('.activity-title').value,
                     description: actEl.querySelector('.activity-description').value,
@@ -12548,7 +12565,19 @@ function buildExportProjectData() {
                 const momentEls = momentsRoot ? Array.from(momentsRoot.querySelectorAll('.moment-group')) : [];
 
                 if (momentEls && momentEls.length) {
-                    momentEls.forEach(momentEl => {
+                    momentEls.forEach((momentEl, momentIndex) => {
+                        // Check if this moment should be included in filtered export
+                        if (isFiltered) {
+                            const momentId = `module-${moduleIndex}-moment-${momentIndex}`;
+                            const isMomentSelected = filteredData.selectedIds.includes(momentId);
+                            const hasSelectedChildren = filteredData.selectedIds.some(id => id.startsWith(momentId + '-'));
+                            
+                            // Skip if neither moment nor its children are selected
+                            if (!isMomentSelected && !hasSelectedChildren) {
+                                return;
+                            }
+                        }
+                        
                         const momentData = {
                             ignored: (typeof __ldIsSelfIgnored === 'function') ? __ldIsSelfIgnored(momentEl) : false,
                             titre: momentEl.querySelector('.moment-title')?.value || "",
@@ -12568,7 +12597,19 @@ function buildExportProjectData() {
                             if (smEls && smEls.length) {
                                 momentData.sousMoments = [];
                                 momentData.subMoments = [];
-                                smEls.forEach(smEl => {
+                                smEls.forEach((smEl, submomentIndex) => {
+                                    // Check if this submoment should be included in filtered export
+                                    if (isFiltered) {
+                                        const submomentId = `module-${moduleIndex}-moment-${momentIndex}-submoment-${submomentIndex}`;
+                                        const isSubmomentSelected = filteredData.selectedIds.includes(submomentId);
+                                        const hasSelectedChildren = filteredData.selectedIds.some(id => id.startsWith(submomentId + '-'));
+                                        
+                                        // Skip if neither submoment nor its children are selected
+                                        if (!isSubmomentSelected && !hasSelectedChildren) {
+                                            return;
+                                        }
+                                    }
+                                    
                                     const smTitleVal = smEl.querySelector('.submoment-title')?.value || "";
                                     const smTargetTime = smEl.querySelector('.submoment-target-time')?.value || "";
                                     const smTargetUnit = smEl.querySelector('.submoment-target-unit')?.value || getDefaultDurationUnitSecs();
@@ -12588,7 +12629,15 @@ function buildExportProjectData() {
                                         targetUnit: String(smTargetUnit),
                                         steps: []
                                     };
-                                    __ldQueryAllDesignedStepCards(smEl).forEach(stepEl => {
+                                    __ldQueryAllDesignedStepCards(smEl).forEach((stepEl, activityIndex) => {
+                                        // Check if this activity should be included in filtered export
+                                        if (isFiltered) {
+                                            const activityId = `module-${moduleIndex}-moment-${momentIndex}-submoment-${submomentIndex}-activity-${activityIndex}`;
+                                            if (!filteredData.selectedIds.includes(activityId)) {
+                                                return;
+                                            }
+                                        }
+                                        
                                         const stepObj = __ldSerializeStepFromEl(stepEl);
                                         smLegacy.activites.push(stepObj);
                                         smCanon.steps.push({ ...stepObj });
@@ -17264,6 +17313,125 @@ function handleExport(select) {
             }
         }
 
+function filterExportDataBySelection(projectData) {
+    // If nothing is selected, export everything.
+    const selected = window.__exportSelectedItems;
+    const hasSelection = !!(selected && (
+        (selected.modules && selected.modules.size) ||
+        (selected.moments && selected.moments.size) ||
+        (selected.submoments && selected.submoments.size) ||
+        (selected.activities && selected.activities.size)
+    ));
+    if (!hasSelection) return projectData;
+
+    try {
+        // One-shot selection: clear it once we build the export
+        delete window.__exportSelectedItems;
+
+        const shouldInclude = (id, type) => id && selected && selected[type + 's'] && selected[type + 's'].has(id);
+
+        const activitiesRoot = document.getElementById('activities-root');
+        if (!activitiesRoot) return projectData;
+
+        const moduleElements = Array.from(activitiesRoot.querySelectorAll('.activity-group'));
+        const filteredModules = [];
+
+        (projectData.modules || []).forEach((moduleData, moduleIdx) => {
+            const moduleEl = moduleElements[moduleIdx];
+            if (!moduleEl) return;
+
+            const moduleId = moduleEl.getAttribute('data-export-id');
+            const includeModule = shouldInclude(moduleId, 'module');
+
+            const momentElements = Array.from(moduleEl.querySelectorAll('.moment-group'));
+            const filteredMoments = [];
+
+            (moduleData.moments || []).forEach((momentData, momentIdx) => {
+                const momentEl = momentElements[momentIdx];
+                if (!momentEl) return;
+
+                const momentId = momentEl.getAttribute('data-export-id');
+                const includeMoment = includeModule || shouldInclude(momentId, 'moment');
+
+                // 1) Direct steps at moment level (no submoment wrapper)
+                const directStepEls = Array.from(momentEl.querySelectorAll('.moment-direct-steps .step-card, .activity-steps-container .step-card'));
+                const directStepsRaw = Array.isArray(momentData.activites) ? momentData.activites : (Array.isArray(momentData.activities) ? momentData.activities : []);
+                const filteredDirectSteps = [];
+                directStepsRaw.forEach((activityData, activityIdx) => {
+                    const activityEl = directStepEls[activityIdx];
+                    if (!activityEl) return;
+                    const activityId = activityEl.getAttribute('data-export-id');
+                    const includeActivity = includeMoment || shouldInclude(activityId, 'activity');
+                    if (includeActivity) filteredDirectSteps.push(activityData);
+                });
+
+                // 2) Steps inside submoments
+                const submomentElements = Array.from(momentEl.querySelectorAll('.submoment-card'));
+                const rawCanon = Array.isArray(momentData.subMoments) ? momentData.subMoments : [];
+                const rawLegacy = Array.isArray(momentData.sousMoments) ? momentData.sousMoments : [];
+
+                const filteredCanon = [];
+                const filteredLegacy = [];
+
+                const count = Math.max(submomentElements.length, rawCanon.length, rawLegacy.length);
+
+                for (let subIdx = 0; subIdx < count; subIdx++) {
+                    const subEl = submomentElements[subIdx];
+                    const smCanon = rawCanon[subIdx];
+                    const smLegacy = rawLegacy[subIdx];
+
+                    // If there's no DOM element for this submoment, we can't map IDs reliably -> skip
+                    if (!subEl) continue;
+
+                    const subId = subEl.getAttribute('data-export-id');
+                    const includeSubmoment = includeMoment || shouldInclude(subId, 'submoment');
+
+                    const stepEls = Array.from(subEl.querySelectorAll('.steps-container .step-card'));
+                    const stepsRaw = (smCanon && Array.isArray(smCanon.steps)) ? smCanon.steps :
+                                     (smLegacy && Array.isArray(smLegacy.activites)) ? smLegacy.activites : [];
+
+                    const filteredSteps = [];
+                    stepsRaw.forEach((activityData, activityIdx) => {
+                        const activityEl = stepEls[activityIdx];
+                        if (!activityEl) return;
+                        const activityId = activityEl.getAttribute('data-export-id');
+                        const includeActivity = includeSubmoment || shouldInclude(activityId, 'activity');
+                        if (includeActivity) filteredSteps.push(activityData);
+                    });
+
+                    if (filteredSteps.length) {
+                        if (smCanon) filteredCanon.push({ ...smCanon, steps: filteredSteps });
+                        if (smLegacy) filteredLegacy.push({ ...smLegacy, activites: filteredSteps });
+                    }
+                }
+
+                const keepMoment = includeMoment || filteredDirectSteps.length || filteredCanon.length || filteredLegacy.length;
+
+                if (keepMoment) {
+                    const out = { ...momentData };
+
+                    // Preserve both schemas if they exist, to keep downstream code compatible.
+                    if ('activites' in out || Array.isArray(momentData.activites)) out.activites = filteredDirectSteps;
+                    if ('activities' in out || Array.isArray(momentData.activities)) out.activities = filteredDirectSteps;
+
+                    if (Array.isArray(momentData.subMoments)) out.subMoments = filteredCanon;
+                    if (Array.isArray(momentData.sousMoments)) out.sousMoments = filteredLegacy;
+
+                    filteredMoments.push(out);
+                }
+            });
+
+            const keepModule = includeModule || filteredMoments.length;
+            if (keepModule) filteredModules.push({ ...moduleData, moments: filteredMoments });
+        });
+
+        return { ...projectData, modules: filteredModules };
+    } catch (err) {
+        if (typeof __ldSilentErr === 'function') __ldSilentErr(err);
+        return projectData;
+    }
+}
+
 function buildExportModel() {
     // Centralised export model derived from the same source as project save (single point of truth).
     // This model is used by XLSX/DOCX exports and aims to keep a stable, explicit structure:
@@ -17377,98 +17545,89 @@ function buildExportModel() {
     };
 
     const modules = (project.modules || []).map((m) => {
-        const __rawMoments = (m.moments || []);
-        const __momentsSource = (__rawMoments && __rawMoments.length) ? __rawMoments : [{
-            titre: '',
-            description: '',
-            dureeCible: '',
-            uniteDureeCible: '',
-function filterExportDataBySelection(projectData) {
-    if (!window.__exportSelectedItems || !projectData || !projectData.modules) {
-        if (window.__exportSelectedItems) delete window.__exportSelectedItems;
-        return projectData;
-    }
-    
-    const selected = window.__exportSelectedItems;
-    const hasSelection = selected.modules.size > 0 || selected.moments.size > 0 || 
-                       selected.submoments.size > 0 || selected.activities.size > 0;
-    
-    if (!hasSelection) {
-        delete window.__exportSelectedItems;
-        return projectData;
-    }
+        const modTitle = asStr(m.titre ?? m.title);
+        const modDesc = asStr(m.description);
+        const modNotes = asStr(m.notes);
 
-    const shouldInclude = (id, type) => id && selected[type + 's'].has(id);
-    const root = document.getElementById('activities-root');
-    if (!root) {
-        delete window.__exportSelectedItems;
-        return projectData;
-    }
+        const modTargetTime = asStr(m.dureeCible ?? m.targetTime);
+        const modTargetUnit = asStr(m.uniteDureeCible ?? m.targetUnit);
 
-    const moduleElements = Array.from(root.querySelectorAll('.activity-group'));
-    const filteredModules = [];
+        const aimsTargets = Array.isArray(m.objectifsApprentissageModule) ? m.objectifsApprentissageModule : (Array.isArray(m.aimsTargets) ? m.aimsTargets : []);
+        const outcomesTargets = Array.isArray(m.resultatsApprentissageModule) ? m.resultatsApprentissageModule : (Array.isArray(m.outcomesTargets) ? m.outcomesTargets : []);
 
-    projectData.modules.forEach((moduleData, moduleIdx) => {
-        const moduleEl = moduleElements[moduleIdx];
-        if (!moduleEl) return;
-        
-        const moduleId = moduleEl.getAttribute('data-export-id');
-        const includeModule = shouldInclude(moduleId, 'module');
-        
-        const momentElements = Array.from(moduleEl.querySelectorAll('.activity-moments-container .moment-group'));
-        const filteredMoments = [];
+        const compSujetIds = Array.isArray(m.competencesModuleSujet) ? m.competencesModuleSujet : [];
+        const compTransIds = Array.isArray(m.competencesModuleTransversales) ? m.competencesModuleTransversales : [];
 
-        (moduleData.moments || []).forEach((momentData, momentIdx) => {
-            const momentEl = momentElements[momentIdx];
-            if (!momentEl) return;
-            
-            const momentId = momentEl.getAttribute('data-export-id');
-            const includeMoment = includeModule || shouldInclude(momentId, 'moment');
-            
-            const submomentElements = Array.from(momentEl.querySelectorAll('.submoments-container .submoment-card'));
-            const filteredSubmoments = [];
+        const compSujetLabels = __idsToLabels(compSujetIds, __compMap);
+        const compTransLabels = __idsToLabels(compTransIds, __compTMap);
 
-            (momentData.sousMoments || []).forEach((submomentData, submomentIdx) => {
-                const submomentEl = submomentElements[submomentIdx];
-                if (!submomentEl) return;
-                
-                const submomentId = submomentEl.getAttribute('data-export-id');
-                const includeSubmoment = includeMoment || shouldInclude(submomentId, 'submoment');
-                
-                const activityElements = Array.from(submomentEl.querySelectorAll('.steps-container .step-card'));
-                const filteredActivities = [];
+        const momentsSource = (Array.isArray(m.moments) && m.moments.length)
+            ? m.moments
+            : [{
+                titre: '',
+                description: '',
+                dureeCible: '',
+                uniteDureeCible: (typeof getDefaultDurationUnitSecs === 'function') ? getDefaultDurationUnitSecs() : 60,
+                activites: [],
+                sousMoments: [],
+                subMoments: []
+            }];
 
-                (submomentData.steps || []).forEach((activityData, activityIdx) => {
-                    const activityEl = activityElements[activityIdx];
-                    if (!activityEl) return;
-                    
-                    const activityId = activityEl.getAttribute('data-export-id');
-                    const includeActivity = includeSubmoment || shouldInclude(activityId, 'activity');
-                    
-                    if (includeActivity) filteredActivities.push(activityData);
-                });
+        const moments = (momentsSource || []).map((mom) => {
+            const momTitle = asStr(mom.titre ?? mom.title);
+            const momDesc = asStr(mom.description);
 
-                if (filteredActivities.length > 0) {
-                    filteredSubmoments.push({...submomentData, steps: filteredActivities});
-                }
+            const momTargetTime = asStr(mom.dureeCible ?? mom.targetTime);
+            const momTargetUnit = asStr(mom.uniteDureeCible ?? mom.targetUnit);
+
+            // Activities directly under the moment (i.e., no submoment wrapper)
+            const momActivitiesRaw = Array.isArray(mom.activites) ? mom.activites : (Array.isArray(mom.activities) ? mom.activities : []);
+            const momActivities = (momActivitiesRaw || []).map(__mapActivity);
+
+            // Submoments (prefer canonical subMoments if present)
+            const subCanon = Array.isArray(mom.subMoments) ? mom.subMoments : [];
+            const subLegacy = Array.isArray(mom.sousMoments) ? mom.sousMoments : [];
+            const subSource = (subCanon && subCanon.length) ? subCanon : subLegacy;
+
+            const submoments = (subSource || []).map((sm) => {
+                const smTitle = asStr(sm.titre ?? sm.title);
+                const smDesc = asStr(sm.description);
+
+                const smTargetTime = asStr(sm.dureeCible ?? sm.targetTime);
+                const smTargetUnit = asStr(sm.uniteDureeCible ?? sm.targetUnit);
+
+                const smActivitiesRaw = Array.isArray(sm.activites) ? sm.activites : (Array.isArray(sm.steps) ? sm.steps : (Array.isArray(sm.activities) ? sm.activities : []));
+                const smActivities = (smActivitiesRaw || []).map(__mapActivity);
+
+                return {
+                    title: ((sm && sm.ignored) ? '[IGNORÉ] ' : '') + smTitle,
+                    description: smDesc,
+                    target: fmtTarget(smTargetTime, smTargetUnit),
+                    activities: smActivities
+                };
             });
 
-            if (filteredSubmoments.length > 0) {
-                filteredMoments.push({...momentData, sousMoments: filteredSubmoments});
-            }
+            return {
+                title: ((mom && mom.ignored) ? '[IGNORÉ] ' : '') + momTitle,
+                description: momDesc,
+                target: fmtTarget(momTargetTime, momTargetUnit),
+                activities: momActivities,
+                submoments: submoments
+            };
         });
 
-        if (filteredMoments.length > 0) {
-            filteredModules.push({...moduleData, moments: filteredMoments});
-        }
-    });
-
-    delete window.__exportSelectedItems;
-    return {...projectData, modules: filteredModules};
-}
-    });
-
-    const meta = {
+        return {
+            title: ((m && m.ignored) ? '[IGNORÉ] ' : '') + modTitle,
+            description: modDesc,
+            notes: modNotes,
+            target: fmtTarget(modTargetTime, modTargetUnit),
+            aimsTargets: aimsTargets,
+            outcomesTargets: outcomesTargets,
+            competencesSujetText: compSujetLabels.join(', '),
+            competencesTransversalesText: compTransLabels.join(', '),
+            moments: moments
+        };
+    });    const meta = {
         courseName: asStr(project.parametres?.nom),
         topic: asStr(project.parametres?.theme),
         authors: asStr(project.parametres?.auteurs),
@@ -20973,6 +21132,116 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
         }
 
 
+
+        // ==========================================================
+        // Selective export helpers (Export Selection modal)
+        // ==========================================================
+        function __ldGetExportSelectionSet() {
+            try {
+                if (window.__ldExportFilteredMode &&
+                    window.__ldExportFilteredData &&
+                    Array.isArray(window.__ldExportFilteredData.selectedIds) &&
+                    window.__ldExportFilteredData.selectedIds.length) {
+                    return new Set(window.__ldExportFilteredData.selectedIds.map(String));
+                }
+            } catch (e) { /* no-op */ }
+            return null;
+        }
+
+        function __ldSelHasPrefix(selSet, prefix) {
+            if (!selSet) return true;
+            const p = String(prefix || '');
+            if (!p) return true;
+            if (selSet.has(p)) return true;
+            const pre = p + '-';
+            for (const id of selSet) {
+                if (String(id).startsWith(pre)) return true;
+            }
+            return false;
+        }
+
+        function __ldGetStepDurationSecsSafe(stepEl) {
+            try { if (typeof __ldIsIgnored === 'function' && __ldIsIgnored(stepEl)) return 0; } catch (_) {}
+            try {
+                if (typeof getStepDurationSecs === 'function') return Math.max(0, Number(getStepDurationSecs(stepEl) || 0));
+            } catch (_) {}
+            // Fallback: parse duration input + unit (unit values are expected to be in seconds)
+            try {
+                const raw = (stepEl && stepEl.querySelector && stepEl.querySelector('.duration-input')?.value) || '';
+                const v = parseFloat(String(raw).replace(',', '.'));
+                if (!isFinite(v) || v <= 0) return 0;
+                const unitRaw = stepEl.querySelector('.duration-unit')?.value;
+                const unit = parseFloat(unitRaw);
+                const unitSecs = isFinite(unit) && unit > 0 ? unit : 60;
+                return v * unitSecs;
+            } catch (_) {
+                return 0;
+            }
+        }
+
+        function __ldComputeSelectedTotalSecs(selSet) {
+            const _sel = selSet || __ldGetExportSelectionSet();
+            if (!_sel) {
+                try { return Math.max(0, Number(getTotals()?.totalSecs || 0)); } catch (_) { /* ignore */ }
+            }
+
+            let total = 0;
+            const modules = Array.from(document.querySelectorAll('.activity-group') || []);
+            modules.forEach((moduleEl, moduleIndex) => {
+                const moduleId = `module-${moduleIndex}`;
+                const moduleExplicit = _sel ? _sel.has(moduleId) : true;
+                if (_sel && !__ldSelHasPrefix(_sel, moduleId)) return;
+
+                const momentEls = Array.from(moduleEl.querySelectorAll('.moment-group') || []);
+                if (momentEls.length === 0) {
+                    // Legacy / no-moment module: sum all step cards under the module
+                    const steps = Array.from(moduleEl.querySelectorAll('.step-card') || []);
+                    steps.forEach((stepEl) => { total += __ldGetStepDurationSecsSafe(stepEl); });
+                    return;
+                }
+
+                momentEls.forEach((momentEl, momentIndex) => {
+                    const momentId = `${moduleId}-moment-${momentIndex}`;
+                    const momentExplicit = _sel ? (moduleExplicit || _sel.has(momentId)) : true;
+                    if (_sel && !momentExplicit && !__ldSelHasPrefix(_sel, momentId)) return;
+
+                    // Direct steps (outside submoments) – only if module or moment explicitly selected
+                    let directSteps = Array.from(momentEl.querySelectorAll('.activity-steps-container .step-card') || []);
+                    if (_sel && !momentExplicit) {
+                        directSteps = directSteps.filter((_, aIdx) => _sel.has(`${momentId}-activity-${aIdx}`));
+                    }
+                    directSteps.forEach((stepEl) => { total += __ldGetStepDurationSecsSafe(stepEl); });
+
+                    // Submoments + steps
+                    const submomentEls = Array.from(momentEl.querySelectorAll('.submoments-container .submoment-card') || []);
+                    submomentEls.forEach((smEl, smIndex) => {
+                        const smId = `${momentId}-submoment-${smIndex}`;
+                        const smExplicit = _sel ? (momentExplicit || moduleExplicit || _sel.has(smId)) : true;
+                        if (_sel && !smExplicit && !__ldSelHasPrefix(_sel, smId)) return;
+
+                        let steps = [];
+                        try {
+                            if (typeof __ldQueryAllDesignedStepCards === 'function') {
+                                steps = Array.from(__ldQueryAllDesignedStepCards(smEl) || []);
+                            } else {
+                                steps = Array.from(smEl.querySelectorAll('.step-card') || []);
+                            }
+                        } catch (_) {
+                            steps = Array.from(smEl.querySelectorAll('.step-card') || []);
+                        }
+
+                        if (_sel && !smExplicit) {
+                            steps = steps.filter((_, aIdx) => _sel.has(`${smId}-activity-${aIdx}`));
+                        }
+
+                        steps.forEach((stepEl) => { total += __ldGetStepDurationSecsSafe(stepEl); });
+                    });
+                });
+            });
+
+            return total;
+        }
+
 function exportCSV() {
     // Export to Excel (.xlsx) – keeps the existing "CSV" menu entry unchanged.
     // Sheets:
@@ -21430,8 +21699,9 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
 
         function exportRichText() {
              const t = translations[currentLang];
-            const totals = getTotals();
-            const totalDuration = fmtTotalDuration(totals.totalSecs, t);
+            const __selSet = __ldGetExportSelectionSet();
+            const __totalSecs = __ldComputeSelectedTotalSecs(__selSet);
+            const totalDuration = fmtTotalDuration(__totalSecs, t);
             
 
                         const __esc = (v) => escapeHtml(String(v ?? ''));
@@ -21631,6 +21901,9 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             html += `<h2>Structure pédagogique</h2>`;
 
             document.querySelectorAll('.activity-group').forEach((activity, aIdx) => {
+                const __moduleId = `module-${aIdx}`;
+                if (__selSet && !__ldSelHasPrefix(__selSet, __moduleId)) return;
+                const __moduleExplicit = __selSet ? __selSet.has(__moduleId) : true;
                 const moduleTitle = activity.querySelector('.activity-title').value || t.md_untitled_activity;
                 const moduleDesc = activity.querySelector('.activity-description').value;
 
@@ -21755,6 +22028,9 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
 
                 if (hasMoments) {
                     momentEls.forEach((momentEl, mIdx) => {
+                        const __momentId = `${__moduleId}-moment-${mIdx}`;
+                        const __momentExplicit = __selSet ? (__moduleExplicit || __selSet.has(__momentId)) : true;
+                        if (__selSet && !__momentExplicit && !__ldSelHasPrefix(__selSet, __momentId)) return;
                         const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
                         const mDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
@@ -21768,12 +22044,27 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         if (hasSubmoments) {
                             // Moment has sub-moments
                             let totalMomentSecs = 0;
-                            submomentEls.forEach(smEl => {
-                                const smSteps = __ldQueryAllDesignedStepCards(smEl);
+                            submomentEls.forEach((smEl, __smIdxTotal) => {
+                            const __submomentIdTotal = `${__momentId}-submoment-${__smIdxTotal}`;
+                            const __submomentExplicitTotal = __selSet ? (__momentExplicit || __moduleExplicit || __selSet.has(__submomentIdTotal)) : true;
+                            if (__selSet && !__submomentExplicitTotal && !__ldSelHasPrefix(__selSet, __submomentIdTotal)) return;
+                                let smSteps = __ldQueryAllDesignedStepCards(smEl);
+                            if (__selSet && !__submomentExplicitTotal) {
+                                smSteps = Array.from(smSteps).filter((_, __aIdx) => __selSet.has(`${__submomentIdTotal}-activity-${__aIdx}`));
+                            }
                                 totalMomentSecs += calcMomentSecs(smSteps);
                             });
 
-                            html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${(typeof __ldIsIgnored==='function' && __ldIsIgnored(momentEl)) ? ' [IGNORÉ]' : ''}${momentTitle ? ` : ${__esc(momentTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(totalMomentSecs)})</span></h3>`;
+                            
+                            // Direct steps in the moment (outside sub-moments)
+                            let __directSteps = Array.from(momentEl.querySelectorAll('.moment-direct-steps .step-card') || []);
+                            if (__selSet && !__momentExplicit) {
+                                __directSteps = __directSteps.filter((_, __aIdx) => __selSet.has(`${__momentId}-activity-${__aIdx}`));
+                            }
+                            const __directSecs = calcMomentSecs(__directSteps);
+                            totalMomentSecs += __directSecs;
+
+html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${(typeof __ldIsIgnored==='function' && __ldIsIgnored(momentEl)) ? ' [IGNORÉ]' : ''}${momentTitle ? ` : ${__esc(momentTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(totalMomentSecs)})</span></h3>`;
                             if (mTgtVal) {
                                 html += `<div style="font-size: 0.9em; color: #64748b; margin-top: 4px; margin-bottom: 6px;"><strong>Durée cible :</strong> ${__esc(mTgtVal)} ${__esc(mTgtUnitTxt)}</div>`;
                             }
@@ -21781,10 +22072,24 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                                 html += `<div style="margin-top: 6px;"><strong>Description :</strong><br>${escapeHtml(mDesc).replace(/\n/g,'<br>')}</div>`;
                             }
 
-                            // Export each sub-moment
+                            
+                            // Direct steps group (kept even when sub-moments exist)
+                            if (__directSteps && __directSteps.length) {
+                                const __directLabel = (t && (t.label_direct_steps || t.label_direct || t.direct_steps)) ? (t.label_direct_steps || t.label_direct || t.direct_steps) : 'Activités directes';
+                                html += `<h4 style="margin-top: 14px; margin-left: 20px; color: #475569; font-size: 0.95em;">Sous-moment ${momentPrefix}.0 : ${__esc(__directLabel)} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(__directSecs)})</span></h4>`;
+                                renderSteps(__directSteps, `${momentPrefix}.0`);
+                            }
+
+// Export each sub-moment
                             submomentEls.forEach((smEl, smIdx) => {
+                            const __submomentId = `${__momentId}-submoment-${smIdx}`;
+                            const __submomentExplicit = __selSet ? (__momentExplicit || __moduleExplicit || __selSet.has(__submomentId)) : true;
+                            if (__selSet && !__submomentExplicit && !__ldSelHasPrefix(__selSet, __submomentId)) return;
                                 const smTitle = (smEl.querySelector('.submoment-title')?.value || '').trim();
-                                const smSteps = __ldQueryAllDesignedStepCards(smEl);
+                                let smSteps = __ldQueryAllDesignedStepCards(smEl);
+                            if (__selSet && !__submomentExplicit) {
+                                smSteps = Array.from(smSteps).filter((_, __aIdx) => __selSet.has(`${__submomentId}-activity-${__aIdx}`));
+                            }
                                 const smSecs = calcMomentSecs(smSteps);
                                 const smPrefix = `${momentPrefix}.${smIdx + 1}`;
 
@@ -21800,7 +22105,10 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             });
                         } else {
                             // Moment has direct steps
-                            const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
+                            let stepCards = Array.from(momentEl.querySelectorAll('.activity-steps-container .step-card'));
+                        if (__selSet && !__momentExplicit) {
+                            stepCards = stepCards.filter((_, __aIdx) => __selSet.has(`${__momentId}-activity-${__aIdx}`));
+                        }
                             const momentSecs = calcMomentSecs(stepCards);
 
                             html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment ${momentPrefix}${(typeof __ldIsIgnored==='function' && __ldIsIgnored(momentEl)) ? ' [IGNORÉ]' : ''}${momentTitle ? ` : ${__esc(momentTitle)}` : ''} <span style="font-weight: normal; color:#64748b;">(${formatTimelineDuration(momentSecs)})</span></h3>`;
@@ -21844,8 +22152,9 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
 
         function exportRTF() {
             const t = translations[currentLang] || translations.fr;
-            const totals = getTotals();
-            const totalDuration = fmtTotalDuration(totals.totalSecs, t);
+            const __selSet = __ldGetExportSelectionSet();
+            const __totalSecs = __ldComputeSelectedTotalSecs(__selSet);
+            const totalDuration = fmtTotalDuration(__totalSecs, t);
             const courseName = (document.getElementById('param-name')?.value || '').trim();
 
             const readDurationSecs = (card) => {
@@ -21966,6 +22275,9 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             let moduleIdx = 0;
             document.querySelectorAll('.activity-group').forEach((moduleEl) => {
                 moduleIdx += 1;
+                const __moduleId = `module-${moduleIdx - 1}`;
+                if (__selSet && !__ldSelHasPrefix(__selSet, __moduleId)) return;
+                const __moduleExplicit = __selSet ? __selSet.has(__moduleId) : true;
                 const moduleTitle = (moduleEl.querySelector('.activity-title')?.value || '').trim() || `${t.md_module} ${moduleIdx}`;
                 const moduleDesc = (moduleEl.querySelector('.activity-description')?.value || '').trim();
                 const moduleNotes = (moduleEl.querySelector('.module-notes')?.value || '').trim();
@@ -22045,6 +22357,9 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 };
                 if (hasMoments) {
                     momentEls.forEach((momentEl, moIdx) => {
+                    const __momentId = `${__moduleId}-moment-${moIdx}`;
+                    const __momentExplicit = __selSet ? (__moduleExplicit || __selSet.has(__momentId)) : true;
+                    if (__selSet && !__momentExplicit && !__ldSelHasPrefix(__selSet, __momentId)) return;
                         const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
                         const momentDesc = (momentEl.querySelector('.moment-description')?.value || '').trim();
                         const momentTarget = fmtTarget(momentEl.querySelector('.moment-target-time'), momentEl.querySelector('.moment-target-unit'));
@@ -22057,21 +22372,52 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         if (hasSubmoments) {
                             // Moment has sub-moments
                             let totalMomentSecs = 0;
-                            submomentEls.forEach(smEl => {
-                                const smSteps = __ldQueryAllDesignedStepCards(smEl);
+                            submomentEls.forEach((smEl, __smIdxTotal) => {
+                            const __submomentIdTotal = `${__momentId}-submoment-${__smIdxTotal}`;
+                            const __submomentExplicitTotal = __selSet ? (__momentExplicit || __moduleExplicit || __selSet.has(__submomentIdTotal)) : true;
+                            if (__selSet && !__submomentExplicitTotal && !__ldSelHasPrefix(__selSet, __submomentIdTotal)) return;
+                                let smSteps = __ldQueryAllDesignedStepCards(smEl);
+                            if (__selSet && !__submomentExplicitTotal) {
+                                smSteps = Array.from(smSteps).filter((_, __aIdx) => __selSet.has(`${__submomentIdTotal}-activity-${__aIdx}`));
+                            }
                                 totalMomentSecs += sumStepsToSecs(smSteps);
                             });
 
-                            rtf += '\\par\\b ' + escapeRtf(`  Moment ${momentPrefix}${(typeof __ldIsIgnored==='function' && __ldIsIgnored(momentEl)) ? ' [IGNORÉ]' : ''}`) + escapeRtf(momentTitle ? ` — ${momentTitle}` : '') + '\\b0\\par ';
+                            
+                            // Direct steps in the moment (outside sub-moments)
+                            let __directSteps = Array.from(momentEl.querySelectorAll('.moment-direct-steps .step-card') || []);
+                            if (__selSet && !__momentExplicit) {
+                                __directSteps = __directSteps.filter((_, __aIdx) => __selSet.has(`${__momentId}-activity-${__aIdx}`));
+                            }
+                            const __directSecs = sumStepsToSecs(__directSteps);
+                            totalMomentSecs += __directSecs;
+
+rtf += '\\par\\b ' + escapeRtf(`  Moment ${momentPrefix}${(typeof __ldIsIgnored==='function' && __ldIsIgnored(momentEl)) ? ' [IGNORÉ]' : ''}`) + escapeRtf(momentTitle ? ` — ${momentTitle}` : '') + '\\b0\\par ';
                             rtf += escapeRtf(`  Durée conçue : ${formatTimelineDuration(totalMomentSecs)}`) + '\\par ';
                             if (momentTarget) rtf += escapeRtf(`  Durée cible : ${momentTarget}`) + '\\par ';
                             if (momentDesc) rtf += escapeRtf(`  Description : ${momentDesc}`) + '\\par ';
 
-                            // Export each sub-moment
+                            
+                            // Direct steps group (kept even when sub-moments exist)
+                            if (__directSteps && __directSteps.length) {
+                                const __directLabel = (t && (t.label_direct_steps || t.label_direct || t.direct_steps)) ? (t.label_direct_steps || t.label_direct || t.direct_steps) : 'Activités directes';
+                                const __smPrefix0 = `${momentPrefix}.0`;
+                                rtf += '\\par\\b ' + escapeRtf(`    Sous-moment ${__smPrefix0}`) + escapeRtf(` — ${__directLabel}`) + '\\b0\\par ';
+                                rtf += escapeRtf(`    Durée conçue : ${formatTimelineDuration(__directSecs)}`) + '\\par ';
+                                renderSteps(__directSteps, __smPrefix0);
+                            }
+
+// Export each sub-moment
                             submomentEls.forEach((smEl, smIdx) => {
+                            const __submomentId = `${__momentId}-submoment-${smIdx}`;
+                            const __submomentExplicit = __selSet ? (__momentExplicit || __moduleExplicit || __selSet.has(__submomentId)) : true;
+                            if (__selSet && !__submomentExplicit && !__ldSelHasPrefix(__selSet, __submomentId)) return;
                                 const smTitle = (smEl.querySelector('.submoment-title')?.value || '').trim();
                                 const smTarget = fmtTarget(smEl.querySelector('.submoment-target-time'), smEl.querySelector('.submoment-target-unit'));
-                                const smSteps = __ldQueryAllDesignedStepCards(smEl);
+                                let smSteps = __ldQueryAllDesignedStepCards(smEl);
+                            if (__selSet && !__submomentExplicit) {
+                                smSteps = Array.from(smSteps).filter((_, __aIdx) => __selSet.has(`${__submomentId}-activity-${__aIdx}`));
+                            }
                                 const smSecs = sumStepsToSecs(smSteps);
                                 const smPrefix = `${momentPrefix}.${smIdx + 1}`;
 
@@ -22083,7 +22429,10 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             });
                         } else {
                             // Moment has direct steps
-                            const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
+                            let stepCards = Array.from(momentEl.querySelectorAll('.activity-steps-container .step-card'));
+                        if (__selSet && !__momentExplicit) {
+                            stepCards = stepCards.filter((_, __aIdx) => __selSet.has(`${__momentId}-activity-${__aIdx}`));
+                        }
                             const momentSecs = sumStepsToSecs(stepCards);
 
                             rtf += '\\par\\b ' + escapeRtf(`  Moment ${momentPrefix}${(typeof __ldIsIgnored==='function' && __ldIsIgnored(momentEl)) ? ' [IGNORÉ]' : ''}`) + escapeRtf(momentTitle ? ` — ${momentTitle}` : '') + '\\b0\\par ';
@@ -22122,7 +22471,8 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
         }
 
         function exportMarkdown() {
-            const data = getTotals();
+            const __selSet = __ldGetExportSelectionSet();
+            const __totalSecs = __ldComputeSelectedTotalSecs(__selSet);
             const t = translations[currentLang];
             const __esc = (v) => escapeHtml(String(v ?? ''));
             const __selTxt = (el) => __esc((el && el.selectedOptions && el.selectedOptions[0]) ? el.selectedOptions[0].innerText : '');
@@ -22135,7 +22485,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
             md += `- **${t.label_mode}:** ${__selTxt(document.getElementById('param-mode'))}\n`;
             md += `- **${t.label_level}:** ${__selTxt(document.getElementById('param-level'))}\n`;
             md += `- **${t.label_class_size}:** ${__esc(document.getElementById('global-class-size')?.value)}\n`;
-            md += `- **${t.label_total_time}:** ${fmtTotalDuration(data.totalSecs, t)}\n`;
+            md += `- **${t.label_total_time}:** ${fmtTotalDuration(__totalSecs, t)}\n`;
             md += `- **${t.label_learning_time}:** ${__esc(document.getElementById('param-learning-val')?.value)} ${__selTxt(document.getElementById('param-learning-unit'))}\n`;
             md += `- **${t.label_designed_time}:** ${__esc(document.getElementById('param-designed-val')?.value)} ${__selTxt(document.getElementById('param-designed-unit'))}\n`; 
 md += `- **Horodatage d'export :** ${new Date().toISOString()}\n\n`;
@@ -22193,6 +22543,9 @@ md += `- **Horodatage d'export :** ${new Date().toISOString()}\n\n`;
             const __compTMap = new Map((getCompetencesTransversalesFromUI() || []).map(c => [String(c.id||'').trim(), String(c.label||c.id||'').trim()]));
             const __idsToLabels = (ids, mp) => (Array.isArray(ids) ? ids.map(x => String(x||'').trim()).filter(Boolean).map(id => mp.get(id) || id) : []);
             document.querySelectorAll('.activity-group').forEach((activity, aIdx) => {
+                const __moduleId = `module-${aIdx}`;
+                if (__selSet && !__ldSelHasPrefix(__selSet, __moduleId)) return;
+                const __moduleExplicit = __selSet ? __selSet.has(__moduleId) : true;
                 const moduleTitle = activity.querySelector('.activity-title').value || t.md_untitled_activity;
                 const moduleDesc = activity.querySelector('.activity-description').value;
 
@@ -22352,6 +22705,9 @@ ${linksRefs}
 
                 if (hasMoments) {
                     momentEls.forEach((momentEl, mIdx) => {
+                        const __momentId = `${__moduleId}-moment-${mIdx}`;
+                        const __momentExplicit = __selSet ? (__moduleExplicit || __selSet.has(__momentId)) : true;
+                        if (__selSet && !__momentExplicit && !__ldSelHasPrefix(__selSet, __momentId)) return;
                         const momentTitle = (momentEl.querySelector('.moment-title')?.value || '').trim();
                         const momentPrefix = `${aIdx + 1}.${mIdx + 1}`;
 
@@ -22363,12 +22719,27 @@ ${linksRefs}
                             // Le moment contient des sous-moments
                             // Calculer la durée totale du moment (somme de tous les sous-moments)
                             let totalMomentSecs = 0;
-                            submomentEls.forEach(smEl => {
-                                const smSteps = __ldQueryAllDesignedStepCards(smEl);
+                            submomentEls.forEach((smEl, __smIdxTotal) => {
+                                const __submomentIdTotal = `${__momentId}-submoment-${__smIdxTotal}`;
+                                const __submomentExplicitTotal = __selSet ? (__momentExplicit || __moduleExplicit || __selSet.has(__submomentIdTotal)) : true;
+                                if (__selSet && !__submomentExplicitTotal && !__ldSelHasPrefix(__selSet, __submomentIdTotal)) return;
+                                let smSteps = __ldQueryAllDesignedStepCards(smEl);
+                                if (__selSet && !__submomentExplicitTotal) {
+                                    smSteps = Array.from(smSteps).filter((_, __aIdx) => __selSet.has(`${__submomentIdTotal}-activity-${__aIdx}`));
+                                }
                                 totalMomentSecs += calcMomentSecs(smSteps);
                             });
 
-                            md += `#### MOMENT ${momentPrefix}${(typeof __ldIsIgnored==='function' && __ldIsIgnored(momentEl)) ? ' [IGNORÉ]' : ''}${momentTitle ? ` : ${__esc(momentTitle)}` : ''}
+                            
+                            // Activités directes du moment (hors sous-moments)
+                            let __directSteps = Array.from(momentEl.querySelectorAll('.moment-direct-steps .step-card') || []);
+                            if (__selSet && !__momentExplicit) {
+                                __directSteps = __directSteps.filter((_, __aIdx) => __selSet.has(`${__momentId}-activity-${__aIdx}`));
+                            }
+                            const __directSecs = calcMomentSecs(__directSteps);
+                            totalMomentSecs += __directSecs;
+
+md += `#### MOMENT ${momentPrefix}${(typeof __ldIsIgnored==='function' && __ldIsIgnored(momentEl)) ? ' [IGNORÉ]' : ''}${momentTitle ? ` : ${__esc(momentTitle)}` : ''}
 `;
                             md += `- **Durée conçue :** ${formatTimelineDuration(totalMomentSecs)}
 `;
@@ -22383,10 +22754,24 @@ ${linksRefs}
 
 `;
 
-                            // Exporter chaque sous-moment
+                            
+                            // Exporter les activités directes du moment (hors sous-moments) si présentes
+                            if (__directSteps && __directSteps.length) {
+                                md += `##### SOUS-MOMENT ${momentPrefix}.0 : ${(t && t.label_direct_steps) ? t.label_direct_steps : 'Activités directes'}\n\n`;
+                                md += `- **Durée conçue :** ${formatTimelineDuration(__directSecs)}\n\n`;
+                                renderSteps(__directSteps, `${momentPrefix}.0`);
+                            }
+
+// Exporter chaque sous-moment
                             submomentEls.forEach((smEl, smIdx) => {
+                                const __submomentId = `${__momentId}-submoment-${smIdx}`;
+                                const __submomentExplicit = __selSet ? (__momentExplicit || __moduleExplicit || __selSet.has(__submomentId)) : true;
+                                if (__selSet && !__submomentExplicit && !__ldSelHasPrefix(__selSet, __submomentId)) return;
                                 const smTitle = (smEl.querySelector('.submoment-title')?.value || '').trim();
-                                const smSteps = __ldQueryAllDesignedStepCards(smEl);
+                                let smSteps = __ldQueryAllDesignedStepCards(smEl);
+                                if (__selSet && !__submomentExplicit) {
+                                    smSteps = Array.from(smSteps).filter((_, __aIdx) => __selSet.has(`${__submomentId}-activity-${__aIdx}`));
+                                }
                                 const smSecs = calcMomentSecs(smSteps);
                                 const smPrefix = `${momentPrefix}.${smIdx + 1}`;
 
@@ -22412,7 +22797,10 @@ ${smNotes}
                             });
                         } else {
                             // Le moment contient des activités directes (pas de sous-moments)
-                            const stepCards = momentEl.querySelectorAll('.activity-steps-container .step-card');
+                            let stepCards = Array.from(momentEl.querySelectorAll('.activity-steps-container .step-card'));
+                            if (__selSet && !__momentExplicit) {
+                                stepCards = stepCards.filter((_, __aIdx) => __selSet.has(`${__momentId}-activity-${__aIdx}`));
+                            }
                             const momentSecs = calcMomentSecs(stepCards);
 
                             md += `#### MOMENT ${momentPrefix}${(typeof __ldIsIgnored==='function' && __ldIsIgnored(momentEl)) ? ' [IGNORÉ]' : ''}${momentTitle ? ` : ${__esc(momentTitle)}` : ''}
@@ -22467,7 +22855,8 @@ ${smNotes}
             const trainingTitle = document.getElementById('param-name')?.value || 'Formation';
             const trainingDesc = document.getElementById('param-description')?.value || '';
             
-            let md = `# ${trainingTitle}\n\n`;
+            
+            const __selSet = __ldGetExportSelectionSet();let md = `# ${trainingTitle}\n\n`;
             
             if (trainingDesc.trim()) {
                 md += `${trainingDesc}\n\n---\n\n`;
@@ -22475,6 +22864,9 @@ ${smNotes}
 
             // Parcourir tous les modules
             document.querySelectorAll('.activity-group').forEach((module, moduleIdx) => {
+                const __moduleId = `module-${moduleIdx}`;
+                if (__selSet && !__ldSelHasPrefix(__selSet, __moduleId)) return;
+                const __moduleExplicit = __selSet ? __selSet.has(__moduleId) : true;
                 const moduleTitle = module.querySelector('.activity-title')?.value || `Module ${moduleIdx + 1}`;
                 const moduleObjectives = module.querySelector('.activity-description')?.value || '';
 
@@ -22488,6 +22880,9 @@ ${smNotes}
 
                 // Parcourir tous les moments du module
                 module.querySelectorAll('.moment-group').forEach((moment, momentIdx) => {
+                    const __momentId = `${__moduleId}-moment-${momentIdx}`;
+                    const __momentExplicit = __selSet ? (__moduleExplicit || __selSet.has(__momentId)) : true;
+                    if (__selSet && !__momentExplicit && !__ldSelHasPrefix(__selSet, __momentId)) return;
                     const momentTitle = moment.querySelector('.moment-title')?.value || `Moment ${momentIdx + 1}`;
                     const momentDesc = moment.querySelector('.moment-description')?.value || '';
 
@@ -22501,6 +22896,9 @@ ${smNotes}
 
                     // Parcourir tous les sous-moments
                     moment.querySelectorAll('.submoment-card').forEach((submoment, submomentIdx) => {
+                        const __submomentId = `${__momentId}-submoment-${submomentIdx}`;
+                        const __submomentExplicit = __selSet ? (__momentExplicit || __moduleExplicit || __selSet.has(__submomentId)) : true;
+                        if (__selSet && !__submomentExplicit && !__ldSelHasPrefix(__selSet, __submomentId)) return;
                         const submomentTitle = submoment.querySelector('.submoment-title')?.value || `Sous-moment ${submomentIdx + 1}`;
                         const submomentDesc = submoment.querySelector('.submoment-notes')?.value || '';
 
@@ -22514,6 +22912,8 @@ ${smNotes}
 
                         // Parcourir toutes les activités du sous-moment
                         submoment.querySelectorAll('.step-card').forEach((activity, activityIdx) => {
+                            const __activityId = `${__submomentId}-activity-${activityIdx}`;
+                            if (__selSet && !__submomentExplicit && !__selSet.has(__activityId)) return;
                             const activityTitle = activity.querySelector('.step-input-title')?.value || `Activité ${activityIdx + 1}`;
                             const activityDescription = activity.querySelector('.step-input-objective')?.value || '';
                             const activityPresentation = activity.querySelector('.step-input-presentation')?.value || '';
@@ -22532,26 +22932,59 @@ ${smNotes}
                         });
                     });
 
-                    // Parcourir les activités directes du moment (sans sous-moment)
+                    // Activités directes du moment (hors sous-moment)
                     const directSteps = moment.querySelector('.moment-direct-steps');
                     if (directSteps) {
-                        directSteps.querySelectorAll('.step-card').forEach((activity, activityIdx) => {
-                            const activityTitle = activity.querySelector('.step-input-title')?.value || `Activité ${activityIdx + 1}`;
-                            const activityDescription = activity.querySelector('.step-input-objective')?.value || '';
-                            const activityPresentation = activity.querySelector('.step-input-presentation')?.value || '';
+                        const __hasSubmoments = moment.querySelectorAll('.submoment-card').length > 0;
+                        let __directCards = Array.from(directSteps.querySelectorAll('.step-card') || []);
+                        if (__selSet && !__momentExplicit) {
+                            __directCards = __directCards.filter((_, __aIdx) => __selSet.has(`${__momentId}-activity-${__aIdx}`));
+                        }
 
-                            md += `#### Activité ${moduleIdx + 1}.${momentIdx + 1}.${activityIdx + 1} : ${activityTitle}\n\n`;
-                            
-                            if (activityDescription.trim()) {
-                                md += `**Description :**\n\n${activityDescription}\n\n`;
+                        const __directLabel = (t && (t.label_direct_steps || t.label_direct || t.direct_steps)) ? (t.label_direct_steps || t.label_direct || t.direct_steps) : 'Activités directes';
+
+                        if (__directCards.length) {
+                            if (__hasSubmoments) {
+                                md += `#### Sous-moment ${moduleIdx + 1}.${momentIdx + 1}.0 : ${__directLabel}\n\n`;
+                                md += `---\n\n`;
+
+                                __directCards.forEach((activity, activityIdx) => {
+                                    const activityTitle = activity.querySelector('.step-input-title')?.value || `Activité ${activityIdx + 1}`;
+                                    const activityDescription = activity.querySelector('.step-input-objective')?.value || '';
+                                    const activityPresentation = activity.querySelector('.step-input-presentation')?.value || '';
+
+                                    md += `##### Activité ${moduleIdx + 1}.${momentIdx + 1}.0.${activityIdx + 1} : ${activityTitle}\n\n`;
+
+                                    if (activityDescription.trim()) {
+                                        md += `**Description :**\n\n${activityDescription}\n\n`;
+                                    }
+
+                                    if (activityPresentation.trim()) {
+                                        md += `**Présentation :**\n\n${activityPresentation}\n\n`;
+                                    }
+
+                                    md += `---\n\n`;
+                                });
+                            } else {
+                                __directCards.forEach((activity, activityIdx) => {
+                                    const activityTitle = activity.querySelector('.step-input-title')?.value || `Activité ${activityIdx + 1}`;
+                                    const activityDescription = activity.querySelector('.step-input-objective')?.value || '';
+                                    const activityPresentation = activity.querySelector('.step-input-presentation')?.value || '';
+
+                                    md += `#### Activité ${moduleIdx + 1}.${momentIdx + 1}.${activityIdx + 1} : ${activityTitle}\n\n`;
+
+                                    if (activityDescription.trim()) {
+                                        md += `**Description :**\n\n${activityDescription}\n\n`;
+                                    }
+
+                                    if (activityPresentation.trim()) {
+                                        md += `**Présentation :**\n\n${activityPresentation}\n\n`;
+                                    }
+
+                                    md += `---\n\n`;
+                                });
                             }
-                            
-                            if (activityPresentation.trim()) {
-                                md += `**Présentation :**\n\n${activityPresentation}\n\n`;
-                            }
-                            
-                            md += `---\n\n`;
-                        });
+                        }
                     }
                 });
             });
@@ -29980,21 +30413,8 @@ kbd {
   const selectedCountEl = document.getElementById('export-selected-count');
   const openBtn = document.getElementById('open-export-modal-btn');
 
-  // Selection storage in the format expected by filterExportDataBySelection
-  let selectedItems = {
-    modules: new Set(),
-    moments: new Set(),
-    submoments: new Set(),
-    activities: new Set()
-  };
-  
+  let selectedItems = new Set();
   let treeData = [];
-  let idCounter = 0;
-
-  // Generate unique export ID
-  function generateExportId() {
-    return `export-id-${Date.now()}-${idCounter++}`;
-  }
 
   // Open modal
   function openModal() {
@@ -30006,37 +30426,23 @@ kbd {
   // Close modal
   function closeModal() {
     modal.classList.add('hidden');
-    // Clear selections
-    selectedItems = {
-      modules: new Set(),
-      moments: new Set(),
-      submoments: new Set(),
-      activities: new Set()
-    };
+    selectedItems.clear();
   }
 
   // Build tree from DOM structure
   function buildTree() {
     treeData = [];
-    idCounter = 0;
     const root = document.getElementById('activities-root');
     if (!root) return;
 
     const modules = Array.from(root.querySelectorAll('.activity-group'));
     
     modules.forEach((moduleEl, moduleIndex) => {
-      // Add or get export ID
-      let moduleExportId = moduleEl.getAttribute('data-export-id');
-      if (!moduleExportId) {
-        moduleExportId = generateExportId();
-        moduleEl.setAttribute('data-export-id', moduleExportId);
-      }
-
       const moduleTitleInput = moduleEl.querySelector('[data-module-title]');
       const moduleTitle = moduleTitleInput ? moduleTitleInput.value.trim() : `Module ${moduleIndex + 1}`;
       
       const moduleNode = {
-        id: moduleExportId,
+        id: `module-${moduleIndex}`,
         type: 'module',
         label: moduleTitle,
         element: moduleEl,
@@ -30048,22 +30454,14 @@ kbd {
         const moments = Array.from(momentsContainer.querySelectorAll('.moment-group'));
         
         moments.forEach((momentEl, momentIndex) => {
-          // Add or get export ID
-          let momentExportId = momentEl.getAttribute('data-export-id');
-          if (!momentExportId) {
-            momentExportId = generateExportId();
-            momentEl.setAttribute('data-export-id', momentExportId);
-          }
-
           const momentTitleInput = momentEl.querySelector('[data-moment-title]');
           const momentTitle = momentTitleInput ? momentTitleInput.value.trim() : `Moment ${momentIndex + 1}`;
           
           const momentNode = {
-            id: momentExportId,
+            id: `module-${moduleIndex}-moment-${momentIndex}`,
             type: 'moment',
             label: momentTitle,
             element: momentEl,
-            parentId: moduleExportId,
             children: []
           };
 
@@ -30072,46 +30470,30 @@ kbd {
             const submoments = Array.from(submomentsContainer.querySelectorAll('.submoment-card'));
             
             submoments.forEach((submomentEl, submomentIndex) => {
-              // Add or get export ID
-              let submomentExportId = submomentEl.getAttribute('data-export-id');
-              if (!submomentExportId) {
-                submomentExportId = generateExportId();
-                submomentEl.setAttribute('data-export-id', submomentExportId);
-              }
-
               const submomentTitleInput = submomentEl.querySelector('[data-submoment-title]');
               const submomentTitle = submomentTitleInput ? submomentTitleInput.value.trim() : `Sous-moment ${submomentIndex + 1}`;
               
               const submomentNode = {
-                id: submomentExportId,
+                id: `module-${moduleIndex}-moment-${momentIndex}-submoment-${submomentIndex}`,
                 type: 'submoment',
                 label: submomentTitle,
                 element: submomentEl,
-                parentId: momentExportId,
                 children: []
               };
 
-              const activitiesContainer = submomentEl.querySelector('.submoment-steps-list');
+              const activitiesContainer = submomentEl.querySelector('.submoment-steps');
               if (activitiesContainer) {
                 const activities = Array.from(activitiesContainer.querySelectorAll('.step-card'));
                 
                 activities.forEach((activityEl, activityIndex) => {
-                  // Add or get export ID
-                  let activityExportId = activityEl.getAttribute('data-export-id');
-                  if (!activityExportId) {
-                    activityExportId = generateExportId();
-                    activityEl.setAttribute('data-export-id', activityExportId);
-                  }
-
                   const activityTitleInput = activityEl.querySelector('[data-step-title]');
                   const activityTitle = activityTitleInput ? activityTitleInput.value.trim() : `Activité ${activityIndex + 1}`;
                   
                   const activityNode = {
-                    id: activityExportId,
+                    id: `module-${moduleIndex}-moment-${momentIndex}-submoment-${submomentIndex}-activity-${activityIndex}`,
                     type: 'activity',
                     label: activityTitle,
                     element: activityEl,
-                    parentId: submomentExportId,
                     children: []
                   };
 
@@ -30120,6 +30502,24 @@ kbd {
               }
 
               momentNode.children.push(submomentNode);
+            });
+          }
+
+
+          // Activités directes du moment (hors sous-moments)
+          const directStepsContainer = momentEl.querySelector('.moment-direct-steps .activity-steps-container') || momentEl.querySelector('.moment-direct-steps');
+          if (directStepsContainer) {
+            const directStepCards = Array.from(directStepsContainer.querySelectorAll('.step-card') || []);
+            directStepCards.forEach((stepEl, stepIndex) => {
+              const stepTitle = (stepEl.querySelector('.step-input-title')?.value || '').trim() || `Activité ${stepIndex + 1}`;
+              const activityNode = {
+                id: `${momentNode.id}-activity-${stepIndex}`,
+                type: 'activity',
+                label: `Activité directe — ${stepTitle}`,
+                element: stepEl,
+                children: []
+              };
+              momentNode.children.push(activityNode);
             });
           }
 
@@ -30179,7 +30579,6 @@ kbd {
     checkbox.type = 'checkbox';
     checkbox.className = 'export-tree-checkbox';
     checkbox.dataset.nodeId = node.id;
-    checkbox.dataset.nodeType = node.type;
     checkbox.addEventListener('change', () => handleCheckboxChange(node, checkbox.checked));
     headerDiv.appendChild(checkbox);
 
@@ -30246,14 +30645,12 @@ kbd {
 
   // Handle checkbox change
   function handleCheckboxChange(node, isChecked) {
-    const typeKey = node.type + 's'; // module -> modules, etc.
-    
     if (isChecked) {
-      selectedItems[typeKey].add(node.id);
+      selectedItems.add(node.id);
       // Select all children
       selectAllChildren(node);
     } else {
-      selectedItems[typeKey].delete(node.id);
+      selectedItems.delete(node.id);
       // Deselect all children
       deselectAllChildren(node);
     }
@@ -30266,8 +30663,7 @@ kbd {
   function selectAllChildren(node) {
     if (node.children) {
       node.children.forEach(child => {
-        const childTypeKey = child.type + 's';
-        selectedItems[childTypeKey].add(child.id);
+        selectedItems.add(child.id);
         selectAllChildren(child);
       });
     }
@@ -30277,8 +30673,7 @@ kbd {
   function deselectAllChildren(node) {
     if (node.children) {
       node.children.forEach(child => {
-        const childTypeKey = child.type + 's';
-        selectedItems[childTypeKey].delete(child.id);
+        selectedItems.delete(child.id);
         deselectAllChildren(child);
       });
     }
@@ -30289,10 +30684,7 @@ kbd {
     const checkboxes = treeContainer.querySelectorAll('.export-tree-checkbox');
     checkboxes.forEach(cb => {
       const nodeId = cb.dataset.nodeId;
-      const nodeType = cb.dataset.nodeType;
-      const typeKey = nodeType + 's';
-      
-      cb.checked = selectedItems[typeKey].has(nodeId);
+      cb.checked = selectedItems.has(nodeId);
       
       const header = cb.closest('.export-tree-item-header');
       if (cb.checked) {
@@ -30305,27 +30697,16 @@ kbd {
 
   // Update selected count
   function updateSelectedCount() {
-    const totalCount = selectedItems.modules.size + 
-                      selectedItems.moments.size + 
-                      selectedItems.submoments.size + 
-                      selectedItems.activities.size;
-    selectedCountEl.textContent = totalCount;
-    btnConfirm.disabled = totalCount === 0;
+    selectedCountEl.textContent = selectedItems.size;
+    btnConfirm.disabled = selectedItems.size === 0;
   }
 
   // Select all items
   function selectAll() {
-    selectedItems = {
-      modules: new Set(),
-      moments: new Set(),
-      submoments: new Set(),
-      activities: new Set()
-    };
-    
+    selectedItems.clear();
     const addAllNodes = (nodes) => {
       nodes.forEach(node => {
-        const typeKey = node.type + 's';
-        selectedItems[typeKey].add(node.id);
+        selectedItems.add(node.id);
         if (node.children) {
           addAllNodes(node.children);
         }
@@ -30338,12 +30719,7 @@ kbd {
 
   // Deselect all items
   function deselectAll() {
-    selectedItems = {
-      modules: new Set(),
-      moments: new Set(),
-      submoments: new Set(),
-      activities: new Set()
-    };
+    selectedItems.clear();
     updateCheckboxStates();
     updateSelectedCount();
   }
@@ -30366,12 +30742,7 @@ kbd {
 
   // Handle export confirmation
   function handleExportConfirm() {
-    const totalCount = selectedItems.modules.size + 
-                      selectedItems.moments.size + 
-                      selectedItems.submoments.size + 
-                      selectedItems.activities.size;
-    
-    if (totalCount === 0) return;
+    if (selectedItems.size === 0) return;
 
     // Get selected format
     const formatRadios = document.querySelectorAll('input[name="export-format"]');
@@ -30380,13 +30751,12 @@ kbd {
       if (radio.checked) selectedFormat = radio.value;
     });
 
-    // Store selections in the format expected by filterExportDataBySelection
-    window.__exportSelectedItems = {
-      modules: new Set(selectedItems.modules),
-      moments: new Set(selectedItems.moments),
-      submoments: new Set(selectedItems.submoments),
-      activities: new Set(selectedItems.activities)
-    };
+    // Build filtered export data
+    const filteredData = buildFilteredExportData();
+
+    // Store the filtered data temporarily
+    window.__ldExportFilteredData = filteredData;
+    window.__ldExportFilteredMode = true;
 
     // Close modal
     closeModal();
@@ -30408,9 +30778,45 @@ kbd {
       } else if (selectedFormat === 'docx') {
         runExport(exportDOCX);
       }
-      
-      // Note: __exportSelectedItems is deleted by filterExportDataBySelection after use
+
+      // Clean up
+      delete window.__ldExportFilteredData;
+      delete window.__ldExportFilteredMode;
     }, 100);
+  }
+
+  // Build filtered export data based on selected items
+  function buildFilteredExportData() {
+    const filtered = {
+      selectedIds: Array.from(selectedItems),
+      selectedElements: []
+    };
+
+    // Collect selected elements
+    selectedItems.forEach(id => {
+      const node = findNodeById(id, treeData);
+      if (node && node.element) {
+        filtered.selectedElements.push({
+          id: id,
+          type: node.type,
+          element: node.element
+        });
+      }
+    });
+
+    return filtered;
+  }
+
+  // Find node by ID in tree
+  function findNodeById(id, nodes) {
+    for (const node of nodes) {
+      if (node.id === id) return node;
+      if (node.children) {
+        const found = findNodeById(id, node.children);
+        if (found) return found;
+      }
+    }
+    return null;
   }
 
   // Event listeners
