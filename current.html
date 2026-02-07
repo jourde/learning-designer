@@ -12464,6 +12464,7 @@ obs3.observe(alist, { childList: true, subtree: true });
 objectifActivite: stepEl.querySelector('.step-input-objective').value,
                                 aFaire: stepEl.querySelector('.step-input-tasks').value,
                                 aFaireFormateur: stepEl.querySelector('.step-input-trainer-tasks').value,
+                                presentation: (stepEl.querySelector('.step-input-presentation')?.value || ''),
                                 notes: stepEl.querySelector('.step-input-notes').value,
                                 liensReferences: (stepEl.querySelector('.step-input-linksrefs')?.value || ''),
                                 linksReferences: (stepEl.querySelector('.step-input-linksrefs')?.value || ''),
@@ -13493,7 +13494,28 @@ if (m.targetTimeSec == null) {
                     // SUBMOMENTS_NORMALISE_V1
                     // Sub-moments inside moment (optional). Keep canonical shape on m.subMoments, accept legacy m.sousMoments.
                     try {
-                        const rawSM = Array.isArray(m.subMoments) ? m.subMoments : (Array.isArray(m.sousMoments) ? m.sousMoments : []);
+                        const __scoreSM = (arr) => {
+                            if (!Array.isArray(arr)) return 0;
+                            let score = 0;
+                            for (const sm of arr) {
+                                if (!sm || typeof sm !== "object") continue;
+                                const stepsArr = Array.isArray(sm.steps) ? sm.steps
+                                  : (Array.isArray(sm.activites) ? sm.activites
+                                  : (Array.isArray(sm.activities) ? sm.activities : []));
+                                if (!Array.isArray(stepsArr)) continue;
+                                for (const s of stepsArr) {
+                                    if (!s || typeof s !== "object") continue;
+                                    const pres = String(s.presentation || "").trim();
+                                    if (pres) score += 10;
+                                    const t = String((s.title ?? s.titre) || "").trim();
+                                    if (t) score += 1;
+                                }
+                            }
+                            return score;
+                        };
+                        const __smEN = Array.isArray(m.subMoments) ? m.subMoments : [];
+                        const __smFR = Array.isArray(m.sousMoments) ? m.sousMoments : [];
+                        const rawSM = (__smFR.length && (__scoreSM(__smFR) > __scoreSM(__smEN))) ? __smFR : (__smEN.length ? __smEN : __smFR);
                         if (Array.isArray(rawSM) && rawSM.length) {
                             m.subMoments = rawSM
                                 .filter(sm => sm && typeof sm === "object")
@@ -13517,8 +13539,15 @@ if (m.targetTimeSec == null) {
                                     }
                                     if (!Array.isArray(sm.steps)) sm.steps = [];
 
-                                    // If both legacy arrays exist, keep steps and drop alternates
-                                    if (Array.isArray(sm.steps) && (Array.isArray(sm.activites) || Array.isArray(sm.activities))) {
+                                    // If both legacy arrays exist, prefer the richer one (e.g., keep slide notes if only present in 'activites')
+                                    const __smActs = Array.isArray(sm.activites) ? sm.activites : (Array.isArray(sm.activities) ? sm.activities : null);
+                                    if (Array.isArray(sm.steps) && Array.isArray(__smActs)) {
+                                        const __hasPresentation = (arr) => arr.some(x => x && typeof x === "object" && String(x.presentation || "").trim());
+                                        const __stepsHasPres = __hasPresentation(sm.steps);
+                                        const __actsHasPres = __hasPresentation(__smActs);
+                                        if (!__stepsHasPres && __actsHasPres) {
+                                            sm.steps = __smActs;
+                                        }
                                         try { delete sm.activites; } catch(_){ __ldSilentErr(_); }
                                         try { delete sm.activities; } catch(_){ __ldSilentErr(_); }
                                     }
@@ -13542,6 +13571,7 @@ if (m.targetTimeSec == null) {
 
                                             s.objective = _trimText(s.objective ?? s.objectifActivite ?? "", 5000);
                                             s.tasks = _trimText(s.tasks ?? s.aFaire ?? "", 8000);
+                                            s.presentation = _trimText(s.presentation ?? "", 8000);
                                             s.notes = _trimText(s.notes ?? "", 8000);
                                             s.trainer = _trimText(s.trainer ?? s.formateur ?? "", 200);
                                             s.place = _trimText(s.place ?? s.lieu ?? "", 200);
@@ -13614,6 +13644,7 @@ s.unite = s.unit;
                             // Text fields
                             s.objective = _trimText(s.objective ?? s.objectifActivite ?? "", 5000);
                             s.tasks = _trimText(s.tasks ?? s.aFaire ?? "", 8000);
+                            s.presentation = _trimText(s.presentation ?? "", 8000);
                             s.notes = _trimText(s.notes ?? "", 8000);
                             s.trainer = _trimText(s.trainer ?? s.formateur ?? "", 200);
                             s.place = _trimText(s.place ?? s.lieu ?? "", 200);
@@ -13914,6 +13945,7 @@ const __chartsSuspendFn = window.__setChartsSuspended;
                 objective: s?.objective ?? s?.objectifActivite ?? "",
                 tasks: s?.tasks ?? s?.aFaire ?? "",
                 trainerTasks: s?.trainerTasks ?? s?.aFaireFormateur ?? "",
+                presentation: s?.presentation ?? "",
                 notes: s?.notes ?? "",
                 linksReferences: s?.linksReferences ?? s?.liensReferences ?? "",
                 evaluationSuivi: s?.evaluationSuivi ?? "",
@@ -14633,6 +14665,7 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
 stepEl.querySelector('.step-input-objective').value = data.objective || "";
             stepEl.querySelector('.step-input-tasks').value = data.tasks || "";
             stepEl.querySelector('.step-input-trainer-tasks').value = data.trainerTasks || data.aFaireFormateur || data.trainer_actions || data.trainerActions || "";
+            stepEl.querySelector('.step-input-presentation').value = data.presentation || "";
             stepEl.querySelector('.step-input-notes').value = data.notes || "";
             try {
               const lrEl = stepEl.querySelector('.step-input-linksrefs');
