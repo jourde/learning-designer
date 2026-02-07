@@ -13189,6 +13189,7 @@ function forceCanonicalImport(payload) {
 objective: asStr(s?.objective ?? s?.objectifActivite ?? ""),
         tasks: asStr(s?.tasks ?? s?.aFaire ?? ""),
         trainerTasks: asStr(s?.trainerTasks ?? s?.aFaireFormateur ?? s?.trainer_actions ?? s?.trainerActions ?? ''),
+        presentation: asStr(s?.presentation ?? s?.diaporama ?? s?.presentationDiapo ?? s?.slideNotes ?? ""),
         notes: asStr(s?.notes ?? ""),
         status: normaliseStepStatus(s?.status ?? s?.etat ?? s?.state ?? ''),
         evaluationSuivi: asStr(s?.evaluationSuivi ?? s?.evaluation ?? s?.suiviEvaluation ?? s?.followUp ?? s?.evalFollowUp ?? ''),
@@ -13515,7 +13516,12 @@ if (m.targetTimeSec == null) {
                         };
                         const __smEN = Array.isArray(m.subMoments) ? m.subMoments : [];
                         const __smFR = Array.isArray(m.sousMoments) ? m.sousMoments : [];
-                        const rawSM = (__smFR.length && (__scoreSM(__smFR) > __scoreSM(__smEN))) ? __smFR : (__smEN.length ? __smEN : __smFR);
+                        const __smScoreEN = __scoreSM(__smEN);
+                        const __smScoreFR = __scoreSM(__smFR);
+                        if (__smEN.length && __smFR.length && __smScoreEN !== __smScoreFR) {
+                            warnings.push(`Sub-moments collision in moment "${m.title}": using ${__smScoreFR > __smScoreEN ? "sousMoments" : "subMoments"}.`);
+                        }
+                        const rawSM = (__smFR.length && (__smScoreFR > __smScoreEN)) ? __smFR : (__smEN.length ? __smEN : __smFR);
                         if (Array.isArray(rawSM) && rawSM.length) {
                             m.subMoments = rawSM
                                 .filter(sm => sm && typeof sm === "object")
@@ -13545,6 +13551,9 @@ if (m.targetTimeSec == null) {
                                         const __hasPresentation = (arr) => arr.some(x => x && typeof x === "object" && String(x.presentation || "").trim());
                                         const __stepsHasPres = __hasPresentation(sm.steps);
                                         const __actsHasPres = __hasPresentation(__smActs);
+                                        if (__stepsHasPres !== __actsHasPres) {
+                                            warnings.push(`Activities collision in sub-moment "${sm.title}" (moment "${m.title}"): using ${(!__stepsHasPres && __actsHasPres) ? "activites" : "steps"}.`);
+                                        }
                                         if (!__stepsHasPres && __actsHasPres) {
                                             sm.steps = __smActs;
                                         }
