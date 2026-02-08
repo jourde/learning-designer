@@ -7,7 +7,7 @@
 ## Requirements for Slide Content
 
 ### 1. Format
-The slide separator must be --- (Markdown HR), not headings like “Slide 1”, “Slide 2”, etc.
+The slide separator must be --- (Markdown HR).
 Each slide contains:
 - Markdown titles if necessary.
 - Bullet points, key terms, visual cues (→, ✓, ⚠️, etc.)
