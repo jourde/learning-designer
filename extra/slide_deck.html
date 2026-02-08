@@ -134,7 +134,16 @@
             gap: 8px;
         }
 
-        .about-btn,
+                .import-status {
+            margin-top: 10px;
+            font-size: 12px;
+            color: var(--color-text-muted);
+            line-height: 1.3;
+            min-height: 16px;
+            opacity: 0.9;
+            word-break: break-word;
+        }
+.about-btn,
         .export-btn,
         .import-btn {
             width: 100%;
@@ -874,7 +883,7 @@
         }
 
         .activity-title {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 600;
             color: var(--color-text);
             margin-bottom: 4px;
@@ -892,8 +901,8 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 40px 32px;
-            max-width: 900px;
+            padding: 56px 48px;
+            max-width: 1100px;
             margin: 0 auto;
             width: 100%;
         }
@@ -943,7 +952,7 @@
         }
 
         .slide-content p {
-            margin-bottom: 16px;
+            margin-bottom: 10px;
         }
 
         .slide-content img.md-image {
@@ -1784,7 +1793,7 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h1 class="sidebar-title">Training Platform</h1>
-                <p class="sidebar-subtitle">School Inspectors - Portugal</p>
+                <p class="sidebar-subtitle">Participant deck</p>
             </div>
 
             <!-- Search -->
@@ -1844,6 +1853,8 @@
                         Export Content
                     </button>
                 </div>
+                <div class="import-status" id="importStatus" aria-live="polite"></div>
+
             </div>
         </aside>
 
@@ -2034,7 +2045,7 @@
                 <div class="about-section-content">
                     <div class="about-info-row">
                         <span class="about-info-label">Title:</span>
-                        <span class="about-info-value">AI and Generative AI for School Inspectors in Portugal</span>
+                        <span class="about-info-value">AI and Generative AI training</span>
                     </div>
                     <div class="about-info-row">
                         <span class="about-info-label">Author & Trainer:</span>
@@ -2417,14 +2428,23 @@
 
                 return activityDiv;
             },
-
             loadActivity(activity) {
+                this.loadActivityAtSlide(activity, 0);
+            },
+
+            loadActivityAtSlide(activity, slideIndex) {
+                if (!activity || !activity.slides || activity.slides.length === 0) return;
+
                 this.currentActivity = activity;
-                this.currentSlideIndex = 0;
-                
+                const idx = Math.max(
+                    0,
+                    Math.min((typeof slideIndex === 'number' ? slideIndex : 0), activity.slides.length - 1)
+                );
+                this.currentSlideIndex = idx;
+
                 // Mark activity as visited
                 this.visitedActivities.add(activity.id);
-                
+
                 this.updateActivityHeader();
                 this.renderSlide();
                 this.updateActiveNav();
@@ -2435,19 +2455,20 @@
 
                 // Load timers
                 this.loadActivityTimer(activity.id);
-// Show and update general progress
+
+                // Show and update general progress
                 this.showGeneralProgress();
 
                 // Show slide controls and progress
                 document.getElementById('slideControls').classList.remove('hidden');
-                
+
                 // Show zoom controls and apply current zoom
                 this.showZoomControls();
                 setTimeout(() => this.applyZoom(), 100);
-                
+
                 // Initialize activity progress
                 this.updateActivityProgress();
-                
+
                 // Save progress
                 this.saveProgressState();
             },
@@ -2523,8 +2544,11 @@
                 const prevBtn = document.getElementById('prevSlideBtn');
                 const nextBtn = document.getElementById('nextSlideBtn');
 
-                prevBtn.disabled = this.currentSlideIndex === 0;
-                nextBtn.disabled = this.currentSlideIndex === this.currentActivity.slides.length - 1;
+                const hasPrev = (this.currentSlideIndex > 0) || !!this.getPrevActivity();
+                const hasNext = (this.currentSlideIndex < this.currentActivity.slides.length - 1) || !!this.getNextActivity();
+
+                prevBtn.disabled = !hasPrev;
+                nextBtn.disabled = !hasNext;
             },
 
             updateActiveNav() {
@@ -2539,18 +2563,23 @@
                     activeEl.classList.add('active');
                 }
             },
-
             nextSlide() {
                 if (this.currentSlideIndex < this.currentActivity.slides.length - 1) {
                     this.currentSlideIndex++;
                     this.renderSlide();
                     this.updateHash();
-                } else {
-                    // Mark activity as completed when reaching the last slide
-                    this.completedActivities.add(this.currentActivity.id);
-                    this.updateGeneralProgress();
-                    this.updateNavigationVisualState();
-                    this.saveProgressState();
+                    return;
+                }
+
+                // We are on the last slide of the current activity
+                this.completedActivities.add(this.currentActivity.id);
+                this.updateGeneralProgress();
+                this.updateNavigationVisualState();
+                this.saveProgressState();
+
+                const nextActivity = this.getNextActivity();
+                if (nextActivity) {
+                    this.loadActivityAtSlide(nextActivity, 0);
                 }
             },
 
@@ -2559,6 +2588,12 @@
                     this.currentSlideIndex--;
                     this.renderSlide();
                     this.updateHash();
+                    return;
+                }
+
+                const prevActivity = this.getPrevActivity();
+                if (prevActivity) {
+                    this.loadActivityAtSlide(prevActivity, prevActivity.slides.length - 1);
                 }
             },
 
@@ -2925,7 +2960,38 @@
                 }
             },
 
-            // ===== NAVIGATION METHODS =====
+            getAllActivitiesInOrder() {
+                const list = [];
+                if (!this.courseData || !this.courseData.modules) return list;
+
+                this.courseData.modules.forEach(module => {
+                    module.moments.forEach(moment => {
+                        moment.submoments.forEach(submoment => {
+                            submoment.activities.forEach(activity => {
+                                list.push(activity);
+                            });
+                        });
+                    });
+                });
+
+                return list;
+            },
+
+            getNextActivity() {
+                const activities = this.getAllActivitiesInOrder();
+                const idx = activities.findIndex(a => a.id === this.currentActivity?.id);
+                if (idx === -1) return null;
+                return (idx < activities.length - 1) ? activities[idx + 1] : null;
+            },
+
+            getPrevActivity() {
+                const activities = this.getAllActivitiesInOrder();
+                const idx = activities.findIndex(a => a.id === this.currentActivity?.id);
+                if (idx === -1) return null;
+                return (idx > 0) ? activities[idx - 1] : null;
+            },
+
+// ===== NAVIGATION METHODS =====
 
             getNextSection() {
                 if (!this.currentActivity) return null;
@@ -3558,7 +3624,7 @@
                     const fileInput = document.getElementById('importFileInput');
                     if (!fileInput) {
                         console.error('File input element not found!');
-                        alert('Error: Import button not properly configured.');
+                        this.setStatus('Import error: import control not configured.', 'error');
                         return;
                     }
                     
@@ -3566,7 +3632,7 @@
                     fileInput.click();
                 } catch (error) {
                     console.error('Error in openImportDialog:', error);
-                    alert('Error opening import dialog: ' + error.message);
+                    this.setStatus('Import error: ' + error.message, 'error');
                 }
             },
 
@@ -3590,7 +3656,7 @@
 
                     // Check file size (max 10MB)
                     if (file.size > 10 * 1024 * 1024) {
-                        alert('❌ Error: File is too large. Maximum size is 10MB.');
+                        this.setStatus('Import error: file is too large (max 10MB).', 'error');
                         event.target.value = ''; // Reset input
                         return;
                     }
@@ -3606,14 +3672,14 @@
                             event.target.value = ''; // Reset input for next import
                         } catch (error) {
                             console.error('JSON parse error:', error);
-                            alert(`❌ Error parsing JSON file:\n\n${error.message}\n\nPlease check that your file contains valid JSON.`);
+                            this.setStatus('Import error: invalid JSON. ' + error.message, 'error');
                             event.target.value = '';
                         }
                     };
                     
                     reader.onerror = (error) => {
                         console.error('File read error:', error);
-                        alert('❌ Error reading file. Please try again.');
+                        this.setStatus('Import error: could not read the file. Please try again.', 'error');
                         event.target.value = '';
                     };
                     
@@ -3621,9 +3687,36 @@
                     reader.readAsText(file);
                 } catch (error) {
                     console.error('Error in handleFileSelect:', error);
-                    alert('Error: ' + error.message);
+                    this.setStatus('Error: ' + error.message, 'error');
                 }
             },
+            setStatus(message, type = 'info') {
+                const el = document.getElementById('importStatus');
+                if (!el) return;
+                const text = (message || '').toString();
+                el.textContent = text;
+                if (text) {
+                    el.setAttribute('data-type', type);
+                } else {
+                    el.removeAttribute('data-type');
+                }
+
+                if (this._statusTimer) {
+                    clearTimeout(this._statusTimer);
+                    this._statusTimer = null;
+                }
+
+                if (text) {
+                    this._statusTimer = setTimeout(() => {
+                        const el2 = document.getElementById('importStatus');
+                        if (!el2) return;
+                        el2.textContent = '';
+                        el2.removeAttribute('data-type');
+                    }, 6000);
+                }
+            },
+
+
 
             importJSON(data) {
                 try {
@@ -3646,7 +3739,7 @@
                     
                     if (!validation.valid) {
                         console.error('Validation failed:', validation.errors);
-                        alert(`❌ Invalid JSON structure:\n\n${validation.errors.join('\n')}\n\nPlease check the file format.`);
+                        this.setStatus('Import error: invalid structure. ' + validation.errors.join(' | '), 'error');
                         return;
                     }
 
@@ -3668,12 +3761,12 @@
                         console.log('Document title updated to:', processedData.title);
                     }
 
-                    // Show success message
-                    alert(`✅ Content loaded successfully!\n\n${processedData.title || 'Training content'}\n\nYou can now start navigating through the slides.`);
+                    // Import feedback (non-modal)
+                    this.setStatus('Content loaded: ' + (processedData.title || 'Training content') + '.', 'success');
                     console.log('Import completed successfully');
                 } catch (error) {
                     console.error('Error in importJSON:', error);
-                    alert('Error importing content: ' + error.message);
+                    this.setStatus('Import error: ' + error.message, 'error');
                 }
             },
 
