@@ -3957,6 +3957,391 @@
                     valid: errors.length === 0,
                     errors
                 };
+            },
+
+            resetAllState() {
+                // Clear progress
+                this.completedActivities = new Set();
+                this.visitedActivities = new Set();
+                this.visitedSlides = new Set();
+
+                // Reset timers
+                this.stopTimerTicks();
+                this.moduleTimer = {
+                    elapsed: 0,
+                    planned: 0,
+                    running: false,
+                    interval: null,
+                    moduleId: null
+                };
+                this.activityTimer = {
+                    elapsed: 0,
+                    planned: 0,
+                    running: false,
+                    interval: null,
+                    activityId: null
+                };
+                this.timerIntervalId = null;
+
+                // Reset UI state
+                this.currentActivity = null;
+                this.currentSlideIndex = 0;
+                this.searchQuery = '';
+                this.expandedNodes = new Set();
+                this.zoomLevel = 100;
+                this.detailsPanelExpanded = false;
+
+                // Clear localStorage
+                localStorage.clear();
+
+                // Hide slide controls
+                const slideControls = document.getElementById('slideControls');
+                if (slideControls) {
+                    slideControls.classList.add('hidden');
+                }
+
+                // Clear content
+                const slideContainer = document.getElementById('slideContainer');
+                if (slideContainer) {
+                    slideContainer.innerHTML = '<div class="slide" style="text-align: center; padding: 60px 20px;"><h2>Welcome!</h2><p style="margin-top: 12px; color: var(--color-text-secondary);">Select an activity from the navigation to begin.</p></div>';
+                }
+
+                // Restart timer ticks
+                this.startTimerTicks();
+            },
+
+            exportAsJSON() {
+                if (!this.courseData) {
+                    alert('❌ No content to export. Please import content first.');
+                    return;
+                }
+
+                const jsonString = JSON.stringify(this.courseData, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `training-content-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                this.closeExportModal();
+            },
+
+            openAboutModal() {
+                document.getElementById('aboutModal').classList.add('visible');
+            },
+
+            closeAboutModal() {
+                document.getElementById('aboutModal').classList.remove('visible');
+            },
+
+            openExportModal() {
+                document.getElementById('exportModal').classList.add('visible');
+            },
+
+            closeExportModal() {
+                document.getElementById('exportModal').classList.remove('visible');
+            },
+
+            exportAsMarkdown() {
+                if (!this.courseData) {
+                    alert('❌ No content to export. Please import content first.');
+                    return;
+                }
+                
+                let markdown = `# ${this.courseData.title || 'Training Content'}\n\n`;
+                markdown += `*Generated on ${new Date().toLocaleDateString('en-GB', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                })}*\n\n`;
+                markdown += `---\n\n`;
+
+                this.courseData.modules.forEach(module => {
+                    markdown += `## ${module.title}\n\n`;
+                    if (module.plannedMinutes) {
+                        markdown += `**Planned Duration:** ${module.plannedMinutes} minutes\n\n`;
+                    }
+
+                    module.moments.forEach(moment => {
+                        markdown += `### ${moment.title}\n\n`;
+
+                        moment.submoments.forEach(submoment => {
+                            markdown += `#### ${submoment.title}\n\n`;
+
+                            submoment.activities.forEach(activity => {
+                                markdown += `##### ${activity.title}\n\n`;
+                                if (activity.plannedMinutes) {
+                                    markdown += `**Planned Duration:** ${activity.plannedMinutes} minutes\n\n`;
+                                }
+
+                                activity.slides.forEach((slide, index) => {
+                                    markdown += `**SLIDE ${index + 1}**`;
+                                    if (slide.title) {
+                                        markdown += `: ${slide.title}`;
+                                    }
+                                    markdown += `\n\n`;
+
+                                    // Convert HTML content to markdown
+                                    const content = this.htmlToMarkdown(slide.content);
+                                    markdown += content + '\n\n';
+                                });
+
+                                markdown += `---\n\n`;
+                            });
+                        });
+                    });
+                });
+
+                this.downloadFile(markdown, 'AI_Training_Content.md', 'text/markdown');
+                this.closeExportModal();
+            },
+
+            exportAsRTF() {
+                if (!this.courseData) {
+                    alert('❌ No content to export. Please import content first.');
+                    return;
+                }
+                
+                let rtf = `{\\rtf1\\ansi\\deff0\n`;
+                
+                // Font table
+                rtf += `{\\fonttbl{\\f0\\fswiss\\fcharset0 Arial;}{\\f1\\fmodern\\fcharset0 Courier New;}}\n`;
+                
+                // Color table
+                rtf += `{\\colortbl;\\red25\\green118\\blue210;\\red33\\green33\\blue33;\\red117\\green117\\blue117;}\n`;
+                
+                // Title
+                rtf += `{\\pard\\qc\\b\\fs32\\cf1 ${this.escapeRTF(this.courseData.title || 'Training Content')}\\par}\n`;
+                rtf += `{\\pard\\qc\\fs20\\cf3\\i Generated on ${new Date().toLocaleDateString('en-GB')}\\par}\n`;
+                rtf += `\\par\\par\n`;
+
+                this.courseData.modules.forEach(module => {
+                    // Module title
+                    rtf += `{\\pard\\b\\fs28\\cf1 ${this.escapeRTF(module.title)}\\par}\n`;
+                    if (module.plannedMinutes) {
+                        rtf += `{\\pard\\fs20\\cf2 Planned Duration: ${module.plannedMinutes} minutes\\par}\n`;
+                    }
+                    rtf += `\\par\n`;
+
+                    module.moments.forEach(moment => {
+                        rtf += `{\\pard\\b\\fs24\\cf2 ${this.escapeRTF(moment.title)}\\par}\n`;
+                        rtf += `\\par\n`;
+
+                        moment.submoments.forEach(submoment => {
+                            rtf += `{\\pard\\b\\fs22\\cf2 ${this.escapeRTF(submoment.title)}\\par}\n`;
+                            rtf += `\\par\n`;
+
+                            submoment.activities.forEach(activity => {
+                                rtf += `{\\pard\\b\\fs20\\cf2 ${this.escapeRTF(activity.title)}\\par}\n`;
+                                if (activity.plannedMinutes) {
+                                    rtf += `{\\pard\\fs18\\cf3 Planned Duration: ${activity.plannedMinutes} minutes\\par}\n`;
+                                }
+                                rtf += `\\par\n`;
+
+                                activity.slides.forEach((slide, index) => {
+                                    rtf += `{\\pard\\b\\fs20 SLIDE ${index + 1}`;
+                                    if (slide.title) {
+                                        rtf += `: ${this.escapeRTF(slide.title)}`;
+                                    }
+                                    rtf += `\\par}\n`;
+                                    rtf += `\\par\n`;
+
+                                    // Convert HTML content to RTF
+                                    const content = this.htmlToRTF(slide.content);
+                                    rtf += content;
+                                    rtf += `\\par\n`;
+                                });
+
+                                rtf += `{\\pard\\qc ---\\par}\n`;
+                                rtf += `\\par\n`;
+                            });
+                        });
+                    });
+                });
+
+                rtf += `}`;
+
+                this.downloadFile(rtf, 'AI_Training_Content.rtf', 'application/rtf');
+                this.closeExportModal();
+            },
+
+            htmlToMarkdown(html) {
+                if (!html) return '';
+                
+                // Create a temporary div to parse HTML
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+
+                let markdown = '';
+
+                // Process each child node
+                const processNode = (node) => {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        return node.textContent;
+                    }
+
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        const tag = node.tagName.toLowerCase();
+
+                        switch (tag) {
+                            case 'p':
+                                return Array.from(node.childNodes)
+                                    .map(child => processNode(child))
+                                    .join('') + '\n\n';
+                            
+                            case 'ul':
+                                return '\n' + Array.from(node.children)
+                                    .map(li => '- ' + Array.from(li.childNodes)
+                                        .map(child => processNode(child))
+                                        .join('')
+                                        .trim())
+                                    .join('\n') + '\n\n';
+                            
+                            case 'ol':
+                                return '\n' + Array.from(node.children)
+                                    .map((li, index) => `${index + 1}. ` + Array.from(li.childNodes)
+                                        .map(child => processNode(child))
+                                        .join('')
+                                        .trim())
+                                    .join('\n') + '\n\n';
+                            
+                            case 'strong':
+                            case 'b':
+                                return '**' + Array.from(node.childNodes)
+                                    .map(child => processNode(child))
+                                    .join('') + '**';
+                            
+                            case 'em':
+                            case 'i':
+                                return '*' + Array.from(node.childNodes)
+                                    .map(child => processNode(child))
+                                    .join('') + '*';
+                            
+                            case 'a':
+                                const href = node.getAttribute('href');
+                                const text = Array.from(node.childNodes)
+                                    .map(child => processNode(child))
+                                    .join('');
+                                return `[${text}](${href})`;
+                            
+                            case 'br':
+                                return '\n';
+                            
+                            default:
+                                return Array.from(node.childNodes)
+                                    .map(child => processNode(child))
+                                    .join('');
+                        }
+                    }
+
+                    return '';
+                };
+
+                markdown = Array.from(temp.childNodes)
+                    .map(node => processNode(node))
+                    .join('');
+
+                return markdown.trim();
+            },
+
+            htmlToRTF(html) {
+                if (!html) return '';
+                
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+
+                let rtf = '';
+
+                const processNode = (node) => {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        return this.escapeRTF(node.textContent);
+                    }
+
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        const tag = node.tagName.toLowerCase();
+
+                        switch (tag) {
+                            case 'p':
+                                return '{\\pard\\fs20 ' + Array.from(node.childNodes)
+                                    .map(child => processNode(child))
+                                    .join('') + '\\par}\n';
+                            
+                            case 'ul':
+                            case 'ol':
+                                return Array.from(node.children)
+                                    .map(li => '{\\pard\\li360\\fs20 \\\'b7  ' + 
+                                        Array.from(li.childNodes)
+                                            .map(child => processNode(child))
+                                            .join('') + '\\par}\n')
+                                    .join('');
+                            
+                            case 'strong':
+                            case 'b':
+                                return '{\\b ' + Array.from(node.childNodes)
+                                    .map(child => processNode(child))
+                                    .join('') + '}';
+                            
+                            case 'em':
+                            case 'i':
+                                return '{\\i ' + Array.from(node.childNodes)
+                                    .map(child => processNode(child))
+                                    .join('') + '}';
+                            
+                            case 'a':
+                                const text = Array.from(node.childNodes)
+                                    .map(child => processNode(child))
+                                    .join('');
+                                return `{\\field{\\*\\fldinst{HYPERLINK "${node.getAttribute('href')}"}}` +
+                                       `{\\fldrslt{\\ul\\cf1 ${text}}}}`;
+                            
+                            case 'br':
+                                return '\\line ';
+                            
+                            default:
+                                return Array.from(node.childNodes)
+                                    .map(child => processNode(child))
+                                    .join('');
+                        }
+                    }
+
+                    return '';
+                };
+
+                rtf = Array.from(temp.childNodes)
+                    .map(node => processNode(node))
+                    .join('');
+
+                return rtf;
+            },
+
+            escapeRTF(text) {
+                if (!text) return '';
+                return text
+                    .replace(/\\/g, '\\\\')
+                    .replace(/{/g, '\\{')
+                    .replace(/}/g, '\\}')
+                    .replace(/\n/g, '\\line ')
+                    .replace(/[\u00A0-\uFFFF]/g, (char) => {
+                        return '\\u' + char.charCodeAt(0) + '?';
+                    });
+            },
+
+            downloadFile(content, filename, mimeType) {
+                const blob = new Blob([content], { type: mimeType });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
             }
         };
 
