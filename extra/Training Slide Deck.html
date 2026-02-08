@@ -3881,3 +3881,91 @@
             },
 
             validateCourseData(data) {
+                const errors = [];
+
+                // Check root structure
+                if (!data || typeof data !== 'object') {
+                    return { valid: false, errors: ['Data must be an object'] };
+                }
+
+                if (!Array.isArray(data.modules)) {
+                    errors.push('Missing or invalid "modules" array');
+                    return { valid: false, errors };
+                }
+
+                if (data.modules.length === 0) {
+                    errors.push('At least one module is required');
+                }
+
+                // Validate each module
+                data.modules.forEach((module, moduleIndex) => {
+                    const prefix = `Module ${moduleIndex + 1}`;
+                    
+                    if (!module.id) errors.push(`${prefix}: Missing "id"`);
+                    if (!module.title) errors.push(`${prefix}: Missing "title"`);
+                    if (!Array.isArray(module.moments)) {
+                        errors.push(`${prefix}: Missing or invalid "moments" array`);
+                        return;
+                    }
+
+                    module.moments.forEach((moment, momentIndex) => {
+                        const momentPrefix = `${prefix} > Moment ${momentIndex + 1}`;
+                        
+                        if (!moment.id) errors.push(`${momentPrefix}: Missing "id"`);
+                        if (!moment.title) errors.push(`${momentPrefix}: Missing "title"`);
+                        if (!Array.isArray(moment.submoments)) {
+                            errors.push(`${momentPrefix}: Missing or invalid "submoments" array`);
+                            return;
+                        }
+
+                        moment.submoments.forEach((submoment, subIndex) => {
+                            const subPrefix = `${momentPrefix} > Submoment ${subIndex + 1}`;
+                            
+                            if (!submoment.id) errors.push(`${subPrefix}: Missing "id"`);
+                            if (!submoment.title) errors.push(`${subPrefix}: Missing "title"`);
+                            if (!Array.isArray(submoment.activities)) {
+                                errors.push(`${subPrefix}: Missing or invalid "activities" array`);
+                                return;
+                            }
+
+                            submoment.activities.forEach((activity, actIndex) => {
+                                const actPrefix = `${subPrefix} > Activity ${actIndex + 1}`;
+                                
+                                if (!activity.id) errors.push(`${actPrefix}: Missing "id"`);
+                                if (!activity.title) errors.push(`${actPrefix}: Missing "title"`);
+                                if (!Array.isArray(activity.slides)) {
+                                    errors.push(`${actPrefix}: Missing or invalid "slides" array`);
+                                    return;
+                                }
+
+                                if (activity.slides.length === 0) {
+                                    errors.push(`${actPrefix}: At least one slide is required`);
+                                }
+
+                                activity.slides.forEach((slide, slideIndex) => {
+                                    const slidePrefix = `${actPrefix} > Slide ${slideIndex + 1}`;
+                                    
+                                    if (slide.number === undefined) errors.push(`${slidePrefix}: Missing "number"`);
+                                    if (!slide.content) errors.push(`${slidePrefix}: Missing "content"`);
+                                });
+                            });
+                        });
+                    });
+                });
+
+                return {
+                    valid: errors.length === 0,
+                    errors
+                };
+            }
+        };
+
+        // Initialize app when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => app.init());
+        } else {
+            app.init();
+        }
+    </script>
+</body>
+</html>
