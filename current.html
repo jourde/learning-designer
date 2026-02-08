@@ -1699,7 +1699,7 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
       const aList = qs('ui-debug-actions');
       const eList = qs('ui-debug-errors');
       if (aList) {
-        aList.innerHTML = '';
+        __ldClearEl(aList);
         const frag = document.createDocumentFragment();
         for (const entry of DIAG.actions.slice().reverse().slice(0, 60)) {
           const div = document.createElement('div');
@@ -1710,7 +1710,7 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
         aList.appendChild(frag);
       }
       if (eList) {
-        eList.innerHTML = '';
+        __ldClearEl(eList);
         const frag = document.createDocumentFragment();
         for (const entry of DIAG.errors.slice().reverse().slice(0, 60)) {
           const div = document.createElement('div');
@@ -2528,10 +2528,18 @@ document.addEventListener('DOMContentLoaded', function() {
     if (missing.length > 0) {
         var banner = document.createElement('div');
         banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:white;padding:12px 16px;font:14px/1.4 system-ui,sans-serif;text-align:center;';
-        banner.innerHTML = '<strong>⚠ Erreur de chargement CDN :</strong> ' +
-            missing.join(', ') +
-            ' — Les fonctions d\u0027export et de tri pourraient ne pas fonctionner.' +
-            ' <button onclick="this.parentElement.remove()" style="margin-left:12px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:white;padding:2px 10px;border-radius:4px;cursor:pointer;">Fermer</button>';
+        // Build banner safely without innerHTML/inline handlers
+        __ldClearEl(banner);
+        const strong = document.createElement('strong');
+        strong.textContent = '⚠ Erreur de chargement CDN :';
+        banner.appendChild(strong);
+        banner.appendChild(document.createTextNode(' ' + missing.join(', ') + ' — Les fonctions d\'export et de tri pourraient ne pas fonctionner. '));
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = 'Fermer';
+        btn.style.cssText = 'margin-left:8px;background:#fff;color:#111;border:1px solid #111;padding:2px 10px;border-radius:4px;cursor:pointer;';
+        btn.addEventListener('click', () => { try { banner.remove(); } catch(_){} });
+        banner.appendChild(btn);
         document.body.insertBefore(banner, document.body.firstChild);
     }
 });
@@ -2763,7 +2771,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
 <div class="w-full md:w-28">
       <label class="compact-label block" data-i18n="label_version_number">
-      Numéro de version
+      Version
       </label>
       <input class="w-full md:w-24 px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none text-center font-mono" data-i18n-placeholder="ph_version_number" id="param-version-number" maxlength="12" inputmode="text" pattern="[0-9A-Za-z.+_-]{0,12}" autocomplete="off" placeholder="Entrez un numéro de version..." type="text"/>
       </div>
@@ -5548,22 +5556,159 @@ function __ldQueryAllDesignedStepCards(scopeEl) {
   } catch (_) { return []; }
 }
 try { window.__ldQueryAllDesignedStepCards = __ldQueryAllDesignedStepCards; } catch(_){ __ldSilentErr(_); }
-// LD_ESCAPE_HTML_GLOBAL_V1
-function __esc(s){
+// LD_ESCAPE_HTML_GLOBAL_V3
+// Provide a globally accessible HTML escaper for safe templating.
+function __ldEscapeHtml(s){
   const str = String(s ?? "");
   return str.replace(/[&<>"']/g, function(c){
     switch(c){
       case "&": return "&amp;";
       case "<": return "&lt;";
       case ">": return "&gt;";
-      case "\"": return "&quot;";
+      case '"': return "&quot;";
       case "'": return "&#39;";
       default: return c;
     }
   });
 }
-try { window.__ldEscapeHtml = __ldEscapeHtml; } catch(_){ __ldSilentErr(_); }
-// END_LD_ESCAPE_HTML_GLOBAL_V1
+
+/* ------------------------------------------------------------------
+   XSS hardening helpers
+   - __ldHtml: template tag that HTML-escapes interpolated values by default
+   - __ldTrustedHtml: wrapper for intentional safe HTML fragments
+   - __ldClearEl: fast DOM clear without innerHTML
+   - __ldSetSafeHtml: sanitises HTML (strips scripts/event handlers/bad URLs)
+------------------------------------------------------------------- */
+function __ldTrustedHtml(html){
+  return { __ldTrusted: true, html: String(html ?? "") };
+}
+
+function __ldHtml(strings, ...values){
+  let out = String((strings && strings[0]) ?? "");
+  for (let i = 0; i < values.length; i++){
+    const v = values[i];
+    if (v && typeof v === 'object' && v.__ldTrusted){
+      out += String(v.html ?? "");
+    } else {
+      out += __ldEscapeHtml(v);
+    }
+    out += String((strings && strings[i+1]) ?? "");
+  }
+  return out;
+}
+
+function __ldClearEl(el){
+  if (!el) return;
+  while (el.firstChild) el.removeChild(el.firstChild);
+}
+
+function __ldSetSafeHtml(el, html){
+  if (!el) return;
+  const raw = String(html ?? "");
+  // Fast path: treat plain text as textContent
+  if (!/[<>]/.test(raw)){
+    el.textContent = raw;
+    return;
+  }
+
+  try{
+    const doc = new DOMParser().parseFromString(raw, 'text/html');
+
+    const BLOCKED_TAGS = new Set([
+      'script','style','iframe','object','embed','link','meta','base','form'
+    ]);
+
+    function isSafeUrl(url){
+      const u = String(url ?? '').trim();
+      if (!u) return true;
+      const low = u.toLowerCase();
+      if (low.startsWith('#')) return true;
+      if (low.startsWith('mailto:')) return true;
+      if (low.startsWith('tel:')) return true;
+      if (low.startsWith('http:') || low.startsWith('https:')) return true;
+      // Allow relative URLs (no scheme)
+      if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(u)) return true;
+      // Allow data:image/* only (for very limited cases)
+      if (low.startsWith('data:image/')) return true;
+      return false;
+    }
+
+    function cleanseEl(node){
+      if (!node || node.nodeType !== 1) return;
+      const tag = String(node.tagName || '').toLowerCase();
+
+      // Remove blocked tags entirely
+      if (BLOCKED_TAGS.has(tag)){
+        node.remove();
+        return;
+      }
+
+      // Strip unsafe attributes
+      const attrs = Array.from(node.attributes || []);
+      for (const a of attrs){
+        const name = String(a.name || '').toLowerCase();
+        const val  = String(a.value ?? '');
+
+        // Remove inline handlers
+        if (name.startsWith('on')){
+          node.removeAttribute(a.name);
+          continue;
+        }
+
+        // Remove potentially dangerous attributes
+        if (name === 'srcdoc'){
+          node.removeAttribute(a.name);
+          continue;
+        }
+
+        // Normalise URLs
+        if (name === 'href' || name === 'src'){
+          if (!isSafeUrl(val)){
+            node.removeAttribute(a.name);
+            continue;
+          }
+          // if opening new tab, enforce rel
+          if (name === 'href' && node.getAttribute('target') === '_blank'){
+            const rel = (node.getAttribute('rel') || '').toLowerCase();
+            const need = ['noopener','noreferrer'];
+            const parts = new Set(rel.split(/\s+/).filter(Boolean));
+            need.forEach(x => parts.add(x));
+            node.setAttribute('rel', Array.from(parts).join(' '));
+          }
+          continue;
+        }
+
+        // Style: remove if contains suspicious constructs
+        if (name === 'style'){
+          const low = val.toLowerCase();
+          if (low.includes('expression(') || low.includes('javascript:') || /url\(\s*javascript:/i.test(val)){
+            node.removeAttribute(a.name);
+          }
+          continue;
+        }
+      }
+
+      // Recurse
+      const kids = Array.from(node.children || []);
+      for (const k of kids) cleanseEl(k);
+    }
+
+    // Cleanse body descendants
+    Array.from(doc.body.children || []).forEach(cleanseEl);
+
+    // Apply sanitised content
+    el.innerHTML = doc.body.innerHTML;
+  } catch(_){
+    // Fail closed to escaped text
+    el.innerHTML = __ldEscapeHtml(raw);
+  }
+}
+
+// Backward-compatible alias (some blocks build templates with __esc)
+function __esc(s){ return __ldEscapeHtml(s); }
+
+try { window.__ldEscapeHtml = __ldEscapeHtml; } catch(_){ try{ if(typeof __ldSilentErr==='function') __ldSilentErr(_); } catch(e){} }
+// END_LD_ESCAPE_HTML_GLOBAL_V3
 // ---- Version number normalisation (text, allow dots, max 12) ----
 function __ldNormaliseVersionNumber(v){
   const s = String(v ?? '').trim();
@@ -5955,7 +6100,7 @@ function renderPanoramaView() {
   // Visible IDs (for "select all" behaviour)
   __ldPanoramaVisibleIds = filtered.map(r => r.panoId).filter(Boolean);
 
-  tbody.innerHTML = '';
+  __ldClearEl(tbody);
   const frag = document.createDocumentFragment();
 
   filtered.forEach(r => {
@@ -5965,40 +6110,106 @@ function renderPanoramaView() {
     const bandClass = (r && r._band === 'a') ? 'pano-band-a' : 'pano-band-b';
     tr.className = bandClass;
 
-    const modTxt = r.module ? __esc(r.module) : '<span class="muted">—</span>';
-    const moTxt = r.moment ? __esc(r.moment) : '<span class="muted">—</span>';
-    const smTxt = r.bloc ? __esc(r.bloc) : '<span class="muted">—</span>';
-    const actTxt = r.activite ? __esc(r.activite) : '<span class="muted">—</span>';
-    const durTxt = r.duree ? __esc(r.duree) : '<span class="muted">—</span>';
+    const panoId = String(r && r.panoId ? r.panoId : '');
 
-    const modCell = `<span class="pano-text font-semibold">${modTxt}</span>`;
-    const moCell = `<span class="pano-text">${moTxt}</span>`;
-    const smCell = r.bloc ? `<span class="pano-text">${smTxt}</span>` : `${smTxt}`;
+    const stKey = (typeof normaliseStepStatus === 'function')
+      ? normaliseStepStatus(r.status)
+      : String(r.status || 'in_progress');
 
-    const stKey = (typeof normaliseStepStatus === 'function') ? normaliseStepStatus(r.status) : String(r.status || 'in_progress');
     const isChecked = __ldPanoramaSelected.has(r.panoId);
 
-    tr.innerHTML = `
-      <td class="px-2 py-1 pano-col-select">
-        <input type="checkbox" class="pano-select align-middle" data-pano-select="${r.panoId}" ${isChecked ? 'checked' : ''} title="Sélectionner cette ligne"/>
-      </td>
-      <td class="px-2 py-1 text-slate-500 font-semibold">${r.n}</td>
-      <td class="px-2 py-1">${modCell}</td>
-      <td class="px-2 py-1">${moCell}</td>
-      <td class="px-2 py-1">${smCell}</td>
-      <td class="px-2 py-1">${actTxt}</td>
-      <td class="px-2 py-1 pano-col-status">
-        <select class="pano-status-select h-[22px] px-1.5 text-[11px] font-semibold border border-slate-200 rounded bg-white outline-none focus:ring-2 focus:ring-indigo-200" data-pano-status="${r.panoId}" aria-label="État" title="Modifier l’état">
-          <option value="review" ${stKey==='review' ? 'selected' : ''}>À revoir</option>
-          <option value="in_progress" ${stKey==='in_progress' ? 'selected' : ''}>En cours</option>
-          <option value="done" ${stKey==='done' ? 'selected' : ''}>Finalisé</option>
-        </select>
-      </td>
-      <td class="px-2 py-1 font-semibold pano-col-duration">${durTxt}</td>
-      <td class="px-2 py-1">
-        <button type="button" class="pano-open text-xs font-extrabold hover:underline" data-pano-open="${r.panoId}">Aller</button>
-      </td>
-    `;
+    function makeTextSpan(text, extraClass){
+      const span = document.createElement('span');
+      span.className = extraClass ? extraClass : '';
+      span.textContent = String(text ?? '');
+      return span;
+    }
+
+    function makeCell(text, spanClass, tdClass){
+      const td = document.createElement('td');
+      td.className = tdClass || 'px-2 py-1';
+      if (text == null || String(text).trim() === ''){
+        const miss = document.createElement('span');
+        miss.className = 'muted';
+        miss.textContent = '—';
+        td.appendChild(miss);
+      } else {
+        const sp = document.createElement('span');
+        sp.className = spanClass || 'pano-text';
+        sp.textContent = String(text);
+        td.appendChild(sp);
+      }
+      return td;
+    }
+
+    // Select checkbox
+    const tdSel = document.createElement('td');
+    tdSel.className = 'px-2 py-1 pano-col-select';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'pano-select align-middle';
+    cb.setAttribute('data-pano-select', panoId);
+    cb.title = 'Sélectionner cette ligne';
+    cb.checked = !!isChecked;
+    tdSel.appendChild(cb);
+    tr.appendChild(tdSel);
+
+    // Row number
+    const tdN = document.createElement('td');
+    tdN.className = 'px-2 py-1 text-slate-500 font-semibold';
+    tdN.textContent = String(r && r.n != null ? r.n : '');
+    tr.appendChild(tdN);
+
+    // Module / moment / bloc / activité
+    tr.appendChild(makeCell(r && r.module, 'pano-text font-semibold', 'px-2 py-1'));
+    tr.appendChild(makeCell(r && r.moment, 'pano-text', 'px-2 py-1'));
+    tr.appendChild(makeCell(r && r.bloc,  'pano-text', 'px-2 py-1'));
+    tr.appendChild(makeCell(r && r.activite, '', 'px-2 py-1'));
+
+    // Status select
+    const tdStatus = document.createElement('td');
+    tdStatus.className = 'px-2 py-1 pano-col-status';
+    const sel = document.createElement('select');
+    sel.className = 'pano-status-select h-[22px] px-1 rounded border border-slate-200 bg-white text-[11px] focus:outline-none focus:ring-2 focus:ring-indigo-200';
+    sel.setAttribute('data-pano-status', panoId);
+    sel.setAttribute('aria-label', 'État');
+    const opts = [
+      ['review', 'À revoir'],
+      ['in_progress', 'En cours'],
+      ['done', 'Finalisé'],
+    ];
+    for (const [val, label] of opts){
+      const o = document.createElement('option');
+      o.value = val;
+      o.textContent = label;
+      if (stKey === val) o.selected = true;
+      sel.appendChild(o);
+    }
+    tdStatus.appendChild(sel);
+    tr.appendChild(tdStatus);
+
+    // Duration
+    const tdDur = document.createElement('td');
+    tdDur.className = 'px-2 py-1 font-semibold pano-col-duration';
+    if (r && r.duree){
+      tdDur.textContent = String(r.duree);
+    } else {
+      tdDur.textContent = '—';
+      tdDur.classList.add('text-slate-400');
+    }
+    tr.appendChild(tdDur);
+
+    // Open
+    const tdOpen = document.createElement('td');
+    tdOpen.className = 'px-2 py-1';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pano-open text-xs font-semibold text-indigo-700 hover:underline';
+    btn.setAttribute('data-pano-open', panoId);
+    btn.textContent = 'Aller';
+    tdOpen.appendChild(btn);
+    tr.appendChild(tdOpen);
+
     frag.appendChild(tr);
   });
 
@@ -6039,7 +6250,15 @@ function initPanoramaUI() {
   const table = document.getElementById('panorama-table');
 
   if (refreshBtn) refreshBtn.addEventListener('click', () => renderPanoramaView());
-  if (filterInput) filterInput.addEventListener('input', () => renderPanoramaView());
+  // Debounce text filtering to avoid rebuilding the table on every keystroke
+  const __panoDebouncedRender = (() => {
+    let t = null;
+    return () => {
+      try { if (t) { clearTimeout(t); t = null; } } catch(_){ try{ if(typeof __ldSilentErr==='function') __ldSilentErr(_); } catch(e){} }
+      t = setTimeout(() => { t = null; try { renderPanoramaView(); } catch(_){ try{ if(typeof __ldSilentErr==='function') __ldSilentErr(_); } catch(e){} } }, 120);
+    };
+  })();
+  if (filterInput) filterInput.addEventListener('input', __panoDebouncedRender);
 
   // Filtrer par état depuis Panorama (agit sur le filtre global pour rester cohérent)
   if (statusSel) {
@@ -6349,7 +6568,7 @@ function initViewLevelSegmentedUI() {
                 } catch(_){ __ldSilentErr(_); }
                 if (hintBits.length) parts.push(`<div class="mt-1 text-xs text-slate-500">${__esc(__ldI18n('import_error_hints', 'Indices'))}: ${__esc(hintBits.join(', '))}</div>`);
 
-                body.innerHTML = parts.join('');
+                __ldSetSafeHtml(body, parts.join(''));
 
                 if (btnDl) btnDl.disabled = !window.__lastImportReport;
                 if (btnCopy) btnCopy.disabled = !window.__lastImportReport;
@@ -6592,8 +6811,26 @@ function initViewLevelSegmentedUI() {
                 });
                 const catDl = document.getElementById('tools-materials-cat-datalist');
                 const subDl = document.getElementById('tools-materials-subcat-datalist');
-                if (catDl) catDl.innerHTML = Array.from(cats).sort().map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
-                if (subDl) subDl.innerHTML = Array.from(subs).sort().map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
+                if (catDl) {
+                    __ldClearEl(catDl);
+                    const frag = document.createDocumentFragment();
+                    Array.from(cats).sort().forEach(v => {
+                        const opt = document.createElement('option');
+                        opt.value = String(v);
+                        frag.appendChild(opt);
+                    });
+                    catDl.appendChild(frag);
+                }
+                if (subDl) {
+                    __ldClearEl(subDl);
+                    const frag = document.createDocumentFragment();
+                    Array.from(subs).sort().forEach(v => {
+                        const opt = document.createElement('option');
+                        opt.value = String(v);
+                        frag.appendChild(opt);
+                    });
+                    subDl.appendChild(frag);
+                }
             } catch(_){ __ldSilentErr(_); }
         }
 
@@ -6623,17 +6860,48 @@ function initViewLevelSegmentedUI() {
             li.setAttribute('data-subcat', sub);
             li.setAttribute('data-item', item);
 
-            li.innerHTML = `
-                <span class="material-icons-round text-slate-500 hover:text-slate-700 text-base cursor-grab drag-handle-tools-materials drag-handle mt-0.5 transition-colors" title="Glisser-déposer pour réorganiser" aria-label="Glisser-déposer pour réorganiser">drag_indicator</span>
-                <div class="flex flex-col sm:flex-row gap-1 flex-1 min-w-0">
-                    <input class="tm-cat-input px-2 py-1 border border-slate-200 rounded text-xs w-full sm:w-[28%]" placeholder="Catégorie..." value="${escapeHtml(cat)}" />
-                    <input class="tm-subcat-input px-2 py-1 border border-slate-200 rounded text-xs w-full sm:w-[28%]" placeholder="Sous-catégorie..." value="${escapeHtml(sub)}" />
-                    <input class="tm-item-input px-2 py-1 border border-slate-200 rounded text-xs flex-1 min-w-0" placeholder="Outil / matériel..." value="${escapeHtml(item)}" />
-                </div>
-                <button class="text-[10px] px-2 py-1 rounded bg-red-50 text-red-700 hover:bg-red-100 border border-red-100" data-action="remove-tools-materials-item" title="Supprimer" type="button">
-                    <span class="material-icons-round text-sm">delete</span>
-                </button>
-            `;
+            // Build DOM safely (avoid innerHTML)
+            const drag = document.createElement('span');
+            drag.className = 'material-icons-round text-slate-500 hover:text-slate-700 cursor-grab mt-1';
+            drag.setAttribute('aria-label', 'Glisser-déposer pour réorganiser');
+            drag.textContent = 'drag_indicator';
+
+            const wrap = document.createElement('div');
+            wrap.className = 'flex flex-col sm:flex-row gap-1 flex-1 min-w-0';
+
+            const catInput = document.createElement('input');
+            catInput.className = 'tm-cat-input px-2 py-1 border border-slate-200 rounded text-[12px] w-full sm:w-[28%]';
+            catInput.placeholder = 'Catégorie...';
+            catInput.value = cat;
+
+            const subInput = document.createElement('input');
+            subInput.className = 'tm-subcat-input px-2 py-1 border border-slate-200 rounded text-[12px] w-full sm:w-[28%]';
+            subInput.placeholder = 'Sous-catégorie...';
+            subInput.value = sub;
+
+            const itemInput = document.createElement('input');
+            itemInput.className = 'tm-item-input px-2 py-1 border border-slate-200 rounded text-[12px] w-full sm:flex-1';
+            itemInput.placeholder = 'Outil / matériel...';
+            itemInput.value = item;
+
+            wrap.appendChild(catInput);
+            wrap.appendChild(subInput);
+            wrap.appendChild(itemInput);
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'text-[10px] px-2 py-1 rounded border border-slate-200 text-slate-500 hover:text-red-600 hover:border-red-200 transition-colors';
+            delBtn.setAttribute('data-action', 'remove-tools-materials-item');
+            delBtn.title = 'Supprimer';
+            delBtn.type = 'button';
+
+            const delIcon = document.createElement('span');
+            delIcon.className = 'material-icons-round text-sm';
+            delIcon.textContent = 'delete';
+            delBtn.appendChild(delIcon);
+
+            li.appendChild(drag);
+            li.appendChild(wrap);
+            li.appendChild(delBtn);
 
             const onAnyInput = () => syncToolsMaterialsTextareaFromList();
             li.querySelectorAll('input').forEach(inp => {
@@ -7075,8 +7343,8 @@ function _readTextFile(file, cb) {
             mgr.refresh = function() {
                 const catList  = document.getElementById(config.catDatalistId);
                 const subList  = document.getElementById(config.subcatDatalistId);
-                if (catList)  catList.innerHTML = '';
-                if (subList)  subList.innerHTML = '';
+                if (catList)  __ldClearEl(catList);
+                if (subList)  __ldClearEl(subList);
 
                 const taxonomy = config.getTaxonomy();
                 const cats = Object.keys(taxonomy || {});
@@ -7353,7 +7621,7 @@ function addAimItem(textValue = null) {
             del.className = 'text-slate-400 hover:text-red-600 p-1 transition-colors';
             del.setAttribute('data-action', 'remove-aim-item');
             del.title = 'Supprimer';
-            del.innerHTML = '<span class="material-icons-round text-sm">close</span>';
+            del.appendChild((() => { const sp=document.createElement('span'); sp.className='material-icons-round text-sm'; sp.textContent='close'; return sp; })());
 
             li.appendChild(drag);
             li.appendChild(catInput);
@@ -7452,7 +7720,7 @@ function addAimItem(textValue = null) {
             del.className = 'text-slate-400 hover:text-red-600 p-1 transition-colors';
             del.setAttribute('data-action', 'remove-outcomes-text-item');
             del.title = 'Supprimer';
-            del.innerHTML = '<span class="material-icons-round text-sm">close</span>';
+            del.appendChild((() => { const sp=document.createElement('span'); sp.className='material-icons-round text-sm'; sp.textContent='close'; return sp; })());
 
             li.appendChild(drag);
             li.appendChild(catInput);
@@ -7805,7 +8073,7 @@ function openAimsFromStep(btn) {
                 const aimsTa = document.getElementById('param-aims');
                 const aimsList = document.getElementById('aims-list');
                 if (aimsTa && aimsList) {
-                    aimsList.innerHTML = '';
+                    __ldClearEl(aimsList);
                     const fromLoad = (window.__kpwizAimsItemsFromLoad && Array.isArray(window.__kpwizAimsItemsFromLoad)) ? window.__kpwizAimsItemsFromLoad : null;
                     const lines = fromLoad ? [] : ((typeof _parseTextList === 'function') ? _parseTextList(aimsTa.value) : String(aimsTa.value||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean));
                     if (fromLoad) {
@@ -7821,7 +8089,7 @@ function openAimsFromStep(btn) {
                 const outTa = document.getElementById('param-outcomes-text');
                 const outList = document.getElementById('outcomes-text-list');
                 if (outTa && outList) {
-                    outList.innerHTML = '';
+                    __ldClearEl(outList);
                     const fromLoad = (window.__kpwizOutcomesTextItemsFromLoad && Array.isArray(window.__kpwizOutcomesTextItemsFromLoad)) ? window.__kpwizOutcomesTextItemsFromLoad : null;
                     const lines = fromLoad ? [] : ((typeof _parseTextList === 'function') ? _parseTextList(outTa.value) : String(outTa.value||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean));
                     if (fromLoad) {
@@ -7837,7 +8105,7 @@ function openAimsFromStep(btn) {
                 const tmTa = document.getElementById('param-tools-materials');
                 const tmList = document.getElementById('tools-materials-list');
                 if (tmTa && tmList) {
-                    tmList.innerHTML = '';
+                    __ldClearEl(tmList);
                     const fromLoad = (window.__kpwizToolsMaterialsItemsFromLoad && Array.isArray(window.__kpwizToolsMaterialsItemsFromLoad)) ? window.__kpwizToolsMaterialsItemsFromLoad : null;
                     const lines = fromLoad ? [] : ((typeof _parseTextList === 'function') ? _parseTextList(tmTa.value) : String(tmTa.value||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean));
                     if (fromLoad) {
@@ -8025,7 +8293,7 @@ function showTooltip(e, content, isHtml = false) {
     const el = getTooltipEl();
     if (!el) return;
     if (isHtml) {
-        el.innerHTML = sanitizeTooltipHtml(content);
+        __ldSetSafeHtml(el, sanitizeTooltipHtml(content));
     } else {
         el.textContent = content;
     }
@@ -8488,7 +8756,7 @@ btn_export_dropdown: "Exporter...",
                 chart_group_modes: "Modes de groupes",
                 label_course_name: "Nom de la formation",
                 ph_course_name: "Entrez le nom de la formation...",
-                label_version_number: "Numéro de version",
+                label_version_number: "Version",
                 ph_version_number: "Entrez un numéro de version (ex. 1.0)...",
 label_learning_time: "Temps d'Apprentissage (Cible)",
                 label_designed_time: "Temps Conçu (Planifié)",
@@ -10096,14 +10364,24 @@ function renderBloomOptions(selectElement, selectedValue = "") {
             const placeholder = t.bloom_placeholder || 'Catégorie...';
 
             const keys = Object.keys(ACTIVE_TAXONOMY || {});
-            let options = `<option value="" disabled ${!selectedValue ? 'selected' : ''}>${escapeHtml(placeholder)}</option>`;
+
+            __ldClearEl(selectElement);
+
+            const opt0 = document.createElement('option');
+            opt0.value = '';
+            opt0.disabled = true;
+            opt0.selected = !selectedValue;
+            opt0.textContent = placeholder;
+            selectElement.appendChild(opt0);
 
             keys.forEach(level => {
                 const label = ACTIVE_TAXONOMY_TRANSLATIONS[level] || t['bloom_' + level] || level;
-                options += `<option value="${escapeHtml(String(level))}" ${String(selectedValue) === String(level) ? 'selected' : ''}>${escapeHtml(String(label))}</option>`;
+                const opt = document.createElement('option');
+                opt.value = String(level);
+                opt.selected = String(selectedValue) === String(level);
+                opt.textContent = String(label);
+                selectElement.appendChild(opt);
             });
-
-            selectElement.innerHTML = options;
 
             // Si aucune taxonomie n'est chargée, on désactive les sélecteurs
             const noTaxonomy = keys.length === 0;
@@ -10121,9 +10399,18 @@ function renderBloomOptions(selectElement, selectedValue = "") {
 
             // Toujours afficher le menu "Sous-catégorie" : s'il n'y a pas de catégorie sélectionnée
             // ou si la taxonomie n'est pas chargée, on le désactive et on laisse uniquement le placeholder.
+            __ldClearEl(subSelectElement);
+
+            const opt0 = document.createElement('option');
+            opt0.value = '';
+            opt0.disabled = true;
+            opt0.textContent = placeholder;
+
             if (!level || !ACTIVE_TAXONOMY || !ACTIVE_TAXONOMY[level]) {
                 subSelectElement.classList.remove('hidden');
-                subSelectElement.innerHTML = `<option value="" disabled selected>${escapeHtml(placeholder)}</option>`;
+                opt0.selected = true;
+                subSelectElement.appendChild(opt0);
+
                 subSelectElement.disabled = true;
                 subSelectElement.classList.add('opacity-60', 'cursor-not-allowed');
                 return;
@@ -10132,14 +10419,18 @@ function renderBloomOptions(selectElement, selectedValue = "") {
             subSelectElement.classList.remove('hidden');
             subSelectElement.disabled = false;
             subSelectElement.classList.remove('opacity-60', 'cursor-not-allowed');
-            let options = `<option value="" disabled ${!selectedValue ? 'selected' : ''}>${escapeHtml(placeholder)}</option>`;
+
+            opt0.selected = !selectedValue;
+            subSelectElement.appendChild(opt0);
 
             (ACTIVE_TAXONOMY[level] || []).forEach(sub => {
                 const label = ACTIVE_TAXONOMY_TRANSLATIONS[sub] || t['bloom_sub_' + sub] || sub;
-                options += `<option value="${escapeHtml(String(sub))}" ${selectedValue === sub ? 'selected' : ''}>${escapeHtml(String(label))}</option>`;
+                const opt = document.createElement('option');
+                opt.value = String(sub);
+                opt.selected = String(selectedValue) === String(sub);
+                opt.textContent = String(label);
+                subSelectElement.appendChild(opt);
             });
-
-            subSelectElement.innerHTML = options;
         }
 
 function updateOutcomeBloom(levelSelect) {
@@ -10695,7 +10986,7 @@ function updateOutcomeBloom(levelSelect) {
             if (!stepEl || !selectEl) return;
             const box = stepEl.querySelector(containerSelector);
             if (!box) return;
-            box.innerHTML = '';
+            __ldClearEl(box);
 
             const ro = (renderOpts && typeof renderOpts === 'object') ? renderOpts : {};
             const selectedOnly = !!ro.selectedOnly;
@@ -10785,7 +11076,7 @@ function updateOutcomeBloom(levelSelect) {
             const catalogue = (typeof getCompetencesTransversalesFromUI === 'function') ? getCompetencesTransversalesFromUI() : [];
             const currentSelected = selectedIds ? _normaliseStepCompetenceIds(selectedIds) : _normaliseStepCompetenceIds(Array.from(sel.selectedOptions || []).map(o => o.value));
 
-            sel.innerHTML = '';
+            __ldClearEl(sel);
             if (!catalogue || catalogue.length === 0) {
                 if (currentSelected && currentSelected.length) {
                     currentSelected.forEach(id => {
@@ -10859,7 +11150,7 @@ function updateOutcomeBloom(levelSelect) {
             const currentSelected = selectedIds ? _normaliseStepCompetenceIds(selectedIds) : _normaliseStepCompetenceIds(Array.from(sel.selectedOptions || []).map(o => o.value));
 
             // Rebuild options
-            sel.innerHTML = '';
+            __ldClearEl(sel);
             if (!catalogue || catalogue.length === 0) {
                 // Preserve any existing selections, even if the catalogue is currently empty
                 if (currentSelected && currentSelected.length) {
@@ -10936,7 +11227,7 @@ function updateOutcomeBloom(levelSelect) {
             if (!stepEl || !selectEl) return;
             const box = stepEl.querySelector(containerSelector);
             if (!box) return;
-            box.innerHTML = '';
+            __ldClearEl(box);
 
             const ro = (renderOpts && typeof renderOpts === 'object') ? renderOpts : {};
             const selectedOnly = !!ro.selectedOnly;
@@ -11011,7 +11302,7 @@ function updateOutcomeBloom(levelSelect) {
             const options = (typeof getGlobalLearningAimsOptions === 'function') ? (getGlobalLearningAimsOptions() || []) : [];
             const currentSelected = selected ? _parseTextList(Array.isArray(selected) ? selected.join('\n') : String(selected)) : Array.from(sel.selectedOptions || []).map(o => String(o.value || '').trim()).filter(Boolean);
 
-            sel.innerHTML = '';
+            __ldClearEl(sel);
             if (!options.length) {
                 (currentSelected || []).forEach(v => {
                     if (!v) return;
@@ -11068,7 +11359,7 @@ function updateOutcomeBloom(levelSelect) {
             const options = (typeof getGlobalLearningOutcomesOptions === 'function') ? (getGlobalLearningOutcomesOptions() || []) : [];
             const currentSelected = selected ? _parseTextList(Array.isArray(selected) ? selected.join('\n') : String(selected)) : Array.from(sel.selectedOptions || []).map(o => String(o.value || '').trim()).filter(Boolean);
 
-            sel.innerHTML = '';
+            __ldClearEl(sel);
             if (!options.length) {
                 (currentSelected || []).forEach(v => {
                     if (!v) return;
@@ -11174,7 +11465,7 @@ function updateOutcomeBloom(levelSelect) {
                 ? (Array.isArray(selected) ? selected.map(v => String(v || '').trim()).filter(Boolean) : _parseTextList(String(selected)))
                 : Array.from(sel.selectedOptions || []).map(o => String(o.value || '').trim()).filter(Boolean);
 
-            sel.innerHTML = '';
+            __ldClearEl(sel);
             if (!options.length) {
                 (currentSelected || []).forEach(v => {
                     if (!v) return;
@@ -11395,7 +11686,7 @@ function updateOutcomeBloom(levelSelect) {
             if (!stepEl || !selectEl) return;
             const box = stepEl.querySelector(containerSelector);
             if (!box) return;
-            box.innerHTML = '';
+            __ldClearEl(box);
 
             const opts = Array.from(selectEl.options || []).filter(o => !(o.disabled && !o.value));
             const usable = opts.filter(o => String(o.value || '').trim());
@@ -11487,7 +11778,7 @@ function refreshAllStepOutcomesOptions() {
             const options = (typeof getGlobalLearningAimsOptions === 'function') ? (getGlobalLearningAimsOptions() || []) : [];
             const currentSelected = selected ? _parseTextList(Array.isArray(selected) ? selected.join('\n') : String(selected)) : (getModuleSelectedAims(moduleEl) || []);
 
-            sel.innerHTML = '';
+            __ldClearEl(sel);
             const seen = new Set();
 
             if (!options.length) {
@@ -11546,7 +11837,7 @@ function refreshAllStepOutcomesOptions() {
             const options = (typeof getGlobalLearningOutcomesOptions === 'function') ? (getGlobalLearningOutcomesOptions() || []) : [];
             const currentSelected = selected ? _parseTextList(Array.isArray(selected) ? selected.join('\n') : String(selected)) : (getModuleSelectedOutcomes(moduleEl) || []);
 
-            sel.innerHTML = '';
+            __ldClearEl(sel);
             const seen = new Set();
 
             if (!options.length) {
@@ -12024,7 +12315,7 @@ obs3.observe(alist, { childList: true, subtree: true });
             const catalogue = (typeof getCompetencesFromUI === 'function') ? getCompetencesFromUI() : [];
             const currentSelected = selectedIds ? _normaliseStepCompetenceIds(selectedIds) : _normaliseStepCompetenceIds(Array.from(sel.selectedOptions || []).map(o => o.value));
 
-            sel.innerHTML = '';
+            __ldClearEl(sel);
             if (!catalogue || catalogue.length === 0) {
                 if (currentSelected && currentSelected.length) {
                     currentSelected.forEach(id => {
@@ -12081,7 +12372,7 @@ obs3.observe(alist, { childList: true, subtree: true });
             const catalogue = (typeof getCompetencesTransversalesFromUI === 'function') ? getCompetencesTransversalesFromUI() : [];
             const currentSelected = selectedIds ? _normaliseStepCompetenceIds(selectedIds) : _normaliseStepCompetenceIds(Array.from(sel.selectedOptions || []).map(o => o.value));
 
-            sel.innerHTML = '';
+            __ldClearEl(sel);
             if (!catalogue || catalogue.length === 0) {
                 if (currentSelected && currentSelected.length) {
                     currentSelected.forEach(id => {
@@ -12223,8 +12514,8 @@ obs3.observe(alist, { childList: true, subtree: true });
             });
 
             // Render
-            sujetBox.innerHTML = '';
-            transvBox.innerHTML = '';
+            __ldClearEl(sujetBox);
+            __ldClearEl(transvBox);
 
             if (countSujetEl) countSujetEl.textContent = String(sujetOrdered.length);
             if (countTransvEl) countTransvEl.textContent = String(transvOrdered.length);
@@ -12351,7 +12642,7 @@ obs3.observe(alist, { childList: true, subtree: true });
             const countEl = moduleEl.querySelector('.module-aims-count');
             if (!box) return;
             const sel = getModuleSelectedAims(moduleEl);
-            box.innerHTML = '';
+            __ldClearEl(box);
             if (countEl) countEl.textContent = String(sel.length);
             if (!sel.length) {
                 const empty = document.createElement('span');
@@ -12369,7 +12660,7 @@ obs3.observe(alist, { childList: true, subtree: true });
             const countEl = moduleEl.querySelector('.module-outcomes-count');
             if (!box) return;
             const sel = getModuleSelectedOutcomes(moduleEl);
-            box.innerHTML = '';
+            __ldClearEl(box);
             if (countEl) countEl.textContent = String(sel.length);
             if (!sel.length) {
                 const empty = document.createElement('span');
@@ -12401,7 +12692,7 @@ obs3.observe(alist, { childList: true, subtree: true });
 
             const close = () => {
                 modal.classList.add('hidden');
-                bodyEl.innerHTML = '';
+                __ldClearEl(bodyEl);
                 __ctx = null;
             };
 
@@ -12456,7 +12747,7 @@ obs3.observe(alist, { childList: true, subtree: true });
                 titleEl.textContent = title;
 
                 if (!opts.length) {
-                    bodyEl.innerHTML = '<div class="text-xs text-slate-500 italic">Aucune option disponible. Renseignez d\'abord la liste dans « Informations et paramètres de la formation ».</div>';
+                    __ldSetSafeHtml(bodyEl, '<div class="text-xs text-slate-500 italic">Aucune option disponible. Renseignez d\'abord la liste dans « Informations et paramètres de la formation ».</div>');
                 } else {
                     const wrap = document.createElement('div');
                     wrap.className = 'max-h-72 overflow-auto border border-slate-200 rounded p-2 bg-slate-50 space-y-1';
@@ -12483,7 +12774,7 @@ obs3.observe(alist, { childList: true, subtree: true });
                         wrap.appendChild(row);
                     });
 
-                    bodyEl.innerHTML = '';
+                    __ldClearEl(bodyEl);
                     bodyEl.appendChild(wrap);
                 }
 
@@ -14159,7 +14450,7 @@ const __chartsSuspendFn = window.__setChartsSuspended;
                 console.error('Normalisation exception; continuing with validated payload.', e);
             }
             const rootEl = document.getElementById('activities-root') || root;
-            if (rootEl) rootEl.innerHTML = '';
+            if (rootEl) __ldClearEl(rootEl);
 
             const __setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = (val ?? ''); };
             // __setHtml removed (XSS vector) — only used for clearing, now uses safe replaceChildren()
@@ -14465,12 +14756,12 @@ function _i18nStr(key, fallback = "") {
 
             const tech = (report && report.error && report.error.message) ? `<div class="text-[11px] text-slate-500 mt-1">${escapeHtml(_i18nStr("import_error_detail", "Détail"))}: ${escapeHtml(report.error.message)}</div>` : "";
 
-            body.innerHTML = `
+            __ldSetSafeHtml(body, `
               <div><span class="font-semibold">${escapeHtml(_i18nStr("import_error_probable_cause", "Cause probable"))}:</span> ${escapeHtml(causeText)}</div>
               ${detectedParts.join("")}
               ${tech}
               ${actionsHtml}
-            `;
+            `);
 
             if (btnDownload) {
                 btnDownload.classList.toggle("hidden", !window.__lastImportReport);
@@ -14884,7 +15175,7 @@ loadProjectFromObject(project);
             if (tgtUnitSel) tgtUnitSel.value = mapUnitToSecs(data.targetUnit || getDefaultDurationUnitKey());
 
             // Clear any template content and rebuild moments/steps from data (backward compatible)
-            if (momentsRoot) momentsRoot.innerHTML = '';
+            if (momentsRoot) __ldClearEl(momentsRoot);
 
             if (data.moments && Array.isArray(data.moments) && data.moments.length) {
                 data.moments.forEach(momentData => {
@@ -14908,7 +15199,7 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
                         const subWrap = momentEl.querySelector('.submoments-container');
                         try { initSortableSubmoments(subWrap); } catch(_){ __ldSilentErr(_); }
                         if (subWrap && ((Array.isArray(momentData.subMoments) && momentData.subMoments.length) || (Array.isArray(momentData.sousMoments) && momentData.sousMoments.length)) && submomentTemplate) {
-                            subWrap.innerHTML = '';
+                            __ldClearEl(subWrap);
                             (momentData.subMoments || momentData.sousMoments || []).forEach((sm, smIdx) => {
                                 const smClone = submomentTemplate.content.cloneNode(true);
                                 subWrap.appendChild(smClone);
@@ -15029,7 +15320,7 @@ if (((data.groupMode || data.regroupement) === 'groups')) stepEl.querySelector('
         function applyTranslations() {
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
-                if (translations[currentLang][key]) el.innerHTML = sanitizeBasicHtml(translations[currentLang][key]);
+                if (translations[currentLang][key]) __ldSetSafeHtml(el, sanitizeBasicHtml(translations[currentLang][key]));
             });
             document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
                 const key = el.getAttribute('data-i18n-placeholder');
@@ -15364,10 +15655,9 @@ try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closes
             let _activeDot = null; // the dot button that opened the floating menu
             const _floatingMenu = document.createElement('div');
             _floatingMenu.className = 'step-status-dot-menu';
-            _floatingMenu.innerHTML =
-                '<button type="button" class="step-status-dot-menu-item" data-val="in_progress" title="En cours"></button>' +
+            __ldSetSafeHtml(_floatingMenu, '<button type="button" class="step-status-dot-menu-item" data-val="in_progress" title="En cours"></button>' +
                 '<button type="button" class="step-status-dot-menu-item" data-val="review" title="À revoir"></button>' +
-                '<button type="button" class="step-status-dot-menu-item" data-val="done" title="Finalisé"></button>';
+                '<button type="button" class="step-status-dot-menu-item" data-val="done" title="Finalisé"></button>');
             document.body.appendChild(_floatingMenu);
 
             function closeMenu(){
@@ -15638,24 +15928,43 @@ document.addEventListener('DOMContentLoaded', () => { try { __ldInitStatusSelect
         function __ldRenderStatusSummary(summaryEl, counts){
             if (!summaryEl) return;
             const total = counts?.total || 0;
+
+            __ldClearEl(summaryEl);
+
             if (total <= 0){
-                summaryEl.innerHTML = '<span class="ld-ss-empty">0</span>';
+                const sp = document.createElement('span');
+                sp.className = 'ld-ss-empty';
+                sp.textContent = '0';
+                summaryEl.appendChild(sp);
                 return;
             }
+
             // Vertical histogram: bar height proportional to count, max bar = 22px
             const maxH = 22;
             const maxVal = Math.max(counts.done || 0, counts.review || 0, counts.in_progress || 0, 1);
             function barH(v){ return Math.max(2, Math.round((v / maxVal) * maxH)); }
+
             function col(cls, v, label){
-                return '<div class="ld-ss-bar-col" title="' + label + ' : ' + v + '">' +
-                    '<span class="ld-ss-count">' + v + '</span>' +
-                    '<div class="ld-ss-bar ld-ss-bar--' + cls + '" style="height:' + barH(v) + 'px"></div>' +
-                '</div>';
+                const colEl = document.createElement('div');
+                colEl.className = 'ld-ss-bar-col';
+                colEl.title = `${label} : ${v}`;
+
+                const countEl = document.createElement('span');
+                countEl.className = 'ld-ss-count';
+                countEl.textContent = String(v);
+
+                const barEl = document.createElement('div');
+                barEl.className = `ld-ss-bar ld-ss-bar--${cls}`;
+                barEl.style.height = `${barH(v)}px`;
+
+                colEl.appendChild(countEl);
+                colEl.appendChild(barEl);
+                return colEl;
             }
-            summaryEl.innerHTML =
-                col('progress', counts.in_progress || 0, 'En cours') +
-                col('review', counts.review || 0, 'À revoir') +
-                col('done', counts.done || 0, 'Finalisé');
+
+            summaryEl.appendChild(col('progress', counts.in_progress || 0, 'En cours'));
+            summaryEl.appendChild(col('review', counts.review || 0, 'À revoir'));
+            summaryEl.appendChild(col('done', counts.done || 0, 'Finalisé'));
         }
 
         function __ldEnsureModuleSummaryEl(modEl){
@@ -16875,21 +17184,21 @@ if (targetSecs > 0) {
             const containerRuler = getTimelineContainerForRender('timeline-ruler');
             
             // Clear all
-            if (containerActivitiesPlanned) containerActivitiesPlanned.innerHTML = '';
-            if (labelsActivitiesPlanned) labelsActivitiesPlanned.innerHTML = '';
-            containerActivities.innerHTML = '';
-            labelsActivities.innerHTML = '';
-            if (containerMoments) containerMoments.innerHTML = '';
-            if (labelsMoments) labelsMoments.innerHTML = '';
-            if (containerSubmoments) containerSubmoments.innerHTML = '';
-            if (labelsSubmoments) labelsSubmoments.innerHTML = '';
+            if (containerActivitiesPlanned) __ldClearEl(containerActivitiesPlanned);
+            if (labelsActivitiesPlanned) __ldClearEl(labelsActivitiesPlanned);
+            __ldClearEl(containerActivities);
+            __ldClearEl(labelsActivities);
+            if (containerMoments) __ldClearEl(containerMoments);
+            if (labelsMoments) __ldClearEl(labelsMoments);
+            if (containerSubmoments) __ldClearEl(containerSubmoments);
+            if (labelsSubmoments) __ldClearEl(labelsSubmoments);
 
-            containerSteps.innerHTML = '';
-            containerGrouping.innerHTML = '';
-            containerTrainer.innerHTML = '';
-            containerPlace.innerHTML = '';
-            containerTime.innerHTML = '';
-            if (containerRuler) containerRuler.innerHTML = "";
+            __ldClearEl(containerSteps);
+            __ldClearEl(containerGrouping);
+            __ldClearEl(containerTrainer);
+            __ldClearEl(containerPlace);
+            __ldClearEl(containerTime);
+            if (containerRuler) __ldClearEl(containerRuler);
 
             // Compute planned structure (target durations) per module
             const activityGroups = document.querySelectorAll('.activity-group');
@@ -17569,7 +17878,7 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong>`;
 
                     
                     if (bar && label) {
-                        bar.innerHTML = '';
+                        __ldClearEl(bar);
                         // Update label
                         const unitSecs = mapUnitToSecs(targetUnitSel?.value || getDefaultDurationUnitSecs());
                         const unitText = __ldGetUnitLabelBySecs(unitSecs, unitLabelFmt);
@@ -18231,7 +18540,7 @@ function exportDOCX() {
     };
 
     addMetaLine('Nom de la formation', model.meta.courseName);
-    addMetaLine('Numéro de version', model.meta.versionNumber);
+    addMetaLine('Version', model.meta.versionNumber);
     addMetaLine('Concepteurs', model.meta.authors);
     addMetaLine('Formateurs', model.meta.trainers);
     addMetaLine('Licence', model.meta.license);
@@ -18790,7 +19099,7 @@ function __deprecated__exportRichText_1() {
                 
                 <h2 data-i18n="heading_metadata">Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Numéro de version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_license || 'Licence'}:</span> ${__esc(document.getElementById('param-license')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
@@ -19324,7 +19633,7 @@ function __deprecated__exportCSV_2() {
                 
                 <h2 data-i18n="heading_metadata">Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Numéro de version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
@@ -19893,7 +20202,7 @@ function __deprecated__exportCSV_3() {
                 
                 <h2 data-i18n="heading_metadata">Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Numéro de version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
@@ -20339,7 +20648,7 @@ function __deprecated__exportCSV_4() {
                 
                 <h2 data-i18n="heading_metadata">Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Numéro de version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
@@ -20595,7 +20904,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 '\\fs24\\b ' + escapeRtf('Métadonnées') + '\\b0\\par' +
                 '\\fs20 ' +
                 '\\b ' + escapeRtf(t.label_course_name) + ':\\b0 ' + escapeRtf(courseName) + '\\par' +
-                '\\b ' + escapeRtf(t.label_version_number || 'Numéro de version') + ':\\b0 ' + escapeRtf(document.getElementById('param-version-number')?.value || '') + '\\par' +
+                '\\b ' + escapeRtf(t.label_version_number || 'Version') + ':\\b0 ' + escapeRtf(document.getElementById('param-version-number')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_authors) + ':\\b0 ' + escapeRtf(document.getElementById('param-authors')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_mode) + ':\\b0 ' + escapeRtf(document.getElementById('param-mode')?.selectedOptions[0]?.innerText || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_level) + ':\\b0 ' + escapeRtf(document.getElementById('param-level')?.selectedOptions[0]?.innerText || '') + '\\par' +
@@ -20742,7 +21051,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 
                 <h2 data-i18n="heading_metadata">Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Numéro de version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
@@ -20997,7 +21306,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 '\\fs24\\b ' + escapeRtf('Métadonnées') + '\\b0\\par' +
                 '\\fs20 ' +
                 '\\b ' + escapeRtf(t.label_course_name) + ':\\b0 ' + escapeRtf(courseName) + '\\par' +
-                '\\b ' + escapeRtf(t.label_version_number || 'Numéro de version') + ':\\b0 ' + escapeRtf(document.getElementById('param-version-number')?.value || '') + '\\par' +
+                '\\b ' + escapeRtf(t.label_version_number || 'Version') + ':\\b0 ' + escapeRtf(document.getElementById('param-version-number')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_authors) + ':\\b0 ' + escapeRtf(document.getElementById('param-authors')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_mode) + ':\\b0 ' + escapeRtf(document.getElementById('param-mode')?.selectedOptions[0]?.innerText || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_level) + ':\\b0 ' + escapeRtf(document.getElementById('param-level')?.selectedOptions[0]?.innerText || '') + '\\par' +
@@ -21269,7 +21578,7 @@ function __deprecated__exportRichText_6() {
                 
                 <h2 data-i18n="heading_metadata">Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Numéro de version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
@@ -21636,7 +21945,7 @@ function exportCSV() {
     const metaRows = [
         ['Champ', 'Valeur'],
         ['Nom de la formation', meta.courseName || ''],
-        ['Numéro de version', meta.versionNumber || ''],
+        ['Version', meta.versionNumber || ''],
         ['Concepteurs', meta.authors || ''],
         ['Formateurs', meta.trainers || ''],
         ['Licence', meta.license || ''],
@@ -21714,7 +22023,7 @@ function exportCSV() {
                 
                 <h2 data-i18n="heading_metadata">Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Numéro de version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
@@ -21970,7 +22279,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 '\\fs24\\b ' + escapeRtf('Métadonnées') + '\\b0\\par' +
                 '\\fs20 ' +
                 '\\b ' + escapeRtf(t.label_course_name) + ':\\b0 ' + escapeRtf(courseName) + '\\par' +
-                '\\b ' + escapeRtf(t.label_version_number || 'Numéro de version') + ':\\b0 ' + escapeRtf(document.getElementById('param-version-number')?.value || '') + '\\par' +
+                '\\b ' + escapeRtf(t.label_version_number || 'Version') + ':\\b0 ' + escapeRtf(document.getElementById('param-version-number')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_authors) + ':\\b0 ' + escapeRtf(document.getElementById('param-authors')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_mode) + ':\\b0 ' + escapeRtf(document.getElementById('param-mode')?.selectedOptions[0]?.innerText || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_level) + ':\\b0 ' + escapeRtf(document.getElementById('param-level')?.selectedOptions[0]?.innerText || '') + '\\par' +
@@ -22197,7 +22506,7 @@ let html = `
                 
                 <h2 data-i18n="heading_metadata">Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>
-                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Numéro de version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_license || 'Licence'}:</span> ${__esc(document.getElementById('param-license')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
@@ -22587,7 +22896,7 @@ html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment
                 '\\fs24\\b ' + escapeRtf('Métadonnées') + '\\b0\\par' +
                 '\\fs20 ' +
                 '\\b ' + escapeRtf(t.label_course_name) + ':\\b0 ' + escapeRtf(courseName) + '\\par' +
-                '\\b ' + escapeRtf(t.label_version_number || 'Numéro de version') + ':\\b0 ' + escapeRtf(document.getElementById('param-version-number')?.value || '') + '\\par' +
+                '\\b ' + escapeRtf(t.label_version_number || 'Version') + ':\\b0 ' + escapeRtf(document.getElementById('param-version-number')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_authors) + ':\\b0 ' + escapeRtf(document.getElementById('param-authors')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_trainers || 'Formateur(s)') + ':\\b0 ' + escapeRtf(document.getElementById('param-trainers')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_license || 'Licence') + ':\\b0 ' + escapeRtf(document.getElementById('param-license')?.value || '') + '\\par' +
@@ -22857,7 +23166,7 @@ rtf += '\\par\\b ' + escapeRtf(`  Moment ${momentPrefix}${(typeof __ldIsIgnored=
             let md = `# ${t.md_title}\n\n`;
             md += `## métadonnées\n`;
             md += `- **${t.label_course_name}:** ${__esc(document.getElementById('param-name')?.value)}\n`;
-            md += `- **${t.label_version_number || 'Numéro de version'}:** ${__esc(document.getElementById('param-version-number')?.value || '')}\n`;
+            md += `- **${t.label_version_number || 'Version'}:** ${__esc(document.getElementById('param-version-number')?.value || '')}\n`;
             md += `- **${t.label_authors}:** ${__esc(document.getElementById('param-authors')?.value)}\n`;
             md += `- **${t.label_trainers || 'Formateur(s)'}:** ${__esc(document.getElementById('param-trainers')?.value || '')}\n`;
             md += `- **${t.label_license || 'Licence'}:** ${__esc(document.getElementById('param-license')?.value || '')}\n`;
@@ -23241,7 +23550,7 @@ ${smNotes}
 `;
 
             const __metaLines = [];
-            if (trainingVersion && trainingVersion.trim()) __metaLines.push(`${t.label_version_number || 'Numéro de version'}: ${trainingVersion.trim()}`);
+            if (trainingVersion && trainingVersion.trim()) __metaLines.push(`${t.label_version_number || 'Version'}: ${trainingVersion.trim()}`);
             if (trainingLicense && trainingLicense.trim()) __metaLines.push(`${t.label_license || 'Licence'}: ${trainingLicense.trim()}`);
             if (__metaLines.length) {
                 md += __metaLines.map(l => `> ${l}`).join('\n') + '\n\n';
@@ -24248,7 +24557,7 @@ function getHistogramBarMeta(kind, val) {
       // Clear legend if present
       if (canvasId === 'chart-learning-types') {
         const lg = document.getElementById('chart-learning-types-legend');
-        if (lg) lg.innerHTML = '';
+        if (lg) __ldClearEl(lg);
       }
       return;
     }
@@ -24260,7 +24569,7 @@ function getHistogramBarMeta(kind, val) {
       ctx.fillText('Aucune donnée', 10, 20);
       if (canvasId === 'chart-learning-types') {
         const lg = document.getElementById('chart-learning-types-legend');
-        if (lg) lg.innerHTML = '';
+        if (lg) __ldClearEl(lg);
       }
       return;
     }
@@ -24630,7 +24939,7 @@ function renderCountBarsText(containerId, rows, style) {
   const host = document.getElementById(containerId);
   if (!host) return;
   const entries = (rows || []).slice();
-  host.innerHTML = '';
+  __ldClearEl(host);
 
   if (!entries.length) {
     const empty = document.createElement('div');
@@ -24680,7 +24989,7 @@ function renderStackedModuleBarsText(containerId, rows) {
   const host = document.getElementById(containerId);
   if (!host) return;
   const entries = (rows || []).slice();
-  host.innerHTML = '';
+  __ldClearEl(host);
 
   if (!entries.length) {
     const empty = document.createElement('div');
@@ -25201,7 +25510,7 @@ function updateCompetenceStats() {
       const ul = document.getElementById(listId);
       if (!ul) return 0;
       const unused = (catalogue || []).filter(c => !usedSet.has(String(c.id || '')));
-      ul.innerHTML = '';
+      __ldClearEl(ul);
       if (!unused.length) {
         const li = document.createElement('li');
         li.className = 'text-slate-400 italic list-none ml-0';
@@ -25236,10 +25545,10 @@ function updateCompetenceStats() {
         .sort((a, b) => (b[1] - a[1]) || String(a[0]).localeCompare(String(b[0])))
         .slice(0, 10);
 
-      tb.innerHTML = '';
+      __ldClearEl(tb);
       if (!rows.length) {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td class="px-2 py-1 text-slate-400 italic" colspan="2">Aucune sélection</td>`;
+        __ldSetSafeHtml(tr, `<td class="px-2 py-1 text-slate-400 italic" colspan="2">Aucune sélection</td>`);
         tb.appendChild(tr);
         return;
       }
@@ -25247,7 +25556,7 @@ function updateCompetenceStats() {
       rows.forEach(([id, n]) => {
         const label = labelById.get(String(id)) || `[Inconnue] ${id}`;
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td class="px-2 py-1 border-t border-slate-100">${__escapeHtmlLite(label)}</td><td class="px-2 py-1 border-t border-slate-100 text-right font-mono">${n}</td>`;
+        __ldSetSafeHtml(tr, `<td class="px-2 py-1 border-t border-slate-100">${__escapeHtmlLite(label)}</td><td class="px-2 py-1 border-t border-slate-100 text-right font-mono">${n}</td>`);
         tb.appendChild(tr);
       });
     }
@@ -25287,10 +25596,10 @@ function updateCompetenceStats() {
 
     if (tbody) {
       const modules = Array.from(document.querySelectorAll('#activities-root .activity-group'));
-      tbody.innerHTML = '';
+      __ldClearEl(tbody);
       if (!modules.length) {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td class="px-2 py-1 text-slate-400 italic" colspan="4">Aucun module</td>`;
+        __ldSetSafeHtml(tr, `<td class="px-2 py-1 text-slate-400 italic" colspan="4">Aucun module</td>`);
         tbody.appendChild(tr);
         try {
           if (document.getElementById('chart-comp-by-module-html')) renderStackedModuleBarsText('chart-comp-by-module-html', []);
@@ -25310,12 +25619,12 @@ function updateCompetenceStats() {
           const denom = totalS + totalT;
           const pctSujet = denom ? Math.round((totalS / denom) * 100) : 0;
           const tr = document.createElement('tr');
-          tr.innerHTML = `
+          __ldSetSafeHtml(tr, `
             <td class="px-2 py-1 border-t border-slate-100">${__escapeHtmlLite(title)}</td>
             <td class="px-2 py-1 border-t border-slate-100 text-right font-mono">${totalS}</td>
             <td class="px-2 py-1 border-t border-slate-100 text-right font-mono">${totalT}</td>
             <td class="px-2 py-1 border-t border-slate-100 text-right font-mono">${pctSujet}%</td>
-          `;
+          `);
           tbody.appendChild(tr);
         });
         // Keep the latest dataset available for responsive redraws (e.g., width slider / window resize)
@@ -25396,7 +25705,7 @@ function updateAimsStats() {
     if (ul) {
       const unused = Array.from(definedSet).filter(v => !used.has(v));
       unusedCount = unused.length;
-      ul.innerHTML = '';
+      __ldClearEl(ul);
       if (!unused.length) {
         const li = document.createElement('li');
         li.className = 'text-slate-400 italic list-none ml-0';
@@ -25430,15 +25739,15 @@ function updateAimsStats() {
 
     const tb = document.getElementById('aim-top-table');
     if (tb) {
-      tb.innerHTML = '';
+      __ldClearEl(tb);
       if (!topRows.length) {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td class="px-2 py-1 text-slate-400 italic" colspan="2">Aucune sélection</td>`;
+        __ldSetSafeHtml(tr, `<td class="px-2 py-1 text-slate-400 italic" colspan="2">Aucune sélection</td>`);
         tb.appendChild(tr);
       } else {
         topRows.forEach(r => {
           const tr = document.createElement('tr');
-          tr.innerHTML = `<td class="px-2 py-1 border-t border-slate-100">${__escapeHtmlLite(String(r.label||''))}</td><td class="px-2 py-1 border-t border-slate-100 text-right font-mono">${__escapeHtmlLite(String(r.value||0))}</td>`;
+          __ldSetSafeHtml(tr, `<td class="px-2 py-1 border-t border-slate-100">${__escapeHtmlLite(String(r.label||''))}</td><td class="px-2 py-1 border-t border-slate-100 text-right font-mono">${__escapeHtmlLite(String(r.value||0))}</td>`);
           tb.appendChild(tr);
         });
       }
@@ -25547,7 +25856,7 @@ function updateOutcomesStats() {
     if (ul) {
       const unused = Array.from(definedSet).filter(v => !used.has(v));
       unusedCount = unused.length;
-      ul.innerHTML = '';
+      __ldClearEl(ul);
       if (!unused.length) {
         const li = document.createElement('li');
         li.className = 'text-slate-400 italic list-none ml-0';
@@ -25581,15 +25890,15 @@ function updateOutcomesStats() {
 
     const tb = document.getElementById('out-top-table');
     if (tb) {
-      tb.innerHTML = '';
+      __ldClearEl(tb);
       if (!topRows.length) {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td class="px-2 py-1 text-slate-400 italic" colspan="2">Aucune sélection</td>`;
+        __ldSetSafeHtml(tr, `<td class="px-2 py-1 text-slate-400 italic" colspan="2">Aucune sélection</td>`);
         tb.appendChild(tr);
       } else {
         topRows.forEach(r => {
           const tr = document.createElement('tr');
-          tr.innerHTML = `<td class="px-2 py-1 border-t border-slate-100">${__escapeHtmlLite(String(r.label||''))}</td><td class="px-2 py-1 border-t border-slate-100 text-right font-mono">${__escapeHtmlLite(String(r.value||0))}</td>`;
+          __ldSetSafeHtml(tr, `<td class="px-2 py-1 border-t border-slate-100">${__escapeHtmlLite(String(r.label||''))}</td><td class="px-2 py-1 border-t border-slate-100 text-right font-mono">${__escapeHtmlLite(String(r.value||0))}</td>`);
           tb.appendChild(tr);
         });
       }
@@ -25695,7 +26004,7 @@ function updateToolsStats() {
     if (ul) {
       const unused = Array.from(definedSet).filter(v => !used.has(v));
       unusedCount = unused.length;
-      ul.innerHTML = '';
+      __ldClearEl(ul);
       if (!unused.length) {
         const li = document.createElement('li');
         li.className = 'text-slate-400 italic list-none ml-0';
@@ -25729,15 +26038,15 @@ function updateToolsStats() {
 
     const tb = document.getElementById('tools-top-table');
     if (tb) {
-      tb.innerHTML = '';
+      __ldClearEl(tb);
       if (!topRows.length) {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td class="px-2 py-1 text-slate-400 italic" colspan="2">Aucune sélection</td>`;
+        __ldSetSafeHtml(tr, `<td class="px-2 py-1 text-slate-400 italic" colspan="2">Aucune sélection</td>`);
         tb.appendChild(tr);
       } else {
         topRows.forEach(r => {
           const tr = document.createElement('tr');
-          tr.innerHTML = `<td class="px-2 py-1 border-t border-slate-100">${__escapeHtmlLite(String(r.label||''))}</td><td class="px-2 py-1 border-t border-slate-100 text-right font-mono">${__escapeHtmlLite(String(r.value||0))}</td>`;
+          __ldSetSafeHtml(tr, `<td class="px-2 py-1 border-t border-slate-100">${__escapeHtmlLite(String(r.label||''))}</td><td class="px-2 py-1 border-t border-slate-100 text-right font-mono">${__escapeHtmlLite(String(r.value||0))}</td>`);
           tb.appendChild(tr);
         });
       }
@@ -25849,10 +26158,10 @@ function updateToolsStats() {
     // Render matrix
     const matrixBody = document.getElementById('tools-types-matrix-body');
     if (matrixBody) {
-      matrixBody.innerHTML = '';
+      __ldClearEl(matrixBody);
       if (toolsByType.size === 0) {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td colspan="7" class="px-2 py-4 text-center text-slate-400 italic">Aucune donnée</td>`;
+        __ldSetSafeHtml(tr, `<td colspan="7" class="px-2 py-4 text-center text-slate-400 italic">Aucune donnée</td>`);
         matrixBody.appendChild(tr);
       } else {
         // Sort tools by total usage
@@ -25879,23 +26188,37 @@ function updateToolsStats() {
           typesOrder.forEach(type => {
             const td = document.createElement('td');
             td.className = 'px-2 py-1.5 border border-slate-200 text-center';
-            const count = typeMap[type] || 0;
-            
-            // Visual indicator based on count
-            let indicator = '';
+            const count = typeMap[type] || 0;            // Visual indicator based on count (DOM, no HTML parsing)
+            const wrap = document.createElement('div');
+            wrap.className = 'flex items-center justify-center gap-0.5';
+            wrap.title = `${count} activité(s)`;
+
+            let dots = 1;
+            let colourClass = 'bg-slate-200';
             if (count === 0) {
-              indicator = '<span class="inline-block w-3 h-3 rounded-full bg-slate-200"></span>';
+              dots = 1;
+              colourClass = 'bg-slate-200';
             } else if (count === 1) {
-              indicator = '<span class="inline-block w-3 h-3 rounded-full bg-green-300"></span>';
+              dots = 1;
+              colourClass = 'bg-green-300';
             } else if (count <= 2) {
-              indicator = '<span class="inline-block w-3 h-3 rounded-full bg-green-300"></span>'.repeat(2);
+              dots = 2;
+              colourClass = 'bg-green-300';
             } else if (count <= 4) {
-              indicator = '<span class="inline-block w-3 h-3 rounded-full bg-green-400"></span>'.repeat(Math.min(count, 3));
+              dots = Math.min(count, 3);
+              colourClass = 'bg-green-400';
             } else {
-              indicator = '<span class="inline-block w-3 h-3 rounded-full bg-green-500"></span>'.repeat(3);
+              dots = 3;
+              colourClass = 'bg-green-500';
             }
-            
-            td.innerHTML = `<div class="flex items-center justify-center gap-0.5" title="${count} activité(s)">${indicator}</div>`;
+
+            for (let n = 0; n < dots; n++) {
+              const sp = document.createElement('span');
+              sp.className = `inline-block w-3 h-3 rounded-full ${colourClass}`;
+              wrap.appendChild(sp);
+            }
+
+            td.appendChild(wrap);
             tr.appendChild(td);
           });
 
@@ -25994,16 +26317,16 @@ function updateToolsStats() {
     const goodEl = document.getElementById('tools-alignment-good');
     if (goodEl) {
       if (goodAlignment.length === 0) {
-        goodEl.innerHTML = '<span class="text-slate-400 italic">Aucun</span>';
+        __ldSetSafeHtml(goodEl, '<span class="text-slate-400 italic">Aucun</span>');
       } else {
-        goodEl.innerHTML = goodAlignment
+        __ldSetSafeHtml(goodEl, goodAlignment
           .sort((a, b) => b.alignmentPct - a.alignmentPct)
           .slice(0, 5)
           .map(s => `<div class="flex items-center justify-between gap-2 py-0.5">
             <span>${__escapeHtmlLite(s.tool)}</span>
             <span class="text-green-600 font-semibold">${s.alignmentPct}%</span>
           </div>`)
-          .join('');
+          .join(''));
       }
     }
 
@@ -26015,7 +26338,7 @@ function updateToolsStats() {
     if (warningsCountEl) warningsCountEl.textContent = String(warnings.length);
     
     if (warningsEl) {
-      warningsEl.innerHTML = '';
+      __ldClearEl(warningsEl);
       if (warnings.length === 0) {
         const li = document.createElement('li');
         li.className = 'text-slate-400 italic list-none ml-0';
@@ -26028,11 +26351,11 @@ function updateToolsStats() {
           .forEach(s => {
             const li = document.createElement('li');
             li.className = 'flex items-center justify-between gap-2 py-0.5';
-            li.innerHTML = `
+            __ldSetSafeHtml(li, `
               <span class="flex-1">${__escapeHtmlLite(s.tool)}</span>
               <span class="text-xs text-slate-500">Attendu: ${typeLabels[s.predictedType]}</span>
               <span class="text-amber-600 font-semibold">${s.alignmentPct}%</span>
-            `;
+            `);
             warningsEl.appendChild(li);
           });
       }
@@ -26384,7 +26707,7 @@ function updateCharts() {
     const type = $('template-export-type')?.value || 'module';
     const sel = $('template-export-item');
     if (!sel) return;
-    sel.innerHTML = '';
+    __ldClearEl(sel);
     if (type === 'module') {
       const mods = listModules();
       mods.forEach((modEl, i) => {
@@ -26486,7 +26809,7 @@ function updateCharts() {
   function populateModuleAfterSelect() {
     const sel = $('tpl-module-after');
     if (!sel) return;
-    sel.innerHTML = '';
+    __ldClearEl(sel);
     listModules().forEach((modEl, i) => {
       const label = safeText(modEl.querySelector('.activity-title')?.value, `Module ${i + 1}`);
       const opt = document.createElement('option');
@@ -26501,7 +26824,7 @@ function updateCharts() {
     const afterSel = $('tpl-moment-after');
     if (!modSel || !afterSel) return;
 
-    modSel.innerHTML = '';
+    __ldClearEl(modSel);
     listModules().forEach((modEl, i) => {
       const label = safeText(modEl.querySelector('.activity-title')?.value, `Module ${i + 1}`);
       const opt = document.createElement('option');
@@ -26511,7 +26834,7 @@ function updateCharts() {
     });
 
     const fillAfter = () => {
-      afterSel.innerHTML = '';
+      __ldClearEl(afterSel);
       const mi = parseInt(modSel.value || "0", 10);
       const modEl = listModules()[mi];
       const moments = modEl ? Array.from(modEl.querySelectorAll('.moment-group')) : [];
@@ -26533,7 +26856,7 @@ function updateCharts() {
     const afterSel = $('tpl-act-after');
     if (!modSel || !momSel || !afterSel) return;
 
-    modSel.innerHTML = '';
+    __ldClearEl(modSel);
     listModules().forEach((modEl, i) => {
       const label = safeText(modEl.querySelector('.activity-title')?.value, `Module ${i + 1}`);
       const opt = document.createElement('option');
@@ -26543,7 +26866,7 @@ function updateCharts() {
     });
 
     const fillMoments = () => {
-      momSel.innerHTML = '';
+      __ldClearEl(momSel);
       const mi = parseInt(modSel.value || "0", 10);
       const modEl = listModules()[mi];
       const moments = modEl ? Array.from(modEl.querySelectorAll('.moment-group')) : [];
@@ -26558,7 +26881,7 @@ function updateCharts() {
     };
 
     const fillAfter = () => {
-      afterSel.innerHTML = '';
+      __ldClearEl(afterSel);
       const mi = parseInt(modSel.value || "0", 10);
       const mosi = parseInt(momSel.value || "0", 10);
       const modEl = listModules()[mi];
@@ -26664,7 +26987,7 @@ function insertMoment(payload, moduleIndex, position, refMomentIndex) {
 
   const stepsContainer = momentEl.querySelector('.activity-steps-container');
   if (stepsContainer) {
-    stepsContainer.innerHTML = '';
+    __ldClearEl(stepsContainer);
     if (Array.isArray(payload.steps)) {
       payload.steps.forEach(s => {
         if (typeof window.App?.Data?.addStepToContainerFromData === 'function') window.App.Data.addStepToContainerFromData(stepsContainer, s);
@@ -27528,7 +27851,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Rebuild category options
             const catArr = Array.from(cats).sort((a,b) => a.localeCompare(b, 'fr'));
-            catSel.innerHTML = '<option value="" data-i18n="opt_all_categories">Toutes</option>' + catArr.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+            __ldClearEl(catSel);
+            const optAllCat = document.createElement('option');
+            optAllCat.value = '';
+            optAllCat.setAttribute('data-i18n', 'opt_all_categories');
+            optAllCat.textContent = 'Toutes';
+            catSel.appendChild(optAllCat);
+            catArr.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = String(c);
+                opt.textContent = String(c);
+                catSel.appendChild(opt);
+            });
             if (catArr.includes(prevCat)) catSel.value = prevCat;
 
             // Rebuild sub-category options based on selected category (or all)
@@ -27541,7 +27875,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 subsByCat.forEach(set => set.forEach(v => subSet.add(v)));
             }
             const subArr = Array.from(subSet).sort((a,b) => a.localeCompare(b, 'fr'));
-            subSel.innerHTML = '<option value="" data-i18n="opt_all_categories">Toutes</option>' + subArr.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+            __ldClearEl(subSel);
+            const optAllSub = document.createElement('option');
+            optAllSub.value = '';
+            optAllSub.setAttribute('data-i18n', 'opt_all_categories');
+            optAllSub.textContent = 'Toutes';
+            subSel.appendChild(optAllSub);
+            subArr.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = String(s);
+                opt.textContent = String(s);
+                subSel.appendChild(opt);
+            });
             if (subArr.includes(prevSub)) subSel.value = prevSub;
 
             try { applyToolsMaterialsListFilters(); } catch(_){ __ldSilentErr(_); }
@@ -27836,13 +28181,13 @@ document.addEventListener('DOMContentLoaded', () => {
     menu = document.createElement('div');
     menu.id = 'duplicate-step-menu';
     menu.className = 'fixed z-[120] hidden bg-white border border-slate-200 rounded-lg shadow-lg p-1 w-[240px]';
-    menu.innerHTML = `
+    __ldSetSafeHtml(menu, `
       <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider px-2 py-1">Dupliquer</div>
       <button type="button" class="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100" data-mode="all">Dupliquer tout</button>
       <button type="button" class="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100" data-mode="no-align">Sans alignement</button>
       <button type="button" class="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100" data-mode="no-tools">Sans outils & matériel</button>
       <button type="button" class="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100" data-mode="skeleton">Squelette (contenu vidé)</button>
-    `;
+    `);
     document.body.appendChild(menu);
 
     // Close on outside click
@@ -28087,7 +28432,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (compsT.length) lines.push('<div class="text-xs"><span class="font-semibold">Transversales</span> : ' + compsT.map(__ctxEsc).join(', ') + '</div>');
       if (aims.length) lines.push('<div class="text-xs"><span class="font-semibold">Objectifs</span> : ' + aims.map(__ctxEsc).join(', ') + '</div>');
       if (outs.length) lines.push('<div class="text-xs"><span class="font-semibold">Résultats</span> : ' + outs.map(__ctxEsc).join(', ') + '</div>');
-      alignBox.innerHTML = lines.length ? lines.join('') : '<div class="text-xs text-slate-500">Aucun élément sélectionné.</div>';
+      __ldSetSafeHtml(alignBox, lines.length ? lines.join('') : '<div class="text-xs text-slate-500">Aucun élément sélectionné.</div>');
     }
 
     // Tools + notes
@@ -28096,7 +28441,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const tools = __ctxGetTools(stepEl);
       const notes = __ctxGetToolNotesMap(stepEl);
       if (!tools.length) {
-        toolsBox.innerHTML = '<div class="text-xs text-slate-500">Aucun outil/matériel sélectionné.</div>';
+        __ldSetSafeHtml(toolsBox, '<div class="text-xs text-slate-500">Aucun outil/matériel sélectionné.</div>');
       } else {
         const html = tools.map(t => {
           const n = (notes && Object.prototype.hasOwnProperty.call(notes, t)) ? __ctxGetText(notes[t]).trim() : '';
@@ -28108,7 +28453,7 @@ document.addEventListener('DOMContentLoaded', () => {
             '</button>'
           );
         }).join('<div class="h-2"></div>');
-        toolsBox.innerHTML = html;
+        __ldSetSafeHtml(toolsBox, html);
       }
     }
 
@@ -28268,7 +28613,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    resBox.innerHTML = '';
+    __ldClearEl(resBox);
     if (!qq) {
       if (empty) empty.classList.add('hidden');
       if (countEl) countEl.textContent = 'Saisissez un terme de recherche.';
@@ -28293,15 +28638,38 @@ document.addEventListener('DOMContentLoaded', () => {
       const kindLabel = (hit.kind === 'module') ? 'Module' : 'Activité';
       const snippet = __ctxSnippet(hit.text + '\n' + __ctxGetText(hit.textAlign) + '\n' + __ctxGetText(hit.textTools), q);
 
-      btn.innerHTML =
-        '<div class="flex items-start justify-between gap-3">' +
-          '<div class="min-w-0">' +
-            '<div class="text-xs text-slate-500">' + kindLabel + '</div>' +
-            '<div class="text-sm font-semibold text-slate-800 truncate">' + __ctxEsc(hit.title || '') + '</div>' +
-            (snippet ? '<div class="text-xs text-slate-600 mt-0.5">' + __ctxEsc(snippet) + '</div>' : '') +
-          '</div>' +
-          '<span class="material-icons-round text-[18px] text-slate-300">arrow_forward</span>' +
-        '</div>';
+            // Build DOM for the hit row (avoids HTML parsing/sanitisation per result)
+      const wrap = document.createElement('div');
+      wrap.className = 'flex items-start justify-between gap-3';
+
+      const left = document.createElement('div');
+      left.className = 'min-w-0';
+
+      const kindEl = document.createElement('div');
+      kindEl.className = 'text-xs text-slate-500';
+      kindEl.textContent = kindLabel;
+
+      const titleEl = document.createElement('div');
+      titleEl.className = 'text-sm font-semibold text-slate-800 truncate';
+      titleEl.textContent = __ctxGetText(hit.title || '');
+
+      left.appendChild(kindEl);
+      left.appendChild(titleEl);
+
+      if (snippet) {
+        const snEl = document.createElement('div');
+        snEl.className = 'text-xs text-slate-600 mt-0.5';
+        snEl.textContent = String(snippet);
+        left.appendChild(snEl);
+      }
+
+      const arrowEl = document.createElement('span');
+      arrowEl.className = 'material-icons-round text-[18px] text-slate-300';
+      arrowEl.textContent = 'arrow_forward';
+
+      wrap.appendChild(left);
+      wrap.appendChild(arrowEl);
+      btn.appendChild(wrap);
 
       btn.addEventListener('click', () => {
         try {
@@ -28722,50 +29090,67 @@ function init(){
     QA('.moment-group').forEach(m => ensureMoveKey(m, 'mom'));
     QA('.submoment-card').forEach(s => ensureMoveKey(s, 'sm'));
 
-    const opts = [];
-    opts.push(`<option value="">— choisir —</option>`);
+    __ldClearEl(moveSelect);
+
+    const baseOpt = document.createElement('option');
+    baseOpt.value = '';
+    baseOpt.textContent = '— choisir —';
+    moveSelect.appendChild(baseOpt);
 
     // Modules
     const modules = QA('.activity-group');
     if (modules.length){
-      opts.push(`<optgroup label="Modules">`);
+      const og = document.createElement('optgroup');
+      og.label = 'Modules';
       modules.forEach((modEl, i) => {
         const idx = _txt('.activity-index', modEl) || String(i+1);
         const title = _txtInput('.activity-title', modEl) || `Module ${idx}`;
-        const key = modEl.dataset.moveKey;
-        opts.push(`<option value="module::${_esc(key)}">${_esc(`Module ${idx} — ${title}`)}</option>`);
+        const key = modEl.dataset.moveKey || '';
+        const opt = document.createElement('option');
+        opt.value = `module::${key}`;
+        opt.textContent = `Module ${idx} — ${title}`;
+        og.appendChild(opt);
       });
-      opts.push(`</optgroup>`);
+      moveSelect.appendChild(og);
     }
 
     // Moments
     const moments = QA('.moment-group');
     if (moments.length){
-      opts.push(`<optgroup label="Moments">`);
+      const og = document.createElement('optgroup');
+      og.label = 'Moments';
       moments.forEach((momEl, j) => {
         const modEl = momEl.closest('.activity-group');
         const modIdx = modEl ? (_txt('.activity-index', modEl) || '') : '';
         const modTitle = modEl ? (_txtInput('.activity-title', modEl) || '') : '';
+
         const momIdx = _txt('.moment-index', momEl) || String(j+1);
         const momTitle = _txtInput('.moment-title', momEl) || `Moment ${momIdx}`;
-        const key = momEl.dataset.moveKey;
+        const key = momEl.dataset.moveKey || '';
+
         const prefix = (modIdx || modTitle) ? `Module ${modIdx} — ${modTitle} › ` : '';
-        opts.push(`<option value="moment::${_esc(key)}">${_esc(`${prefix}Moment ${momIdx} — ${momTitle}`)}</option>`);
+        const opt = document.createElement('option');
+        opt.value = `moment::${key}`;
+        opt.textContent = `${prefix}Moment ${momIdx} — ${momTitle}`;
+        og.appendChild(opt);
       });
-      opts.push(`</optgroup>`);
+      moveSelect.appendChild(og);
     }
 
     // Sous-moments
     const submoments = QA('.submoment-card');
     if (submoments.length){
-      opts.push(`<optgroup label="Sous-moments">`);
+      const og = document.createElement('optgroup');
+      og.label = 'Sous-moments';
       submoments.forEach((smEl, k) => {
         const momEl = smEl.closest('.moment-group');
         const modEl = smEl.closest('.activity-group');
+
         const modIdx = modEl ? (_txt('.activity-index', modEl) || '') : '';
         const modTitle = modEl ? (_txtInput('.activity-title', modEl) || '') : '';
         const momIdx = momEl ? (_txt('.moment-index', momEl) || '') : '';
         const momTitle = momEl ? (_txtInput('.moment-title', momEl) || '') : '';
+
         // submoment index within moment
         let smIdx = '';
         try {
@@ -28779,17 +29164,20 @@ function init(){
         } catch(_) { smIdx = String(k+1); }
 
         const smTitle = _txtInput('.submoment-title', smEl) || `Sous-moment ${smIdx}`;
-        const key = smEl.dataset.moveKey;
+        const key = smEl.dataset.moveKey || '';
 
         const prefix = (modIdx || modTitle || momIdx || momTitle)
           ? `Module ${modIdx} — ${modTitle} › Moment ${momIdx} — ${momTitle} › `
           : '';
-        opts.push(`<option value="submoment::${_esc(key)}">${_esc(`${prefix}Sous-moment ${smIdx} — ${smTitle}`)}</option>`);
+
+        const opt = document.createElement('option');
+        opt.value = `submoment::${key}`;
+        opt.textContent = `${prefix}Sous-moment ${smIdx} — ${smTitle}`;
+        og.appendChild(opt);
       });
-      opts.push(`</optgroup>`);
+      moveSelect.appendChild(og);
     }
 
-    moveSelect.innerHTML = opts.join('');
     if (prev && moveSelect.querySelector(`option[value="${CSS.escape(prev)}"]`)){
       moveSelect.value = prev;
     }
@@ -30657,7 +31045,7 @@ kbd {
         btn.type = 'button';
         btn.className = 'ld-textarea-fullscreen-btn';
         btn.title = 'Éditer en plein écran';
-        btn.innerHTML = '<span class="material-icons-round">fullscreen</span>';
+        __ldSetSafeHtml(btn, '<span class="material-icons-round">fullscreen</span>');
         
         btn.addEventListener('click', (e) => {
           e.preventDefault();
@@ -30924,10 +31312,10 @@ kbd {
 
   // Render tree UI
   function renderTree() {
-    treeContainer.innerHTML = '';
+    __ldClearEl(treeContainer);
     
     if (treeData.length === 0) {
-      treeContainer.innerHTML = '<div class="text-center text-slate-500 py-8">Aucun contenu à exporter</div>';
+      __ldSetSafeHtml(treeContainer, '<div class="text-center text-slate-500 py-8">Aucun contenu à exporter</div>');
       return;
     }
 
@@ -30951,7 +31339,7 @@ kbd {
     if (node.children && node.children.length > 0) {
       const toggleBtn = document.createElement('div');
       toggleBtn.className = 'export-tree-toggle';
-      toggleBtn.innerHTML = '<span class="material-icons-round">expand_more</span>';
+      __ldSetSafeHtml(toggleBtn, '<span class="material-icons-round">expand_more</span>');
       toggleBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         itemDiv.classList.toggle('collapsed');
@@ -30975,7 +31363,12 @@ kbd {
     const iconDiv = document.createElement('div');
     iconDiv.className = 'export-tree-icon';
     const iconName = getIconForType(node.type);
-    iconDiv.innerHTML = `<span class="material-icons-round" style="color: ${getColorForType(node.type)}">${iconName}</span>`;
+    __ldClearEl(iconDiv);
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'material-icons-round';
+    try { iconSpan.style.color = String(getColorForType(node.type) || ''); } catch(_){}
+    iconSpan.textContent = String(iconName || '');
+    iconDiv.appendChild(iconSpan);
     headerDiv.appendChild(iconDiv);
 
     // Label
