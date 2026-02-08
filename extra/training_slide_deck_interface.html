@@ -177,8 +177,8 @@
 
         .export-btn:hover {
             background: var(--color-primary-dark);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
+            box-shadow: none;
+            }
 
         .import-btn {
             background: var(--color-success);
@@ -899,9 +899,10 @@
         }
 
         .slide {
-            background: var(--color-surface);
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.05);
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
             padding: 48px;
             width: 100%;
             min-height: 400px;
@@ -1081,6 +1082,18 @@
             flex-direction: column;
             gap: 8px;
         }
+
+        .timers-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .timers-row .timer-container {
+            flex: 1 1 260px;
+        }
+
 
         .panel-progress {
             grid-column: 2;
@@ -1934,7 +1947,8 @@
                         <!-- Timers Column -->
                         <div class="panel-timers">
                             <div class="section-label">Timers</div>
-                            <!-- Activity Timer -->
+                            <div class="timers-row">
+                                                                <!-- Activity Timer -->
                             <div class="timer-container activity-timer" id="activityTimer">
                                 <span class="timer-label">Activity</span>
                                 <div class="timer-display green">
@@ -1956,36 +1970,14 @@
                                     </button>
                                 </div>
                             </div>
-
-                            <!-- Module Timer -->
-                            <div class="timer-container module-timer hidden" id="moduleTimer">
-                                <span class="timer-label">Module</span>
-                                <div class="timer-display green">
-                                    <span class="timer-elapsed" id="moduleElapsed">00:00</span>
-                                    <span class="timer-separator">/</span>
-                                    <span class="timer-planned" id="modulePlanned">00:00</span>
-                                </div>
-                                <div class="timer-controls">
-                                    <button class="timer-btn" id="modulePlayBtn" onclick="app.toggleModuleTimer()" title="Start/Pause">
-                                        <svg viewBox="0 0 24 24" fill="currentColor">
-                                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                                        </svg>
-                                    </button>
-                                    <button class="timer-btn" id="moduleResetBtn" onclick="app.resetModuleTimer()" title="Reset">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <polyline points="23 4 23 10 17 10"></polyline>
-                                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                                        </svg>
-                                    </button>
-                                </div>
                             </div>
-                        </div>
+</div>
 
                         <!-- Progress Column -->
                         <div class="panel-progress">
                             <div class="section-label">Progress</div>
                             <!-- General Progress Bar -->
-                            <div class="progress-bar-container general-progress-bottom hidden" id="generalProgress">
+                            <div class="progress-bar-container general-progress-bottom" id="generalProgress">
                                 <div class="progress-bar-label">
                                     <span class="progress-bar-title">Overall</span>
                                     <span class="progress-bar-percentage" id="generalProgressText">0%</span>
@@ -2245,7 +2237,7 @@
         // (Removed broken syntax here)
 
         // ===== APPLICATION STATE =====
-        const app = {
+        const app = window.app = {
             // Course data - starts empty, populated via import
             courseData: null,
             
@@ -2255,13 +2247,6 @@
             expandedNodes: new Set(),
             
             // Timer state
-            moduleTimer: {
-                elapsed: 0,
-                planned: 0,
-                running: false,
-                interval: null,
-                moduleId: null
-            },
             activityTimer: {
                 elapsed: 0,
                 planned: 0,
@@ -2449,13 +2434,8 @@
                 this.updateHash();
 
                 // Load timers
-                const moduleId = this.getModuleIdForActivity(activity.id);
-                if (moduleId) {
-                    this.loadModuleTimer(moduleId);
-                }
                 this.loadActivityTimer(activity.id);
-
-                // Show and update general progress
+// Show and update general progress
                 this.showGeneralProgress();
 
                 // Show slide controls and progress
@@ -2526,6 +2506,7 @@
                 this.updateSlideCounter();
                 this.updateNavigationButtons();
                 this.updateActivityProgress();
+                this.updateGeneralProgress();
                 this.saveProgressState();
 
                 // Reapply zoom after slide content changes
@@ -3245,43 +3226,53 @@
             },
 
             updateGeneralProgress() {
-                // Calculate progress across ALL modules in the entire training
-                let totalActivities = 0;
-                let completedCount = 0;
-                let visitedCount = 0;
-
-                // Guard clause if no data
+                // Overall progress across the entire deck (all slides in all activities)
                 if (!this.courseData || !this.courseData.modules) return;
 
+                let totalSlides = 0;
+                let slidesBeforeCurrent = 0;
+                let currentGlobalSlide = 0;
+                let foundCurrent = false;
+
+                const currentActivityId = this.currentActivity ? this.currentActivity.id : null;
+                const currentSlideIndex = Number.isInteger(this.currentSlideIndex) ? this.currentSlideIndex : 0;
+
                 this.courseData.modules.forEach(module => {
-                    module.moments.forEach(moment => {
-                        moment.submoments.forEach(submoment => {
-                            submoment.activities.forEach(activity => {
-                                totalActivities++;
-                                if (this.completedActivities.has(activity.id)) {
-                                    completedCount++;
-                                } else if (this.visitedActivities.has(activity.id)) {
-                                    visitedCount++;
+                    (module.moments || []).forEach(moment => {
+                        (moment.submoments || []).forEach(submoment => {
+                            (submoment.activities || []).forEach(activity => {
+                                const slideCount = (activity.slides && activity.slides.length) ? activity.slides.length : 0;
+                                totalSlides += slideCount;
+
+                                if (!foundCurrent) {
+                                    if (currentActivityId && activity.id === currentActivityId) {
+                                        // Clamp slide index to available range
+                                        const local = Math.min(Math.max(currentSlideIndex, 0), Math.max(slideCount - 1, 0));
+                                        currentGlobalSlide = slidesBeforeCurrent + local + 1; // 1-based
+                                        foundCurrent = true;
+                                    } else {
+                                        slidesBeforeCurrent += slideCount;
+                                    }
                                 }
                             });
                         });
                     });
                 });
 
-                // Calculate percentage based on completed activities
-                const percentage = totalActivities > 0 ? Math.round((completedCount / totalActivities) * 100) : 0;
-                
+                // Fallback: if we couldn't locate the current activity in the tree
+                if (!foundCurrent) currentGlobalSlide = 0;
+
+                const percentage = totalSlides > 0 ? Math.round((currentGlobalSlide / totalSlides) * 100) : 0;
+
                 // Update bottom progress bar
                 const fillElement = document.getElementById('generalProgressFill');
                 const textElement = document.getElementById('generalProgressText');
-                
+
                 if (fillElement && textElement) {
                     fillElement.style.width = `${percentage}%`;
-                    
-                    // Show detailed progress
-                    const visitedTotal = completedCount + visitedCount;
-                    textElement.textContent = `${percentage}% (${completedCount} completed, ${visitedCount} in progress, ${totalActivities - visitedTotal} remaining)`;
-                    
+                    textElement.textContent = totalSlides > 0
+                        ? `${percentage}% (${currentGlobalSlide}/${totalSlides} slides)`
+                        : `0%`;
                     if (percentage === 100) {
                         fillElement.classList.add('complete');
                     } else {
@@ -3289,10 +3280,10 @@
                     }
                 }
 
-                // Update sidebar progress bar
+                // Update sidebar progress bar (if present)
                 const sidebarFill = document.getElementById('sidebar-progress-fill');
                 const sidebarText = document.getElementById('sidebar-progress-text');
-                
+
                 if (sidebarFill && sidebarText) {
                     sidebarFill.style.width = `${percentage}%`;
                     sidebarText.textContent = `${percentage}%`;
@@ -3388,17 +3379,6 @@
                 return 'red';
             },
 
-            updateModuleTimerDisplay() {
-                const display = document.querySelector('#moduleTimer .timer-display');
-                const elapsed = document.getElementById('moduleElapsed');
-                const planned = document.getElementById('modulePlanned');
-                
-                elapsed.textContent = this.formatTime(this.moduleTimer.elapsed);
-                planned.textContent = this.formatTime(this.moduleTimer.planned);
-                
-                const color = this.getTimerColor(this.moduleTimer.elapsed, this.moduleTimer.planned);
-                display.className = `timer-display ${color}`;
-            },
 
             updateActivityTimerDisplay() {
                 const display = document.querySelector('#activityTimer .timer-display');
@@ -3412,48 +3392,6 @@
                 display.className = `timer-display ${color}`;
             },
 
-            toggleModuleTimer() {
-                this.moduleTimer.running = !this.moduleTimer.running;
-                
-                const playBtn = document.getElementById('modulePlayBtn');
-                if (this.moduleTimer.running) {
-                    playBtn.classList.add('playing');
-                    playBtn.innerHTML = `
-                        <svg viewBox="0 0 24 24" fill="currentColor">
-                            <rect x="6" y="4" width="4" height="16"></rect>
-                            <rect x="14" y="4" width="4" height="16"></rect>
-                        </svg>
-                    `;
-                    playBtn.title = 'Pause';
-                } else {
-                    playBtn.classList.remove('playing');
-                    playBtn.innerHTML = `
-                        <svg viewBox="0 0 24 24" fill="currentColor">
-                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                        </svg>
-                    `;
-                    playBtn.title = 'Start';
-                }
-                
-                this.saveTimerState();
-            },
-
-            resetModuleTimer() {
-                this.moduleTimer.elapsed = 0;
-                this.moduleTimer.running = false;
-                
-                const playBtn = document.getElementById('modulePlayBtn');
-                playBtn.classList.remove('playing');
-                playBtn.innerHTML = `
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                    </svg>
-                `;
-                playBtn.title = 'Start';
-                
-                this.updateModuleTimerDisplay();
-                this.saveTimerState();
-            },
 
             toggleActivityTimer() {
                 this.activityTimer.running = !this.activityTimer.running;
@@ -3505,15 +3443,6 @@
                 }
 
                 this.timerIntervalId = setInterval(() => {
-                    if (this.moduleTimer.running) {
-                        this.moduleTimer.elapsed++;
-                        this.updateModuleTimerDisplay();
-                        
-                        // Save every 10 seconds to reduce writes
-                        if (this.moduleTimer.elapsed % 10 === 0) {
-                            this.saveTimerState();
-                        }
-                    }
                     
                     if (this.activityTimer.running) {
                         this.activityTimer.elapsed++;
@@ -3534,54 +3463,6 @@
                 }
             },
 
-            loadModuleTimer(moduleId) {
-                const module = this.findModuleById(moduleId);
-                if (!module) return;
-
-                this.moduleTimer.moduleId = moduleId;
-                this.moduleTimer.planned = module.plannedMinutes * 60;
-                
-                // Reset if switching modules
-                const savedState = this.safeLocalStorageGet('moduleTimerState');
-                if (savedState) {
-                    try {
-                        const state = JSON.parse(savedState);
-                        if (state.moduleId === moduleId) {
-                            this.moduleTimer.elapsed = state.elapsed || 0;
-                            this.moduleTimer.running = state.running || false;
-                        } else {
-                            this.moduleTimer.elapsed = 0;
-                            this.moduleTimer.running = false;
-                        }
-                    } catch (error) {
-                        console.warn('Failed to parse module timer state:', error.message);
-                        this.moduleTimer.elapsed = 0;
-                        this.moduleTimer.running = false;
-                    }
-                }
-                
-                this.updateModuleTimerDisplay();
-                document.getElementById('moduleTimer').classList.remove('hidden');
-                
-                // Update play button state
-                const playBtn = document.getElementById('modulePlayBtn');
-                if (this.moduleTimer.running) {
-                    playBtn.classList.add('playing');
-                    playBtn.innerHTML = `
-                        <svg viewBox="0 0 24 24" fill="currentColor">
-                            <rect x="6" y="4" width="4" height="16"></rect>
-                            <rect x="14" y="4" width="4" height="16"></rect>
-                        </svg>
-                    `;
-                } else {
-                    playBtn.classList.remove('playing');
-                    playBtn.innerHTML = `
-                        <svg viewBox="0 0 24 24" fill="currentColor">
-                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                        </svg>
-                    `;
-                }
-            },
 
             loadActivityTimer(activityId) {
                 const activity = this.findActivityById(activityId);
@@ -3626,12 +3507,6 @@
             },
 
             saveTimerState() {
-                this.safeLocalStorageSet('moduleTimerState', JSON.stringify({
-                    moduleId: this.moduleTimer.moduleId,
-                    elapsed: this.moduleTimer.elapsed,
-                    running: this.moduleTimer.running
-                }));
-                
                 this.safeLocalStorageSet('activityTimerState', JSON.stringify({
                     activityId: this.activityTimer.activityId,
                     elapsed: this.activityTimer.elapsed,
@@ -3698,7 +3573,6 @@
             hasProgress() {
                 return this.completedActivities.size > 0 || 
                        this.visitedActivities.size > 0 || 
-                       this.moduleTimer.elapsed > 0 ||
                        this.activityTimer.elapsed > 0;
             },
 
@@ -3832,16 +3706,18 @@
                                                         content: slide.content || slide.html || ''
                                                     }));
                                                 } else if (typeof srcStep.presentation === 'string') {
-                                                    // String format - Check for separators
-                                                    // Regex to match "SLIDE", "# Slide 1", "## SLIDE", etc. case insensitive
-                                                    const slideSeparator = /(?:^|\n)(?:#+\s*)?slide\s*\d+[^\n]*\s*(?:\n|$)/i;
+                                                    // String format - Split into slides using Markdown separator line: ---
+                                                    // A new slide starts whenever a line containing only --- appears.
+                                                    const mdSlideSeparator = /(?:^|\r?\n)\s*---\s*(?:\r?\n|$)/;
                                                     
-                                                    if (slideSeparator.test(srcStep.presentation)) {
-                                                        // Split by separator
-                                                        const rawSlides = srcStep.presentation.split(slideSeparator);
+                                                    if (mdSlideSeparator.test(srcStep.presentation)) {
+                                                        // Split by Markdown HR separator
+                                                        const rawSlides = srcStep.presentation.split(mdSlideSeparator);
                                                         
-                                                        // Filter out empty/whitespace-only slides resulting from the split (e.g. if string starts with separator)
-                                                        const cleanSlides = rawSlides.filter(s => s && s.trim().length > 0);
+                                                        // Filter out empty/whitespace-only slides resulting from the split
+                                                        const cleanSlides = rawSlides
+                                                            .map(s => (s || '').trim())
+                                                            .filter(s => s.length > 0);
                                                         
                                                         if (cleanSlides.length > 0) {
                                                             slides = cleanSlides.map((content, idx) => ({
@@ -3851,8 +3727,9 @@
                                                             }));
                                                         }
                                                     }
+
                                                     
-                                                    // If split didn't result in slides (or no "SLIDE" found), treat as single slide
+                                                    // If no Markdown separator was found (or split produced no content), treat as single slide
                                                     if (slides.length === 0) {
                                                          slides = [{
                                                             number: 1,
@@ -4025,14 +3902,7 @@
 
                 // Reset timers
                 this.stopTimerTicks();
-                this.moduleTimer = {
-                    elapsed: 0,
-                    planned: 0,
-                    running: false,
-                    interval: null,
-                    moduleId: null
-                };
-                this.activityTimer = {
+this.activityTimer = {
                     elapsed: 0,
                     planned: 0,
                     running: false,
