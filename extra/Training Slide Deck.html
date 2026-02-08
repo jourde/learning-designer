@@ -1,0 +1,4267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Slide Deck Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ===== CSS RESET & BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --color-bg: #FAFAFA;
+            --color-surface: #FFFFFF;
+            --color-text: #111827;
+            --color-text-secondary: #6B7280;
+            --color-text-muted: #9CA3AF;
+            --color-border: #E5E7EB;
+            --color-border-light: #F3F4F6;
+            --color-hover: #F9FAFB;
+            --color-primary: #2563EB;
+            --color-primary-light: #EFF6FF;
+            --color-primary-dark: #1D4ED8;
+            --color-success: #059669;
+            --color-success-light: #ECFDF5;
+            --color-warning: #D97706;
+            --color-warning-light: #FFFBEB;
+            --color-sidebar: #FFFFFF;
+            --sidebar-width: 280px;
+            --header-height: 60px;
+            --transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ===== LAYOUT ===== */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--color-surface);
+            border-right: 1px solid var(--color-border);
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            transition: transform var(--transition);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--color-border);
+            background: var(--color-surface);
+        }
+
+        .sidebar-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 4px;
+        }
+
+        .sidebar-subtitle {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+
+        /* Export Button */
+        .sidebar-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--color-border);
+            background: var(--color-surface);
+        }
+
+        /* Progress bar in footer */
+        .progress-wrapper {
+            margin-bottom: 12px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--color-border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--color-primary);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .footer-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .about-btn,
+        .export-btn,
+        .import-btn {
+            width: 100%;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .about-btn svg,
+        .export-btn svg,
+        .import-btn svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        .about-btn {
+            background: var(--color-surface);
+            color: var(--color-text);
+            border: 1px solid var(--color-border);
+        }
+
+        .about-btn:hover {
+            background: var(--color-hover);
+            border-color: var(--color-text-muted);
+        }
+
+        .export-btn {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .export-btn:hover {
+            background: var(--color-primary-dark);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .import-btn {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .import-btn:hover {
+            background: #047857;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .export-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Export Modal */
+        .export-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .export-modal.visible {
+            display: flex;
+        }
+
+        .export-modal-content {
+            background: var(--color-surface);
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .export-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .export-modal-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .export-close-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--color-text-secondary);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all var(--transition);
+        }
+
+        .export-close-btn:hover {
+            background: var(--color-hover);
+            color: var(--color-text);
+        }
+
+        .export-modal-body {
+            margin-bottom: 24px;
+        }
+
+        .export-description {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .export-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .export-option {
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .export-option:hover {
+            border-color: var(--color-primary);
+            background: var(--color-primary-light);
+        }
+
+        .export-option-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--color-border-light);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all var(--transition);
+        }
+
+        .export-option:hover .export-option-icon {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .export-option-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .export-option-content {
+            flex: 1;
+        }
+
+        .export-option-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 2px;
+        }
+
+        .export-option-desc {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+
+        .export-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .export-cancel-btn {
+            padding: 10px 20px;
+            background: var(--color-surface);
+            color: var(--color-text);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .export-cancel-btn:hover {
+            background: var(--color-hover);
+        }
+
+        /* About Modal */
+        .about-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .about-modal.visible {
+            display: flex;
+        }
+
+        .about-modal-content {
+            background: var(--color-surface);
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        .about-section {
+            margin-bottom: 28px;
+        }
+
+        .about-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .about-section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--color-border-light);
+        }
+
+        .about-section-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--color-primary-light);
+            color: var(--color-primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .about-section-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .about-section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .about-section-content {
+            padding-left: 44px;
+        }
+
+        .about-info-row {
+            display: flex;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .about-info-label {
+            font-weight: 600;
+            color: var(--color-text);
+            min-width: 140px;
+            flex-shrink: 0;
+        }
+
+        .about-info-value {
+            color: var(--color-text-secondary);
+            line-height: 1.6;
+        }
+
+        .about-description {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            line-height: 1.7;
+            margin-bottom: 12px;
+        }
+
+        .about-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .about-list li {
+            padding: 6px 0;
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .about-list li::before {
+            content: '•';
+            color: var(--color-primary);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .about-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: var(--color-primary-light);
+            color: var(--color-primary);
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+
+        .about-modules {
+            display: grid;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .about-module-card {
+            background: var(--color-border-light);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .about-module-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 6px;
+        }
+
+        .about-module-desc {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            line-height: 1.6;
+        }
+
+        .about-module-meta {
+            font-size: 12px;
+            color: var(--color-text-muted);
+            margin-top: 8px;
+        }
+
+        /* Search Box */
+        .search-container {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 36px 10px 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color var(--transition);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px var(--color-primary-light);
+        }
+
+        .search-clear {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--color-text-muted);
+            font-size: 18px;
+            width: 24px;
+            height: 24px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .search-clear:hover {
+            background: var(--color-hover);
+            color: var(--color-text);
+        }
+
+        .search-clear.visible {
+            display: flex;
+        }
+
+        /* Navigation Tree */
+        .nav-tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 8px;
+        }
+
+        .nav-module {
+            margin-bottom: 8px;
+        }
+
+        .nav-module-header {
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            text-transform: lowercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-moment,
+        .nav-submoment {
+            margin-left: 8px;
+        }
+
+        .nav-item-header {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background var(--transition);
+            user-select: none;
+        }
+
+        .nav-item-header:hover {
+            background: var(--color-hover);
+        }
+
+        .nav-expand-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            color: var(--color-text-muted);
+            transition: transform var(--transition);
+            flex-shrink: 0;
+        }
+
+        .nav-expand-icon.expanded {
+            transform: rotate(90deg);
+        }
+
+        .nav-item-title {
+            font-size: 14px;
+            color: var(--color-text);
+            flex: 1;
+            text-transform: lowercase;
+        }
+
+        .nav-children {
+            display: none;
+            margin-left: 12px;
+            margin-top: 4px;
+        }
+
+        .nav-children.expanded {
+            display: block;
+        }
+
+        .nav-activity {
+            padding: 8px 12px;
+            margin: 2px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            transition: all var(--transition);
+            border-left: 3px solid transparent;
+            text-transform: lowercase;
+        }
+
+        .nav-activity:hover {
+            background: var(--color-hover);
+            color: var(--color-text);
+        }
+
+        .nav-activity.active {
+            background: var(--color-primary-light);
+            color: var(--color-primary);
+            border-left-color: var(--color-primary);
+            font-weight: 500;
+        }
+
+        .nav-activity.visited {
+            color: var(--color-success);
+            font-weight: 500;
+            position: relative;
+        }
+
+        .nav-activity.visited::after {
+            content: '✓';
+            position: absolute;
+            right: 12px;
+            color: var(--color-success);
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .nav-activity.completed {
+            color: var(--color-success);
+            font-weight: 500;
+        }
+
+        .nav-activity.completed::after {
+            content: '✓';
+            position: absolute;
+            right: 12px;
+            color: var(--color-success);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* Moment and Submoment completion indicators */
+        .nav-item-header.has-progress {
+            position: relative;
+        }
+
+        .nav-progress-badge {
+            margin-left: auto;
+            padding: 2px 8px;
+            background: var(--color-border-light);
+            color: var(--color-text-muted);
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .nav-progress-badge.completed {
+            background: var(--color-success-light);
+            color: var(--color-success);
+        }
+
+        .nav-progress-badge.in-progress {
+            background: var(--color-primary-light);
+            color: var(--color-primary);
+        }
+
+        /* Module header progress */
+        .nav-module-header {
+            position: relative;
+        }
+
+        .nav-module-progress {
+            font-size: 11px;
+            color: var(--color-text-muted);
+            margin-top: 4px;
+            font-weight: 400;
+        }
+
+        .nav-module-progress.completed {
+            color: var(--color-success);
+            font-weight: 500;
+        }
+
+        .slide-count {
+            font-size: 12px;
+            color: var(--color-text-muted);
+            margin-left: 8px;
+            text-transform: lowercase;
+        }
+
+        /* Search Results */
+        .search-results {
+            display: none;
+        }
+
+        .search-results.visible {
+            display: block;
+        }
+
+        .search-result-item {
+            padding: 12px;
+            margin: 4px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background var(--transition);
+            border-left: 3px solid var(--color-border);
+        }
+
+        .search-result-item:hover {
+            background: var(--color-hover);
+        }
+
+        .search-result-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text);
+            margin-bottom: 4px;
+        }
+
+        .search-result-context {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            line-height: 1.4;
+        }
+
+        .search-highlight {
+            background: #FFF59D;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+
+        .no-results {
+            padding: 20px;
+            text-align: center;
+            color: var(--color-text-secondary);
+            font-size: 14px;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .content-header {
+            background: var(--color-surface);
+            border-bottom: 1px solid var(--color-border);
+            padding: 20px 32px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        /* Zoom Controls */
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            position: absolute;
+            top: 16px;
+            right: 24px;
+            z-index: 101;
+        }
+
+        .zoom-btn {
+            width: 32px;
+            height: 32px;
+            background: none;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+            color: var(--color-text);
+        }
+
+        .zoom-btn:hover {
+            background: var(--color-hover);
+            border-color: var(--color-text-muted);
+        }
+
+        .zoom-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .zoom-btn:disabled:hover {
+            background: none;
+            border-color: var(--color-border);
+        }
+
+        .zoom-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .zoom-level {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            min-width: 45px;
+            text-align: center;
+        }
+
+        /* Zoomed content */
+        .slide {
+            transform-origin: top center;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .activity-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 4px;
+        }
+
+        .activity-breadcrumb {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+
+        /* Slide Container */
+        .slide-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 32px;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .slide {
+            background: var(--color-surface);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.05);
+            padding: 48px;
+            width: 100%;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--color-text);
+            margin-bottom: 24px;
+            line-height: 1.2;
+        }
+
+        .slide-content {
+            font-size: 18px;
+            color: var(--color-text-secondary);
+            line-height: 1.7;
+        }
+
+        .slide-content ul,
+        .slide-content ol {
+            margin-left: 24px;
+            margin-top: 16px;
+        }
+
+        .slide-content li {
+            margin-bottom: 12px;
+        }
+
+        .slide-content p {
+            margin-bottom: 16px;
+        }
+
+        .slide-content strong {
+            color: var(--color-text);
+            font-weight: 600;
+        }
+
+        .slide-content code {
+            background: var(--color-border-light);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .slide-content pre {
+            background: var(--color-border-light);
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+
+        .slide-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        /* Navigation Controls */
+        .slide-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin-top: 32px;
+            padding: 0;
+            background: var(--color-surface);
+            border-top: 1px solid var(--color-border);
+            position: sticky;
+            bottom: 0;
+            z-index: 100;
+        }
+
+        /* Navigation bar - always visible */
+        .nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 24px;
+            background: var(--color-surface);
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .nav-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toggle-panel-btn {
+            background: none;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--color-text);
+            transition: all var(--transition);
+        }
+
+        .toggle-panel-btn:hover {
+            background: var(--color-hover);
+            border-color: var(--color-text-muted);
+        }
+
+        .toggle-panel-btn svg {
+            width: 14px;
+            height: 14px;
+            transition: transform var(--transition);
+        }
+
+        .toggle-panel-btn.expanded svg {
+            transform: rotate(180deg);
+        }
+
+        .slide-counter {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            font-weight: 500;
+        }
+
+        .nav-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Collapsible panel */
+        .details-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--color-border-light);
+        }
+
+        .details-panel.expanded {
+            max-height: 400px;
+        }
+
+        .details-panel-content {
+            padding: 12px 24px;
+            display: grid;
+            grid-template-columns: auto auto;
+            gap: 10px 20px;
+        }
+
+        .panel-section {
+            display: contents;
+        }
+
+        .panel-timers {
+            grid-column: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .panel-progress {
+            grid-column: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .section-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .slide-counter {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            font-weight: 500;
+        }
+
+        .slide-nav-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-next-section {
+            background: var(--color-success);
+            color: white;
+            border: 2px solid var(--color-success);
+        }
+
+        .btn-next-section:hover {
+            background: #047857;
+            border-color: #047857;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-next-section:disabled {
+            background: var(--color-border);
+            border-color: var(--color-border);
+            color: var(--color-text-muted);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .btn-next-section:disabled:hover {
+            background: var(--color-border);
+            border-color: var(--color-border);
+            box-shadow: none;
+        }
+
+        .btn-next-section svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .btn {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--color-primary-dark);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-secondary {
+            background: var(--color-surface);
+            color: var(--color-text);
+            border: 1px solid var(--color-border);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--color-hover);
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Mobile Menu */
+        .mobile-header {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            background: var(--color-surface);
+            border-bottom: 1px solid var(--color-border);
+            padding: 0 16px;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1001;
+        }
+
+        .mobile-menu-btn {
+            background: none;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--color-text);
+        }
+
+        .mobile-menu-btn:active {
+            background: var(--color-hover);
+        }
+
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            transition: opacity var(--transition);
+        }
+
+        .mobile-overlay.visible {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Welcome Screen */
+        .welcome-screen {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 60px 32px;
+        }
+
+        .welcome-title {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--color-text);
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+
+        .welcome-subtitle {
+            font-size: 20px;
+            color: var(--color-text-secondary);
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        .welcome-description {
+            font-size: 16px;
+            color: var(--color-text-secondary);
+            margin-bottom: 40px;
+            line-height: 1.7;
+        }
+
+        .welcome-cta {
+            padding: 14px 32px;
+            font-size: 16px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            :root {
+                --sidebar-width: 280px;
+            }
+
+            .slide {
+                padding: 32px;
+            }
+
+            .slide-title {
+                font-size: 28px;
+            }
+
+            .slide-content {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding-top: var(--header-height);
+            }
+
+            .mobile-header {
+                display: flex;
+            }
+
+            .slide-container {
+                padding: 24px 16px;
+            }
+
+            .slide {
+                padding: 24px;
+                min-height: 300px;
+            }
+
+            .slide-title {
+                font-size: 24px;
+            }
+
+            .slide-content {
+                font-size: 15px;
+            }
+
+            .slide-controls {
+                padding: 0;
+            }
+
+            .nav-bar {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 8px 12px;
+                gap: 8px;
+            }
+
+            .nav-bar-left,
+            .nav-bar-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .nav-bar-left {
+                order: 2;
+            }
+
+            .nav-bar-right {
+                order: 1;
+            }
+
+            .details-panel-content {
+                grid-template-columns: 1fr;
+                padding: 10px 12px;
+                gap: 12px;
+            }
+
+            .panel-timers,
+            .panel-progress {
+                grid-column: 1;
+            }
+
+            .timer-container {
+                padding: 5px 12px;
+                gap: 8px;
+            }
+
+            .timer-label {
+                font-size: 10px;
+            }
+
+            .timer-display {
+                font-size: 13px;
+            }
+
+            .timer-elapsed,
+            .timer-planned {
+                min-width: 50px;
+            }
+
+            .timer-btn {
+                width: 26px;
+                height: 26px;
+            }
+
+            .timer-btn svg {
+                width: 12px;
+                height: 12px;
+            }
+
+            .slide-nav-buttons {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .btn {
+                flex: 1;
+                min-width: 120px;
+            }
+
+            .btn-next-section {
+                flex: 1 1 100%;
+                margin-top: 8px;
+            }
+
+            .welcome-title {
+                font-size: 32px;
+            }
+
+            .welcome-subtitle {
+                font-size: 18px;
+            }
+
+            /* Timer responsive adjustments */
+            .timer-container {
+                font-size: 13px;
+                padding: 6px 12px;
+                gap: 8px;
+            }
+
+            .timer-display {
+                font-size: 14px;
+            }
+
+            .timer-elapsed,
+            .timer-planned {
+                min-width: 55px;
+            }
+
+            .timer-btn {
+                width: 28px;
+                height: 28px;
+            }
+
+            .timer-btn svg {
+                width: 12px;
+                height: 12px;
+            }
+
+            .activity-timer {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 12px;
+            }
+
+            .module-timer {
+                margin-top: 12px;
+            }
+
+            /* Export modal responsive */
+            .export-modal-content {
+                padding: 24px;
+                max-width: 100%;
+                margin: 0 16px;
+            }
+
+            .export-modal-title {
+                font-size: 20px;
+            }
+
+            .export-option {
+                padding: 12px;
+            }
+
+            .export-option-icon {
+                width: 36px;
+                height: 36px;
+            }
+
+            .export-option-title {
+                font-size: 15px;
+            }
+
+            .export-option-desc {
+                font-size: 12px;
+            }
+
+            /* About modal responsive */
+            .about-modal-content {
+                padding: 24px;
+                max-width: 100%;
+                margin: 0;
+            }
+
+            .about-section-content {
+                padding-left: 0;
+            }
+
+            .about-info-row {
+                flex-direction: column;
+            }
+
+            .about-info-label {
+                min-width: auto;
+                margin-bottom: 2px;
+            }
+
+            /* Progress bars responsive */
+            .progress-bar-label {
+                font-size: 11px;
+            }
+
+            .progress-bar-track {
+                height: 5px;
+            }
+
+            .activity-timer {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .activity-progress {
+                margin-top: 8px;
+            }
+
+            /* Zoom controls responsive */
+            .zoom-controls {
+                top: 8px;
+                right: 8px;
+                padding: 6px;
+                gap: 6px;
+            }
+
+            .zoom-btn {
+                width: 28px;
+                height: 28px;
+            }
+
+            .zoom-btn svg {
+                width: 14px;
+                height: 14px;
+            }
+
+            .zoom-level {
+                font-size: 12px;
+                min-width: 40px;
+            }
+        }
+
+        /* ===== TIMERS ===== */
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 14px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timer-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .timer-display {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 3px 6px;
+            border-radius: 4px;
+            transition: all var(--transition);
+        }
+
+        .timer-display.green {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .timer-display.orange {
+            background: #FFF3E0;
+            color: #E65100;
+        }
+
+        .timer-display.red {
+            background: #FFEBEE;
+            color: #C62828;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .timer-elapsed {
+            min-width: 55px;
+        }
+
+        .timer-separator {
+            color: var(--color-text-muted);
+        }
+
+        .timer-planned {
+            color: var(--color-text-secondary);
+            min-width: 55px;
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 4px;
+        }
+
+        .timer-btn {
+            background: none;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition);
+            color: var(--color-text-secondary);
+        }
+
+        .timer-btn:hover {
+            background: var(--color-hover);
+            border-color: var(--color-text-muted);
+            color: var(--color-text);
+        }
+
+        .timer-btn:active {
+            transform: scale(0.95);
+        }
+
+        .timer-btn.playing {
+            background: var(--color-primary-light);
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+
+        .timer-btn svg {
+            width: 13px;
+            height: 13px;
+        }
+
+        /* Progress Bars */
+        .progress-bar-container {
+            margin-top: 8px;
+        }
+
+        .progress-bar-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .progress-bar-title {
+            font-weight: 600;
+        }
+
+        .progress-bar-percentage {
+            color: var(--color-text-muted);
+        }
+
+        .progress-bar-track {
+            height: 5px;
+            background: var(--color-border-light);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-primary-dark));
+            border-radius: 3px;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .progress-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .progress-bar-fill.complete {
+            background: linear-gradient(90deg, var(--color-success), #047857);
+        }
+
+        .module-progress {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .general-progress {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .activity-progress {
+            margin-top: 12px;
+        }
+
+        .module-timer {
+            margin-top: 8px;
+        }
+
+        .activity-timer {
+            margin-right: auto;
+        }
+
+        /* ===== UTILITY ===== */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Scrollbar styling */
+        .nav-tree::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .nav-tree::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .nav-tree::-webkit-scrollbar-thumb {
+            background: var(--color-border);
+            border-radius: 4px;
+        }
+
+        .nav-tree::-webkit-scrollbar-thumb:hover {
+            background: var(--color-text-muted);
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+        <div class="sidebar-title">Training Platform</div>
+        <div style="width: 40px;"></div>
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1 class="sidebar-title">Training Platform</h1>
+                <p class="sidebar-subtitle">School Inspectors - Portugal</p>
+            </div>
+
+            <!-- Search -->
+            <div class="search-container">
+                <div class="search-box">
+                    <input 
+                        type="text" 
+                        class="search-input" 
+                        id="searchInput" 
+                        placeholder="Search activities and slides..."
+                        autocomplete="off"
+                    >
+                    <button class="search-clear" id="searchClear" aria-label="Clear search">×</button>
+                </div>
+            </div>
+
+            <!-- Navigation Tree -->
+            <nav class="nav-tree" id="navTree"></nav>
+
+            <!-- Search Results -->
+            <div class="search-results" id="searchResults"></div>
+
+            <!-- Export Button -->
+            <div class="sidebar-footer">
+                <div class="progress-wrapper">
+                    <div class="progress-label">
+                        <span>Progress</span>
+                        <span id="sidebar-progress-text">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="sidebar-progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="footer-buttons">
+                    <button class="import-btn" onclick="app.openImportDialog()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        Import JSON
+                    </button>
+                    <button class="about-btn" onclick="app.openAboutModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        About This Training
+                    </button>
+                    <button class="export-btn" onclick="app.openExportModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Export Content
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Zoom Controls -->
+            <div class="zoom-controls" id="zoomControls" style="display: none;">
+                <button class="zoom-btn" id="zoomOutBtn" onclick="app.zoomOut()" title="Zoom out">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        <line x1="8" y1="11" x2="14" y2="11"></line>
+                    </svg>
+                </button>
+                <span class="zoom-level" id="zoomLevel">100%</span>
+                <button class="zoom-btn" id="zoomInBtn" onclick="app.zoomIn()" title="Zoom in">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        <line x1="11" y1="8" x2="11" y2="14"></line>
+                        <line x1="8" y1="11" x2="14" y2="11"></line>
+                    </svg>
+                </button>
+                <button class="zoom-btn" id="zoomResetBtn" onclick="app.zoomReset()" title="Reset zoom">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 4v6h6"></path>
+                        <path d="M23 20v-6h-6"></path>
+                        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Content Header -->
+            <div class="content-header" id="contentHeader">
+                <h2 class="activity-title" id="activityTitle">Welcome</h2>
+                <p class="activity-breadcrumb" id="activityBreadcrumb">Select an activity to begin</p>
+            </div>
+
+            <!-- Slide Container -->
+            <div class="slide-container" id="slideContainer">
+                <div class="welcome-screen">
+                    <h1 class="welcome-title">Training Slide Deck Platform</h1>
+                    <p class="welcome-subtitle">Import your content to begin</p>
+                    <p class="welcome-description">
+                        Click the <strong>"Import JSON"</strong> button in the sidebar to load your training content.
+                        <br><br>
+                        You can import any structured training material in JSON format with modules, activities, and slides.
+                    </p>
+                    <button class="btn btn-success welcome-cta" onclick="app.openImportDialog()" style="background: var(--color-success); border-color: var(--color-success);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; margin-right: 8px;">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        Import JSON File
+                    </button>
+                </div>
+            </div>
+
+            <!-- Slide Controls -->
+            <div class="slide-controls hidden" id="slideControls">
+                <!-- Navigation Bar - Always Visible -->
+                <div class="nav-bar">
+                    <div class="nav-bar-left">
+                        <button class="toggle-panel-btn" id="togglePanelBtn" onclick="app.toggleDetailsPanel()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                            <span id="togglePanelText">Details</span>
+                        </button>
+                        <span class="slide-counter" id="slideCounter">Slide 1 / 1</span>
+                    </div>
+                    <div class="nav-bar-right">
+                        <div class="slide-nav-buttons">
+                            <button class="btn btn-secondary" id="prevSlideBtn" onclick="app.prevSlide()">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                </svg>
+                                Previous
+                            </button>
+                            <button class="btn btn-primary" id="nextSlideBtn" onclick="app.nextSlide()">
+                                Next
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </button>
+                            <button class="btn btn-next-section" id="nextSectionBtn" onclick="app.goToNextSection()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                    <polyline points="15 18 21 12 15 6"></polyline>
+                                </svg>
+                                <span id="nextSectionLabel">Next Section</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Collapsible Details Panel -->
+                <div class="details-panel" id="detailsPanel">
+                    <div class="details-panel-content">
+                        <!-- Timers Column -->
+                        <div class="panel-timers">
+                            <div class="section-label">Timers</div>
+                            <!-- Activity Timer -->
+                            <div class="timer-container activity-timer" id="activityTimer">
+                                <span class="timer-label">Activity</span>
+                                <div class="timer-display green">
+                                    <span class="timer-elapsed" id="activityElapsed">00:00</span>
+                                    <span class="timer-separator">/</span>
+                                    <span class="timer-planned" id="activityPlanned">00:00</span>
+                                </div>
+                                <div class="timer-controls">
+                                    <button class="timer-btn" id="activityPlayBtn" onclick="app.toggleActivityTimer()" title="Start/Pause">
+                                        <svg viewBox="0 0 24 24" fill="currentColor">
+                                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                        </svg>
+                                    </button>
+                                    <button class="timer-btn" id="activityResetBtn" onclick="app.resetActivityTimer()" title="Reset">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="23 4 23 10 17 10"></polyline>
+                                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Module Timer -->
+                            <div class="timer-container module-timer hidden" id="moduleTimer">
+                                <span class="timer-label">Module</span>
+                                <div class="timer-display green">
+                                    <span class="timer-elapsed" id="moduleElapsed">00:00</span>
+                                    <span class="timer-separator">/</span>
+                                    <span class="timer-planned" id="modulePlanned">00:00</span>
+                                </div>
+                                <div class="timer-controls">
+                                    <button class="timer-btn" id="modulePlayBtn" onclick="app.toggleModuleTimer()" title="Start/Pause">
+                                        <svg viewBox="0 0 24 24" fill="currentColor">
+                                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                        </svg>
+                                    </button>
+                                    <button class="timer-btn" id="moduleResetBtn" onclick="app.resetModuleTimer()" title="Reset">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="23 4 23 10 17 10"></polyline>
+                                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress Column -->
+                        <div class="panel-progress">
+                            <div class="section-label">Progress</div>
+                            <!-- General Progress Bar -->
+                            <div class="progress-bar-container general-progress-bottom hidden" id="generalProgress">
+                                <div class="progress-bar-label">
+                                    <span class="progress-bar-title">Overall</span>
+                                    <span class="progress-bar-percentage" id="generalProgressText">0%</span>
+                                </div>
+                                <div class="progress-bar-track">
+                                    <div class="progress-bar-fill" id="generalProgressFill" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Activity Progress Bar -->
+                            <div class="progress-bar-container activity-progress-bottom" id="activityProgressBottom">
+                                <div class="progress-bar-label">
+                                    <span class="progress-bar-title">Slides</span>
+                                    <span class="progress-bar-percentage" id="activityProgressText">0%</span>
+                                </div>
+                                <div class="progress-bar-track">
+                                    <div class="progress-bar-fill" id="activityProgressFill" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Hidden File Input for JSON Import -->
+    <input type="file" id="importFileInput" accept=".json,application/json" style="display: none;" onchange="app.handleFileSelect(event)">
+
+    <!-- About Modal -->
+    <div class="about-modal" id="aboutModal" onclick="if(event.target === this) app.closeAboutModal()">
+        <div class="about-modal-content">
+            <div class="export-modal-header">
+                <h2 class="export-modal-title">About This Training</h2>
+                <button class="export-close-btn" onclick="app.closeAboutModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Course Overview -->
+            <div class="about-section">
+                <div class="about-section-header">
+                    <div class="about-section-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="about-section-title">Course Overview</h3>
+                </div>
+                <div class="about-section-content">
+                    <div class="about-info-row">
+                        <span class="about-info-label">Title:</span>
+                        <span class="about-info-value">AI and Generative AI for School Inspectors in Portugal</span>
+                    </div>
+                    <div class="about-info-row">
+                        <span class="about-info-label">Author & Trainer:</span>
+                        <span class="about-info-value">François Jourde</span>
+                    </div>
+                    <div class="about-info-row">
+                        <span class="about-info-label">Version:</span>
+                        <span class="about-info-value">1.8</span>
+                    </div>
+                    <div class="about-info-row">
+                        <span class="about-info-label">Last Updated:</span>
+                        <span class="about-info-value">7 February 2026</span>
+                    </div>
+                    <div class="about-info-row">
+                        <span class="about-info-label">Level:</span>
+                        <span class="about-info-value">Intermediate</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="about-section">
+                <div class="about-section-header">
+                    <div class="about-section-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </div>
+                    <h3 class="about-section-title">Description</h3>
+                </div>
+                <div class="about-section-content">
+                    <p class="about-description">
+                        This 3-day training develops Portuguese school inspectors' digital competences, enabling them to work 
+                        confidently, responsibly, and efficiently with AI, including generative AI, in their professional practice. 
+                        The goal is to transform AI from an abstract concept into a tangible tool that solves work-related friction.
+                    </p>
+                    <p class="about-description">
+                        <strong>Note:</strong> The trainer does not use PowerPoint presentations. Instead, all participants receive 
+                        this HTML-based single-page web application that can be opened in any browser and updated in real-time.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Target Audience -->
+            <div class="about-section">
+                <div class="about-section-header">
+                    <div class="about-section-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <h3 class="about-section-title">Target Audience</h3>
+                </div>
+                <div class="about-section-content">
+                    <p class="about-description">
+                        <strong>General Inspectorate of Education and Science (IGEC):</strong> Portuguese school inspectors 
+                        working across primary and secondary education cycles (English as a foreign language).
+                    </p>
+                    <p class="about-description">
+                        Participants have varying digital competences and need to develop their skills to work responsibly 
+                        and efficiently with AI, including generative AI.
+                    </p>
+                    <div class="about-info-row" style="margin-top: 16px;">
+                        <span class="about-info-label">Cohort Size:</span>
+                        <span class="about-info-value">30 participants</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prerequisites -->
+            <div class="about-section">
+                <div class="about-section-header">
+                    <div class="about-section-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 11 12 14 22 4"></polyline>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                    </div>
+                    <h3 class="about-section-title">Prerequisites</h3>
+                </div>
+                <div class="about-section-content">
+                    <ul class="about-list">
+                        <li>Basic familiarity with Microsoft Office suite</li>
+                        <li>Access credentials for Microsoft Copilot (distributed in advance)</li>
+                        <li>Basic level of literacy sufficient to decode visual, textual and audio information</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Duration & Structure -->
+            <div class="about-section">
+                <div class="about-section-header">
+                    <div class="about-section-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                    <h3 class="about-section-title">Duration & Structure</h3>
+                </div>
+                <div class="about-section-content">
+                    <div class="about-info-row">
+                        <span class="about-info-label">Total Duration:</span>
+                        <span class="about-info-value">18 hours (3 days)</span>
+                    </div>
+                    <div class="about-info-row">
+                        <span class="about-info-label">Designed Duration:</span>
+                        <span class="about-info-value">17.3 hours</span>
+                    </div>
+                    <div class="about-modules">
+                        <div class="about-module-card">
+                            <div class="about-module-title">Day 1: Understanding GenAI</div>
+                            <div class="about-module-desc">Foundations, Governance, Legal, Ethics and competences</div>
+                            <div class="about-module-meta">Duration: 6 hours</div>
+                        </div>
+                        <div class="about-module-card">
+                            <div class="about-module-title">Day 2: Practical Application & Prompting</div>
+                            <div class="about-module-desc">Hands-on practice with AI tools and prompting techniques</div>
+                            <div class="about-module-meta">Duration: 6 hours</div>
+                        </div>
+                        <div class="about-module-card">
+                            <div class="about-module-title">Day 3: Building Shared Prompt Libraries</div>
+                            <div class="about-module-desc">Equipping the inspectorate with shared resources</div>
+                            <div class="about-module-meta">Duration: 6 hours</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Learning Approach -->
+            <div class="about-section">
+                <div class="about-section-header">
+                    <div class="about-section-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="about-section-title">Learning Approach</h3>
+                </div>
+                <div class="about-section-content">
+                    <div class="about-info-row">
+                        <span class="about-info-label">Modality:</span>
+                        <span class="about-info-value">Blended Learning</span>
+                    </div>
+                    <p class="about-description" style="margin-top: 12px;">
+                        The training combines theoretical foundations with hands-on practice, encouraging active participation 
+                        and collaborative learning. Participants progress from understanding AI concepts to applying them 
+                        in their professional context and creating shared resources for their organization.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Tools & Materials -->
+            <div class="about-section">
+                <div class="about-section-header">
+                    <div class="about-section-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                        </svg>
+                    </div>
+                    <h3 class="about-section-title">Tools & Materials</h3>
+                </div>
+                <div class="about-section-content">
+                    <div style="margin-bottom: 12px;">
+                        <span class="about-badge">LMS</span>
+                        <span class="about-badge">GenAI</span>
+                        <span class="about-badge">EdTech</span>
+                        <span class="about-badge">Web Tools</span>
+                    </div>
+                    <ul class="about-list">
+                        <li>Microsoft Teams (Learning Management)</li>
+                        <li>Microsoft Copilot (Generative AI)</li>
+                        <li>Microsoft Word (Word Processing)</li>
+                        <li>Wooclap (Audience Response System)</li>
+                        <li>Transformer Explainer (Web Simulation)</li>
+                        <li>Prompting Coach (ChatBot)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="export-modal-footer">
+                <button class="export-cancel-btn" onclick="app.closeAboutModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="export-modal" id="exportModal" onclick="if(event.target === this) app.closeExportModal()">
+        <div class="export-modal-content">
+            <div class="export-modal-header">
+                <h2 class="export-modal-title">Export Training Content</h2>
+                <button class="export-close-btn" onclick="app.closeExportModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="export-modal-body">
+                <p class="export-description">
+                    Choose your preferred format to export all training content including all modules, activities, and slides.
+                </p>
+                <div class="export-options">
+                    <div class="export-option" onclick="app.exportAsJSON()">
+                        <div class="export-option-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <path d="M9 15h6M9 12h6"></path>
+                            </svg>
+                        </div>
+                        <div class="export-option-content">
+                            <div class="export-option-title">JSON Template (.json)</div>
+                            <div class="export-option-desc">Structured data format, can be re-imported later</div>
+                        </div>
+                    </div>
+                    <div class="export-option" onclick="app.exportAsMarkdown()">
+                        <div class="export-option-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                        </div>
+                        <div class="export-option-content">
+                            <div class="export-option-title">Markdown (.md)</div>
+                            <div class="export-option-desc">Plain text format with formatting, ideal for documentation</div>
+                        </div>
+                    </div>
+                    <div class="export-option" onclick="app.exportAsRTF()">
+                        <div class="export-option-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="12" y1="18" x2="12" y2="12"></line>
+                                <line x1="9" y1="15" x2="15" y2="15"></line>
+                            </svg>
+                        </div>
+                        <div class="export-option-content">
+                            <div class="export-option-title">Rich Text Format (.rtf)</div>
+                            <div class="export-option-desc">Formatted document, opens in Word, Pages, and other editors</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="export-modal-footer">
+                <button class="export-cancel-btn" onclick="app.closeExportModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== DATA STRUCTURE =====
+        // Course data is now loaded dynamically via JSON import
+                }
+            ]
+        };
+
+        // ===== APPLICATION STATE =====
+        const app = {
+            // Course data - starts empty, populated via import
+            courseData: null,
+            
+            currentActivity: null,
+            currentSlideIndex: 0,
+            searchQuery: '',
+            expandedNodes: new Set(),
+            
+            // Timer state
+            moduleTimer: {
+                elapsed: 0,
+                planned: 0,
+                running: false,
+                interval: null,
+                moduleId: null
+            },
+            activityTimer: {
+                elapsed: 0,
+                planned: 0,
+                running: false,
+                interval: null,
+                activityId: null
+            },
+
+            // Store timer interval reference for cleanup
+            timerIntervalId: null,
+
+            // Progress tracking
+            completedActivities: new Set(),
+            visitedActivities: new Set(),
+            visitedSlides: new Set(),
+
+            // Zoom state
+            zoomLevel: 100,
+            zoomMin: 80,
+            zoomMax: 200,
+            zoomStep: 20,
+
+            // Details panel state
+            detailsPanelExpanded: false,
+
+            init() {
+                this.buildNavigation();
+                this.attachEventListeners();
+                this.loadStateFromHash();
+                this.loadTimerState();
+                this.loadProgressState();
+                this.loadZoomPreference();
+                this.loadDetailsPanelState();
+                this.startTimerTicks();
+            },
+
+            buildNavigation() {
+                const navTree = document.getElementById('navTree');
+                navTree.innerHTML = '';
+
+                if (!this.courseData || !this.courseData.modules) {
+                    navTree.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--color-text-muted);">No content loaded. Please import a JSON file.</div>';
+                    return;
+                }
+
+                this.courseData.modules.forEach(module => {
+                    const moduleEl = this.createModuleElement(module);
+                    navTree.appendChild(moduleEl);
+                });
+
+                // Apply visual state after building navigation
+                setTimeout(() => this.updateNavigationVisualState(), 0);
+            },
+
+            createModuleElement(module) {
+                const moduleDiv = document.createElement('div');
+                moduleDiv.className = 'nav-module';
+
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'nav-module-header';
+                headerDiv.textContent = module.title;
+                moduleDiv.appendChild(headerDiv);
+
+                module.moments.forEach(moment => {
+                    const momentEl = this.createMomentElement(moment);
+                    moduleDiv.appendChild(momentEl);
+                });
+
+                return moduleDiv;
+            },
+
+            createMomentElement(moment) {
+                const momentDiv = document.createElement('div');
+                momentDiv.className = 'nav-moment';
+
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'nav-item-header';
+                headerDiv.innerHTML = `
+                    <svg class="nav-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                    <span class="nav-item-title">${moment.title}</span>
+                `;
+
+                const childrenDiv = document.createElement('div');
+                childrenDiv.className = 'nav-children';
+
+                headerDiv.addEventListener('click', () => {
+                    const isExpanded = childrenDiv.classList.toggle('expanded');
+                    headerDiv.querySelector('.nav-expand-icon').classList.toggle('expanded', isExpanded);
+                    
+                    if (isExpanded) {
+                        this.expandedNodes.add(moment.id);
+                    } else {
+                        this.expandedNodes.delete(moment.id);
+                    }
+                });
+
+                moment.submoments.forEach(submoment => {
+                    const submomentEl = this.createSubmomentElement(submoment);
+                    childrenDiv.appendChild(submomentEl);
+                });
+
+                momentDiv.appendChild(headerDiv);
+                momentDiv.appendChild(childrenDiv);
+
+                return momentDiv;
+            },
+
+            createSubmomentElement(submoment) {
+                const submomentDiv = document.createElement('div');
+                submomentDiv.className = 'nav-submoment';
+
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'nav-item-header';
+                headerDiv.innerHTML = `
+                    <svg class="nav-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                    <span class="nav-item-title">${submoment.title}</span>
+                `;
+
+                const childrenDiv = document.createElement('div');
+                childrenDiv.className = 'nav-children';
+
+                headerDiv.addEventListener('click', () => {
+                    const isExpanded = childrenDiv.classList.toggle('expanded');
+                    headerDiv.querySelector('.nav-expand-icon').classList.toggle('expanded', isExpanded);
+                    
+                    if (isExpanded) {
+                        this.expandedNodes.add(submoment.id);
+                    } else {
+                        this.expandedNodes.delete(submoment.id);
+                    }
+                });
+
+                submoment.activities.forEach(activity => {
+                    const activityEl = this.createActivityElement(activity);
+                    childrenDiv.appendChild(activityEl);
+                });
+
+                submomentDiv.appendChild(headerDiv);
+                submomentDiv.appendChild(childrenDiv);
+
+                return submomentDiv;
+            },
+
+            createActivityElement(activity) {
+                const activityDiv = document.createElement('div');
+                activityDiv.className = 'nav-activity';
+                activityDiv.dataset.activityId = activity.id;
+                
+                const slideCount = activity.slides.length;
+                activityDiv.innerHTML = `
+                    ${activity.title}
+                    <span class="slide-count">${slideCount} slide${slideCount !== 1 ? 's' : ''}</span>
+                `;
+
+                activityDiv.addEventListener('click', () => {
+                    this.loadActivity(activity);
+                });
+
+                return activityDiv;
+            },
+
+            loadActivity(activity) {
+                this.currentActivity = activity;
+                this.currentSlideIndex = 0;
+                
+                // Mark activity as visited
+                this.visitedActivities.add(activity.id);
+                
+                this.updateActivityHeader();
+                this.renderSlide();
+                this.updateActiveNav();
+                this.updateNavigationVisualState();
+                this.updateNextSectionButton();
+                this.closeMobileMenu();
+                this.updateHash();
+
+                // Load timers
+                const moduleId = this.getModuleIdForActivity(activity.id);
+                if (moduleId) {
+                    this.loadModuleTimer(moduleId);
+                }
+                this.loadActivityTimer(activity.id);
+
+                // Show and update general progress
+                this.showGeneralProgress();
+
+                // Show slide controls and progress
+                document.getElementById('slideControls').classList.remove('hidden');
+                
+                // Show zoom controls and apply current zoom
+                this.showZoomControls();
+                setTimeout(() => this.applyZoom(), 100);
+                
+                // Initialize activity progress
+                this.updateActivityProgress();
+                
+                // Save progress
+                this.saveProgressState();
+            },
+
+            updateActivityHeader() {
+                const activity = this.currentActivity;
+                const breadcrumb = this.getBreadcrumb(activity.id);
+                
+                document.getElementById('activityTitle').textContent = activity.title;
+                document.getElementById('activityBreadcrumb').textContent = breadcrumb;
+            },
+
+            getBreadcrumb(activityId) {
+                // Find the activity in the data structure and build breadcrumb
+                for (const module of this.courseData.modules) {
+                    for (const moment of module.moments) {
+                        for (const submoment of moment.submoments) {
+                            for (const activity of submoment.activities) {
+                                if (activity.id === activityId) {
+                                    return `${moment.title.split(':')[0]} → ${submoment.title.split(':')[0]}`;
+                                }
+                            }
+                        }
+                    }
+                }
+                return '';
+            },
+
+            // ===== SECURITY & SANITIZATION =====
+
+            sanitizeHTML(html) {
+                const div = document.createElement('div');
+                div.textContent = html;
+                return div.innerHTML;
+            },
+
+            renderSlide() {
+                const slide = this.currentActivity.slides[this.currentSlideIndex];
+                const container = document.getElementById('slideContainer');
+
+                // Sanitize title but allow HTML in content (content is from trusted JSON)
+                const sanitizedTitle = slide.title ? this.sanitizeHTML(slide.title) : '';
+                
+                container.innerHTML = `
+                    <div class="slide">
+                        ${sanitizedTitle ? `<h2 class="slide-title">${sanitizedTitle}</h2>` : ''}
+                        <div class="slide-content">${slide.content}</div>
+                    </div>
+                `;
+
+                // Track visited slide
+                const slideKey = `${this.currentActivity.id}-slide-${this.currentSlideIndex}`;
+                this.visitedSlides.add(slideKey);
+
+                this.updateSlideCounter();
+                this.updateNavigationButtons();
+                this.updateActivityProgress();
+                this.saveProgressState();
+
+                // Reapply zoom after slide content changes
+                setTimeout(() => this.applyZoom(), 0);
+            },
+
+            updateSlideCounter() {
+                const total = this.currentActivity.slides.length;
+                const current = this.currentSlideIndex + 1;
+                document.getElementById('slideCounter').textContent = `Slide ${current} / ${total}`;
+            },
+
+            updateNavigationButtons() {
+                const prevBtn = document.getElementById('prevSlideBtn');
+                const nextBtn = document.getElementById('nextSlideBtn');
+
+                prevBtn.disabled = this.currentSlideIndex === 0;
+                nextBtn.disabled = this.currentSlideIndex === this.currentActivity.slides.length - 1;
+            },
+
+            updateActiveNav() {
+                // Remove all active classes
+                document.querySelectorAll('.nav-activity').forEach(el => {
+                    el.classList.remove('active');
+                });
+
+                // Add active class to current activity
+                const activeEl = document.querySelector(`[data-activity-id="${this.currentActivity.id}"]`);
+                if (activeEl) {
+                    activeEl.classList.add('active');
+                }
+            },
+
+            nextSlide() {
+                if (this.currentSlideIndex < this.currentActivity.slides.length - 1) {
+                    this.currentSlideIndex++;
+                    this.renderSlide();
+                    this.updateHash();
+                } else {
+                    // Mark activity as completed when reaching the last slide
+                    this.completedActivities.add(this.currentActivity.id);
+                    this.updateGeneralProgress();
+                    this.updateNavigationVisualState();
+                    this.saveProgressState();
+                }
+            },
+
+            prevSlide() {
+                if (this.currentSlideIndex > 0) {
+                    this.currentSlideIndex--;
+                    this.renderSlide();
+                    this.updateHash();
+                }
+            },
+
+            startTraining() {
+                if (!this.courseData || !this.courseData.modules || this.courseData.modules.length === 0) {
+                    alert('⚠️ No content loaded.\n\nPlease import a JSON file to begin.');
+                    return;
+                }
+                
+                // Load the first activity
+                const firstActivity = this.courseData.modules[0].moments[0].submoments[0].activities[0];
+                this.loadActivity(firstActivity);
+            },
+
+            // Search functionality
+            performSearch(query) {
+                this.searchQuery = query.toLowerCase().trim();
+                
+                if (!this.searchQuery) {
+                    this.clearSearch();
+                    return;
+                }
+
+                const results = [];
+
+                // Search through all activities and slides
+                this.courseData.modules.forEach(module => {
+                    module.moments.forEach(moment => {
+                        moment.submoments.forEach(submoment => {
+                            submoment.activities.forEach(activity => {
+                                // Check activity title
+                                if (activity.title.toLowerCase().includes(this.searchQuery)) {
+                                    results.push({
+                                        type: 'activity',
+                                        activity: activity,
+                                        title: activity.title,
+                                        context: 'Activity match'
+                                    });
+                                }
+
+                                // Check slide content
+                                activity.slides.forEach((slide, index) => {
+                                    const slideText = (slide.title + ' ' + slide.content).toLowerCase();
+                                    if (slideText.includes(this.searchQuery)) {
+                                        results.push({
+                                            type: 'slide',
+                                            activity: activity,
+                                            slideIndex: index,
+                                            title: `${activity.title} - Slide ${index + 1}`,
+                                            context: slide.title || slide.content.substring(0, 100)
+                                        });
+                                    }
+                                });
+                            });
+                        });
+                    });
+                });
+
+                this.displaySearchResults(results);
+            },
+
+            displaySearchResults(results) {
+                const navTree = document.getElementById('navTree');
+                const searchResults = document.getElementById('searchResults');
+
+                navTree.style.display = 'none';
+                searchResults.classList.add('visible');
+
+                if (results.length === 0) {
+                    searchResults.innerHTML = '<div class="no-results">No results found</div>';
+                    return;
+                }
+
+                searchResults.innerHTML = results.map(result => {
+                    const highlightedContext = this.highlightText(result.context, this.searchQuery);
+                    return `
+                        <div class="search-result-item" data-activity-id="${result.activity.id}" data-slide-index="${result.slideIndex || 0}">
+                            <div class="search-result-title">${result.title}</div>
+                            <div class="search-result-context">${highlightedContext}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Add click handlers to search results
+                searchResults.querySelectorAll('.search-result-item').forEach(el => {
+                    el.addEventListener('click', () => {
+                        const activityId = el.dataset.activityId;
+                        const slideIndex = parseInt(el.dataset.slideIndex);
+                        const activity = this.findActivityById(activityId);
+                        
+                        if (activity) {
+                            this.currentActivity = activity;
+                            this.currentSlideIndex = slideIndex;
+                            this.updateActivityHeader();
+                            this.renderSlide();
+                            this.updateActiveNav();
+                            this.clearSearch();
+                            this.closeMobileMenu();
+                            this.updateHash();
+                            document.getElementById('slideControls').classList.remove('hidden');
+                        }
+                    });
+                });
+            },
+
+            highlightText(text, query) {
+                if (!query) return text;
+                
+                // Remove HTML tags for highlighting
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = text;
+                const plainText = tempDiv.textContent || tempDiv.innerText;
+                
+                const regex = new RegExp(`(${query})`, 'gi');
+                return plainText.substring(0, 150).replace(regex, '<span class="search-highlight">$1</span>');
+            },
+
+            findActivityById(activityId) {
+                for (const module of this.courseData.modules) {
+                    for (const moment of module.moments) {
+                        for (const submoment of moment.submoments) {
+                            for (const activity of submoment.activities) {
+                                if (activity.id === activityId) {
+                                    return activity;
+                                }
+                            }
+                        }
+                    }
+                }
+                return null;
+            },
+
+            clearSearch() {
+                const searchInput = document.getElementById('searchInput');
+                const searchClear = document.getElementById('searchClear');
+                const navTree = document.getElementById('navTree');
+                const searchResults = document.getElementById('searchResults');
+
+                searchInput.value = '';
+                searchClear.classList.remove('visible');
+                navTree.style.display = 'block';
+                searchResults.classList.remove('visible');
+                searchResults.innerHTML = '';
+                this.searchQuery = '';
+            },
+
+            // Mobile menu
+            toggleMobileMenu() {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('mobileOverlay');
+                
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('visible');
+            },
+
+            closeMobileMenu() {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('mobileOverlay');
+                
+                sidebar.classList.remove('open');
+                overlay.classList.remove('visible');
+            },
+
+            // Hash navigation
+            updateHash() {
+                if (this.currentActivity) {
+                    window.location.hash = `${this.currentActivity.id}-slide-${this.currentSlideIndex}`;
+                }
+            },
+
+            loadStateFromHash() {
+                const hash = window.location.hash.substring(1);
+                if (!hash) return;
+
+                const match = hash.match(/^(.+)-slide-(\d+)$/);
+                if (match) {
+                    const activityId = match[1];
+                    const slideIndex = parseInt(match[2]);
+                    const activity = this.findActivityById(activityId);
+                    
+                    if (activity && slideIndex < activity.slides.length) {
+                        this.currentActivity = activity;
+                        this.currentSlideIndex = slideIndex;
+                        this.updateActivityHeader();
+                        this.renderSlide();
+                        this.updateActiveNav();
+                        document.getElementById('slideControls').classList.remove('hidden');
+                    }
+                }
+            },
+
+            attachEventListeners() {
+                // Search
+                const searchInput = document.getElementById('searchInput');
+                const searchClear = document.getElementById('searchClear');
+
+                searchInput.addEventListener('input', (e) => {
+                    const value = e.target.value;
+                    searchClear.classList.toggle('visible', value.length > 0);
+                    this.performSearch(value);
+                });
+
+                searchClear.addEventListener('click', () => {
+                    this.clearSearch();
+                });
+
+                // Mobile menu
+                document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+                    this.toggleMobileMenu();
+                });
+
+                document.getElementById('mobileOverlay').addEventListener('click', () => {
+                    this.closeMobileMenu();
+                });
+
+                // Keyboard navigation
+                document.addEventListener('keydown', (e) => {
+                    if (!this.currentActivity) return;
+
+                    // Ignore if user is typing in search
+                    if (document.activeElement === searchInput) return;
+
+                    switch(e.key) {
+                        case 'ArrowRight':
+                        case ' ':
+                            e.preventDefault();
+                            this.nextSlide();
+                            break;
+                        case 'ArrowLeft':
+                            e.preventDefault();
+                            this.prevSlide();
+                            break;
+                        case 'Home':
+                            e.preventDefault();
+                            this.currentSlideIndex = 0;
+                            this.renderSlide();
+                            this.updateHash();
+                            break;
+                        case 'End':
+                            e.preventDefault();
+                            this.currentSlideIndex = this.currentActivity.slides.length - 1;
+                            this.renderSlide();
+                            this.updateHash();
+                            break;
+                        case 'Escape':
+                            if (window.innerWidth <= 768) {
+                                this.closeMobileMenu();
+                            }
+                            // Close modals if open
+                            const aboutModal = document.getElementById('aboutModal');
+                            const exportModal = document.getElementById('exportModal');
+                            if (aboutModal.classList.contains('visible')) {
+                                this.closeAboutModal();
+                            } else if (exportModal.classList.contains('visible')) {
+                                this.closeExportModal();
+                            }
+                            break;
+                    }
+                });
+
+                // Hash change
+                window.addEventListener('hashchange', () => {
+                    this.loadStateFromHash();
+                });
+            },
+
+            // ===== DETAILS PANEL TOGGLE =====
+
+            toggleDetailsPanel() {
+                this.detailsPanelExpanded = !this.detailsPanelExpanded;
+                const panel = document.getElementById('detailsPanel');
+                const btn = document.getElementById('togglePanelBtn');
+                const text = document.getElementById('togglePanelText');
+
+                if (this.detailsPanelExpanded) {
+                    panel.classList.add('expanded');
+                    btn.classList.add('expanded');
+                    text.textContent = 'Hide Details';
+                } else {
+                    panel.classList.remove('expanded');
+                    btn.classList.remove('expanded');
+                    text.textContent = 'Details';
+                }
+
+                // Save state
+                this.safeLocalStorageSet('detailsPanelExpanded', this.detailsPanelExpanded);
+            },
+
+            loadDetailsPanelState() {
+                const saved = this.safeLocalStorageGet('detailsPanelExpanded');
+                if (saved === 'true') {
+                    this.detailsPanelExpanded = false; // Will be toggled to true
+                    this.toggleDetailsPanel();
+                }
+            },
+
+            // ===== ZOOM METHODS =====
+
+            zoomIn() {
+                if (this.zoomLevel < this.zoomMax) {
+                    this.zoomLevel += this.zoomStep;
+                    this.applyZoom();
+                }
+            },
+
+            zoomOut() {
+                if (this.zoomLevel > this.zoomMin) {
+                    this.zoomLevel -= this.zoomStep;
+                    this.applyZoom();
+                }
+            },
+
+            zoomReset() {
+                this.zoomLevel = 100;
+                this.applyZoom();
+            },
+
+            applyZoom() {
+                const slide = document.querySelector('.slide');
+                if (slide) {
+                    const scale = this.zoomLevel / 100;
+                    slide.style.transform = `scale(${scale})`;
+                }
+
+                // Update zoom level display
+                const zoomLevelEl = document.getElementById('zoomLevel');
+                if (zoomLevelEl) {
+                    zoomLevelEl.textContent = `${this.zoomLevel}%`;
+                }
+
+                // Update button states
+                const zoomInBtn = document.getElementById('zoomInBtn');
+                const zoomOutBtn = document.getElementById('zoomOutBtn');
+                
+                if (zoomInBtn) {
+                    zoomInBtn.disabled = this.zoomLevel >= this.zoomMax;
+                }
+                if (zoomOutBtn) {
+                    zoomOutBtn.disabled = this.zoomLevel <= this.zoomMin;
+                }
+
+                // Save zoom preference
+                this.safeLocalStorageSet('zoomLevel', this.zoomLevel.toString());
+            },
+
+            loadZoomPreference() {
+                const savedZoom = this.safeLocalStorageGet('zoomLevel');
+                if (savedZoom) {
+                    const parsed = parseInt(savedZoom, 10);
+                    if (!isNaN(parsed) && parsed >= this.zoomMin && parsed <= this.zoomMax) {
+                        this.zoomLevel = parsed;
+                        this.applyZoom();
+                    }
+                }
+            },
+
+            showZoomControls() {
+                const zoomControls = document.getElementById('zoomControls');
+                if (zoomControls) {
+                    zoomControls.style.display = 'flex';
+                }
+            },
+
+            // ===== NAVIGATION METHODS =====
+
+            getNextSection() {
+                if (!this.currentActivity) return null;
+
+                const currentActivityId = this.currentActivity.id;
+                let foundCurrent = false;
+                let nextActivity = null;
+                let nextSubmoment = null;
+                let nextMoment = null;
+                let nextModule = null;
+
+                // Search through all modules to find current activity and next sections
+                for (let moduleIndex = 0; moduleIndex < this.courseData.modules.length; moduleIndex++) {
+                    const module = this.courseData.modules[moduleIndex];
+
+                    for (let momentIndex = 0; momentIndex < module.moments.length; momentIndex++) {
+                        const moment = module.moments[momentIndex];
+
+                        for (let submomentIndex = 0; submomentIndex < moment.submoments.length; submomentIndex++) {
+                            const submoment = moment.submoments[submomentIndex];
+
+                            for (let activityIndex = 0; activityIndex < submoment.activities.length; activityIndex++) {
+                                const activity = submoment.activities[activityIndex];
+
+                                if (foundCurrent && !nextActivity) {
+                                    // Found the next activity
+                                    nextActivity = {
+                                        type: 'activity',
+                                        data: activity,
+                                        label: 'Next Activity'
+                                    };
+                                    return nextActivity;
+                                }
+
+                                if (activity.id === currentActivityId) {
+                                    foundCurrent = true;
+
+                                    // Check if there's a next activity in same submoment
+                                    if (activityIndex < submoment.activities.length - 1) {
+                                        return {
+                                            type: 'activity',
+                                            data: submoment.activities[activityIndex + 1],
+                                            label: 'Next Activity'
+                                        };
+                                    }
+
+                                    // Check if there's a next submoment
+                                    if (submomentIndex < moment.submoments.length - 1) {
+                                        const nextSub = moment.submoments[submomentIndex + 1];
+                                        if (nextSub.activities.length > 0) {
+                                            return {
+                                                type: 'submoment',
+                                                data: nextSub.activities[0],
+                                                label: 'Next Sub-moment',
+                                                submomentTitle: nextSub.title
+                                            };
+                                        }
+                                    }
+
+                                    // Check if there's a next moment
+                                    if (momentIndex < module.moments.length - 1) {
+                                        const nextMom = module.moments[momentIndex + 1];
+                                        if (nextMom.submoments.length > 0 && nextMom.submoments[0].activities.length > 0) {
+                                            return {
+                                                type: 'moment',
+                                                data: nextMom.submoments[0].activities[0],
+                                                label: 'Next Moment',
+                                                momentTitle: nextMom.title
+                                            };
+                                        }
+                                    }
+
+                                    // Check if there's a next module
+                                    if (moduleIndex < this.courseData.modules.length - 1) {
+                                        const nextMod = this.courseData.modules[moduleIndex + 1];
+                                        if (nextMod.moments.length > 0 && 
+                                            nextMod.moments[0].submoments.length > 0 && 
+                                            nextMod.moments[0].submoments[0].activities.length > 0) {
+                                            return {
+                                                type: 'module',
+                                                data: nextMod.moments[0].submoments[0].activities[0],
+                                                label: 'Next Module',
+                                                moduleTitle: nextMod.title
+                                            };
+                                        }
+                                    }
+
+                                    // No next section found
+                                    return null;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return null;
+            },
+
+            goToNextSection() {
+                const nextSection = this.getNextSection();
+                if (nextSection) {
+                    this.loadActivity(nextSection.data);
+                }
+            },
+
+            updateNextSectionButton() {
+                const nextSection = this.getNextSection();
+                const button = document.getElementById('nextSectionBtn');
+                const label = document.getElementById('nextSectionLabel');
+
+                if (!button || !label) return;
+
+                if (nextSection) {
+                    // Set appropriate label
+                    switch (nextSection.type) {
+                        case 'activity':
+                            label.textContent = 'Next Activity';
+                            break;
+                        case 'submoment':
+                            label.textContent = 'Next Sub-moment';
+                            break;
+                        case 'moment':
+                            label.textContent = 'Next Moment';
+                            break;
+                        case 'module':
+                            label.textContent = 'Next Module';
+                            break;
+                    }
+                    button.disabled = false;
+                } else {
+                    // No next section - disable button
+                    label.textContent = 'End of Training';
+                    button.disabled = true;
+                }
+            },
+
+            // ===== PROGRESS METHODS =====
+
+            updateNavigationVisualState() {
+                // Update all activities
+                document.querySelectorAll('.nav-activity').forEach(el => {
+                    const activityId = el.dataset.activityId;
+                    
+                    // Remove all state classes first
+                    el.classList.remove('visited', 'completed');
+                    
+                    // Add appropriate class
+                    if (this.completedActivities.has(activityId)) {
+                        el.classList.add('completed');
+                    } else if (this.visitedActivities.has(activityId)) {
+                        el.classList.add('visited');
+                    }
+                });
+
+                // Update moments and submoments with progress badges
+                this.updateMomentProgress();
+                this.updateModuleHeaderProgress();
+            },
+
+            updateMomentProgress() {
+                this.courseData.modules.forEach(module => {
+                    module.moments.forEach(moment => {
+                        // Calculate moment progress
+                        let totalActivities = 0;
+                        let completedActivities = 0;
+                        let visitedActivities = 0;
+
+                        moment.submoments.forEach(submoment => {
+                            submoment.activities.forEach(activity => {
+                                totalActivities++;
+                                if (this.completedActivities.has(activity.id)) {
+                                    completedActivities++;
+                                } else if (this.visitedActivities.has(activity.id)) {
+                                    visitedActivities++;
+                                }
+                            });
+                        });
+
+                        // Find moment header and update badge
+                        const momentHeaders = document.querySelectorAll('.nav-item-header');
+                        momentHeaders.forEach(header => {
+                            const titleElement = header.querySelector('.nav-item-title');
+                            if (titleElement && titleElement.textContent.includes(moment.title)) {
+                                // Remove existing badge
+                                const existingBadge = header.querySelector('.nav-progress-badge');
+                                if (existingBadge) {
+                                    existingBadge.remove();
+                                }
+
+                                // Add new badge if there's progress
+                                if (totalActivities > 0) {
+                                    const badge = document.createElement('span');
+                                    badge.className = 'nav-progress-badge';
+                                    
+                                    if (completedActivities === totalActivities) {
+                                        badge.classList.add('completed');
+                                        badge.textContent = '✓';
+                                    } else if (completedActivities > 0 || visitedActivities > 0) {
+                                        badge.classList.add('in-progress');
+                                        badge.textContent = `${completedActivities}/${totalActivities}`;
+                                    } else {
+                                        badge.textContent = `0/${totalActivities}`;
+                                    }
+                                    
+                                    header.classList.add('has-progress');
+                                    header.appendChild(badge);
+                                }
+                            }
+                        });
+                    });
+                });
+            },
+
+            updateModuleHeaderProgress() {
+                this.courseData.modules.forEach(module => {
+                    // Calculate module progress
+                    let totalActivities = 0;
+                    let completedActivities = 0;
+
+                    module.moments.forEach(moment => {
+                        moment.submoments.forEach(submoment => {
+                            submoment.activities.forEach(activity => {
+                                totalActivities++;
+                                if (this.completedActivities.has(activity.id)) {
+                                    completedActivities++;
+                                }
+                            });
+                        });
+                    });
+
+                    // Find module header and update
+                    const moduleHeaders = document.querySelectorAll('.nav-module-header');
+                    moduleHeaders.forEach(header => {
+                        if (header.textContent.includes(module.title)) {
+                            // Remove existing progress indicator
+                            const existingProgress = header.querySelector('.nav-module-progress');
+                            if (existingProgress) {
+                                existingProgress.remove();
+                            }
+
+                            // Add progress indicator if there's any progress
+                            if (totalActivities > 0 && (completedActivities > 0 || this.hasAnyVisitedActivitiesInModule(module))) {
+                                const progressDiv = document.createElement('div');
+                                progressDiv.className = 'nav-module-progress';
+                                
+                                if (completedActivities === totalActivities) {
+                                    progressDiv.classList.add('completed');
+                                    progressDiv.textContent = `✓ Completed (${completedActivities}/${totalActivities})`;
+                                } else {
+                                    progressDiv.textContent = `Progress: ${completedActivities}/${totalActivities} activities`;
+                                }
+                                
+                                header.appendChild(progressDiv);
+                            }
+                        }
+                    });
+                });
+            },
+
+            hasAnyVisitedActivitiesInModule(module) {
+                return module.moments.some(moment => 
+                    moment.submoments.some(submoment =>
+                        submoment.activities.some(activity =>
+                            this.visitedActivities.has(activity.id)
+                        )
+                    )
+                );
+            },
+
+            updateActivityProgress() {
+                if (!this.currentActivity) return;
+
+                const totalSlides = this.currentActivity.slides.length;
+                const visitedCount = this.currentActivity.slides.filter((slide, index) => {
+                    const slideKey = `${this.currentActivity.id}-slide-${index}`;
+                    return this.visitedSlides.has(slideKey);
+                }).length;
+
+                const percentage = Math.round((visitedCount / totalSlides) * 100);
+                
+                const fillElement = document.getElementById('activityProgressFill');
+                const textElement = document.getElementById('activityProgressText');
+                
+                if (fillElement && textElement) {
+                    fillElement.style.width = `${percentage}%`;
+                    textElement.textContent = `${percentage}%`;
+                    
+                    if (percentage === 100) {
+                        fillElement.classList.add('complete');
+                    } else {
+                        fillElement.classList.remove('complete');
+                    }
+                }
+            },
+
+            updateGeneralProgress() {
+                // Calculate progress across ALL modules in the entire training
+                let totalActivities = 0;
+                let completedCount = 0;
+                let visitedCount = 0;
+
+                this.courseData.modules.forEach(module => {
+                    module.moments.forEach(moment => {
+                        moment.submoments.forEach(submoment => {
+                            submoment.activities.forEach(activity => {
+                                totalActivities++;
+                                if (this.completedActivities.has(activity.id)) {
+                                    completedCount++;
+                                } else if (this.visitedActivities.has(activity.id)) {
+                                    visitedCount++;
+                                }
+                            });
+                        });
+                    });
+                });
+
+                // Calculate percentage based on completed activities
+                const percentage = totalActivities > 0 ? Math.round((completedCount / totalActivities) * 100) : 0;
+                
+                // Update bottom progress bar
+                const fillElement = document.getElementById('generalProgressFill');
+                const textElement = document.getElementById('generalProgressText');
+                
+                if (fillElement && textElement) {
+                    fillElement.style.width = `${percentage}%`;
+                    
+                    // Show detailed progress
+                    const visitedTotal = completedCount + visitedCount;
+                    textElement.textContent = `${percentage}% (${completedCount} completed, ${visitedCount} in progress, ${totalActivities - visitedTotal} remaining)`;
+                    
+                    if (percentage === 100) {
+                        fillElement.classList.add('complete');
+                    } else {
+                        fillElement.classList.remove('complete');
+                    }
+                }
+
+                // Update sidebar progress bar
+                const sidebarFill = document.getElementById('sidebar-progress-fill');
+                const sidebarText = document.getElementById('sidebar-progress-text');
+                
+                if (sidebarFill && sidebarText) {
+                    sidebarFill.style.width = `${percentage}%`;
+                    sidebarText.textContent = `${percentage}%`;
+                }
+            },
+
+            showGeneralProgress() {
+                const generalProgress = document.getElementById('generalProgress');
+                if (generalProgress) {
+                    generalProgress.classList.remove('hidden');
+                }
+                this.updateGeneralProgress();
+            },
+
+            // ===== LOCAL STORAGE HELPERS WITH ERROR HANDLING =====
+
+            safeLocalStorageSet(key, value) {
+                try {
+                    localStorage.setItem(key, value);
+                    return true;
+                } catch (error) {
+                    console.warn(`Failed to save to localStorage (${key}):`, error.message);
+                    // Handle quota exceeded or disabled localStorage
+                    if (error.name === 'QuotaExceededError') {
+                        console.warn('localStorage quota exceeded. Consider clearing old data.');
+                    }
+                    return false;
+                }
+            },
+
+            safeLocalStorageGet(key) {
+                try {
+                    return localStorage.getItem(key);
+                } catch (error) {
+                    console.warn(`Failed to read from localStorage (${key}):`, error.message);
+                    return null;
+                }
+            },
+
+            saveProgressState() {
+                this.safeLocalStorageSet('completedActivities', JSON.stringify(Array.from(this.completedActivities)));
+                this.safeLocalStorageSet('visitedActivities', JSON.stringify(Array.from(this.visitedActivities)));
+                this.safeLocalStorageSet('visitedSlides', JSON.stringify(Array.from(this.visitedSlides)));
+            },
+
+            loadProgressState() {
+                const savedCompleted = this.safeLocalStorageGet('completedActivities');
+                const savedVisited = this.safeLocalStorageGet('visitedActivities');
+                const savedSlides = this.safeLocalStorageGet('visitedSlides');
+                
+                try {
+                    if (savedCompleted) {
+                        this.completedActivities = new Set(JSON.parse(savedCompleted));
+                    }
+                    
+                    if (savedVisited) {
+                        this.visitedActivities = new Set(JSON.parse(savedVisited));
+                    }
+                    
+                    if (savedSlides) {
+                        this.visitedSlides = new Set(JSON.parse(savedSlides));
+                    }
+                } catch (error) {
+                    console.warn('Failed to parse saved progress state:', error.message);
+                    // Reset to empty sets if data is corrupted
+                    this.completedActivities = new Set();
+                    this.visitedActivities = new Set();
+                    this.visitedSlides = new Set();
+                }
+
+                // Update visual state after loading
+                this.updateNavigationVisualState();
+                
+                // Update general progress if there's any progress
+                if (this.completedActivities.size > 0 || this.visitedActivities.size > 0) {
+                    this.updateGeneralProgress();
+                }
+            },
+
+            // ===== TIMER METHODS =====
+            
+            formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            },
+
+            getTimerColor(elapsed, planned) {
+                if (planned === 0) return 'green';
+                const percentage = (elapsed / planned) * 100;
+                if (percentage < 80) return 'green';
+                if (percentage < 90) return 'orange';
+                return 'red';
+            },
+
+            updateModuleTimerDisplay() {
+                const display = document.querySelector('#moduleTimer .timer-display');
+                const elapsed = document.getElementById('moduleElapsed');
+                const planned = document.getElementById('modulePlanned');
+                
+                elapsed.textContent = this.formatTime(this.moduleTimer.elapsed);
+                planned.textContent = this.formatTime(this.moduleTimer.planned);
+                
+                const color = this.getTimerColor(this.moduleTimer.elapsed, this.moduleTimer.planned);
+                display.className = `timer-display ${color}`;
+            },
+
+            updateActivityTimerDisplay() {
+                const display = document.querySelector('#activityTimer .timer-display');
+                const elapsed = document.getElementById('activityElapsed');
+                const planned = document.getElementById('activityPlanned');
+                
+                elapsed.textContent = this.formatTime(this.activityTimer.elapsed);
+                planned.textContent = this.formatTime(this.activityTimer.planned);
+                
+                const color = this.getTimerColor(this.activityTimer.elapsed, this.activityTimer.planned);
+                display.className = `timer-display ${color}`;
+            },
+
+            toggleModuleTimer() {
+                this.moduleTimer.running = !this.moduleTimer.running;
+                
+                const playBtn = document.getElementById('modulePlayBtn');
+                if (this.moduleTimer.running) {
+                    playBtn.classList.add('playing');
+                    playBtn.innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <rect x="6" y="4" width="4" height="16"></rect>
+                            <rect x="14" y="4" width="4" height="16"></rect>
+                        </svg>
+                    `;
+                    playBtn.title = 'Pause';
+                } else {
+                    playBtn.classList.remove('playing');
+                    playBtn.innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                    `;
+                    playBtn.title = 'Start';
+                }
+                
+                this.saveTimerState();
+            },
+
+            resetModuleTimer() {
+                this.moduleTimer.elapsed = 0;
+                this.moduleTimer.running = false;
+                
+                const playBtn = document.getElementById('modulePlayBtn');
+                playBtn.classList.remove('playing');
+                playBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                `;
+                playBtn.title = 'Start';
+                
+                this.updateModuleTimerDisplay();
+                this.saveTimerState();
+            },
+
+            toggleActivityTimer() {
+                this.activityTimer.running = !this.activityTimer.running;
+                
+                const playBtn = document.getElementById('activityPlayBtn');
+                if (this.activityTimer.running) {
+                    playBtn.classList.add('playing');
+                    playBtn.innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <rect x="6" y="4" width="4" height="16"></rect>
+                            <rect x="14" y="4" width="4" height="16"></rect>
+                        </svg>
+                    `;
+                    playBtn.title = 'Pause';
+                } else {
+                    playBtn.classList.remove('playing');
+                    playBtn.innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                    `;
+                    playBtn.title = 'Start';
+                }
+                
+                this.saveTimerState();
+            },
+
+            resetActivityTimer() {
+                this.activityTimer.elapsed = 0;
+                this.activityTimer.running = false;
+                
+                const playBtn = document.getElementById('activityPlayBtn');
+                playBtn.classList.remove('playing');
+                playBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                `;
+                playBtn.title = 'Start';
+                
+                this.updateActivityTimerDisplay();
+                this.saveTimerState();
+            },
+
+            startTimerTicks() {
+                // Prevent multiple intervals
+                if (this.timerIntervalId) {
+                    return;
+                }
+
+                this.timerIntervalId = setInterval(() => {
+                    if (this.moduleTimer.running) {
+                        this.moduleTimer.elapsed++;
+                        this.updateModuleTimerDisplay();
+                        
+                        // Save every 10 seconds to reduce writes
+                        if (this.moduleTimer.elapsed % 10 === 0) {
+                            this.saveTimerState();
+                        }
+                    }
+                    
+                    if (this.activityTimer.running) {
+                        this.activityTimer.elapsed++;
+                        this.updateActivityTimerDisplay();
+                        
+                        // Save every 10 seconds to reduce writes
+                        if (this.activityTimer.elapsed % 10 === 0) {
+                            this.saveTimerState();
+                        }
+                    }
+                }, 1000);
+            },
+
+            stopTimerTicks() {
+                if (this.timerIntervalId) {
+                    clearInterval(this.timerIntervalId);
+                    this.timerIntervalId = null;
+                }
+            },
+
+            loadModuleTimer(moduleId) {
+                const module = this.findModuleById(moduleId);
+                if (!module) return;
+
+                this.moduleTimer.moduleId = moduleId;
+                this.moduleTimer.planned = module.plannedMinutes * 60;
+                
+                // Reset if switching modules
+                const savedState = this.safeLocalStorageGet('moduleTimerState');
+                if (savedState) {
+                    try {
+                        const state = JSON.parse(savedState);
+                        if (state.moduleId === moduleId) {
+                            this.moduleTimer.elapsed = state.elapsed || 0;
+                            this.moduleTimer.running = state.running || false;
+                        } else {
+                            this.moduleTimer.elapsed = 0;
+                            this.moduleTimer.running = false;
+                        }
+                    } catch (error) {
+                        console.warn('Failed to parse module timer state:', error.message);
+                        this.moduleTimer.elapsed = 0;
+                        this.moduleTimer.running = false;
+                    }
+                }
+                
+                this.updateModuleTimerDisplay();
+                document.getElementById('moduleTimer').classList.remove('hidden');
+                
+                // Update play button state
+                const playBtn = document.getElementById('modulePlayBtn');
+                if (this.moduleTimer.running) {
+                    playBtn.classList.add('playing');
+                    playBtn.innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <rect x="6" y="4" width="4" height="16"></rect>
+                            <rect x="14" y="4" width="4" height="16"></rect>
+                        </svg>
+                    `;
+                } else {
+                    playBtn.classList.remove('playing');
+                    playBtn.innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                    `;
+                }
+            },
+
+            loadActivityTimer(activityId) {
+                const activity = this.findActivityById(activityId);
+                if (!activity) return;
+
+                this.activityTimer.activityId = activityId;
+                this.activityTimer.planned = (activity.plannedMinutes || 10) * 60;
+                
+                // Reset if switching activities
+                const savedState = localStorage.getItem('activityTimerState');
+                if (savedState) {
+                    const state = JSON.parse(savedState);
+                    if (state.activityId === activityId) {
+                        this.activityTimer.elapsed = state.elapsed || 0;
+                        this.activityTimer.running = state.running || false;
+                    } else {
+                        this.activityTimer.elapsed = 0;
+                        this.activityTimer.running = false;
+                    }
+                }
+                
+                this.updateActivityTimerDisplay();
+                
+                // Update play button state
+                const playBtn = document.getElementById('activityPlayBtn');
+                if (this.activityTimer.running) {
+                    playBtn.classList.add('playing');
+                    playBtn.innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <rect x="6" y="4" width="4" height="16"></rect>
+                            <rect x="14" y="4" width="4" height="16"></rect>
+                        </svg>
+                    `;
+                } else {
+                    playBtn.classList.remove('playing');
+                    playBtn.innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                    `;
+                }
+            },
+
+            saveTimerState() {
+                this.safeLocalStorageSet('moduleTimerState', JSON.stringify({
+                    moduleId: this.moduleTimer.moduleId,
+                    elapsed: this.moduleTimer.elapsed,
+                    running: this.moduleTimer.running
+                }));
+                
+                this.safeLocalStorageSet('activityTimerState', JSON.stringify({
+                    activityId: this.activityTimer.activityId,
+                    elapsed: this.activityTimer.elapsed,
+                    running: this.activityTimer.running
+                }));
+            },
+
+            loadTimerState() {
+                // Timer state is loaded when activities are loaded
+                // This just ensures the timer tick is running
+            },
+
+            findModuleById(moduleId) {
+                return this.courseData.modules.find(m => m.id === moduleId);
+            },
+
+            getModuleIdForActivity(activityId) {
+                for (const module of this.courseData.modules) {
+                    for (const moment of module.moments) {
+                        for (const submoment of moment.submoments) {
+                            for (const activity of submoment.activities) {
+                                if (activity.id === activityId) {
+                                    return module.id;
+                                }
+                            }
+                        }
+                    }
+                }
+                return null;
+            },
+
+            // ===== EXPORT METHODS =====
+
+            // ===== IMPORT/EXPORT METHODS =====
+
+            openImportDialog() {
+                // Check if user has progress
+                if (this.hasProgress()) {
+                    if (!confirm('⚠️ Warning: Importing new content will reset your current progress.\n\nYou will lose:\n• Completed activities\n• Timer data\n• Navigation history\n\nDo you want to continue?')) {
+                        return;
+                    }
+                }
+                
+                document.getElementById('importFileInput').click();
+            },
+
+            hasProgress() {
+                return this.completedActivities.size > 0 || 
+                       this.visitedActivities.size > 0 || 
+                       this.moduleTimer.elapsed > 0 ||
+                       this.activityTimer.elapsed > 0;
+            },
+
+            handleFileSelect(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                // Check file size (max 10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('❌ Error: File is too large. Maximum size is 10MB.');
+                    event.target.value = ''; // Reset input
+                    return;
+                }
+
+                const reader = new FileReader();
+                
+                reader.onload = (e) => {
+                    try {
+                        const jsonData = JSON.parse(e.target.result);
+                        this.importJSON(jsonData);
+                        event.target.value = ''; // Reset input for next import
+                    } catch (error) {
+                        alert(`❌ Error parsing JSON file:\n\n${error.message}\n\nPlease check that your file contains valid JSON.`);
+                        event.target.value = '';
+                    }
+                };
+                
+                reader.onerror = () => {
+                    alert('❌ Error reading file. Please try again.');
+                    event.target.value = '';
+                };
+                
+                reader.readAsText(file);
+            },
+
+            importJSON(data) {
+                // Validate the JSON structure
+                const validation = this.validateCourseData(data);
+                if (!validation.valid) {
+                    alert(`❌ Invalid JSON structure:\n\n${validation.errors.join('\n')}\n\nPlease check the file format.`);
+                    return;
+                }
+
+                // Reset all state
+                this.resetAllState();
+
+                // Load new data
+                this.courseData = data;
+
+                // Rebuild UI
+                this.buildNavigation();
+                
+                // Update document title if available
+                if (data.title) {
+                    document.title = data.title;
+                }
+
+                // Show success message
+                alert(`✅ Content loaded successfully!\n\n${data.title || 'Training content'}\n\nYou can now start navigating through the slides.`);
+            },
+
+            validateCourseData(data) {
+                const errors = [];
+
+                // Check root structure
+                if (!data || typeof data !== 'object') {
+                    return { valid: false, errors: ['Data must be an object'] };
+                }
+
+                if (!Array.isArray(data.modules)) {
+                    errors.push('Missing or invalid "modules" array');
+                    return { valid: false, errors };
+                }
+
+                if (data.modules.length === 0) {
+                    errors.push('At least one module is required');
+                }
+
+                // Validate each module
+                data.modules.forEach((module, moduleIndex) => {
+                    const prefix = `Module ${moduleIndex + 1}`;
+                    
+                    if (!module.id) errors.push(`${prefix}: Missing "id"`);
+                    if (!module.title) errors.push(`${prefix}: Missing "title"`);
+                    if (!Array.isArray(module.moments)) {
+                        errors.push(`${prefix}: Missing or invalid "moments" array`);
+                        return;
+                    }
+
+                    module.moments.forEach((moment, momentIndex) => {
+                        const momentPrefix = `${prefix} > Moment ${momentIndex + 1}`;
+                        
+                        if (!moment.id) errors.push(`${momentPrefix}: Missing "id"`);
+                        if (!moment.title) errors.push(`${momentPrefix}: Missing "title"`);
+                        if (!Array.isArray(moment.submoments)) {
+                            errors.push(`${momentPrefix}: Missing or invalid "submoments" array`);
+                            return;
+                        }
+
+                        moment.submoments.forEach((submoment, subIndex) => {
+                            const subPrefix = `${momentPrefix} > Submoment ${subIndex + 1}`;
+                            
+                            if (!submoment.id) errors.push(`${subPrefix}: Missing "id"`);
+                            if (!submoment.title) errors.push(`${subPrefix}: Missing "title"`);
+                            if (!Array.isArray(submoment.activities)) {
+                                errors.push(`${subPrefix}: Missing or invalid "activities" array`);
+                                return;
+                            }
+
+                            submoment.activities.forEach((activity, actIndex) => {
+                                const actPrefix = `${subPrefix} > Activity ${actIndex + 1}`;
+                                
+                                if (!activity.id) errors.push(`${actPrefix}: Missing "id"`);
+                                if (!activity.title) errors.push(`${actPrefix}: Missing "title"`);
+                                if (!Array.isArray(activity.slides)) {
+                                    errors.push(`${actPrefix}: Missing or invalid "slides" array`);
+                                    return;
+                                }
+
+                                if (activity.slides.length === 0) {
+                                    errors.push(`${actPrefix}: At least one slide is required`);
+                                }
+
+                                activity.slides.forEach((slide, slideIndex) => {
+                                    const slidePrefix = `${actPrefix} > Slide ${slideIndex + 1}`;
+                                    
+                                    if (slide.number === undefined) errors.push(`${slidePrefix}: Missing "number"`);
+                                    if (!slide.content) errors.push(`${slidePrefix}: Missing "content"`);
+                                });
+                            });
+                        });
+                    });
+                });
+
+                return {
+                    valid: errors.length === 0,
+                    errors
+                };
+            },
+
+            resetAllState() {
+                // Clear progress
+                this.completedActivities = new Set();
+                this.visitedActivities = new Set();
+                this.visitedSlides = new Set();
+
+                // Reset timers
+                this.stopTimerTicks();
+                this.moduleTimer = {
+                    elapsed: 0,
+                    planned: 0,
+                    running: false,
+                    interval: null,
+                    moduleId: null
+                };
+                this.activityTimer = {
+                    elapsed: 0,
+                    planned: 0,
+                    running: false,
+                    interval: null,
+                    activityId: null
+                };
+                this.timerIntervalId = null;
+
+                // Reset UI state
+                this.currentActivity = null;
+                this.currentSlideIndex = 0;
+                this.searchQuery = '';
+                this.expandedNodes = new Set();
+                this.zoomLevel = 100;
+                this.detailsPanelExpanded = false;
+
+                // Clear localStorage
+                localStorage.clear();
+
+                // Hide slide controls
+                const slideControls = document.getElementById('slideControls');
+                if (slideControls) {
+                    slideControls.classList.add('hidden');
+                }
+
+                // Clear content
+                const slideContainer = document.getElementById('slideContainer');
+                if (slideContainer) {
+                    slideContainer.innerHTML = '<div class="slide" style="text-align: center; padding: 60px 20px;"><h2>Welcome!</h2><p style="margin-top: 12px; color: var(--color-text-secondary);">Select an activity from the navigation to begin.</p></div>';
+                }
+
+                // Restart timer ticks
+                this.startTimerTicks();
+            },
+
+            exportAsJSON() {
+                if (!this.courseData) {
+                    alert('❌ No content to export. Please import content first.');
+                    return;
+                }
+
+                const jsonString = JSON.stringify(this.courseData, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `training-content-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                this.closeExportModal();
+            },
+
+            openAboutModal() {
+                document.getElementById('aboutModal').classList.add('visible');
+            },
+
+            closeAboutModal() {
+                document.getElementById('aboutModal').classList.remove('visible');
+            },
+
+            openExportModal() {
+                document.getElementById('exportModal').classList.add('visible');
+            },
+
+            closeExportModal() {
+                document.getElementById('exportModal').classList.remove('visible');
+            },
+
+            exportAsMarkdown() {
+                if (!this.courseData) {
+                    alert('❌ No content to export. Please import content first.');
+                    return;
+                }
+                
+                let markdown = `# ${this.courseData.title || 'Training Content'}\n\n`;
+                markdown += `*Generated on ${new Date().toLocaleDateString('en-GB', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                })}*\n\n`;
+                markdown += `---\n\n`;
+
+                this.courseData.modules.forEach(module => {
+                    markdown += `## ${module.title}\n\n`;
+                    if (module.plannedMinutes) {
+                        markdown += `**Planned Duration:** ${module.plannedMinutes} minutes\n\n`;
+                    }
+
+                    module.moments.forEach(moment => {
+                        markdown += `### ${moment.title}\n\n`;
+
+                        moment.submoments.forEach(submoment => {
+                            markdown += `#### ${submoment.title}\n\n`;
+
+                            submoment.activities.forEach(activity => {
+                                markdown += `##### ${activity.title}\n\n`;
+                                if (activity.plannedMinutes) {
+                                    markdown += `**Planned Duration:** ${activity.plannedMinutes} minutes\n\n`;
+                                }
+
+                                activity.slides.forEach((slide, index) => {
+                                    markdown += `**SLIDE ${index + 1}**`;
+                                    if (slide.title) {
+                                        markdown += `: ${slide.title}`;
+                                    }
+                                    markdown += `\n\n`;
+
+                                    // Convert HTML content to markdown
+                                    const content = this.htmlToMarkdown(slide.content);
+                                    markdown += content + '\n\n';
+                                });
+
+                                markdown += `---\n\n`;
+                            });
+                        });
+                    });
+                });
+
+                this.downloadFile(markdown, 'AI_Training_Content.md', 'text/markdown');
+                this.closeExportModal();
+            },
+
+            exportAsRTF() {
+                if (!this.courseData) {
+                    alert('❌ No content to export. Please import content first.');
+                    return;
+                }
+                
+                let rtf = `{\\rtf1\\ansi\\deff0\n`;
+                
+                // Font table
+                rtf += `{\\fonttbl{\\f0\\fswiss\\fcharset0 Arial;}{\\f1\\fmodern\\fcharset0 Courier New;}}\n`;
+                
+                // Color table
+                rtf += `{\\colortbl;\\red25\\green118\\blue210;\\red33\\green33\\blue33;\\red117\\green117\\blue117;}\n`;
+                
+                // Title
+                rtf += `{\\pard\\qc\\b\\fs32\\cf1 ${this.escapeRTF(this.courseData.title || 'Training Content')}\\par}\n`;
+                rtf += `{\\pard\\qc\\fs20\\cf3\\i Generated on ${new Date().toLocaleDateString('en-GB')}\\par}\n`;
+                rtf += `\\par\\par\n`;
+
+                this.courseData.modules.forEach(module => {
+                    // Module title
+                    rtf += `{\\pard\\b\\fs28\\cf1 ${this.escapeRTF(module.title)}\\par}\n`;
+                    if (module.plannedMinutes) {
+                        rtf += `{\\pard\\fs20\\cf2 Planned Duration: ${module.plannedMinutes} minutes\\par}\n`;
+                    }
+                    rtf += `\\par\n`;
+
+                    module.moments.forEach(moment => {
+                        rtf += `{\\pard\\b\\fs24\\cf2 ${this.escapeRTF(moment.title)}\\par}\n`;
+                        rtf += `\\par\n`;
+
+                        moment.submoments.forEach(submoment => {
+                            rtf += `{\\pard\\b\\fs22\\cf2 ${this.escapeRTF(submoment.title)}\\par}\n`;
+                            rtf += `\\par\n`;
+
+                            submoment.activities.forEach(activity => {
+                                rtf += `{\\pard\\b\\fs20\\cf2 ${this.escapeRTF(activity.title)}\\par}\n`;
+                                if (activity.plannedMinutes) {
+                                    rtf += `{\\pard\\fs18\\cf3 Planned Duration: ${activity.plannedMinutes} minutes\\par}\n`;
+                                }
+                                rtf += `\\par\n`;
+
+                                activity.slides.forEach((slide, index) => {
+                                    rtf += `{\\pard\\b\\fs20 SLIDE ${index + 1}`;
+                                    if (slide.title) {
+                                        rtf += `: ${this.escapeRTF(slide.title)}`;
+                                    }
+                                    rtf += `\\par}\n`;
+                                    rtf += `\\par\n`;
+
+                                    // Convert HTML content to RTF
+                                    const content = this.htmlToRTF(slide.content);
+                                    rtf += content;
+                                    rtf += `\\par\n`;
+                                });
+
+                                rtf += `{\\pard\\qc ---\\par}\n`;
+                                rtf += `\\par\n`;
+                            });
+                        });
+                    });
+                });
+
+                rtf += `}`;
+
+                this.downloadFile(rtf, 'AI_Training_Content.rtf', 'application/rtf');
+                this.closeExportModal();
+            },
+
+            htmlToMarkdown(html) {
+                if (!html) return '';
+                
+                // Create a temporary div to parse HTML
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+
+                let markdown = '';
+
+                // Process each child node
+                const processNode = (node) => {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        return node.textContent;
+                    }
+
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        const tag = node.tagName.toLowerCase();
+
+                        switch (tag) {
+                            case 'p':
+                                return Array.from(node.childNodes)
+                                    .map(child => processNode(child))
+                                    .join('') + '\n\n';
+                            
+                            case 'ul':
+                                return '\n' + Array.from(node.children)
+                                    .map(li => '- ' + Array.from(li.childNodes)
+                                        .map(child => processNode(child))
+                                        .join('')
+                                        .trim())
+                                    .join('\n') + '\n\n';
+                            
+                            case 'ol':
+                                return '\n' + Array.from(node.children)
+                                    .map((li, index) => `${index + 1}. ` + Array.from(li.childNodes)
+                                        .map(child => processNode(child))
+                                        .join('')
+                                        .trim())
+                                    .join('\n') + '\n\n';
+                            
+                            case 'strong':
+                            case 'b':
+                                return '**' + Array.from(node.childNodes)
+                                    .map(child => processNode(child))
+                                    .join('') + '**';
+                            
+                            case 'em':
+                            case 'i':
+                                return '*' + Array.from(node.childNodes)
+                                    .map(child => processNode(child))
+                                    .join('') + '*';
+                            
+                            case 'a':
+                                const href = node.getAttribute('href');
+                                const text = Array.from(node.childNodes)
+                                    .map(child => processNode(child))
+                                    .join('');
+                                return `[${text}](${href})`;
+                            
+                            case 'br':
+                                return '\n';
+                            
+                            default:
+                                return Array.from(node.childNodes)
+                                    .map(child => processNode(child))
+                                    .join('');
+                        }
+                    }
+
+                    return '';
+                };
+
+                markdown = Array.from(temp.childNodes)
+                    .map(node => processNode(node))
+                    .join('');
+
+                return markdown.trim();
+            },
+
+            htmlToRTF(html) {
+                if (!html) return '';
+                
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+
+                let rtf = '';
+
+                const processNode = (node) => {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        return this.escapeRTF(node.textContent);
+                    }
+
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        const tag = node.tagName.toLowerCase();
+
+                        switch (tag) {
+                            case 'p':
+                                return '{\\pard\\fs20 ' + Array.from(node.childNodes)
+                                    .map(child => processNode(child))
+                                    .join('') + '\\par}\n';
+                            
+                            case 'ul':
+                            case 'ol':
+                                return Array.from(node.children)
+                                    .map(li => '{\\pard\\li360\\fs20 \\\'b7  ' + 
+                                        Array.from(li.childNodes)
+                                            .map(child => processNode(child))
+                                            .join('') + '\\par}\n')
+                                    .join('');
+                            
+                            case 'strong':
+                            case 'b':
+                                return '{\\b ' + Array.from(node.childNodes)
+                                    .map(child => processNode(child))
+                                    .join('') + '}';
+                            
+                            case 'em':
+                            case 'i':
+                                return '{\\i ' + Array.from(node.childNodes)
+                                    .map(child => processNode(child))
+                                    .join('') + '}';
+                            
+                            case 'a':
+                                const text = Array.from(node.childNodes)
+                                    .map(child => processNode(child))
+                                    .join('');
+                                return `{\\field{\\*\\fldinst{HYPERLINK "${node.getAttribute('href')}"}}` +
+                                       `{\\fldrslt{\\ul\\cf1 ${text}}}}`;
+                            
+                            case 'br':
+                                return '\\line ';
+                            
+                            default:
+                                return Array.from(node.childNodes)
+                                    .map(child => processNode(child))
+                                    .join('');
+                        }
+                    }
+
+                    return '';
+                };
+
+                rtf = Array.from(temp.childNodes)
+                    .map(node => processNode(node))
+                    .join('');
+
+                return rtf;
+            },
+
+            escapeRTF(text) {
+                if (!text) return '';
+                return text
+                    .replace(/\\/g, '\\\\')
+                    .replace(/{/g, '\\{')
+                    .replace(/}/g, '\\}')
+                    .replace(/\n/g, '\\line ')
+                    .replace(/[\u00A0-\uFFFF]/g, (char) => {
+                        return '\\u' + char.charCodeAt(0) + '?';
+                    });
+            },
+
+            downloadFile(content, filename, mimeType) {
+                const blob = new Blob([content], { type: mimeType });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }
+        };
+
+        // Initialize app when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => app.init());
+        } else {
+            app.init();
+        }
+    </script>
+</body>
+</html>
