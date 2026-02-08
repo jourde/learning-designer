@@ -1,0 +1,36 @@
+**Task:** Read the attached JSON file containing a learning scenario. Complete and revise all empty or inadequate "presentation" fields.
+
+**What "presentation" means:** The actual slide deck content that participants will see on screen during each activity - concise, visual-friendly slides with titles, bullet points, and key information (NOT detailed facilitator notes or talking points).
+
+**Requirements for slide content:**
+
+1. **Format:** Present each slide clearly with:
+   - Markdown title level 1: "# SLIDE [number]"
+   - Title: [slide title]
+   - Bullet points, key terms, visual cues (→, ✓, ⚠️, etc.)
+
+2. **Alignment:** Each presentation must align with:
+   - The activity's objective ("objectifActivite")
+   - The trainer's tasks ("aFaireFormateur")
+   - The participant's tasks ("aFaire")
+   - Any referenced materials ("liensReferences", "notes")
+   - The overall module description and training context
+
+3. **Content characteristics:**
+   - Concise and scannable
+   - Professional and pedagogically sound
+   - Appropriate for the activity duration
+   - Practical examples relevant to the audience
+   - Clear key takeaways
+
+4. **Language:** Use UK English. Use "pupil" instead of "student".
+
+**Deliverable:** Generate the complete updated JSON file for download.
+
+**Process:**
+1. First, ask which modules to cover.
+2. Explain your understanding of the task
+2. Show 2-3 sample slide decks from different Day 1 activities for approval
+3. Upon approval, complete all Day 1 "presentation" fields
+4. Generate the updated JSON file
+5. Generate a Markdown file listing all the modifications made.
