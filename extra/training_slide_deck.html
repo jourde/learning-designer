@@ -3826,7 +3826,7 @@
                                                 } else if (typeof srcStep.presentation === 'string') {
                                                     // String format - Check for separators
                                                     // Regex to match "SLIDE", "# Slide 1", "## SLIDE", etc. case insensitive
-                                                    const slideSeparator = /(?:^|\n)(?:#+\s*)?SLIDE\s*\d*(?::?)\s*(?:\n|$)/i;
+                                                    const slideSeparator = /(?:^|\n)(?:#+\s*)?slide\s*\d+[^\n]*\s*(?:\n|$)/i;
                                                     
                                                     if (slideSeparator.test(srcStep.presentation)) {
                                                         // Split by separator
