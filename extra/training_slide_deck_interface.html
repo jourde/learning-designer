@@ -945,6 +945,14 @@
             margin-bottom: 16px;
         }
 
+        .slide-content img.md-image {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 16px auto;
+            border-radius: 10px;
+        }
+
         .slide-content strong {
             color: var(--color-text);
             font-weight: 600;
@@ -3888,11 +3896,26 @@
                 if (!markdown) return '';
                 let html = markdown;
 
-                // 1. SPECIFIC FIX: Remove lines starting with "Title:"
+                // 1) Remove lines starting with "Title:"
                 html = html.replace(/^Title:\s+.*$/gim, '');
 
-                // 2. Remove purely whitespace lines left behind
+                // 2) Remove purely whitespace lines left behind
                 html = html.replace(/^\s*[\r\n]/gm, '');
+
+                // Images: ![alt](url) -> <img>
+                // (Do this before link handling so images are not converted into anchors.)
+                html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/gim, (m, alt, url) => {
+                    const safeAlt = (alt || '').replace(/"/g, '&quot;');
+                    const safeUrl = (url || '').trim().replace(/"/g, '&quot;');
+                    return `<img class="md-image" src="${safeUrl}" alt="${safeAlt}" loading="lazy">`;
+                });
+
+                // Links: [text](url) -> <a>
+                html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/gim, (m, text, url) => {
+                    const safeText = (text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const safeUrl = (url || '').trim().replace(/"/g, '&quot;');
+                    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeText}</a>`;
+                });
 
                 // Headers (e.g., # Title -> <h1>Title</h1>)
                 html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
@@ -3900,18 +3923,16 @@
                 html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
 
                 // Bold (e.g., **bold** -> <strong>bold</strong>)
-                html = html.replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>');
+                html = html.replace(/\*\*([^*]+?)\*\*/gim, '<strong>$1</strong>');
 
-                // Italic (e.g., *italic* -> <em>italic</em>)
-                html = html.replace(/\*(.*)\*/gim, '<em>$1</em>');
+                // Italic (e.g., *italic* -> <em>italic</em>) - avoid matching **bold**
+                html = html.replace(/\*(?!\*)([^*\n]+?)\*(?!\*)/gim, '<em>$1</em>');
 
-                // Lists (e.g., - item -> <ul><li>item</li></ul>)
-                // This is a very basic implementation and might not handle nested lists perfectly
+                // Lists (basic)
                 html = html.replace(/^\s*-\s+(.*)/gim, '<li>$1</li>');
-                html = html.replace(/(<li>.*<\/li>)/gim, '<ul>$1</ul>'); // Wrap consecutive li in ul (simplified)
+                html = html.replace(/(?:<li>.*?<\/li>\s*)+/gim, (m) => `<ul>${m}</ul>`);
 
-                // Paragraphs (e.g., new lines -> <br> or <p>)
-                // Using <br> for simplicity within existing slide structure
+                // Line breaks
                 html = html.replace(/\n/g, '<br>');
 
                 return html;
