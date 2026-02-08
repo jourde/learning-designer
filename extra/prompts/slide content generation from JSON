@@ -1,6 +1,6 @@
 **Task:** Read the attached JSON file containing a learning scenario. Complete and revise all empty or inadequate "presentation" fields.
 
-**What "presentation" means:** The actual slide deck content that participants will see on screen during each activity - concise, visual-friendly slides with titles, bullet points, and key information (NOT detailed facilitator notes or talking points).
+**What "presentation" means:** The actual slide deck content that participants will see on screen during each activity - concise, visually friendly slides with titles, bullet points, and key information (NOT detailed facilitator notes or talking points).
 
 **Requirements for slide content:**
 
@@ -28,9 +28,9 @@
 **Deliverable:** Generate the complete updated JSON file for download.
 
 **Process:**
-1. First, ask which modules to cover.
+1. First, ask which module(s) to cover.
 2. Explain your understanding of the task
-2. Show 2-3 sample slide decks from different Day 1 activities for approval
-3. Upon approval, complete all Day 1 "presentation" fields
+2. Show 2-3 sample slide decks from different activities for approval
+3. Upon approval, complete all "presentation" fields
 4. Generate the updated JSON file
 5. Generate a Markdown file listing all the modifications made.
