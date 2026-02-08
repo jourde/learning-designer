@@ -2754,23 +2754,38 @@ document.addEventListener('DOMContentLoaded', function() {
       <span class="material-icons-round text-[14px] text-slate-400">info</span>
       Informations principales
     </h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-      <div>
-        <label class="compact-label block" data-i18n="label_course_name">
-          Nom de la formation
-        </label>
-        <input class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" data-i18n-placeholder="ph_course_name" id="param-name" placeholder="Entrez le nom de la formation..." type="text"/>
+        <div class="flex flex-col md:flex-row md:items-end gap-3">
+<div class="flex-1 min-w-[240px]">
+      <label class="compact-label block" data-i18n="label_course_name">
+      Nom de la formation
+      </label>
+      <input class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" data-i18n-placeholder="ph_course_name" id="param-name" placeholder="Entrez le nom de la formation..." type="text"/>
       </div>
-      <div>
-        <label class="compact-label block" data-i18n="label_topic">
-          Thème
-        </label>
-        <input class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" data-i18n-placeholder="ph_topic" id="param-topic" placeholder="Entrez le thème..." type="text"/>
+<div class="w-full md:w-28">
+      <label class="compact-label block" data-i18n="label_version_number">
+      Numéro de version
+      </label>
+      <input class="w-full md:w-24 px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none text-center font-mono" data-i18n-placeholder="ph_version_number" id="param-version-number" maxlength="12" inputmode="text" pattern="[0-9A-Za-z.+_-]{0,12}" autocomplete="off" placeholder="Entrez un numéro de version..." type="text"/>
+      </div>
+<div class="w-full md:w-72">
+      <label class="compact-label block" data-i18n="label_license">
+      Licence
+      </label>
+      <select class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none bg-white" id="param-license">
+      <option data-i18n="opt_license_unspecified" selected="" value="">Non spécifiée</option>
+      <option data-i18n="opt_license_cc_by_40" value="CC BY 4.0">CC BY 4.0</option>
+      <option data-i18n="opt_license_cc_by_sa_40" value="CC BY-SA 4.0">CC BY-SA 4.0</option>
+      <option data-i18n="opt_license_cc_by_nd_40" value="CC BY-ND 4.0">CC BY-ND 4.0</option>
+      <option data-i18n="opt_license_cc_by_nc_40" value="CC BY-NC 4.0">CC BY-NC 4.0</option>
+      <option data-i18n="opt_license_cc_by_nc_sa_40" value="CC BY-NC-SA 4.0">CC BY-NC-SA 4.0</option>
+      <option data-i18n="opt_license_cc_by_nc_nd_40" value="CC BY-NC-ND 4.0">CC BY-NC-ND 4.0</option>
+      <option data-i18n="opt_license_cc0_10" value="CC0 1.0">CC0 1.0</option>
+      <option data-i18n="opt_license_pdm_10" value="Public Domain Mark 1.0">Public Domain Mark 1.0</option>
+      </select>
       </div>
     </div>
-  </div>
 
-  <!-- TIME CONFIGURATION -->
+<!-- TIME CONFIGURATION -->
   <div class="p-3 border-t border-slate-100">
     <h3 class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
       <span class="material-icons-round text-[14px] text-slate-400">schedule</span>
@@ -2856,22 +2871,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <option data-i18n="opt_mode_blended" value="blended">Hybride (sur site et en ligne)</option>
         </select>
       </div>
-      <div>
-        <label class="compact-label block" data-i18n="label_license">
-          Licence
-        </label>
-        <select class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none bg-white" id="param-license">
-          <option data-i18n="opt_license_unspecified" selected="" value="">Non spécifiée</option>
-          <option data-i18n="opt_license_cc_by_40" value="CC BY 4.0">CC BY 4.0</option>
-          <option data-i18n="opt_license_cc_by_sa_40" value="CC BY-SA 4.0">CC BY-SA 4.0</option>
-          <option data-i18n="opt_license_cc_by_nd_40" value="CC BY-ND 4.0">CC BY-ND 4.0</option>
-          <option data-i18n="opt_license_cc_by_nc_40" value="CC BY-NC 4.0">CC BY-NC 4.0</option>
-          <option data-i18n="opt_license_cc_by_nc_sa_40" value="CC BY-NC-SA 4.0">CC BY-NC-SA 4.0</option>
-          <option data-i18n="opt_license_cc_by_nc_nd_40" value="CC BY-NC-ND 4.0">CC BY-NC-ND 4.0</option>
-          <option data-i18n="opt_license_cc0_10" value="CC0 1.0">CC0 1.0</option>
-          <option data-i18n="opt_license_pdm_10" value="Public Domain Mark 1.0">Public Domain Mark 1.0</option>
-        </select>
-      </div>
+      
     </div>
   </div>
 
@@ -5564,6 +5564,25 @@ function __esc(s){
 }
 try { window.__ldEscapeHtml = __ldEscapeHtml; } catch(_){ __ldSilentErr(_); }
 // END_LD_ESCAPE_HTML_GLOBAL_V1
+// ---- Version number normalisation (text, allow dots, max 12) ----
+function __ldNormaliseVersionNumber(v){
+  const s = String(v ?? '').trim();
+  // Allow typical version strings (e.g. 1.0, 1.0.3, v2.1-beta). Strip unsafe characters.
+  const cleaned = s.replace(/[^0-9A-Za-z.+_-]/g,'');
+  return cleaned.slice(0,12);
+}
+
+// __ldVersionInputListener
+try{
+  document.addEventListener('input', (e)=>{
+    const t = e && e.target;
+    if(t && t.id === 'param-version-number'){
+      const nv = __ldNormaliseVersionNumber(t.value);
+      if(t.value !== nv) t.value = nv;
+    }
+  });
+}catch(_){ __ldSilentErr(_); }
+
 
 // ---- View level (modules / moments / submoments / activities) ----
 // Simplified view level UI update - CSS handles all visual styles via [aria-pressed]
@@ -8469,6 +8488,8 @@ btn_export_dropdown: "Exporter...",
                 chart_group_modes: "Modes de groupes",
                 label_course_name: "Nom de la formation",
                 ph_course_name: "Entrez le nom de la formation...",
+                label_version_number: "Numéro de version",
+                ph_version_number: "Entrez un numéro de version (ex. 1.0)...",
 label_learning_time: "Temps d'Apprentissage (Cible)",
                 label_designed_time: "Temps Conçu (Planifié)",
                 label_duration_tolerance: "Tolérance (écart acceptable)",
@@ -12537,9 +12558,9 @@ function buildExportProjectData() {
                 })(),
                 parametres: {
                     nom: (document.getElementById('param-name')?.value),
-                    theme: (document.getElementById('param-topic') ? document.getElementById('param-topic').value : ''),
                     auteurs: (document.getElementById('param-authors')?.value),
                     formateurs: (document.getElementById('param-trainers')?.value),
+                    numeroVersion: __ldNormaliseVersionNumber(document.getElementById('param-version-number')?.value || ''),
                     licence: (document.getElementById('param-license')?.value || ''),
                     niveau: document.getElementById('param-level')?.value || 'unspecified',
                     publicCible: document.getElementById('param-target-audience')?.value || '',
@@ -12712,10 +12733,10 @@ function __ldBuildKeyParamsCanonical(project) {
     // General
     setIfEmpty('name', p.nom || p.titre || kp.title || '');
     setIfEmpty('title', kp.title || p.titre || p.nom || '');
-    setIfEmpty('topic', p.theme || '');
     setIfEmpty('authors', p.auteurs || '');
     setIfEmpty('trainers', p.formateurs || '');
     setIfEmpty('license', kp.license || kp.licence || p.licence || p.license || '');
+    setIfEmpty('versionNumber', kp.versionNumber || kp.numeroVersion || p.numeroVersion || p.versionNumber || '');
     // Mirror for mixed/legacy exports
     if ((kp.licence == null || String(kp.licence).trim() === '') && (kp.license != null && String(kp.license).trim() !== '')) kp.licence = kp.license;
     setIfEmpty('level', p.niveau || 'unspecified');
@@ -13355,7 +13376,6 @@ function migrateProjectToCurrentSchema(project) {
             })) : [];
             p.keyParams = {
                 name: pr.nom ?? '',
-                topic: pr.theme ?? '',
                 authors: pr.auteurs ?? '',
                 level: pr.niveau ?? 'unspecified',
                 targetAudience: pr.publicCible ?? '',
@@ -13440,9 +13460,9 @@ function forceCanonicalImport(payload) {
 
     const canonicalKeyParams = keyParams || {
         name: pr.nom ?? "",
-        topic: pr.theme ?? "",
         authors: pr.auteurs ?? "",
         trainers: pr.formateurs ?? "",
+        versionNumber: pr.numeroVersion ?? pr.versionNumber ?? "",
         license: pr.licence ?? pr.license ?? "",
         level: pr.niveau ?? "unspecified",
         targetAudience: pr.publicCible ?? "",
@@ -14161,7 +14181,7 @@ const __chartsSuspendFn = window.__setChartsSuspended;
 
                 // Support both canonical keyParams and FR parametres (including mixed exports where keyParams is partial)
                 __setVal('param-name', __pick(__kp.name, __kp.title, __pr.nom, __pr.titre, ""));
-                { const __el=document.getElementById('param-topic'); if(__el){ __el.value = __pick(__kp.topic, __pr.theme, ""); } }
+                __setVal('param-version-number', __ldNormaliseVersionNumber(__pick(__kp.versionNumber, __kp.numeroVersion, __pr.numeroVersion, __pr.versionNumber, "")));
                 __setVal('param-authors', __pick(__kp.authors, __pr.auteurs, ""));
                 __setVal('param-trainers', __pick(__kp.trainers, __pr.formateurs, ""));
                 __setVal('param-license', __pick(__kp.license, __kp.licence, __pr.licence, __pr.license, ""));
@@ -17978,7 +17998,7 @@ function buildExportModel() {
         };
     });    const meta = {
         courseName: asStr(project.parametres?.nom),
-        topic: asStr(project.parametres?.theme),
+        versionNumber: asStr(project.parametres?.numeroVersion ?? project.parametres?.versionNumber ?? ''),
         authors: asStr(project.parametres?.auteurs),
         trainers: asStr(project.parametres?.formateurs),
         license: asStr(project.parametres?.licence || project.parametres?.license),
@@ -18211,10 +18231,10 @@ function exportDOCX() {
     };
 
     addMetaLine('Nom de la formation', model.meta.courseName);
+    addMetaLine('Numéro de version', model.meta.versionNumber);
     addMetaLine('Concepteurs', model.meta.authors);
     addMetaLine('Formateurs', model.meta.trainers);
     addMetaLine('Licence', model.meta.license);
-    addMetaLine('Thème', model.meta.topic);
     addMetaLine('Niveau', model.meta.level);
     addMetaLine('Modalité', model.meta.mode);
     addMetaLine('Taille cohorte', model.meta.cohortSize);
@@ -18769,10 +18789,10 @@ function __deprecated__exportRichText_1() {
                 <h1>${t.rtf_title}</h1>
                 
                 <h2 data-i18n="heading_metadata">Métadonnées</h2>
-                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Numéro de version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_license || 'Licence'}:</span> ${__esc(document.getElementById('param-license')?.value || '')}</div>
-                <div class="meta-item"><span class="meta-label" data-i18n="label_theme_colon">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
@@ -19303,9 +19323,9 @@ function __deprecated__exportCSV_2() {
                 <h1>${t.rtf_title}</h1>
                 
                 <h2 data-i18n="heading_metadata">Métadonnées</h2>
-                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Numéro de version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
-                <div class="meta-item"><span class="meta-label" data-i18n="label_theme_colon">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
@@ -19872,9 +19892,9 @@ function __deprecated__exportCSV_3() {
                 <h1>${t.rtf_title}</h1>
                 
                 <h2 data-i18n="heading_metadata">Métadonnées</h2>
-                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Numéro de version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
-                <div class="meta-item"><span class="meta-label" data-i18n="label_theme_colon">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
@@ -20318,9 +20338,9 @@ function __deprecated__exportCSV_4() {
                 <h1>${t.rtf_title}</h1>
                 
                 <h2 data-i18n="heading_metadata">Métadonnées</h2>
-                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Numéro de version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
-                <div class="meta-item"><span class="meta-label" data-i18n="label_theme_colon">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
@@ -20575,6 +20595,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 '\\fs24\\b ' + escapeRtf('Métadonnées') + '\\b0\\par' +
                 '\\fs20 ' +
                 '\\b ' + escapeRtf(t.label_course_name) + ':\\b0 ' + escapeRtf(courseName) + '\\par' +
+                '\\b ' + escapeRtf(t.label_version_number || 'Numéro de version') + ':\\b0 ' + escapeRtf(document.getElementById('param-version-number')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_authors) + ':\\b0 ' + escapeRtf(document.getElementById('param-authors')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_mode) + ':\\b0 ' + escapeRtf(document.getElementById('param-mode')?.selectedOptions[0]?.innerText || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_level) + ':\\b0 ' + escapeRtf(document.getElementById('param-level')?.selectedOptions[0]?.innerText || '') + '\\par' +
@@ -20720,9 +20741,9 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 <h1>${t.rtf_title}</h1>
                 
                 <h2 data-i18n="heading_metadata">Métadonnées</h2>
-                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Numéro de version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
-                <div class="meta-item"><span class="meta-label" data-i18n="label_theme_colon">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
@@ -20976,6 +20997,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 '\\fs24\\b ' + escapeRtf('Métadonnées') + '\\b0\\par' +
                 '\\fs20 ' +
                 '\\b ' + escapeRtf(t.label_course_name) + ':\\b0 ' + escapeRtf(courseName) + '\\par' +
+                '\\b ' + escapeRtf(t.label_version_number || 'Numéro de version') + ':\\b0 ' + escapeRtf(document.getElementById('param-version-number')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_authors) + ':\\b0 ' + escapeRtf(document.getElementById('param-authors')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_mode) + ':\\b0 ' + escapeRtf(document.getElementById('param-mode')?.selectedOptions[0]?.innerText || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_level) + ':\\b0 ' + escapeRtf(document.getElementById('param-level')?.selectedOptions[0]?.innerText || '') + '\\par' +
@@ -21246,9 +21268,9 @@ function __deprecated__exportRichText_6() {
                 <h1>${t.rtf_title}</h1>
                 
                 <h2 data-i18n="heading_metadata">Métadonnées</h2>
-                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Numéro de version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
-                <div class="meta-item"><span class="meta-label" data-i18n="label_theme_colon">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
@@ -21614,10 +21636,10 @@ function exportCSV() {
     const metaRows = [
         ['Champ', 'Valeur'],
         ['Nom de la formation', meta.courseName || ''],
+        ['Numéro de version', meta.versionNumber || ''],
         ['Concepteurs', meta.authors || ''],
         ['Formateurs', meta.trainers || ''],
         ['Licence', meta.license || ''],
-        ['Thème', meta.topic || ''],
         ['Niveau', meta.level || ''],
         ['Modalité', meta.mode || ''],
         ['Taille cohorte', meta.cohortSize || ''],
@@ -21691,9 +21713,9 @@ function exportCSV() {
                 <h1>${t.rtf_title}</h1>
                 
                 <h2 data-i18n="heading_metadata">Métadonnées</h2>
-                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Numéro de version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
-                <div class="meta-item"><span class="meta-label" data-i18n="label_theme_colon">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
@@ -21948,6 +21970,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                 '\\fs24\\b ' + escapeRtf('Métadonnées') + '\\b0\\par' +
                 '\\fs20 ' +
                 '\\b ' + escapeRtf(t.label_course_name) + ':\\b0 ' + escapeRtf(courseName) + '\\par' +
+                '\\b ' + escapeRtf(t.label_version_number || 'Numéro de version') + ':\\b0 ' + escapeRtf(document.getElementById('param-version-number')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_authors) + ':\\b0 ' + escapeRtf(document.getElementById('param-authors')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_mode) + ':\\b0 ' + escapeRtf(document.getElementById('param-mode')?.selectedOptions[0]?.innerText || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_level) + ':\\b0 ' + escapeRtf(document.getElementById('param-level')?.selectedOptions[0]?.innerText || '') + '\\par' +
@@ -22173,10 +22196,10 @@ let html = `
                 <h1>${t.rtf_title}</h1>
                 
                 <h2 data-i18n="heading_metadata">Métadonnées</h2>
-                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_version_number || 'Numéro de version'}:</span> ${__esc(document.getElementById('param-version-number')?.value || '')}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_license || 'Licence'}:</span> ${__esc(document.getElementById('param-license')?.value || '')}</div>
-                <div class="meta-item"><span class="meta-label" data-i18n="label_theme_colon">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_class_size}:</span> ${__esc(document.getElementById('global-class-size')?.value)}</div>
@@ -22564,10 +22587,10 @@ html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment
                 '\\fs24\\b ' + escapeRtf('Métadonnées') + '\\b0\\par' +
                 '\\fs20 ' +
                 '\\b ' + escapeRtf(t.label_course_name) + ':\\b0 ' + escapeRtf(courseName) + '\\par' +
+                '\\b ' + escapeRtf(t.label_version_number || 'Numéro de version') + ':\\b0 ' + escapeRtf(document.getElementById('param-version-number')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_authors) + ':\\b0 ' + escapeRtf(document.getElementById('param-authors')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_trainers || 'Formateur(s)') + ':\\b0 ' + escapeRtf(document.getElementById('param-trainers')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_license || 'Licence') + ':\\b0 ' + escapeRtf(document.getElementById('param-license')?.value || '') + '\\par' +
-                '\\b Thème:\\b0 ' + escapeRtf(document.getElementById('param-topic')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_mode) + ':\\b0 ' + escapeRtf(document.getElementById('param-mode')?.selectedOptions?.[0]?.innerText || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_level) + ':\\b0 ' + escapeRtf(document.getElementById('param-level')?.selectedOptions?.[0]?.innerText || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_class_size) + ':\\b0 ' + escapeRtf(document.getElementById('global-class-size')?.value || '') + '\\par' +
@@ -22834,10 +22857,10 @@ rtf += '\\par\\b ' + escapeRtf(`  Moment ${momentPrefix}${(typeof __ldIsIgnored=
             let md = `# ${t.md_title}\n\n`;
             md += `## métadonnées\n`;
             md += `- **${t.label_course_name}:** ${__esc(document.getElementById('param-name')?.value)}\n`;
+            md += `- **${t.label_version_number || 'Numéro de version'}:** ${__esc(document.getElementById('param-version-number')?.value || '')}\n`;
             md += `- **${t.label_authors}:** ${__esc(document.getElementById('param-authors')?.value)}\n`;
             md += `- **${t.label_trainers || 'Formateur(s)'}:** ${__esc(document.getElementById('param-trainers')?.value || '')}\n`;
             md += `- **${t.label_license || 'Licence'}:** ${__esc(document.getElementById('param-license')?.value || '')}\n`;
-            md += `- **Thème:** ${__esc(document.getElementById('param-topic')?.value || '')}\n`;
             md += `- **${t.label_mode}:** ${__selTxt(document.getElementById('param-mode'))}\n`;
             md += `- **${t.label_level}:** ${__selTxt(document.getElementById('param-level'))}\n`;
             md += `- **${t.label_class_size}:** ${__esc(document.getElementById('global-class-size')?.value)}\n`;
@@ -23211,15 +23234,20 @@ ${smNotes}
             const trainingTitle = document.getElementById('param-name')?.value || 'Formation';
             const trainingDesc = document.getElementById('param-description')?.value || '';
             const trainingLicense = document.getElementById('param-license')?.value || '';
-            
-            
-            const __selSet = __ldGetExportSelectionSet();let md = `# ${trainingTitle}\n\n`;
+            const trainingVersion = document.getElementById('param-version-number')?.value || '';
 
-            if (trainingLicense && trainingLicense.trim()) {
-                md += `> ${t.label_license || 'Licence'}: ${trainingLicense.trim()}\n\n`;
+            const __selSet = __ldGetExportSelectionSet();let md = `# ${trainingTitle}
+
+`;
+
+            const __metaLines = [];
+            if (trainingVersion && trainingVersion.trim()) __metaLines.push(`${t.label_version_number || 'Numéro de version'}: ${trainingVersion.trim()}`);
+            if (trainingLicense && trainingLicense.trim()) __metaLines.push(`${t.label_license || 'Licence'}: ${trainingLicense.trim()}`);
+            if (__metaLines.length) {
+                md += __metaLines.map(l => `> ${l}`).join('\n') + '\n\n';
             }
-            
-            if (trainingDesc.trim()) {
+
+if (trainingDesc.trim()) {
                 md += `${trainingDesc}\n\n---\n\n`;
             }
 
