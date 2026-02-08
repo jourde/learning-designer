@@ -28,6 +28,7 @@
 
 **Process:**
 1. First, ask which module(s) to cover.
-2. Complete all relevant "presentation" fields
-4. Generate the updated JSON file
+2. Complete all relevant "presentation" fields.
+3. **Validate the structure:** Before generating the final JSON, validate that the structure matches the original file's schema (all fields, hierarchy, data types, and nested objects preserved).
+4. Generate the updated JSON file.
 5. Generate a Markdown file listing all the modifications made.
