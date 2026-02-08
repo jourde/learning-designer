@@ -10,7 +10,7 @@
 
 ### 1. Format
 Present each slide clearly with:
-- Markdown title level 1: "# SLIDE [number] - Title: [slide title]"
+- Markdown titles
 - Bullet points, key terms, visual cues (→, ✓, ⚠️, etc.)
 
 ### 2. Alignment
