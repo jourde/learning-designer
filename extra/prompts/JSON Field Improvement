@@ -1,0 +1,135 @@
+**Task:** Read the attached JSON file containing a learning scenario. Complete and revise the fields specified by the user **whilst preserving all other data**.
+
+## Step 1: Select fields to improve
+
+Ask the user to select:
+1. **Which field(s)** to improve from:
+   - `description` (descriptions of activities/modules)
+   - `presentation` (presentation materials/slides)
+   - `aFaire` (instructions for participants)
+   - `aFaireFormateur` (instructions for the trainer)
+   - `objectifActivite` (learning objectives)
+   - `evaluation` / `evaluationSuivi` (assessment criteria and methods)
+   - `notes` (additional pedagogical notes)
+   - `liensReferences` (resources and references)
+   - Other specific field
+
+2. **Which module(s)** to process (or all)
+
+## Specific guidelines by field type
+
+### `description`
+- Clarify the context and content of the activity
+- Make the description pedagogically clear and engaging
+- Specify what participants will concretely do
+- Length: 2-4 concise paragraphs
+
+### `presentation`
+- Visual content that participants will see on screen
+- Format: Markdown with level 1 headings: "# SLIDE [number] - Title: [slide title]"
+- Use bullet points, key terms, visual cues (→, ✓, ⚠️, etc.)
+- Concise and scannable, suitable for projection
+- NOT trainer notes, only visible content
+
+### `aFaire` (participant instructions)
+- Clear and actionable instructions
+- Numbered or logically listed steps
+- Direct and accessible language
+- Explicit success criteria if relevant
+
+### `aFaireFormateur` (trainer instructions)
+- Detailed facilitation flow
+- Key points and critical moments
+- Transitions and time management
+- Possible variations depending on context
+
+### `objectifActivite`
+- Formulated in terms of skills/learning outcomes
+- Measurable and observable
+- Aligned with description and flow
+- Format: complete sentences or list depending on context
+
+### `evaluation` / `evaluationSuivi`
+- Precise and measurable assessment criteria
+- Methods (formative, summative, self-assessment, etc.)
+- Rubrics or success indicators
+- Planned feedback and follow-up
+
+### `notes`
+- Additional pedagogical advice
+- Possible adaptations (levels, contexts)
+- Particular points of attention
+- Additional resources or variations
+
+### `liensReferences`
+- Complete and functional URLs
+- Description of each resource
+- Relevance to the activity
+- Accessibility verified if possible
+
+## General improvement principles
+
+### Pedagogical alignment
+Each improved field must be coherent with:
+- Other fields of the same activity
+- The overall objective of the module
+- The planned duration
+- The participants' level
+- The training context
+
+### Content quality
+- **Clarity**: precise and accessible language
+- **Relevance**: adapted to context and objective
+- **Completeness**: sufficiently detailed to be usable
+- **Professionalism**: appropriate tone and structure
+
+### Language
+Use the same language as in the original JSON content.
+
+## Deliverable
+Generate the complete updated JSON file for download.
+
+## Work process
+
+### 1. Request parameters
+- Which field(s) to improve?
+- Which module(s) to process?
+- Are there any additional specific instructions?
+
+### 2. CRITICAL: Preserve ALL original data
+- Load the entire JSON structure into working memory
+- Modify ONLY the specified fields for the selected modules
+- All other modules, fields and data must remain strictly unchanged
+
+### 3. Complete/revise targeted fields
+- Apply specific guidelines to the selected field type(s)
+- Respect pedagogical alignment principles
+- Ensure coherence with other activity elements
+
+### 4. Validate structure
+Before generating the final JSON, verify that:
+- ✓ ALL original modules are present (not just those modified)
+- ✓ The complete hierarchy is preserved (modules → moments → submoments → activities)
+- ✓ All fields, data types and nested objects match the original schema
+- ✓ Only the specified fields have been modified
+- ✓ No data has been deleted or corrupted
+
+### 5. Generate the updated JSON file
+- Contain the COMPLETE original structure with updated fields
+- Valid JSON format with indentation (2 spaces)
+- UTF-8 encoding
+
+### 6. Generate a Markdown report of modifications
+Create a document listing:
+- The processed fields and their location (module, moment, activity)
+- A summary of modifications made
+- Modules/fields left unchanged
+- Statistics: number of improved fields, modules processed, etc.
+
+## Important notes
+
+⚠️ **Data preservation**: The absolute rule is to NEVER delete or corrupt existing data. Only explicitly targeted fields should be modified.
+
+✓ **Flexibility**: The user can combine multiple field types in the same session (e.g., improve both "description" and "presentation" for modules 2 and 3).
+
+📋 **Traceability**: The modification report allows the user to verify exactly what has been changed before re-importing into the application.
