@@ -2856,6 +2856,22 @@ document.addEventListener('DOMContentLoaded', function() {
           <option data-i18n="opt_mode_blended" value="blended">Hybride (sur site et en ligne)</option>
         </select>
       </div>
+      <div>
+        <label class="compact-label block" data-i18n="label_license">
+          Licence
+        </label>
+        <select class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none bg-white" id="param-license">
+          <option data-i18n="opt_license_unspecified" selected="" value="">Non spécifiée</option>
+          <option data-i18n="opt_license_cc_by_40" value="CC BY 4.0">CC BY 4.0</option>
+          <option data-i18n="opt_license_cc_by_sa_40" value="CC BY-SA 4.0">CC BY-SA 4.0</option>
+          <option data-i18n="opt_license_cc_by_nd_40" value="CC BY-ND 4.0">CC BY-ND 4.0</option>
+          <option data-i18n="opt_license_cc_by_nc_40" value="CC BY-NC 4.0">CC BY-NC 4.0</option>
+          <option data-i18n="opt_license_cc_by_nc_sa_40" value="CC BY-NC-SA 4.0">CC BY-NC-SA 4.0</option>
+          <option data-i18n="opt_license_cc_by_nc_nd_40" value="CC BY-NC-ND 4.0">CC BY-NC-ND 4.0</option>
+          <option data-i18n="opt_license_cc0_10" value="CC0 1.0">CC0 1.0</option>
+          <option data-i18n="opt_license_pdm_10" value="Public Domain Mark 1.0">Public Domain Mark 1.0</option>
+        </select>
+      </div>
     </div>
   </div>
 
@@ -4351,6 +4367,10 @@ Cochez les éléments que vous souhaitez inclure dans l'export. Les éléments p
 <label class="flex items-center gap-2 p-2 border border-slate-200 rounded hover:bg-indigo-50 hover:border-indigo-300 cursor-pointer transition-colors">
 <input type="radio" name="export-format" value="richtext" class="text-indigo-600">
 <span class="text-xs">Page Web HTML</span>
+</label>
+<label class="flex items-center gap-2 p-2 border border-slate-200 rounded hover:bg-indigo-50 hover:border-indigo-300 cursor-pointer transition-colors">
+<input type="radio" name="export-format" value="json" class="text-indigo-600">
+<span class="text-xs">JSON</span>
 </label>
 </div>
 </div>
@@ -8463,6 +8483,16 @@ label_learning_time: "Temps d'Apprentissage (Cible)",
                 ph_authors: "Entrez le nom du/des concepteurs...",
                 label_trainers: "Formateur(s)",
                 ph_trainers: "Entrez le nom du/des formateur(s)...",
+                label_license: "Licence",
+                opt_license_unspecified: "Non spécifiée",
+                opt_license_cc_by_40: "CC BY 4.0",
+                opt_license_cc_by_sa_40: "CC BY-SA 4.0",
+                opt_license_cc_by_nd_40: "CC BY-ND 4.0",
+                opt_license_cc_by_nc_40: "CC BY-NC 4.0",
+                opt_license_cc_by_nc_sa_40: "CC BY-NC-SA 4.0",
+                opt_license_cc_by_nc_nd_40: "CC BY-NC-ND 4.0",
+                opt_license_cc0_10: "CC0 1.0",
+                opt_license_pdm_10: "Public Domain Mark 1.0",
                 label_topic: "Thème",
                 ph_topic: "Entrez le thème...",
                 opt_level_unspecified: "Non spécifié",
@@ -12510,6 +12540,7 @@ function buildExportProjectData() {
                     theme: (document.getElementById('param-topic') ? document.getElementById('param-topic').value : ''),
                     auteurs: (document.getElementById('param-authors')?.value),
                     formateurs: (document.getElementById('param-trainers')?.value),
+                    licence: (document.getElementById('param-license')?.value || ''),
                     niveau: document.getElementById('param-level')?.value || 'unspecified',
                     publicCible: document.getElementById('param-target-audience')?.value || '',
                     prerequis: document.getElementById('param-prerequisites')?.value || '',
@@ -12684,6 +12715,9 @@ function __ldBuildKeyParamsCanonical(project) {
     setIfEmpty('topic', p.theme || '');
     setIfEmpty('authors', p.auteurs || '');
     setIfEmpty('trainers', p.formateurs || '');
+    setIfEmpty('license', kp.license || kp.licence || p.licence || p.license || '');
+    // Mirror for mixed/legacy exports
+    if ((kp.licence == null || String(kp.licence).trim() === '') && (kp.license != null && String(kp.license).trim() !== '')) kp.licence = kp.license;
     setIfEmpty('level', p.niveau || 'unspecified');
     setIfEmpty('targetAudience', p.publicCible || '');
     setIfEmpty('prerequisites', p.prerequis || '');
@@ -13408,6 +13442,8 @@ function forceCanonicalImport(payload) {
         name: pr.nom ?? "",
         topic: pr.theme ?? "",
         authors: pr.auteurs ?? "",
+        trainers: pr.formateurs ?? "",
+        license: pr.licence ?? pr.license ?? "",
         level: pr.niveau ?? "unspecified",
         targetAudience: pr.publicCible ?? "",
         prerequisites: pr.prerequis ?? "",
@@ -14128,6 +14164,7 @@ const __chartsSuspendFn = window.__setChartsSuspended;
                 { const __el=document.getElementById('param-topic'); if(__el){ __el.value = __pick(__kp.topic, __pr.theme, ""); } }
                 __setVal('param-authors', __pick(__kp.authors, __pr.auteurs, ""));
                 __setVal('param-trainers', __pick(__kp.trainers, __pr.formateurs, ""));
+                __setVal('param-license', __pick(__kp.license, __kp.licence, __pr.licence, __pr.license, ""));
                 __setVal('param-level', __pick(__kp.level, __pr.niveau, 'unspecified') || 'unspecified');
                 __setVal('param-target-audience', __pick(__kp.targetAudience, __pr.publicCible, ""));
                 __setVal('param-prerequisites', __pick(__kp.prerequisites, __pr.prerequis, ""));
@@ -17944,6 +17981,7 @@ function buildExportModel() {
         topic: asStr(project.parametres?.theme),
         authors: asStr(project.parametres?.auteurs),
         trainers: asStr(project.parametres?.formateurs),
+        license: asStr(project.parametres?.licence || project.parametres?.license),
         level: asStr(project.parametres?.niveau),
         targetAudience: asStr(project.parametres?.publicCible),
         prerequisites: asStr(project.parametres?.prerequis),
@@ -18175,6 +18213,7 @@ function exportDOCX() {
     addMetaLine('Nom de la formation', model.meta.courseName);
     addMetaLine('Concepteurs', model.meta.authors);
     addMetaLine('Formateurs', model.meta.trainers);
+    addMetaLine('Licence', model.meta.license);
     addMetaLine('Thème', model.meta.topic);
     addMetaLine('Niveau', model.meta.level);
     addMetaLine('Modalité', model.meta.mode);
@@ -18732,6 +18771,7 @@ function __deprecated__exportRichText_1() {
                 <h2 data-i18n="heading_metadata">Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_license || 'Licence'}:</span> ${__esc(document.getElementById('param-license')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label" data-i18n="label_theme_colon">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
@@ -21576,6 +21616,7 @@ function exportCSV() {
         ['Nom de la formation', meta.courseName || ''],
         ['Concepteurs', meta.authors || ''],
         ['Formateurs', meta.trainers || ''],
+        ['Licence', meta.license || ''],
         ['Thème', meta.topic || ''],
         ['Niveau', meta.level || ''],
         ['Modalité', meta.mode || ''],
@@ -22134,6 +22175,7 @@ let html = `
                 <h2 data-i18n="heading_metadata">Métadonnées</h2>
                 <div class="meta-item"><span class="meta-label">${t.label_course_name}:</span> ${__esc(document.getElementById('param-name')?.value)}</div>                <div class="meta-item"><span class="meta-label">${t.label_authors}:</span> ${__esc(document.getElementById('param-authors')?.value)}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_trainers || 'Formateur(s)'}:</span> ${__esc(document.getElementById('param-trainers')?.value || '')}</div>
+                <div class="meta-item"><span class="meta-label">${t.label_license || 'Licence'}:</span> ${__esc(document.getElementById('param-license')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label" data-i18n="label_theme_colon">Thème:</span> ${__esc(document.getElementById('param-topic')?.value || '')}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_mode}:</span> ${__selTxt(document.getElementById('param-mode'))}</div>
                 <div class="meta-item"><span class="meta-label">${t.label_level}:</span> ${__selTxt(document.getElementById('param-level'))}</div>
@@ -22524,6 +22566,7 @@ html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment
                 '\\b ' + escapeRtf(t.label_course_name) + ':\\b0 ' + escapeRtf(courseName) + '\\par' +
                 '\\b ' + escapeRtf(t.label_authors) + ':\\b0 ' + escapeRtf(document.getElementById('param-authors')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_trainers || 'Formateur(s)') + ':\\b0 ' + escapeRtf(document.getElementById('param-trainers')?.value || '') + '\\par' +
+                '\\b ' + escapeRtf(t.label_license || 'Licence') + ':\\b0 ' + escapeRtf(document.getElementById('param-license')?.value || '') + '\\par' +
                 '\\b Thème:\\b0 ' + escapeRtf(document.getElementById('param-topic')?.value || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_mode) + ':\\b0 ' + escapeRtf(document.getElementById('param-mode')?.selectedOptions?.[0]?.innerText || '') + '\\par' +
                 '\\b ' + escapeRtf(t.label_level) + ':\\b0 ' + escapeRtf(document.getElementById('param-level')?.selectedOptions?.[0]?.innerText || '') + '\\par' +
@@ -22793,6 +22836,7 @@ rtf += '\\par\\b ' + escapeRtf(`  Moment ${momentPrefix}${(typeof __ldIsIgnored=
             md += `- **${t.label_course_name}:** ${__esc(document.getElementById('param-name')?.value)}\n`;
             md += `- **${t.label_authors}:** ${__esc(document.getElementById('param-authors')?.value)}\n`;
             md += `- **${t.label_trainers || 'Formateur(s)'}:** ${__esc(document.getElementById('param-trainers')?.value || '')}\n`;
+            md += `- **${t.label_license || 'Licence'}:** ${__esc(document.getElementById('param-license')?.value || '')}\n`;
             md += `- **Thème:** ${__esc(document.getElementById('param-topic')?.value || '')}\n`;
             md += `- **${t.label_mode}:** ${__selTxt(document.getElementById('param-mode'))}\n`;
             md += `- **${t.label_level}:** ${__selTxt(document.getElementById('param-level'))}\n`;
@@ -23166,9 +23210,14 @@ ${smNotes}
             const t = translations[currentLang] || translations.fr;
             const trainingTitle = document.getElementById('param-name')?.value || 'Formation';
             const trainingDesc = document.getElementById('param-description')?.value || '';
+            const trainingLicense = document.getElementById('param-license')?.value || '';
             
             
             const __selSet = __ldGetExportSelectionSet();let md = `# ${trainingTitle}\n\n`;
+
+            if (trainingLicense && trainingLicense.trim()) {
+                md += `> ${t.label_license || 'Licence'}: ${trainingLicense.trim()}\n\n`;
+            }
             
             if (trainingDesc.trim()) {
                 md += `${trainingDesc}\n\n---\n\n`;
@@ -31089,6 +31138,8 @@ kbd {
         runExport(exportCSV);
       } else if (selectedFormat === 'docx') {
         runExport(exportDOCX);
+      } else if (selectedFormat === 'json') {
+        exportFilteredJSON();
       }
 
       // Clean up
@@ -31129,6 +31180,72 @@ kbd {
       }
     }
     return null;
+  }
+
+  // Export filtered data as JSON (reuses full save format)
+  function exportFilteredJSON() {
+    try {
+      // Build full export data (same as saveProject)
+      let exportProject = buildExportProjectDataCanonicalOnly();
+
+      // Filter to selected items only
+      if (window.__ldExportFilteredData && window.__ldExportFilteredData.selectedIds) {
+        const selectedIds = new Set(window.__ldExportFilteredData.selectedIds);
+        
+        // Filter activities/modules
+        if (exportProject.activities && Array.isArray(exportProject.activities)) {
+          exportProject.activities = exportProject.activities.filter(module => {
+            const moduleId = `module-${module.id}`;
+            if (!selectedIds.has(moduleId)) return false;
+
+            // Filter moments within the module
+            if (module.moments && Array.isArray(module.moments)) {
+              module.moments = module.moments.filter(moment => {
+                const momentId = `moment-${module.id}-${moment.id}`;
+                if (!selectedIds.has(momentId)) return false;
+
+                // Filter submoments within the moment
+                if (moment.submoments && Array.isArray(moment.submoments)) {
+                  moment.submoments = moment.submoments.filter(submoment => {
+                    const submomentId = `submoment-${module.id}-${moment.id}-${submoment.id}`;
+                    if (!selectedIds.has(submomentId)) return false;
+
+                    // Filter activities within the submoment
+                    if (submoment.activities && Array.isArray(submoment.activities)) {
+                      submoment.activities = submoment.activities.filter(activity => {
+                        const activityId = `activity-${module.id}-${moment.id}-${submoment.id}-${activity.id}`;
+                        return selectedIds.has(activityId);
+                      });
+                    }
+
+                    return true;
+                  });
+                }
+
+                return true;
+              });
+            }
+
+            return true;
+          });
+        }
+      }
+
+      // Create JSON blob and download
+      const blob = new Blob([JSON.stringify(exportProject, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      const filename = window.__ldBuildExportFilename('json', 'selection');
+      a.download = filename;
+      
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('JSON export failed:', e);
+      alert('Erreur lors de l\'export JSON: ' + e.message);
+    }
   }
 
   // Event listeners
