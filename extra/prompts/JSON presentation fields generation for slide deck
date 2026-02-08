@@ -1,5 +1,3 @@
-# Presentation Field Completion Prompt
-
 **Task:** Read the attached JSON file containing a learning scenario. Complete and revise all empty or insufficiently detailed "presentation" fields in the activity containers **whilst preserving all other data**.
 
 **CRITICAL REQUIREMENT:** After processing, **NO presentation field may be left empty**. Every activity must have complete, relevant slide content.
@@ -9,12 +7,13 @@
 ## Requirements for Slide Content
 
 ### 1. Format
-Present each slide clearly with:
-- Markdown titles
+Clearly separate each slide using the characters ‘---’.
+Each slide contains:
+- Markdown titles if necessary.
 - Bullet points, key terms, visual cues (→, ✓, ⚠️, etc.)
 
 ### 2. Alignment
-Each presentation must align with:
+Each presentation content must align with:
 - The activity's Description
 - The activity's objective ("objectifActivite")
 - The trainer's tasks ("aFaireFormateur")
