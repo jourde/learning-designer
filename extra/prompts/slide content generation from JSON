@@ -1,34 +1,49 @@
-**Task:** Read the attached JSON file containing a learning scenario. Complete and revise all empty or insufficiently detailed "presentation" fields in the activity containers.
+**Task:** Read the attached JSON file containing a learning scenario. Complete and revise all empty or insufficiently detailed "presentation" fields in the activity containers **whilst preserving all other data**.
 
 **What "presentation" means:** The actual slide deck content that participants will see on screen during each activity - concise, visually friendly slides with titles, bullet points, and key information (NOT detailed facilitator notes or talking points).
 
-**Requirements for slide content:**
+## Requirements for Slide Content
 
-1. **Format:** Present each slide clearly with:
-   - Markdown title level 1: "# SLIDE [number] - Title: [slide title]"
-   - Bullet points, key terms, visual cues (→, ✓, ⚠️, etc.)
+### 1. Format
+Present each slide clearly with:
+- Markdown title level 1: "# SLIDE [number] - Title: [slide title]"
+- Bullet points, key terms, visual cues (→, ✓, ⚠️, etc.)
 
-2. **Alignment:** Each presentation must align with:
-   - The activity's Description ()   
-   - The activity's objective ("objectifActivite")
-   - The trainer's tasks ("aFaireFormateur")
-   - The participant's tasks ("aFaire")
-   - Any referenced materials ("liensReferences", "notes")
-   - The overall module description and training context
+### 2. Alignment
+Each presentation must align with:
+- The activity's Description
+- The activity's objective ("objectifActivite")
+- The trainer's tasks ("aFaireFormateur")
+- The participant's tasks ("aFaire")
+- Any referenced materials ("liensReferences", "notes")
+- The overall module description and training context
 
-3. **Content characteristics:**
-   - Concise and scannable
-   - Professional and pedagogically sound
-   - Appropriate for the activity duration
-   - Clear key takeaways
+### 3. Content Characteristics
+- Concise and scannable
+- Professional and pedagogically sound
+- Appropriate for the activity duration
+- Clear key takeaways
 
-4. **Language:** Use the same language as in the JSON content.
+### 4. Language
+Use the same language as in the JSON content.
 
-**Deliverable:** Generate the complete updated JSON file for download.
+## Deliverable
+Generate the complete updated JSON file for download.
 
-**Process:**
-1. First, ask which module(s) to cover.
-2. Complete all relevant "presentation" fields.
-3. **Validate the structure:** Before generating the final JSON, validate that the structure matches the original file's schema (all fields, hierarchy, data types, and nested objects preserved).
-4. Generate the updated JSON file.
-5. Generate a Markdown file listing all the modifications made.
+## Process
+
+1. **First, ask which module(s) to cover.**
+
+2. **CRITICAL: Preserve ALL original data.** Load the entire JSON structure into working memory. Only modify the "presentation" fields for the specified module(s). All other modules, fields, and data must remain completely unchanged.
+
+3. **Complete all relevant "presentation" fields** for the specified module(s).
+
+4. **Validate the structure:** Before generating the final JSON, verify that:
+   - ALL original modules are present (not just the ones being modified)
+   - The complete hierarchy is preserved (modules → moments → submoments → activities)
+   - All fields, data types, and nested objects match the original schema
+   - Only the specified "presentation" fields have been modified
+
+5. **Generate the updated JSON file** containing the **complete** original structure with updated presentation fields.
+
+6. **Generate a Markdown file** listing all the modifications made, clearly indicating which modules were processed and which were left unchanged.
