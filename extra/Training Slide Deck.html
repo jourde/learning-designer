@@ -19,7 +19,7 @@
             --color-bg: #FAFAFA;
             --color-surface: #FFFFFF;
             --color-text: #111827;
-            --color-text-secondary: #6B7280;
+            --color-text-secondary: #374151;
             --color-text-muted: #9CA3AF;
             --color-border: #E5E7EB;
             --color-border-light: #F3F4F6;
@@ -922,11 +922,7 @@
         }
 
         .slide-title {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--color-text);
-            margin-bottom: 24px;
-            line-height: 1.2;
+            display: none; /* Force hide any slide titles */
         }
 
         .slide-content {
@@ -2506,12 +2502,11 @@
                 const slide = this.currentActivity.slides[this.currentSlideIndex];
                 const container = document.getElementById('slideContainer');
 
-                // Sanitize title but allow HTML in content (content is from trusted JSON)
-                const sanitizedTitle = slide.title ? this.sanitizeHTML(slide.title) : '';
+                // We purposefully do NOT render the title here as per requirements.
+                // Only the content is shown.
                 
                 container.innerHTML = `
                     <div class="slide">
-                        ${sanitizedTitle ? `<h2 class="slide-title">${sanitizedTitle}</h2>` : ''}
                         <div class="slide-content">${slide.content}</div>
                     </div>
                 `;
@@ -3816,55 +3811,64 @@
                                         id: srcSub.id || `sub-${Math.random().toString(36).substr(2, 9)}`,
                                         title: srcSub.title || 'Untitled Submoment',
                                         activities: (srcSub.steps || []).map(srcStep => {
-                                            // Create content for the slide based on step details
-                                            let contentHtml = '';
+                                            // Handle presentation field for slides
+                                            let slides = [];
                                             
-                                            // Objective
-                                            if (srcStep.objective) {
-                                                contentHtml += `<h3>Objective</h3><p>${srcStep.objective.replace(/\n/g, '<br>')}</p>`;
+                                            // Check if presentation exists (priority as requested)
+                                            if (srcStep.presentation) {
+                                                if (Array.isArray(srcStep.presentation)) {
+                                                    // Multiple slides (Array format)
+                                                    slides = srcStep.presentation.map((slide, idx) => ({
+                                                        number: idx + 1,
+                                                        title: '', // Intentionally empty title as per requirements
+                                                        content: slide.content || slide.html || ''
+                                                    }));
+                                                } else if (typeof srcStep.presentation === 'string') {
+                                                    // String format - Check for separators
+                                                    // Regex to match "SLIDE", "# Slide 1", "## SLIDE", etc. case insensitive
+                                                    const slideSeparator = /(?:^|\n)(?:#+\s*)?SLIDE\s*\d*(?::?)\s*(?:\n|$)/i;
+                                                    
+                                                    if (slideSeparator.test(srcStep.presentation)) {
+                                                        // Split by separator
+                                                        const rawSlides = srcStep.presentation.split(slideSeparator);
+                                                        
+                                                        // Filter out empty/whitespace-only slides resulting from the split (e.g. if string starts with separator)
+                                                        const cleanSlides = rawSlides.filter(s => s && s.trim().length > 0);
+                                                        
+                                                        if (cleanSlides.length > 0) {
+                                                            slides = cleanSlides.map((content, idx) => ({
+                                                                number: idx + 1,
+                                                                title: '', // Intentionally empty title as per requirements
+                                                                content: this.simpleMarkdownToHtml(content) // Basic conversion
+                                                            }));
+                                                        }
+                                                    }
+                                                    
+                                                    // If split didn't result in slides (or no "SLIDE" found), treat as single slide
+                                                    if (slides.length === 0) {
+                                                         slides = [{
+                                                            number: 1,
+                                                            title: '', // Intentionally empty title as per requirements
+                                                            content: this.simpleMarkdownToHtml(srcStep.presentation)
+                                                        }];
+                                                    }
+                                                }
                                             }
                                             
-                                            // Tasks
-                                            if (srcStep.tasks) {
-                                                contentHtml += `<h3>Tasks</h3><p>${srcStep.tasks.replace(/\n/g, '<br>')}</p>`;
-                                            }
-                                            
-                                            // Method details
-                                            contentHtml += `<h3>Details</h3><ul>`;
-                                            if (srcStep.duration) contentHtml += `<li><strong>Duration:</strong> ${srcStep.duration} min</li>`;
-                                            if (srcStep.type) contentHtml += `<li><strong>Type:</strong> ${srcStep.type}</li>`;
-                                            if (srcStep.groupMode) {
-                                                contentHtml += `<li><strong>Mode:</strong> ${srcStep.groupMode}`;
-                                                if (srcStep.groupSize) contentHtml += ` (Size: ${srcStep.groupSize})`;
-                                                contentHtml += `</li>`;
-                                            }
-                                            contentHtml += `</ul>`;
-
-                                            // Tools
-                                            if (srcStep.toolsMaterialsTargets && srcStep.toolsMaterialsTargets.length > 0) {
-                                                contentHtml += `<h3>Tools & Materials</h3><ul>`;
-                                                srcStep.toolsMaterialsTargets.forEach(tool => {
-                                                    contentHtml += `<li>${tool}</li>`;
-                                                });
-                                                contentHtml += `</ul>`;
-                                            }
-
-                                            // Notes
-                                            if (srcStep.notes) {
-                                                contentHtml += `<h3>Notes</h3><p><em>${srcStep.notes.replace(/\n/g, '<br>')}</em></p>`;
+                                            // If no presentation content or empty array, fallback to placeholder
+                                            if (slides.length === 0) {
+                                                slides = [{
+                                                    number: 1,
+                                                    title: '', // Intentionally empty title as per requirements
+                                                    content: '<div class="slide-content"><p><em>No presentation content defined for this activity.</em></p></div>'
+                                                }];
                                             }
 
                                             return {
                                                 id: srcStep.id || `act-${Math.random().toString(36).substr(2, 9)}`,
                                                 title: srcStep.title || 'Untitled Activity',
                                                 plannedMinutes: parseInt(srcStep.duration || 0),
-                                                slides: [
-                                                    {
-                                                        number: 1,
-                                                        title: srcStep.title,
-                                                        content: contentHtml
-                                                    }
-                                                ]
+                                                slides: slides
                                             };
                                         })
                                     };
@@ -3878,6 +3882,39 @@
                     title: sourceData.keyParams ? sourceData.keyParams.title : 'Imported Course',
                     modules: modules
                 };
+            },
+
+            simpleMarkdownToHtml(markdown) {
+                if (!markdown) return '';
+                let html = markdown;
+
+                // 1. SPECIFIC FIX: Remove lines starting with "Title:"
+                html = html.replace(/^Title:\s+.*$/gim, '');
+
+                // 2. Remove purely whitespace lines left behind
+                html = html.replace(/^\s*[\r\n]/gm, '');
+
+                // Headers (e.g., # Title -> <h1>Title</h1>)
+                html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+                html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+                html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+
+                // Bold (e.g., **bold** -> <strong>bold</strong>)
+                html = html.replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>');
+
+                // Italic (e.g., *italic* -> <em>italic</em>)
+                html = html.replace(/\*(.*)\*/gim, '<em>$1</em>');
+
+                // Lists (e.g., - item -> <ul><li>item</li></ul>)
+                // This is a very basic implementation and might not handle nested lists perfectly
+                html = html.replace(/^\s*-\s+(.*)/gim, '<li>$1</li>');
+                html = html.replace(/(<li>.*<\/li>)/gim, '<ul>$1</ul>'); // Wrap consecutive li in ul (simplified)
+
+                // Paragraphs (e.g., new lines -> <br> or <p>)
+                // Using <br> for simplicity within existing slide structure
+                html = html.replace(/\n/g, '<br>');
+
+                return html;
             },
 
             validateCourseData(data) {
