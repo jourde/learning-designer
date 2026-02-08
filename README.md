@@ -22,7 +22,7 @@ N.B. : Cette application a été développée avec l'aide de chatbots d'IA gén�
 - **Guide d'utilisation** : [https://github.com/jourde/learning-designer/wiki](https://github.com/jourde/learning-designer/wiki)
 ### Outils
 - **Application de création de requête d'amélioration d'un scénario**: [https://jourde.github.io/learning-designer/development/enhacement-prompt-builder.html](https://jourde.github.io/learning-designer/development/enhacement-prompt-builder.html)
-- **Import de diaporama**: [https://jourde.github.io/learning-designer/extra/training_slide_deck.html](https://jourde.github.io/learning-designer/extra/training_slide_deck.html)
+- **Génération de diaporama (web app html)**: [https://jourde.github.io/learning-designer/extra/training_slide_deck.html](https://jourde.github.io/learning-designer/extra/training_slide_deck.html)
 
 ## Autres
 - **Page web associée** : [https://jourde.github.io/learning-designer/](https://jourde.github.io/learning-designer/)
