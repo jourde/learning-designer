@@ -2235,79 +2235,10 @@
         </div>
     </div>
 
-    <!-- Export Modal -->
-    <div class="export-modal" id="exportModal" onclick="if(event.target === this) app.closeExportModal()">
-        <div class="export-modal-content">
-            <div class="export-modal-header">
-                <h2 class="export-modal-title">Export Training Content</h2>
-                <button class="export-close-btn" onclick="app.closeExportModal()">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-            <div class="export-modal-body">
-                <p class="export-description">
-                    Choose your preferred format to export all training content including all modules, activities, and slides.
-                </p>
-                <div class="export-options">
-                    <div class="export-option" onclick="app.exportAsJSON()">
-                        <div class="export-option-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <path d="M9 15h6M9 12h6"></path>
-                            </svg>
-                        </div>
-                        <div class="export-option-content">
-                            <div class="export-option-title">JSON Template (.json)</div>
-                            <div class="export-option-desc">Structured data format, can be re-imported later</div>
-                        </div>
-                    </div>
-                    <div class="export-option" onclick="app.exportAsMarkdown()">
-                        <div class="export-option-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <line x1="16" y1="13" x2="8" y2="13"></line>
-                                <line x1="16" y1="17" x2="8" y2="17"></line>
-                                <polyline points="10 9 9 9 8 9"></polyline>
-                            </svg>
-                        </div>
-                        <div class="export-option-content">
-                            <div class="export-option-title">Markdown (.md)</div>
-                            <div class="export-option-desc">Plain text format with formatting, ideal for documentation</div>
-                        </div>
-                    </div>
-                    <div class="export-option" onclick="app.exportAsRTF()">
-                        <div class="export-option-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <line x1="12" y1="18" x2="12" y2="12"></line>
-                                <line x1="9" y1="15" x2="15" y2="15"></line>
-                            </svg>
-                        </div>
-                        <div class="export-option-content">
-                            <div class="export-option-title">Rich Text Format (.rtf)</div>
-                            <div class="export-option-desc">Formatted document, opens in Word, Pages, and other editors</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="export-modal-footer">
-                <button class="export-cancel-btn" onclick="app.closeExportModal()">Cancel</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         // ===== DATA STRUCTURE =====
         // Course data is now loaded dynamically via JSON import
-                }
-            ]
-        };
+        // (Removed broken syntax here)
 
         // ===== APPLICATION STATE =====
         const app = {
@@ -2353,6 +2284,9 @@
             detailsPanelExpanded: false,
 
             init() {
+                console.log('App initializing...');
+                console.log('App object:', this);
+                
                 this.buildNavigation();
                 this.attachEventListeners();
                 this.loadStateFromHash();
@@ -2361,6 +2295,9 @@
                 this.loadZoomPreference();
                 this.loadDetailsPanelState();
                 this.startTimerTicks();
+                
+                console.log('App initialized successfully');
+                console.log('courseData:', this.courseData);
             },
 
             buildNavigation() {
@@ -2541,6 +2478,8 @@
 
             getBreadcrumb(activityId) {
                 // Find the activity in the data structure and build breadcrumb
+                if (!this.courseData || !this.courseData.modules) return '';
+                
                 for (const module of this.courseData.modules) {
                     for (const moment of module.moments) {
                         for (const submoment of moment.submoments) {
@@ -2658,6 +2597,8 @@
                     this.clearSearch();
                     return;
                 }
+                
+                if (!this.courseData || !this.courseData.modules) return;
 
                 const results = [];
 
@@ -2754,6 +2695,7 @@
             },
 
             findActivityById(activityId) {
+                if (!this.courseData || !this.courseData.modules) return null;
                 for (const module of this.courseData.modules) {
                     for (const moment of module.moments) {
                         for (const submoment of moment.submoments) {
@@ -3160,6 +3102,8 @@
             },
 
             updateMomentProgress() {
+                if (!this.courseData || !this.courseData.modules) return;
+
                 this.courseData.modules.forEach(module => {
                     module.moments.forEach(moment => {
                         // Calculate moment progress
@@ -3214,6 +3158,8 @@
             },
 
             updateModuleHeaderProgress() {
+                if (!this.courseData || !this.courseData.modules) return;
+
                 this.courseData.modules.forEach(module => {
                     // Calculate module progress
                     let totalActivities = 0;
@@ -3300,6 +3246,9 @@
                 let totalActivities = 0;
                 let completedCount = 0;
                 let visitedCount = 0;
+
+                // Guard clause if no data
+                if (!this.courseData || !this.courseData.modules) return;
 
                 this.courseData.modules.forEach(module => {
                     module.moments.forEach(moment => {
@@ -3693,10 +3642,12 @@
             },
 
             findModuleById(moduleId) {
+                if (!this.courseData || !this.courseData.modules) return null;
                 return this.courseData.modules.find(m => m.id === moduleId);
             },
 
             getModuleIdForActivity(activityId) {
+                if (!this.courseData || !this.courseData.modules) return null;
                 for (const module of this.courseData.modules) {
                     for (const moment of module.moments) {
                         for (const submoment of moment.submoments) {
@@ -3716,14 +3667,29 @@
             // ===== IMPORT/EXPORT METHODS =====
 
             openImportDialog() {
-                // Check if user has progress
-                if (this.hasProgress()) {
-                    if (!confirm('⚠️ Warning: Importing new content will reset your current progress.\n\nYou will lose:\n• Completed activities\n• Timer data\n• Navigation history\n\nDo you want to continue?')) {
+                try {
+                    console.log('openImportDialog called');
+                    
+                    // Check if user has progress
+                    if (this.hasProgress()) {
+                        if (!confirm('⚠️ Warning: Importing new content will reset your current progress.\n\nYou will lose:\n• Completed activities\n• Timer data\n• Navigation history\n\nDo you want to continue?')) {
+                            return;
+                        }
+                    }
+                    
+                    const fileInput = document.getElementById('importFileInput');
+                    if (!fileInput) {
+                        console.error('File input element not found!');
+                        alert('Error: Import button not properly configured.');
                         return;
                     }
+                    
+                    console.log('Triggering file input click');
+                    fileInput.click();
+                } catch (error) {
+                    console.error('Error in openImportDialog:', error);
+                    alert('Error opening import dialog: ' + error.message);
                 }
-                
-                document.getElementById('importFileInput').click();
             },
 
             hasProgress() {
@@ -3734,61 +3700,93 @@
             },
 
             handleFileSelect(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-
-                // Check file size (max 10MB)
-                if (file.size > 10 * 1024 * 1024) {
-                    alert('❌ Error: File is too large. Maximum size is 10MB.');
-                    event.target.value = ''; // Reset input
-                    return;
-                }
-
-                const reader = new FileReader();
-                
-                reader.onload = (e) => {
-                    try {
-                        const jsonData = JSON.parse(e.target.result);
-                        this.importJSON(jsonData);
-                        event.target.value = ''; // Reset input for next import
-                    } catch (error) {
-                        alert(`❌ Error parsing JSON file:\n\n${error.message}\n\nPlease check that your file contains valid JSON.`);
-                        event.target.value = '';
+                try {
+                    console.log('handleFileSelect called', event);
+                    
+                    const file = event.target.files[0];
+                    if (!file) {
+                        console.log('No file selected');
+                        return;
                     }
-                };
-                
-                reader.onerror = () => {
-                    alert('❌ Error reading file. Please try again.');
-                    event.target.value = '';
-                };
-                
-                reader.readAsText(file);
+
+                    console.log('File selected:', file.name, file.size, 'bytes');
+
+                    // Check file size (max 10MB)
+                    if (file.size > 10 * 1024 * 1024) {
+                        alert('❌ Error: File is too large. Maximum size is 10MB.');
+                        event.target.value = ''; // Reset input
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    
+                    reader.onload = (e) => {
+                        try {
+                            console.log('File loaded, parsing JSON...');
+                            const jsonData = JSON.parse(e.target.result);
+                            console.log('JSON parsed successfully');
+                            this.importJSON(jsonData);
+                            event.target.value = ''; // Reset input for next import
+                        } catch (error) {
+                            console.error('JSON parse error:', error);
+                            alert(`❌ Error parsing JSON file:\n\n${error.message}\n\nPlease check that your file contains valid JSON.`);
+                            event.target.value = '';
+                        }
+                    };
+                    
+                    reader.onerror = (error) => {
+                        console.error('File read error:', error);
+                        alert('❌ Error reading file. Please try again.');
+                        event.target.value = '';
+                    };
+                    
+                    console.log('Starting file read...');
+                    reader.readAsText(file);
+                } catch (error) {
+                    console.error('Error in handleFileSelect:', error);
+                    alert('Error: ' + error.message);
+                }
             },
 
             importJSON(data) {
-                // Validate the JSON structure
-                const validation = this.validateCourseData(data);
-                if (!validation.valid) {
-                    alert(`❌ Invalid JSON structure:\n\n${validation.errors.join('\n')}\n\nPlease check the file format.`);
-                    return;
+                try {
+                    console.log('importJSON called with data:', data);
+                    
+                    // Validate the JSON structure
+                    console.log('Validating JSON structure...');
+                    const validation = this.validateCourseData(data);
+                    
+                    if (!validation.valid) {
+                        console.error('Validation failed:', validation.errors);
+                        alert(`❌ Invalid JSON structure:\n\n${validation.errors.join('\n')}\n\nPlease check the file format.`);
+                        return;
+                    }
+
+                    console.log('Validation passed! Resetting state...');
+                    // Reset all state
+                    this.resetAllState();
+
+                    console.log('Loading new data...');
+                    // Load new data
+                    this.courseData = data;
+
+                    console.log('Rebuilding navigation...');
+                    // Rebuild UI
+                    this.buildNavigation();
+                    
+                    // Update document title if available
+                    if (data.title) {
+                        document.title = data.title;
+                        console.log('Document title updated to:', data.title);
+                    }
+
+                    // Show success message
+                    alert(`✅ Content loaded successfully!\n\n${data.title || 'Training content'}\n\nYou can now start navigating through the slides.`);
+                    console.log('Import completed successfully');
+                } catch (error) {
+                    console.error('Error in importJSON:', error);
+                    alert('Error importing content: ' + error.message);
                 }
-
-                // Reset all state
-                this.resetAllState();
-
-                // Load new data
-                this.courseData = data;
-
-                // Rebuild UI
-                this.buildNavigation();
-                
-                // Update document title if available
-                if (data.title) {
-                    document.title = data.title;
-                }
-
-                // Show success message
-                alert(`✅ Content loaded successfully!\n\n${data.title || 'Training content'}\n\nYou can now start navigating through the slides.`);
             },
 
             validateCourseData(data) {
