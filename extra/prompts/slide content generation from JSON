@@ -1,4 +1,8 @@
+# Presentation Field Completion Prompt
+
 **Task:** Read the attached JSON file containing a learning scenario. Complete and revise all empty or insufficiently detailed "presentation" fields in the activity containers **whilst preserving all other data**.
+
+**CRITICAL REQUIREMENT:** After processing, **NO presentation field may be left empty**. Every activity must have complete, relevant slide content.
 
 **What "presentation" means:** The actual slide deck content that participants will see on screen during each activity - concise, visually friendly slides with titles, bullet points, and key information (NOT detailed facilitator notes or talking points).
 
@@ -36,14 +40,26 @@ Generate the complete updated JSON file for download.
 
 2. **CRITICAL: Preserve ALL original data.** Load the entire JSON structure into working memory. Only modify the "presentation" fields for the specified module(s). All other modules, fields, and data must remain completely unchanged.
 
-3. **Complete all relevant "presentation" fields** for the specified module(s).
+3. **Complete all relevant "presentation" fields** for the specified module(s):
+   - **Every activity must have slide content** - no presentation field may remain empty
+   - If an activity has insufficient contextual information to create detailed slides, generate content based on:
+     - The activity's title and any available description
+     - The module's overall objective
+     - Standard pedagogical practices for that type of activity
+     - Logical inference from related activities
+   - Mark any slides created with limited information in the modification log
 
 4. **Validate the structure:** Before generating the final JSON, verify that:
    - ALL original modules are present (not just the ones being modified)
    - The complete hierarchy is preserved (modules → moments → submoments → activities)
    - All fields, data types, and nested objects match the original schema
    - Only the specified "presentation" fields have been modified
+   - **NO presentation field is empty** for any activity in the processed module(s)
 
 5. **Generate the updated JSON file** containing the **complete** original structure with updated presentation fields.
 
-6. **Generate a Markdown file** listing all the modifications made, clearly indicating which modules were processed and which were left unchanged.
+6. **Generate a Markdown file** listing all the modifications made, clearly indicating:
+   - Which modules were processed and which were left unchanged
+   - How many presentation fields were completed or revised
+   - Any activities where slides were created with limited contextual information
+   - Confirmation that zero presentation fields remain empty in processed modules
