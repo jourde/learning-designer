@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
     <style>
         /* ===== CSS RESET & BASE ===== */
         * {
@@ -113,16 +114,22 @@
             color: var(--color-text-secondary);
         }
 
-        /* Export Button */
+        /* Compact Footer with Material Icons */
         .sidebar-footer {
-            padding: 16px 20px;
+            padding: 12px 16px;
             border-top: 1px solid var(--color-border);
             background: var(--color-surface);
         }
 
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
         /* Progress bar in footer */
         .progress-wrapper {
-            margin-bottom: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--color-border);
         }
 
         .progress-label {
@@ -150,9 +157,139 @@
         }
 
         .footer-buttons {
+            display: none; /* Hide old button layout */
+        }
+
+        /* New compact icon-based footer */
+        .footer-actions {
             display: flex;
-            flex-direction: column;
-            gap: 8px;
+            align-items: center;
+            justify-content: space-around;
+            gap: 4px;
+            margin-top: 12px;
+            padding: 8px;
+            background: var(--color-border-light);
+            border-radius: 12px;
+        }
+
+        .footer-icon-btn {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 10px;
+            background: transparent;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 22px;
+        }
+
+        .footer-icon-btn:hover {
+            background: var(--color-surface);
+            color: var(--color-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .footer-icon-btn:active {
+            transform: translateY(0);
+        }
+
+        .footer-icon-btn .material-symbols-outlined {
+            font-size: 22px;
+        }
+
+        /* Tooltip on hover */
+        .footer-icon-btn::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%) scale(0.8);
+            padding: 6px 12px;
+            background: var(--color-text);
+            color: var(--color-surface);
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+        }
+
+        .footer-icon-btn:hover::after {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+        }
+
+        /* Tooltip arrow */
+        .footer-icon-btn::before {
+            content: '';
+            position: absolute;
+            bottom: calc(100% + 2px);
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid var(--color-text);
+            opacity: 0;
+            transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+
+        .footer-icon-btn:hover::before {
+            opacity: 1;
+        }
+
+        /* Highlight specific action buttons */
+        .footer-icon-btn.export-action {
+            color: var(--color-primary);
+        }
+
+        .footer-icon-btn.export-action:hover {
+            color: var(--color-primary-dark);
+            background: var(--color-primary-light);
+        }
+
+        .footer-icon-btn.import-action {
+            color: var(--color-success);
+        }
+
+        .footer-icon-btn.import-action:hover {
+            color: #047857;
+            background: var(--color-success-light);
+        }
+
+        /* Subtle pulse animation for primary actions */
+        @keyframes subtlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .footer-icon-btn.export-action .material-symbols-outlined,
+        .footer-icon-btn.import-action .material-symbols-outlined {
+            animation: subtlePulse 3s ease-in-out infinite;
+        }
+
+        .footer-icon-btn:hover .material-symbols-outlined {
+            animation: none;
+        }
+
+        /* Dark mode special styling */
+        [data-theme="dark"] .footer-actions {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        [data-theme="dark"] .footer-icon-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
 
                 .import-status {
@@ -165,6 +302,7 @@
             word-break: break-word;
         }
 .about-btn,
+        .shortcuts-btn,
         .export-btn,
         .import-btn {
             width: 100%;
@@ -182,6 +320,7 @@
         }
 
         .about-btn svg,
+        .shortcuts-btn svg,
         .export-btn svg,
         .import-btn svg {
             width: 16px;
@@ -199,6 +338,18 @@
             background: var(--color-hover);
             border-color: var(--color-text-muted);
         }
+
+        .shortcuts-btn {
+            background: var(--color-surface);
+            color: var(--color-text);
+            border: 1px solid var(--color-border);
+        }
+
+        .shortcuts-btn:hover {
+            background: var(--color-hover);
+            border-color: var(--color-text-muted);
+        }
+
 .export-btn {
             background: #3B82F6; /* lighter blue */
             color: white;
@@ -817,52 +968,295 @@
             text-transform: lowercase;
         }
 
-        /* Search Results */
+        /* Enhanced Search Results */
         .search-results {
             display: none;
+            padding: 8px;
         }
 
         .search-results.visible {
             display: block;
         }
 
-        .search-result-item {
+        /* Search Filters */
+        .search-filters {
             padding: 12px;
-            margin: 4px 0;
+            background: var(--color-border-light);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .search-filters-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .search-filter-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--color-border);
             border-radius: 6px;
+            background: var(--color-surface);
+            color: var(--color-text-secondary);
+            font-size: 12px;
+            font-weight: 500;
             cursor: pointer;
-            transition: background var(--transition);
-            border-left: 3px solid var(--color-border);
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .search-filter-btn:hover {
+            background: var(--color-hover);
+            border-color: var(--color-text-muted);
+        }
+
+        .search-filter-btn.active {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        .search-filter-btn .material-symbols-outlined {
+            font-size: 16px;
+        }
+
+        .search-results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 4px;
+            margin-bottom: 8px;
+        }
+
+        .search-results-count {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            font-weight: 500;
+        }
+
+        .search-clear-filters {
+            font-size: 11px;
+            color: var(--color-primary);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all var(--transition);
+        }
+
+        .search-clear-filters:hover {
+            background: var(--color-primary-light);
+        }
+
+        /* Search History */
+        .search-history {
+            padding: 12px;
+            background: var(--color-border-light);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .search-history-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-history-clear {
+            font-size: 10px;
+            color: var(--color-text-muted);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 3px;
+            transition: all var(--transition);
+            text-transform: none;
+        }
+
+        .search-history-clear:hover {
+            background: var(--color-surface);
+            color: var(--color-text);
+        }
+
+        .search-history-items {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .search-history-item {
+            padding: 6px 10px;
+            background: var(--color-surface);
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .search-history-item:hover {
+            background: var(--color-hover);
+            color: var(--color-text);
+        }
+
+        .search-history-item .material-symbols-outlined {
+            font-size: 14px;
+            color: var(--color-text-muted);
+        }
+
+        /* Enhanced Search Result Item with Thumbnail */
+        .search-result-item {
+            padding: 10px;
+            margin: 4px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all var(--transition);
+            border: 1px solid var(--color-border);
+            background: var(--color-surface);
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
         }
 
         .search-result-item:hover {
             background: var(--color-hover);
+            border-color: var(--color-primary);
+            transform: translateX(2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-result-thumbnail {
+            width: 60px;
+            height: 45px;
+            border-radius: 6px;
+            background: var(--color-border-light);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--color-border);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .search-result-thumbnail .material-symbols-outlined {
+            font-size: 24px;
+            color: var(--color-text-muted);
+        }
+
+        .search-result-thumbnail-text {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            text-align: center;
+            padding: 4px;
+            line-height: 1.2;
+        }
+
+        .search-result-content {
+            flex: 1;
+            min-width: 0;
         }
 
         .search-result-title {
-            font-size: 14px;
-            font-weight: 500;
+            font-size: 13px;
+            font-weight: 600;
             color: var(--color-text);
             margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .search-result-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background: var(--color-primary-light);
+            color: var(--color-primary);
+            font-weight: 600;
         }
 
         .search-result-context {
-            font-size: 12px;
+            font-size: 11px;
             color: var(--color-text-secondary);
-            line-height: 1.4;
+            line-height: 1.5;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .search-result-meta {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            font-size: 10px;
+            color: var(--color-text-muted);
+        }
+
+        .search-result-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .search-result-meta-item .material-symbols-outlined {
+            font-size: 14px;
         }
 
         .search-highlight {
             background: #FFF59D;
-            padding: 0 2px;
-            border-radius: 2px;
+            color: #111827;
+            padding: 1px 3px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        [data-theme="dark"] .search-highlight {
+            background: #F59E0B;
+            color: #1F2937;
         }
 
         .no-results {
-            padding: 20px;
+            padding: 40px 20px;
             text-align: center;
             color: var(--color-text-secondary);
-            font-size: 14px;
+        }
+
+        .no-results .material-symbols-outlined {
+            font-size: 48px;
+            color: var(--color-text-muted);
+            margin-bottom: 12px;
+        }
+
+        .no-results-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 8px;
+        }
+
+        .no-results-text {
+            font-size: 13px;
+            line-height: 1.5;
         }
 
         /* ===== MAIN CONTENT ===== */
@@ -2040,6 +2434,522 @@
                 border: 1px solid #333;
             }
         }
+
+        /* ===== ENHANCEMENT 1: GLASSMORPHISM EFFECTS ===== */
+        .export-modal-content {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15),
+                        0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        [data-theme="dark"] .export-modal-content {
+            background: rgba(31, 41, 55, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4),
+                        0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+
+        .about-modal-content {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15),
+                        0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        [data-theme="dark"] .about-modal-content {
+            background: rgba(31, 41, 55, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4),
+                        0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+
+        .zoom-controls {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1),
+                        0 0 0 1px rgba(255, 255, 255, 0.2);
+        }
+
+        [data-theme="dark"] .zoom-controls {
+            background: rgba(31, 41, 55, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3),
+                        0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px) saturate(180%);
+            -webkit-backdrop-filter: blur(10px) saturate(180%);
+            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.08);
+        }
+
+        [data-theme="dark"] .sidebar {
+            background: rgba(31, 41, 55, 0.95);
+            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* ===== ENHANCEMENT 2: SLIDE NUMBER INDICATOR ===== */
+        .slide-number-indicator {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            background: var(--color-primary);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+            z-index: 50;
+            animation: slideNumberFadeIn 0.4s ease;
+        }
+
+        @keyframes slideNumberFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        [data-theme="dark"] .slide-number-indicator {
+            background: var(--color-primary);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+
+        /* ===== ENHANCEMENT 3: CLICKABLE BREADCRUMBS ===== */
+        .activity-breadcrumb {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .breadcrumb-segment {
+            color: var(--color-text-secondary);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all var(--transition);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .breadcrumb-segment:hover {
+            color: var(--color-primary);
+            background: var(--color-primary-light);
+        }
+
+        .breadcrumb-separator {
+            color: var(--color-text-muted);
+            user-select: none;
+            font-weight: 400;
+        }
+
+        .breadcrumb-segment.active {
+            color: var(--color-text);
+            font-weight: 600;
+        }
+
+        /* ===== ENHANCEMENT 4: MODULE SEPARATORS ===== */
+        .nav-module-separator {
+            height: 1px;
+            background: linear-gradient(
+                to right,
+                transparent,
+                var(--color-border) 20%,
+                var(--color-border) 80%,
+                transparent
+            );
+            margin: 12px 0;
+            position: relative;
+        }
+
+        .nav-module-separator::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 1px;
+            background: var(--color-primary);
+            opacity: 0.3;
+        }
+
+        /* ===== ENHANCEMENT 5: CIRCULAR PROGRESS INDICATORS ===== */
+        .circular-progress {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 16px;
+        }
+
+        .circular-progress svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .circular-progress-bg {
+            fill: none;
+            stroke: var(--color-border);
+            stroke-width: 6;
+        }
+
+        .circular-progress-fill {
+            fill: none;
+            stroke: var(--color-primary);
+            stroke-width: 6;
+            stroke-linecap: round;
+            stroke-dasharray: 251.2;
+            stroke-dashoffset: 251.2;
+            transition: stroke-dashoffset 0.6s ease;
+        }
+
+        .circular-progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--color-text);
+        }
+
+        .progress-milestone {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: all var(--transition);
+        }
+
+        .progress-milestone.completed {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+
+        .progress-milestone:hover {
+            transform: translateY(-50%) scale(1.2);
+        }
+
+        /* ===== ENHANCEMENT 6: TIME ESTIMATE ===== */
+        .time-estimate {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            margin-top: 8px;
+            padding: 6px 12px;
+            background: var(--color-border-light);
+            border-radius: 6px;
+            width: fit-content;
+        }
+
+        .time-estimate-icon {
+            width: 14px;
+            height: 14px;
+            color: var(--color-text-muted);
+        }
+
+        .time-estimate-text {
+            font-weight: 500;
+        }
+
+        /* ===== ENHANCEMENT 7: KEYBOARD SHORTCUTS OVERLAY ===== */
+        .shortcuts-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .shortcuts-modal.visible {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .shortcuts-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        [data-theme="dark"] .shortcuts-panel {
+            background: rgba(31, 41, 55, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .shortcuts-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--color-border);
+        }
+
+        .shortcuts-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--color-text);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .shortcuts-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--color-text-secondary);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all var(--transition);
+        }
+
+        .shortcuts-close:hover {
+            background: var(--color-hover);
+            color: var(--color-text);
+        }
+
+        .shortcuts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .shortcut-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            transition: all var(--transition);
+        }
+
+        .shortcut-item:hover {
+            border-color: var(--color-primary);
+            background: var(--color-primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+        }
+
+        .shortcut-label {
+            font-size: 14px;
+            color: var(--color-text);
+            font-weight: 500;
+        }
+
+        .shortcut-keys {
+            display: flex;
+            gap: 4px;
+        }
+
+        .shortcut-key {
+            background: var(--color-border-light);
+            color: var(--color-text-secondary);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: 'Monaco', 'Consolas', monospace;
+            border: 1px solid var(--color-border);
+            min-width: 28px;
+            text-align: center;
+        }
+
+        [data-theme="dark"] .shortcut-key {
+            background: var(--color-hover);
+        }
+
+        /* ===== ENHANCEMENT 8: PRESENTATION MODE ===== */
+        body.presentation-mode .sidebar {
+            transform: translateX(-100%);
+        }
+
+        body.presentation-mode .main-content {
+            margin-left: 0;
+        }
+
+        body.presentation-mode .content-header {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        body.presentation-mode .zoom-controls {
+            opacity: 0;
+            transition: opacity var(--transition);
+        }
+
+        body.presentation-mode:hover .zoom-controls {
+            opacity: 1;
+        }
+
+        body.presentation-mode .slide-container {
+            max-width: 100%;
+            padding: 80px;
+        }
+
+        .presenter-controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            padding: 20px;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            opacity: 0;
+            transform: translateY(100%);
+            transition: all 0.3s ease;
+            z-index: 200;
+        }
+
+        body.presentation-mode .presenter-controls {
+            display: flex;
+        }
+
+        body.presentation-mode:hover .presenter-controls {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .presenter-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .presenter-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .presenter-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .laser-pointer-effect {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 0, 0, 0.8), rgba(255, 0, 0, 0));
+            pointer-events: none;
+            z-index: 9999;
+            display: none;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+        }
+
+        body.presentation-mode.laser-active .laser-pointer-effect {
+            display: block;
+        }
+
+        /* Presentation mode toggle button */
+        .presentation-toggle {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--color-primary);
+            color: white;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+            z-index: 150;
+        }
+
+        .presentation-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.5);
+        }
+
+        .presentation-toggle svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        body.presentation-mode .presentation-toggle {
+            background: var(--color-warning);
+        }
     </style>
 </head>
 <body>
@@ -2092,7 +3002,43 @@
             <nav class="nav-tree" id="navTree" aria-label="Training navigation"></nav>
 
             <!-- Search Results -->
-            <div class="search-results" id="searchResults"></div>
+            <div class="search-results" id="searchResults">
+                <!-- Search History (shown when no active search) -->
+                <div class="search-history" id="searchHistory" style="display: none;">
+                    <div class="search-history-title">
+                        Recent Searches
+                        <button class="search-history-clear" id="clearSearchHistory">Clear</button>
+                    </div>
+                    <div class="search-history-items" id="searchHistoryItems"></div>
+                </div>
+
+                <!-- Search Filters -->
+                <div class="search-filters" id="searchFilters" style="display: none;">
+                    <div class="search-filters-row">
+                        <button class="search-filter-btn" data-filter="all">
+                            <span class="material-symbols-outlined">select_all</span>
+                            All
+                        </button>
+                        <button class="search-filter-btn" data-filter="completed">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            Completed
+                        </button>
+                        <button class="search-filter-btn" data-filter="incomplete">
+                            <span class="material-symbols-outlined">radio_button_unchecked</span>
+                            Incomplete
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results Header -->
+                <div class="search-results-header" id="searchResultsHeader" style="display: none;">
+                    <span class="search-results-count" id="searchResultsCount">0 results</span>
+                    <button class="search-clear-filters" id="clearFiltersBtn" style="display: none;">Clear filters</button>
+                </div>
+
+                <!-- Results List -->
+                <div id="searchResultsList"></div>
+            </div>
 
             <!-- Export Button -->
             <div class="sidebar-footer">
@@ -2105,36 +3051,22 @@
                         <div class="progress-fill" id="sidebar-progress-fill" style="width: 0%"></div>
                     </div>
                 </div>
-                <div class="footer-buttons">
-                    <button class="dark-mode-toggle" id="darkModeToggle" onclick="app.toggleDarkMode()">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="darkModeIcon">
-                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                        </svg>
-                        <span id="darkModeLabel">Dark Mode</span>
+                <!-- Compact Icon-Based Footer Actions -->
+                <div class="footer-actions">
+                    <button class="footer-icon-btn" onclick="app.toggleDarkMode()" data-tooltip="Dark Mode" id="darkModeToggle">
+                        <span class="material-symbols-outlined" id="darkModeIcon">dark_mode</span>
                     </button>
-                    <button class="about-btn" onclick="app.openAboutModal()">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="16" x2="12" y2="12"></line>
-                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                        </svg>
-                        About This Training
+                    <button class="footer-icon-btn" onclick="toggleShortcutsModal()" data-tooltip="Shortcuts">
+                        <span class="material-symbols-outlined">keyboard</span>
                     </button>
-                    <button class="import-btn" onclick="app.openImportDialog()">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="17 8 12 3 7 8"></polyline>
-                            <line x1="12" y1="3" x2="12" y2="15"></line>
-                        </svg>
-                        Import JSON
+                    <button class="footer-icon-btn" onclick="app.openAboutModal()" data-tooltip="About">
+                        <span class="material-symbols-outlined">info</span>
                     </button>
-                    <button class="export-btn" onclick="app.openExportModal()">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="7 10 12 15 17 10"></polyline>
-                            <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
-                        Export Content
+                    <button class="footer-icon-btn import-action" onclick="app.openImportDialog()" data-tooltip="Import">
+                        <span class="material-symbols-outlined">upload_file</span>
+                    </button>
+                    <button class="footer-icon-btn export-action" onclick="app.openExportModal()" data-tooltip="Export">
+                        <span class="material-symbols-outlined">download</span>
                     </button>
                 </div>
                 <div class="import-status" id="importStatus" aria-live="polite"></div>
@@ -2555,10 +3487,10 @@ navAllFolded: false,
             init() {
                 console.log('App initializing...');
                 console.log('App object:', this);
-                
+
                 this.buildNavigation();
                 this.attachEventListeners();
-this.loadNavFoldAllState();
+                this.loadNavFoldAllState();
                 this.loadStateFromHash();
                 this.loadTimerState();
                 // Seen-state markers removed (no persistent "visited/completed" ticks)
@@ -2568,7 +3500,8 @@ this.loadNavFoldAllState();
                 this.loadZoomPreference();
                 this.loadDetailsPanelState();
                 this.startTimerTicks();
-                
+                this.initSearchHandlers(); // Initialize enhanced search
+
                 console.log('App initialized successfully');
                 console.log('courseData:', this.courseData);
             },
@@ -2987,14 +3920,24 @@ updateNavFoldAllAvailability() {
             },
 
             // Search functionality
+            // Enhanced Search System
+            searchHistory: [],
+            searchFilters: {
+                completion: 'all', // 'all', 'completed', 'incomplete'
+            },
+            maxSearchHistory: 5,
+
             performSearch(query) {
                 this.searchQuery = query.toLowerCase().trim();
-                
+
                 if (!this.searchQuery) {
                     this.clearSearch();
                     return;
                 }
-                
+
+                // Save to search history
+                this.addToSearchHistory(this.searchQuery);
+
                 if (!this.courseData || !this.courseData.modules) return;
 
                 const results = [];
@@ -3009,8 +3952,12 @@ updateNavFoldAllAvailability() {
                                     results.push({
                                         type: 'activity',
                                         activity: activity,
+                                        module: module,
+                                        moment: moment,
+                                        submoment: submoment,
                                         title: activity.title,
-                                        context: 'Activity match'
+                                        context: 'Activity match',
+                                        timestamp: Date.now()
                                     });
                                 }
 
@@ -3018,12 +3965,26 @@ updateNavFoldAllAvailability() {
                                 activity.slides.forEach((slide, index) => {
                                     const slideText = (slide.title + ' ' + slide.content).toLowerCase();
                                     if (slideText.includes(this.searchQuery)) {
+                                        // Extract context with search term
+                                        const contextText = slide.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                                        const queryIndex = contextText.toLowerCase().indexOf(this.searchQuery);
+                                        const contextStart = Math.max(0, queryIndex - 50);
+                                        const contextEnd = Math.min(contextText.length, queryIndex + this.searchQuery.length + 50);
+                                        const contextSnippet = (contextStart > 0 ? '...' : '') +
+                                                             contextText.substring(contextStart, contextEnd) +
+                                                             (contextEnd < contextText.length ? '...' : '');
+
                                         results.push({
                                             type: 'slide',
                                             activity: activity,
+                                            module: module,
+                                            moment: moment,
+                                            submoment: submoment,
                                             slideIndex: index,
-                                            title: `${activity.title} - Slide ${index + 1}`,
-                                            context: slide.title || slide.content.substring(0, 100)
+                                            title: `${activity.title}`,
+                                            slideTitle: slide.title || `Slide ${index + 1}`,
+                                            context: contextSnippet || slide.title || 'Slide content',
+                                            timestamp: Date.now()
                                         });
                                     }
                                 });
@@ -3035,41 +3996,151 @@ updateNavFoldAllAvailability() {
                 this.displaySearchResults(results);
             },
 
-            displaySearchResults(results) {
-                const navTree = document.getElementById('navTree');
-                const searchResults = document.getElementById('searchResults');
+            addToSearchHistory(query) {
+                // Remove if already exists
+                this.searchHistory = this.searchHistory.filter(item => item !== query);
+                // Add to beginning
+                this.searchHistory.unshift(query);
+                // Limit to max items
+                if (this.searchHistory.length > this.maxSearchHistory) {
+                    this.searchHistory = this.searchHistory.slice(0, this.maxSearchHistory);
+                }
+                // Save to localStorage
+                this.safeLocalStorageSet('searchHistory', JSON.stringify(this.searchHistory));
+            },
 
-                navTree.style.display = 'none';
-                searchResults.classList.add('visible');
+            loadSearchHistory() {
+                const saved = this.safeLocalStorageGet('searchHistory');
+                if (saved) {
+                    try {
+                        this.searchHistory = JSON.parse(saved);
+                    } catch (e) {
+                        this.searchHistory = [];
+                    }
+                }
+            },
 
-                if (results.length === 0) {
-                    searchResults.innerHTML = '<div class="no-results">No results found</div>';
+            clearSearchHistory() {
+                this.searchHistory = [];
+                this.safeLocalStorageSet('searchHistory', JSON.stringify([]));
+                this.renderSearchHistory();
+            },
+
+            renderSearchHistory() {
+                const historyContainer = document.getElementById('searchHistory');
+                const historyItems = document.getElementById('searchHistoryItems');
+
+                if (this.searchHistory.length === 0) {
+                    historyContainer.style.display = 'none';
                     return;
                 }
 
-                searchResults.innerHTML = results.map(result => {
+                historyContainer.style.display = 'block';
+                historyItems.innerHTML = this.searchHistory.map(query => `
+                    <div class="search-history-item" data-query="${this.sanitizeHTML(query)}">
+                        <span class="material-symbols-outlined">history</span>
+                        ${this.sanitizeHTML(query)}
+                    </div>
+                `).join('');
+
+                // Add click handlers
+                historyItems.querySelectorAll('.search-history-item').forEach(el => {
+                    el.addEventListener('click', () => {
+                        const query = el.dataset.query;
+                        document.getElementById('searchInput').value = query;
+                        this.performSearch(query);
+                    });
+                });
+            },
+
+            displaySearchResults(results) {
+                const navTree = document.getElementById('navTree');
+                const searchResults = document.getElementById('searchResults');
+                const searchResultsList = document.getElementById('searchResultsList');
+                const searchFilters = document.getElementById('searchFilters');
+                const searchResultsHeader = document.getElementById('searchResultsHeader');
+                const searchResultsCount = document.getElementById('searchResultsCount');
+                const searchHistory = document.getElementById('searchHistory');
+
+                navTree.style.display = 'none';
+                searchResults.classList.add('visible');
+                searchHistory.style.display = 'none';
+
+                // Apply filters
+                let filteredResults = results;
+                if (this.searchFilters.completion !== 'all') {
+                    filteredResults = results.filter(result => {
+                        const isCompleted = this.isActivityCompleted(result.activity);
+                        return this.searchFilters.completion === 'completed' ? isCompleted : !isCompleted;
+                    });
+                }
+
+                // Show filters and header
+                searchFilters.style.display = 'block';
+                searchResultsHeader.style.display = 'flex';
+                searchResultsCount.textContent = `${filteredResults.length} result${filteredResults.length !== 1 ? 's' : ''}`;
+
+                if (filteredResults.length === 0) {
+                    searchResultsList.innerHTML = `
+                        <div class="no-results">
+                            <span class="material-symbols-outlined">search_off</span>
+                            <div class="no-results-title">No results found</div>
+                            <div class="no-results-text">Try adjusting your search terms or filters</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                searchResultsList.innerHTML = filteredResults.map(result => {
                     const highlightedContext = this.highlightText(result.context, this.searchQuery);
+                    const highlightedTitle = this.highlightText(result.title, this.searchQuery);
+                    const isCompleted = this.isActivityCompleted(result.activity);
+
+                    // Generate thumbnail
+                    const thumbnailContent = result.type === 'slide'
+                        ? `<div class="search-result-thumbnail-text">${result.slideTitle}</div>`
+                        : `<span class="material-symbols-outlined">description</span>`;
+
                     return `
                         <div class="search-result-item" data-activity-id="${result.activity.id}" data-slide-index="${result.slideIndex || 0}">
-                            <div class="search-result-title">${result.title}</div>
-                            <div class="search-result-context">${highlightedContext}</div>
+                            <div class="search-result-thumbnail">
+                                ${thumbnailContent}
+                            </div>
+                            <div class="search-result-content">
+                                <div class="search-result-title">
+                                    ${highlightedTitle}
+                                    ${result.type === 'slide' ? '<span class="search-result-badge">Slide ' + (result.slideIndex + 1) + '</span>' : ''}
+                                </div>
+                                <div class="search-result-context">${highlightedContext}</div>
+                                <div class="search-result-meta">
+                                    <div class="search-result-meta-item">
+                                        <span class="material-symbols-outlined">folder</span>
+                                        ${result.module.title}
+                                    </div>
+                                    ${isCompleted ? '<div class="search-result-meta-item"><span class="material-symbols-outlined">check_circle</span>Completed</div>' : ''}
+                                </div>
+                            </div>
                         </div>
                     `;
                 }).join('');
 
                 // Add click handlers to search results
-                searchResults.querySelectorAll('.search-result-item').forEach(el => {
+                searchResultsList.querySelectorAll('.search-result-item').forEach(el => {
                     el.addEventListener('click', () => {
                         const activityId = el.dataset.activityId;
                         const slideIndex = parseInt(el.dataset.slideIndex);
                         const activity = this.findActivityById(activityId);
-                        
+
                         if (activity) {
                             this.currentActivity = activity;
                             this.currentSlideIndex = slideIndex;
                             this.updateActivityHeader();
                             this.renderSlide();
                             this.updateActiveNav();
+
+                            // Highlight search terms in the slide content
+                            this.highlightSearchTermsInSlide();
+
                             this.clearSearch();
                             this.closeMobileMenu();
                             this.updateHash();
@@ -3077,6 +4148,40 @@ updateNavFoldAllAvailability() {
                         }
                     });
                 });
+            },
+
+            highlightSearchTermsInSlide() {
+                if (!this.searchQuery) return;
+
+                setTimeout(() => {
+                    const slideContent = document.querySelector('.slide-content');
+                    if (!slideContent) return;
+
+                    // Walk through text nodes and highlight
+                    const walk = (node) => {
+                        if (node.nodeType === Node.TEXT_NODE) {
+                            const text = node.textContent;
+                            const lowerText = text.toLowerCase();
+                            const queryLower = this.searchQuery.toLowerCase();
+
+                            if (lowerText.includes(queryLower)) {
+                                const span = document.createElement('span');
+                                span.innerHTML = this.highlightText(text, this.searchQuery);
+                                node.parentNode.replaceChild(span, node);
+                            }
+                        } else if (node.nodeType === Node.ELEMENT_NODE && node.nodeName !== 'SCRIPT' && node.nodeName !== 'STYLE') {
+                            Array.from(node.childNodes).forEach(child => walk(child));
+                        }
+                    };
+
+                    walk(slideContent);
+                }, 100);
+            },
+
+            isActivityCompleted(activity) {
+                // Check if activity is in completedActivities (if you're tracking that)
+                // For now, return false as placeholder
+                return false;
             },
 
             highlightText(text, query) {
@@ -3114,13 +4219,62 @@ updateNavFoldAllAvailability() {
                 const searchClear = document.getElementById('searchClear');
                 const navTree = document.getElementById('navTree');
                 const searchResults = document.getElementById('searchResults');
+                const searchFilters = document.getElementById('searchFilters');
+                const searchResultsHeader = document.getElementById('searchResultsHeader');
+                const searchHistory = document.getElementById('searchHistory');
 
                 searchInput.value = '';
                 searchClear.classList.remove('visible');
                 navTree.style.display = 'block';
                 searchResults.classList.remove('visible');
-                searchResults.innerHTML = '';
+
+                // Hide filters and header
+                if (searchFilters) searchFilters.style.display = 'none';
+                if (searchResultsHeader) searchResultsHeader.style.display = 'none';
+
+                // Show search history if available
+                this.renderSearchHistory();
+
                 this.searchQuery = '';
+                this.searchFilters.completion = 'all';
+                this.updateFilterButtons();
+            },
+
+            updateFilterButtons() {
+                document.querySelectorAll('.search-filter-btn').forEach(btn => {
+                    const filter = btn.dataset.filter;
+                    if (filter === this.searchFilters.completion) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            },
+
+            initSearchHandlers() {
+                // Search history clear button
+                const clearHistoryBtn = document.getElementById('clearSearchHistory');
+                if (clearHistoryBtn) {
+                    clearHistoryBtn.addEventListener('click', () => {
+                        this.clearSearchHistory();
+                    });
+                }
+
+                // Filter buttons
+                document.querySelectorAll('.search-filter-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        this.searchFilters.completion = btn.dataset.filter;
+                        this.updateFilterButtons();
+                        // Re-run search with new filters
+                        if (this.searchQuery) {
+                            const searchInput = document.getElementById('searchInput');
+                            this.performSearch(searchInput.value);
+                        }
+                    });
+                });
+
+                // Load search history on init
+                this.loadSearchHistory();
             },
 
             // Mobile menu
@@ -4636,23 +5790,20 @@ this.activityTimer = {
             },
 
             updateDarkModeButton(theme) {
-                const label = document.getElementById('darkModeLabel');
                 const icon = document.getElementById('darkModeIcon');
-                if (label) {
-                    label.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
-                }
+                const btn = document.getElementById('darkModeToggle');
                 if (icon) {
-                    icon.innerHTML = theme === 'dark'
-                        ? '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>'
-                        : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+                    icon.textContent = theme === 'dark' ? 'light_mode' : 'dark_mode';
+                }
+                if (btn) {
+                    btn.setAttribute('data-tooltip', theme === 'dark' ? 'Light Mode' : 'Dark Mode');
                 }
             },
 
             loadThemePreference() {
                 const saved = this.safeLocalStorageGet('theme');
-                // Respect system preference if no saved preference
-                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                const theme = saved || (prefersDark ? 'dark' : 'light');
+                // Default to light mode (no longer respecting system preference by default)
+                const theme = saved || 'light';
                 if (theme === 'dark') {
                     document.documentElement.setAttribute('data-theme', 'dark');
                 }
@@ -5032,6 +6183,286 @@ this.activityTimer = {
         } else {
             app.init();
         }
+    </script>
+
+    <!-- ENHANCEMENT 7: Keyboard Shortcuts Modal -->
+    <div class="shortcuts-modal" id="shortcutsModal" role="dialog" aria-modal="true" aria-labelledby="shortcutsTitle" onclick="if(event.target === this) toggleShortcutsModal()">
+        <div class="shortcuts-panel">
+            <div class="shortcuts-header">
+                <h2 class="shortcuts-title" id="shortcutsTitle">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                        <path d="M6 8h.01M10 8h.01M14 8h.01M6 12h.01M10 12h.01M14 12h.01M6 16h.01M10 16h.01M14 16h.01"></path>
+                    </svg>
+                    Keyboard Shortcuts
+                </h2>
+                <button class="shortcuts-close" onclick="toggleShortcutsModal()" aria-label="Close shortcuts">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="shortcuts-grid">
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Next Slide</span>
+                    <div class="shortcut-keys">
+                        <span class="shortcut-key">→</span>
+                        <span class="shortcut-key">Space</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Previous Slide</span>
+                    <div class="shortcut-keys">
+                        <span class="shortcut-key">←</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Next Section</span>
+                    <div class="shortcut-keys">
+                        <span class="shortcut-key">N</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Search</span>
+                    <div class="shortcut-keys">
+                        <span class="shortcut-key">Ctrl</span>
+                        <span class="shortcut-key">F</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Toggle Dark Mode</span>
+                    <div class="shortcut-keys">
+                        <span class="shortcut-key">D</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Presentation Mode</span>
+                    <div class="shortcut-keys">
+                        <span class="shortcut-key">P</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Keyboard Shortcuts</span>
+                    <div class="shortcut-keys">
+                        <span class="shortcut-key">?</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Zoom In</span>
+                    <div class="shortcut-keys">
+                        <span class="shortcut-key">+</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Zoom Out</span>
+                    <div class="shortcut-keys">
+                        <span class="shortcut-key">-</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Reset Zoom</span>
+                    <div class="shortcut-keys">
+                        <span class="shortcut-key">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ENHANCEMENT 8: Presentation Mode Toggle Button -->
+    <button class="presentation-toggle" id="presentationToggle" onclick="togglePresentationMode()" title="Toggle Presentation Mode (P)" aria-label="Toggle presentation mode">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+    </button>
+
+    <!-- ENHANCEMENT 8: Presenter Controls (shown in presentation mode) -->
+    <div class="presenter-controls" id="presenterControls">
+        <button class="presenter-btn" onclick="app.prevSlide()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            Previous
+        </button>
+        <button class="presenter-btn" onclick="app.nextSlide()">
+            Next
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+        </button>
+        <button class="presenter-btn" onclick="togglePresentationMode()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12"></path>
+            </svg>
+            Exit
+        </button>
+    </div>
+
+    <!-- ENHANCEMENT 8: Laser Pointer Effect -->
+    <div class="laser-pointer-effect" id="laserPointer"></div>
+
+    <script>
+        // ===== ENHANCEMENT FUNCTIONS =====
+
+        // Enhancement 7: Keyboard Shortcuts Modal
+        function toggleShortcutsModal() {
+            const modal = document.getElementById('shortcutsModal');
+            modal.classList.toggle('visible');
+        }
+
+        // Enhancement 8: Presentation Mode
+        function togglePresentationMode() {
+            document.body.classList.toggle('presentation-mode');
+            const btn = document.getElementById('presentationToggle');
+            if (document.body.classList.contains('presentation-mode')) {
+                btn.title = 'Exit Presentation Mode (P)';
+            } else {
+                btn.title = 'Toggle Presentation Mode (P)';
+            }
+        }
+
+        // Enhancement 8: Laser Pointer
+        let laserActive = false;
+        const laserPointer = document.getElementById('laserPointer');
+
+        document.addEventListener('mousemove', (e) => {
+            if (laserActive && document.body.classList.contains('presentation-mode')) {
+                laserPointer.style.left = e.clientX + 'px';
+                laserPointer.style.top = e.clientY + 'px';
+            }
+        });
+
+        // Enhanced Keyboard Shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ignore if typing in input
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            switch(e.key) {
+                case '?':
+                    e.preventDefault();
+                    toggleShortcutsModal();
+                    break;
+                case 'p':
+                case 'P':
+                    if (!e.ctrlKey && !e.metaKey) {
+                        e.preventDefault();
+                        togglePresentationMode();
+                    }
+                    break;
+                case 'n':
+                case 'N':
+                    if (!e.ctrlKey && !e.metaKey && app.goToNextSection) {
+                        e.preventDefault();
+                        app.goToNextSection();
+                    }
+                    break;
+                case 'd':
+                case 'D':
+                    if (!e.ctrlKey && !e.metaKey && app.toggleTheme) {
+                        e.preventDefault();
+                        app.toggleTheme();
+                    }
+                    break;
+                case 'l':
+                case 'L':
+                    if (document.body.classList.contains('presentation-mode')) {
+                        e.preventDefault();
+                        laserActive = !laserActive;
+                        document.body.classList.toggle('laser-active', laserActive);
+                    }
+                    break;
+                case 'Escape':
+                    if (document.getElementById('shortcutsModal').classList.contains('visible')) {
+                        toggleShortcutsModal();
+                    } else if (document.body.classList.contains('presentation-mode')) {
+                        togglePresentationMode();
+                    }
+                    break;
+            }
+        });
+
+        // Enhancement 2: Update slide number indicator
+        if (typeof app !== 'undefined') {
+            const originalNavigateToSlide = app.navigateToSlide;
+            app.navigateToSlide = function(...args) {
+                if (originalNavigateToSlide) {
+                    originalNavigateToSlide.apply(this, args);
+                }
+                updateSlideNumberIndicator();
+            };
+        }
+
+        function updateSlideNumberIndicator() {
+            let indicator = document.querySelector('.slide-number-indicator');
+            if (!indicator && app.currentActivity && app.currentSlide !== undefined) {
+                indicator = document.createElement('div');
+                indicator.className = 'slide-number-indicator';
+                document.querySelector('.slide-container')?.appendChild(indicator);
+            }
+
+            if (indicator && app.currentActivity && app.currentSlide !== undefined) {
+                const currentSlideNum = app.currentSlide + 1;
+                const totalSlides = app.currentActivity.slides?.length || 0;
+                indicator.textContent = `${currentSlideNum} / ${totalSlides}`;
+            }
+        }
+
+        // Enhancement 3: Enhanced breadcrumbs with clickable segments
+        function enhanceBreadcrumbs() {
+            const breadcrumb = document.getElementById('activityBreadcrumb');
+            if (!breadcrumb || !app.currentModule || !app.currentActivity) return;
+
+            const moduleName = app.currentModule.name;
+            const activityName = app.currentActivity.name;
+
+            breadcrumb.innerHTML = `
+                <span class="breadcrumb-segment" onclick="app.navigateToModule('${app.currentModule.id}')">${moduleName}</span>
+                <span class="breadcrumb-separator">›</span>
+                <span class="breadcrumb-segment active">${activityName}</span>
+            `;
+        }
+
+        // Enhancement 6: Time estimate display
+        function addTimeEstimate() {
+            const footer = document.querySelector('.sidebar-footer .progress-wrapper');
+            if (footer && !document.querySelector('.time-estimate') && app.data) {
+                let totalMinutes = 0;
+                app.data.modules?.forEach(module => {
+                    module.activities?.forEach(activity => {
+                        if (activity.duration) {
+                            totalMinutes += parseInt(activity.duration) || 0;
+                        }
+                    });
+                });
+
+                if (totalMinutes > 0) {
+                    const hours = Math.floor(totalMinutes / 60);
+                    const minutes = totalMinutes % 60;
+                    const timeText = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+
+                    const timeEstimate = document.createElement('div');
+                    timeEstimate.className = 'time-estimate';
+                    timeEstimate.innerHTML = `
+                        <svg class="time-estimate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span class="time-estimate-text">Est. ${timeText} total</span>
+                    `;
+                    footer.appendChild(timeEstimate);
+                }
+            }
+        }
+
+        // Initialize enhancements when app is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                addTimeEstimate();
+            }, 1000);
+        });
     </script>
 </body>
 </html>
