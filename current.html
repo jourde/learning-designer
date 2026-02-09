@@ -30739,7 +30739,9 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
     <!-- Modal Body -->
     <div class="flex-1 p-6 overflow-hidden flex flex-col gap-3">
       <!-- Markdown Toolbar -->
+
       <div class="flex items-center gap-1 px-2 py-2 bg-slate-50 border border-slate-200 rounded-lg flex-wrap">
+        <!-- Inline -->
         <div class="flex items-center gap-1 border-r border-slate-300 pr-2">
           <button type="button" class="md-btn" data-md-action="bold" title="Gras (Ctrl+B)">
             <span class="material-icons-round text-[18px]">format_bold</span>
@@ -30750,8 +30752,12 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
           <button type="button" class="md-btn" data-md-action="strikethrough" title="Barré">
             <span class="material-icons-round text-[18px]">strikethrough_s</span>
           </button>
+          <button type="button" class="md-btn" data-md-action="code" title="Code inline">
+            <span class="material-icons-round text-[18px]">code</span>
+          </button>
         </div>
-        
+
+        <!-- Headings -->
         <div class="flex items-center gap-1 border-r border-slate-300 pr-2">
           <button type="button" class="md-btn" data-md-action="h1" title="Titre 1">
             <span class="font-bold text-sm">H1</span>
@@ -30762,11 +30768,27 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
           <button type="button" class="md-btn" data-md-action="h3" title="Titre 3">
             <span class="font-bold text-sm">H3</span>
           </button>
+          <button type="button" class="md-btn" data-md-action="h4" title="Titre 4">
+            <span class="font-bold text-sm">H4</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="h5" title="Titre 5">
+            <span class="font-bold text-sm">H5</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="h6" title="Titre 6">
+            <span class="font-bold text-sm">H6</span>
+          </button>
         </div>
-        
+
+        <!-- Lists + indentation -->
         <div class="flex items-center gap-1 border-r border-slate-300 pr-2">
-          <button type="button" class="md-btn" data-md-action="ul" title="Liste à puces">
+          <button type="button" class="md-btn" data-md-action="ul" title="Liste à puces (-)">
             <span class="material-icons-round text-[18px]">format_list_bulleted</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="ul_star" title="Liste à puces (*)">
+            <span class="font-mono text-[12px] font-bold">*</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="ul_plus" title="Liste à puces (+)">
+            <span class="font-mono text-[12px] font-bold">+</span>
           </button>
           <button type="button" class="md-btn" data-md-action="ol" title="Liste numérotée">
             <span class="material-icons-round text-[18px]">format_list_numbered</span>
@@ -30774,32 +30796,64 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
           <button type="button" class="md-btn" data-md-action="checklist" title="Liste de tâches">
             <span class="material-icons-round text-[18px]">checklist</span>
           </button>
+          <button type="button" class="md-btn" data-md-action="toggle_task" title="Cocher / décocher tâche">
+            <span class="material-icons-round text-[18px]">check_box</span>
+          </button>
+
+          <span class="mx-1 w-px h-6 bg-slate-300"></span>
+
+          <button type="button" class="md-btn" data-md-action="indent" title="Indenter (Tab)">
+            <span class="material-icons-round text-[18px]">format_indent_increase</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="outdent" title="Désindenter (Shift+Tab)">
+            <span class="material-icons-round text-[18px]">format_indent_decrease</span>
+          </button>
         </div>
-        
+
+        <!-- Inserts / blocks -->
         <div class="flex items-center gap-1 border-r border-slate-300 pr-2">
-          <button type="button" class="md-btn" data-md-action="link" title="Insérer un lien">
+          <button type="button" class="md-btn" data-md-action="link" title="Insérer un lien (Ctrl+K)">
             <span class="material-icons-round text-[18px]">link</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="image" title="Insérer une image">
+            <span class="material-icons-round text-[18px]">image</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="autolink" title="Auto-lien &lt;https://…&gt;">
+            <span class="material-icons-round text-[18px]">add_link</span>
           </button>
           <button type="button" class="md-btn" data-md-action="quote" title="Citation">
             <span class="material-icons-round text-[18px]">format_quote</span>
-          </button>
-          <button type="button" class="md-btn" data-md-action="code" title="Code inline">
-            <span class="material-icons-round text-[18px]">code</span>
           </button>
           <button type="button" class="md-btn" data-md-action="codeblock" title="Bloc de code">
             <span class="material-icons-round text-[18px]">code_blocks</span>
           </button>
         </div>
-        
+
+        <!-- Tables / separators -->
         <div class="flex items-center gap-1">
           <button type="button" class="md-btn" data-md-action="hr" title="Ligne horizontale">
             <span class="material-icons-round text-[18px]">horizontal_rule</span>
           </button>
-          <button type="button" class="md-btn" data-md-action="table" title="Tableau">
+          <button type="button" class="md-btn" data-md-action="table" title="Insérer un tableau">
             <span class="material-icons-round text-[18px]">table_chart</span>
           </button>
+          <button type="button" class="md-btn" data-md-action="table_add_row" title="Ajouter une ligne (tableau)">
+            <span class="font-mono text-[12px] font-bold">+R</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="table_add_col" title="Ajouter une colonne (tableau)">
+            <span class="font-mono text-[12px] font-bold">+C</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="table_align_left" title="Aligner colonnes à gauche (tableau)">
+            <span class="font-mono text-[12px] font-bold">L</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="table_align_center" title="Aligner colonnes au centre (tableau)">
+            <span class="font-mono text-[12px] font-bold">C</span>
+          </button>
+          <button type="button" class="md-btn" data-md-action="table_align_right" title="Aligner colonnes à droite (tableau)">
+            <span class="font-mono text-[12px] font-bold">R</span>
+          </button>
         </div>
-        
+
         <div class="ml-auto flex items-center gap-2">
           <span class="text-xs text-slate-500">Markdown activé</span>
           <a href="https://www.markdownguide.org/cheat-sheet/" target="_blank" class="text-xs text-indigo-600 hover:text-indigo-700 flex items-center gap-1" title="Guide Markdown">
@@ -30808,7 +30862,6 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
           </a>
         </div>
       </div>
-      
       <textarea id="fullscreen-textarea-content" 
                 class="flex-1 px-4 py-3 text-base border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none bg-white text-slate-700 leading-relaxed font-sans"
                 placeholder="Saisissez votre texte ici..."></textarea>
@@ -31019,16 +31072,235 @@ kbd {
     updateCharCount();
   }
 
+  // --- Multi-line helpers (lists / indentation / toggles) ---
+  function _getLineRangeFromSelection() {
+    const v = modalContent.value;
+    let s = modalContent.selectionStart || 0;
+    let e = modalContent.selectionEnd || 0;
+
+    // Normalise selection (some browsers can return reversed ranges)
+    if (e < s) { const t = s; s = e; e = t; }
+
+    let lineStart = v.lastIndexOf('\n', Math.max(0, s - 1)) + 1;
+    let lineEnd = v.indexOf('\n', e);
+    if (lineEnd === -1) lineEnd = v.length;
+
+    // If no selection, operate on current line only
+    if (s === e) {
+      const le = v.indexOf('\n', s);
+      lineEnd = (le === -1) ? v.length : le;
+    }
+
+    const block = v.substring(lineStart, lineEnd);
+    const lines = block.split('\n');
+
+    return { v, s, e, lineStart, lineEnd, block, lines };
+  }
+
+  function _replaceLineBlock(lineStart, lineEnd, newBlock, keepSelection = true) {
+    const v = modalContent.value;
+    modalContent.value = v.substring(0, lineStart) + newBlock + v.substring(lineEnd);
+
+    if (keepSelection) {
+      const newEnd = lineStart + newBlock.length;
+      modalContent.setSelectionRange(lineStart, newEnd);
+    }
+    modalContent.focus();
+    updateCharCount();
+  }
+
+  function _mapSelectedLines(mapper) {
+    const { lineStart, lineEnd, lines } = _getLineRangeFromSelection();
+    const newLines = lines.map((ln, idx) => mapper(String(ln), idx, lines));
+    _replaceLineBlock(lineStart, lineEnd, newLines.join('\n'), true);
+  }
+
+  function _stripListPrefix(line) {
+    const mTask = line.match(/^(\s*)([-*+]\s+\[(?:\s|x|X)\]\s+)(.*)$/);
+    if (mTask) return { indent: mTask[1], body: mTask[3], kind: 'task' };
+
+    const mOl = line.match(/^(\s*)(\d+[\.)]\s+)(.*)$/);
+    if (mOl) return { indent: mOl[1], body: mOl[3], kind: 'ol' };
+
+    const mUl = line.match(/^(\s*)([-*+]\s+)(.*)$/);
+    if (mUl) return { indent: mUl[1], body: mUl[3], kind: 'ul' };
+
+    const m = line.match(/^(\s*)(.*)$/);
+    return { indent: m ? m[1] : '', body: m ? m[2] : line, kind: 'none' };
+  }
+
+  function _applyListPrefix(prefix) {
+    _mapSelectedLines((ln) => {
+      if (!ln.trim()) return ln;
+      const { indent, body } = _stripListPrefix(ln);
+      return indent + prefix + body;
+    });
+  }
+
+  function _toggleTaskState() {
+    _mapSelectedLines((ln) => {
+      if (!ln.trim()) return ln;
+      const m = ln.match(/^(\s*)([-*+]\s+\[)(\s|x|X)(\]\s+)(.*)$/);
+      if (m) {
+        const next = (String(m[3]).toLowerCase() === 'x') ? ' ' : 'x';
+        return m[1] + m[2] + next + m[4] + m[5];
+      }
+      const { indent, body } = _stripListPrefix(ln);
+      return indent + '- [ ] ' + body;
+    });
+  }
+
+  function _indentLines() {
+    _mapSelectedLines((ln) => ln ? ('  ' + ln) : ln);
+  }
+
+  function _outdentLines() {
+    _mapSelectedLines((ln) => {
+      if (ln.startsWith('  ')) return ln.slice(2);
+      if (ln.startsWith('\t')) return ln.slice(1);
+      if (ln.startsWith(' ')) return ln.slice(1);
+      return ln;
+    });
+  }
+
+  // --- Table helpers (GFM) ---
+  function _splitTableRow(line) {
+    const raw = String(line || '').trim();
+    const noEdge = raw.replace(/^\|/, '').replace(/\|$/, '');
+    return noEdge.split('|').map(s => s.trim());
+  }
+
+  function _isTableLine(line) {
+    return String(line || '').includes('|');
+  }
+
+  function _isDelimiterLine(line) {
+    // e.g. |---|:---:|---:|
+    const cells = _splitTableRow(line);
+    if (!cells.length) return false;
+    return cells.every(c => /^:?-{3,}:?$/.test(c));
+  }
+
+  function _findTableAtCursor() {
+    const v = modalContent.value;
+    const cursor = modalContent.selectionStart || 0;
+    const lines = v.split('\n');
+
+    // Cursor line index
+    let acc = 0, idx = 0;
+    for (; idx < lines.length; idx++) {
+      const nextAcc = acc + lines[idx].length + 1;
+      if (cursor <= nextAcc - 1) break;
+      acc = nextAcc;
+    }
+    if (idx >= lines.length) idx = lines.length - 1;
+
+    // Expand up/down for contiguous table-ish lines
+    let top = idx;
+    while (top > 0 && lines[top - 1].trim() && _isTableLine(lines[top - 1])) top--;
+    let bottom = idx;
+    while (bottom < lines.length - 1 && lines[bottom + 1].trim() && _isTableLine(lines[bottom + 1])) bottom++;
+
+    const block = lines.slice(top, bottom + 1);
+    if (block.length < 2) return null;
+
+    // Find delimiter line inside block
+    let delimRel = -1;
+    for (let i = 0; i < block.length; i++) {
+      if (_isDelimiterLine(block[i])) { delimRel = i; break; }
+    }
+    if (delimRel < 0) return null;
+
+    const headerRel = Math.max(0, delimRel - 1);
+    const nCols = _splitTableRow(block[headerRel]).length || _splitTableRow(block[delimRel]).length;
+
+    // Convert rel -> absolute line indices and absolute string indices
+    const startAbsLine = top;
+    const endAbsLine = bottom;
+
+    // string indices
+    const beforeLines = lines.slice(0, startAbsLine).join('\n');
+    const lineStartIdx = beforeLines.length + (startAbsLine > 0 ? 1 : 0);
+    const blockText = lines.slice(startAbsLine, endAbsLine + 1).join('\n');
+    const lineEndIdx = lineStartIdx + blockText.length;
+
+    return {
+      startAbsLine, endAbsLine, lineStartIdx, lineEndIdx,
+      blockLines: block, delimRel, headerRel, nCols
+    };
+  }
+
+  function _setTableDelimiterAlignment(alignment) {
+    const t = _findTableAtCursor();
+    if (!t) { alert('Placez le curseur dans un tableau Markdown pour appliquer l\'alignement.'); return; }
+
+    const alignCell = (a) => {
+      if (a === 'left') return ':---';
+      if (a === 'center') return ':---:';
+      if (a === 'right') return '---:';
+      return '---';
+    };
+
+    const newLines = t.blockLines.slice();
+    const delimCells = Array.from({length: t.nCols}, () => alignCell(alignment));
+    newLines[t.delimRel] = '| ' + delimCells.join(' | ') + ' |';
+
+    _replaceLineBlock(t.lineStartIdx, t.lineEndIdx, newLines.join('\n'), true);
+  }
+
+  function _tableAddRow() {
+    const t = _findTableAtCursor();
+    if (!t) { alert('Placez le curseur dans un tableau Markdown pour ajouter une ligne.'); return; }
+    const newLines = t.blockLines.slice();
+    const emptyCells = Array.from({length: t.nCols}, () => ' ');
+    newLines.push('| ' + emptyCells.join(' | ') + ' |');
+    _replaceLineBlock(t.lineStartIdx, t.lineEndIdx, newLines.join('\n'), true);
+  }
+
+  function _tableAddCol() {
+    const t = _findTableAtCursor();
+    if (!t) { alert('Placez le curseur dans un tableau Markdown pour ajouter une colonne.'); return; }
+    const newLines = t.blockLines.map((ln, i) => {
+      const cells = _splitTableRow(ln);
+      while (cells.length < t.nCols) cells.push(' ');
+      if (i === t.delimRel) {
+        cells.push('---');
+      } else {
+        cells.push(' ');
+      }
+      return '| ' + cells.join(' | ') + ' |';
+    });
+    _replaceLineBlock(t.lineStartIdx, t.lineEndIdx, newLines.join('\n'), true);
+  }
+
   const markdownActions = {
+    // Inline
     bold: () => wrapSelection('**'),
     italic: () => wrapSelection('*'),
     strikethrough: () => wrapSelection('~~'),
+    code: () => wrapSelection('`'),
+
+    // Headings
     h1: () => insertAtLineStart('# '),
     h2: () => insertAtLineStart('## '),
     h3: () => insertAtLineStart('### '),
-    ul: () => insertAtLineStart('- '),
-    ol: () => insertAtLineStart('1. '),
-    checklist: () => insertAtLineStart('- [ ] '),
+    h4: () => insertAtLineStart('#### '),
+    h5: () => insertAtLineStart('##### '),
+    h6: () => insertAtLineStart('###### '),
+
+    // Lists (apply to selection if multi-line; otherwise insert)
+    ul: () => _applyListPrefix('- '),
+    ul_star: () => _applyListPrefix('* '),
+    ul_plus: () => _applyListPrefix('+ '),
+    ol: () => _applyListPrefix('1. '),
+    checklist: () => _applyListPrefix('- [ ] '),
+    toggle_task: () => _toggleTaskState(),
+
+    // Indentation
+    indent: () => _indentLines(),
+    outdent: () => _outdentLines(),
+
+    // Inserts / blocks
     link: () => {
       const { selectedText } = getSelection();
       if (selectedText) {
@@ -31037,8 +31309,29 @@ kbd {
         replaceSelection('[texte du lien](url)', 1, 14);
       }
     },
+    image: () => {
+      const { selectedText } = getSelection();
+      if (selectedText) {
+        replaceSelection(`![${selectedText}](url)`, selectedText.length + 4, selectedText.length + 7);
+      } else {
+        replaceSelection('![alt text](url)', 2, 10);
+      }
+    },
+    autolink: () => {
+      const { selectedText } = getSelection();
+      const s = (selectedText || '').trim();
+      if (s) {
+        // If already wrapped, do nothing; else wrap into <...>
+        if (/^<.*>$/.test(s)) return;
+        replaceSelection(`<${s}>`, 1, 1 + s.length);
+      } else {
+        const url = prompt('URL à transformer en auto-lien (<https://…>) :', 'https://');
+        if (url && String(url).trim()) {
+          insertAtCursor(`<${String(url).trim()}>`);
+        }
+      }
+    },
     quote: () => insertAtLineStart('> '),
-    code: () => wrapSelection('`'),
     codeblock: () => {
       const { selectedText } = getSelection();
       if (selectedText) {
@@ -31048,11 +31341,18 @@ kbd {
       }
     },
     hr: () => insertAtCursor('\n\n---\n\n', 0),
+
+    // Tables (GFM)
     table: () => {
       const table = '\n| Colonne 1 | Colonne 2 | Colonne 3 |\n|-----------|-----------|-----------|' +
                     '\n| Cellule 1 | Cellule 2 | Cellule 3 |\n| Cellule 4 | Cellule 5 | Cellule 6 |\n';
       insertAtCursor(table, 0);
-    }
+    },
+    table_add_row: () => _tableAddRow(),
+    table_add_col: () => _tableAddCol(),
+    table_align_left: () => _setTableDelimiterAlignment('left'),
+    table_align_center: () => _setTableDelimiterAlignment('center'),
+    table_align_right: () => _setTableDelimiterAlignment('right')
   };
 
   function handleMarkdownAction(action) {
@@ -31230,6 +31530,13 @@ kbd {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();
         handleMarkdownAction('link');
+      }
+
+      // Tab / Shift+Tab for indent/outdent (lists, tables, general text)
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        if (e.shiftKey) handleMarkdownAction('outdent');
+        else handleMarkdownAction('indent');
       }
     }
   });
