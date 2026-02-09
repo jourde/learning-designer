@@ -30862,9 +30862,22 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
           </a>
         </div>
       </div>
-      <textarea id="fullscreen-textarea-content" 
-                class="flex-1 px-4 py-3 text-base border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none bg-white text-slate-700 leading-relaxed font-sans"
-                placeholder="Saisissez votre texte ici..."></textarea>
+      <div class="md-split flex-1 overflow-hidden flex gap-4">
+  <div class="flex-1 overflow-hidden flex flex-col">
+    <textarea id="fullscreen-textarea-content"
+              class="w-full h-full px-4 py-3 text-base border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none bg-white text-slate-700 leading-relaxed font-sans"
+              placeholder="Saisissez votre texte ici..."></textarea>
+  </div>
+
+  <div class="flex-1 overflow-hidden flex flex-col">
+    <div class="text-xs text-slate-500 px-1 pb-1 flex items-center justify-between select-none">
+      <span>Aperçu</span>
+      <span class="text-[10px] text-slate-400">Markdown (GFM)</span>
+    </div>
+    <div id="fullscreen-markdown-preview"
+         class="md-preview flex-1 overflow-auto px-4 py-3 border-2 border-slate-200 rounded-lg bg-slate-50 text-slate-800"></div>
+  </div>
+</div>
     </div>
     
     <!-- Modal Footer -->
@@ -30971,6 +30984,37 @@ kbd {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* Markdown preview (fullscreen split view) */
+.md-preview { line-height: 1.55; }
+.md-preview h1 { font-size: 1.5rem; font-weight: 700; margin: 0.75rem 0 0.5rem; }
+.md-preview h2 { font-size: 1.25rem; font-weight: 700; margin: 0.75rem 0 0.5rem; }
+.md-preview h3 { font-size: 1.125rem; font-weight: 700; margin: 0.75rem 0 0.5rem; }
+.md-preview h4 { font-size: 1rem; font-weight: 700; margin: 0.75rem 0 0.5rem; }
+.md-preview h5 { font-size: 0.95rem; font-weight: 700; margin: 0.75rem 0 0.5rem; }
+.md-preview h6 { font-size: 0.9rem; font-weight: 700; margin: 0.75rem 0 0.5rem; }
+.md-preview p { margin: 0.5rem 0; }
+.md-preview a { color: #4f46e5; text-decoration: underline; word-break: break-word; }
+.md-preview a:hover { color: #4338ca; }
+.md-preview code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; background: rgba(15, 23, 42, 0.06); padding: 0.05rem 0.25rem; border-radius: 0.25rem; }
+.md-preview pre { background: rgba(15, 23, 42, 0.06); padding: 0.75rem; border-radius: 0.5rem; overflow: auto; margin: 0.75rem 0; }
+.md-preview pre code { background: transparent; padding: 0; }
+.md-preview blockquote { border-left: 4px solid rgba(100, 116, 139, 0.5); padding: 0.25rem 0.75rem; margin: 0.75rem 0; color: #334155; background: rgba(226, 232, 240, 0.45); border-radius: 0.25rem; }
+.md-preview ul, .md-preview ol { margin: 0.5rem 0 0.5rem 1.25rem; }
+.md-preview li { margin: 0.2rem 0; }
+.md-preview hr { border: none; border-top: 1px solid rgba(148, 163, 184, 0.6); margin: 1rem 0; }
+.md-preview table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 0.95rem; }
+.md-preview th, .md-preview td { border: 1px solid rgba(203, 213, 225, 0.9); padding: 0.4rem 0.5rem; vertical-align: top; }
+.md-preview th { background: rgba(226, 232, 240, 0.8); font-weight: 700; }
+.md-preview img { max-width: 100%; height: auto; border-radius: 0.5rem; margin: 0.5rem 0; }
+.md-preview .md-task { display: inline-flex; align-items: center; gap: 0.45rem; }
+.md-preview .md-task input[type="checkbox"] { width: 0.95rem; height: 0.95rem; }
+
+/* Responsive split view */
+@media (max-width: 900px) {
+  .md-split { flex-direction: column; }
+  .md-split > div { width: 100%; }
+}
 </style>
 
 <script>
@@ -31012,7 +31056,250 @@ kbd {
   function updateCharCount() {
     const count = modalContent.value.length;
     modalCharCount.textContent = `${count} caractère${count > 1 ? 's' : ''}`;
+    try { schedulePreview(); } catch(_) {}
   }
+
+  // Live Markdown preview (split view)
+  const modalPreview = document.getElementById('fullscreen-markdown-preview');
+  let __mdPreviewTimer = null;
+
+  function _escapeHtml(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function _escapeAttr(str) {
+    // Conservative: allow common URL / token characters, escape everything else
+    return _escapeHtml(String(str ?? ''));
+  }
+
+  function _renderInline(text) {
+    // Start from escaped text, then apply Markdown inline transforms to generated HTML only
+    let s = _escapeHtml(text);
+
+    // Images: ![alt](url)
+    s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (m, alt, url) => {
+      const a = _escapeAttr(alt);
+      const u = _escapeAttr(url.trim());
+      return `<img src="${u}" alt="${a}">`;
+    });
+
+    // Links: [text](url)
+    s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m, label, url) => {
+      const u = _escapeAttr(url.trim());
+      return `<a href="${u}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+    });
+
+    // Autolinks: <https://...>
+    s = s.replace(/&lt;(https?:\/\/[^\s&]+?)&gt;/g, (m, url) => {
+      const u = _escapeAttr(url);
+      return `<a href="${u}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+    });
+
+    // Inline code
+    s = s.replace(/`([^`]+)`/g, (m, code) => `<code>${code}</code>`);
+
+    // Bold / italic / strike (simple, non-nesting)
+    s = s.replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/~~([^~]+?)~~/g, '<del>$1</del>');
+    s = s.replace(/(^|[^*])\*([^*]+?)\*(?!\*)/g, '$1<em>$2</em>');
+
+    return s;
+  }
+
+  function _splitTableRow(line) {
+    let raw = String(line || '').trim();
+    raw = raw.replace(/^\|/, '').replace(/\|$/, '');
+    return raw.split('|').map(c => c.trim());
+  }
+
+  function _isTableDelimiter(line) {
+    const cells = _splitTableRow(line);
+    return cells.length > 0 && cells.every(c => /^:?-{3,}:?$/.test(c));
+  }
+
+  function _tableAlignFromCell(cell) {
+    const c = String(cell || '').trim();
+    const left = c.startsWith(':');
+    const right = c.endsWith(':');
+    if (left && right) return 'center';
+    if (right) return 'right';
+    if (left) return 'left';
+    return '';
+  }
+
+  function renderMarkdown(md) {
+    const src = String(md ?? '').replace(/\r\n/g, '\n');
+    if (!src.trim()) {
+      return '<div class="text-slate-400 italic">Aperçu en direct…</div>';
+    }
+
+    const lines = src.split('\n');
+    const out = [];
+    let i = 0;
+
+    while (i < lines.length) {
+      const line = lines[i];
+
+      // Fenced code blocks
+      const fence = line.match(/^```\s*([A-Za-z0-9_-]+)?\s*$/);
+      if (fence) {
+        const lang = fence[1] ? String(fence[1]) : '';
+        i++;
+        const buf = [];
+        while (i < lines.length && !/^```\s*$/.test(lines[i])) {
+          buf.push(lines[i]);
+          i++;
+        }
+        if (i < lines.length) i++; // consume closing fence
+        out.push(`<pre><code${lang ? ` class="language-${_escapeAttr(lang)}"` : ''}>${_escapeHtml(buf.join('\n'))}</code></pre>`);
+        continue;
+      }
+
+      // Horizontal rule
+      if (/^\s*(---|\*\*\*|___)\s*$/.test(line)) {
+        out.push('<hr>');
+        i++;
+        continue;
+      }
+
+      // Headings
+      const h = line.match(/^(#{1,6})\s+(.*)$/);
+      if (h) {
+        const level = h[1].length;
+        out.push(`<h${level}>${_renderInline(h[2].trim())}</h${level}>`);
+        i++;
+        continue;
+      }
+
+      // Tables (GFM)
+      if (line.includes('|') && i + 1 < lines.length && _isTableDelimiter(lines[i + 1])) {
+        const headerCells = _splitTableRow(line);
+        const delimCells = _splitTableRow(lines[i + 1]);
+        const n = Math.max(headerCells.length, delimCells.length);
+        const aligns = Array.from({ length: n }, (_, idx) => _tableAlignFromCell(delimCells[idx] || ''));
+        i += 2;
+
+        const bodyRows = [];
+        while (i < lines.length && lines[i].includes('|') && lines[i].trim() !== '') {
+          if (_isTableDelimiter(lines[i])) break;
+          bodyRows.push(_splitTableRow(lines[i]));
+          i++;
+        }
+
+        const thead = '<thead><tr>' + headerCells.map((c, idx) => {
+          const a = aligns[idx] ? ` style="text-align:${aligns[idx]};"` : '';
+          return `<th${a}>${_renderInline(c)}</th>`;
+        }).join('') + '</tr></thead>';
+
+        const tbody = '<tbody>' + bodyRows.map(r => {
+          return '<tr>' + Array.from({ length: n }, (_, idx) => {
+            const a = aligns[idx] ? ` style="text-align:${aligns[idx]};"` : '';
+            return `<td${a}>${_renderInline(r[idx] ?? '')}</td>`;
+          }).join('') + '</tr>';
+        }).join('') + '</tbody>';
+
+        out.push(`<table>${thead}${tbody}</table>`);
+        continue;
+      }
+
+      // Blockquotes (single-level)
+      if (/^\s*>/.test(line)) {
+        const buf = [];
+        while (i < lines.length && /^\s*>/.test(lines[i])) {
+          buf.push(lines[i].replace(/^\s*>\s?/, ''));
+          i++;
+        }
+        out.push('<blockquote>' + buf.map(l => _renderInline(l)).join('<br>') + '</blockquote>');
+        continue;
+      }
+
+      // Lists (UL / OL / tasks, single-level)
+      const taskRe = /^\s*([-*+])\s+\[(\s|x|X)\]\s+(.*)$/;
+      const ulRe = /^\s*([-*+])\s+(.*)$/;
+      const olRe = /^\s*(\d+)[\.)]\s+(.*)$/;
+
+      if (taskRe.test(line) || ulRe.test(line) || olRe.test(line)) {
+        const isOl = olRe.test(line) && !taskRe.test(line);
+        const listTag = isOl ? 'ol' : 'ul';
+        const items = [];
+
+        while (i < lines.length) {
+          const ln = lines[i];
+          if (ln.trim() === '') break;
+
+          const tm = ln.match(taskRe);
+          if (tm) {
+            const checked = String(tm[2]).toLowerCase() === 'x';
+            const text = _renderInline(tm[3]);
+            items.push(`<li><span class="md-task"><input type="checkbox" disabled ${checked ? 'checked' : ''}> <span>${text}</span></span></li>`);
+            i++;
+            continue;
+          }
+
+          const om = ln.match(olRe);
+          if (om && isOl) {
+            items.push(`<li>${_renderInline(om[2])}</li>`);
+            i++;
+            continue;
+          }
+
+          const um = ln.match(ulRe);
+          if (um && !isOl && !taskRe.test(ln)) {
+            items.push(`<li>${_renderInline(um[2])}</li>`);
+            i++;
+            continue;
+          }
+
+          // Stop when list type changes
+          break;
+        }
+
+        out.push(`<${listTag}>${items.join('')}</${listTag}>`);
+        continue;
+      }
+
+      // Blank lines
+      if (!line.trim()) {
+        i++;
+        continue;
+      }
+
+      // Paragraph (merge consecutive text lines)
+      const pbuf = [line];
+      i++;
+      while (i < lines.length && lines[i].trim() && !/^(#{1,6})\s+/.test(lines[i]) && !/^```/.test(lines[i]) && !/^\s*>/.test(lines[i]) && !lines[i].includes('|')) {
+        // Stop before potential list
+        if (/^\s*([-*+])\s+/.test(lines[i]) || /^\s*\d+[\.)]\s+/.test(lines[i])) break;
+        pbuf.push(lines[i]);
+        i++;
+      }
+      out.push('<p>' + pbuf.map(l => _renderInline(l)).join('<br>') + '</p>');
+    }
+
+    return out.join('\n');
+  }
+
+  function updatePreview() {
+    if (!modalPreview) return;
+    try {
+      const html = renderMarkdown(modalContent.value || '');
+      if (typeof __ldSetSafeHtml === 'function') __ldSetSafeHtml(modalPreview, html);
+      else modalPreview.innerHTML = html;
+    } catch (err) {
+      try { modalPreview.textContent = String(modalContent.value || ''); } catch(_){}
+    }
+  }
+
+  function schedulePreview() {
+    if (__mdPreviewTimer) clearTimeout(__mdPreviewTimer);
+    __mdPreviewTimer = setTimeout(updatePreview, 80);
+  }
+
 
   // Markdown formatting functions
   function getSelection() {
@@ -31359,6 +31646,7 @@ kbd {
     if (markdownActions[action]) {
       markdownActions[action]();
     }
+    try { schedulePreview(); } catch(_) {}
   }
 
   function openFullscreen(textarea) {
@@ -31376,6 +31664,7 @@ kbd {
     
     // Update char count
     updateCharCount();
+    try { updatePreview(); } catch(_) {}
     
     // Show modal
     modal.classList.remove('hidden');
