@@ -20,6 +20,7 @@
             --color-surface: #FFFFFF;
             --color-text: #111827;
             --color-text-secondary: #374151;
+            --slide-font-size: 18px;
             --color-text-muted: #9CA3AF;
             --color-border: #E5E7EB;
             --color-border-light: #F3F4F6;
@@ -178,24 +179,22 @@
             background: var(--color-hover);
             border-color: var(--color-text-muted);
         }
-
-        .export-btn {
-            background: var(--color-primary);
+.export-btn {
+            background: #3B82F6; /* lighter blue */
             color: white;
         }
 
-        .export-btn:hover {
-            background: var(--color-primary-dark);
+.export-btn:hover {
+            background: #2563EB; /* previous primary */
             box-shadow: none;
             }
-
-        .import-btn {
-            background: var(--color-success);
+.import-btn {
+            background: #10B981; /* lighter green */
             color: white;
         }
 
-        .import-btn:hover {
-            background: #047857;
+.import-btn:hover {
+            background: #059669; /* previous success */
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
@@ -454,6 +453,7 @@
         .about-info-value {
             color: var(--color-text-secondary);
             line-height: 1.6;
+            overflow-wrap: anywhere;
         }
 
         .about-description {
@@ -582,51 +582,50 @@
             display: flex;
         }
 
+.nav-actions-row {
+    padding: 0 20px 12px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+}
 
-        /* Navigation Toggle */
-        .nav-toggle-row {
-            padding: 0 20px 12px;
-        }
+.nav-action-btn {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    font-size: 13px;
+    transition: background var(--transition), color var(--transition), border-color var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
 
-        .nav-toggle-btn {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 8px 10px;
-            border-radius: 8px;
-            border: 1px solid var(--color-border);
-            background: var(--color-border-light);
-            color: var(--color-text-secondary);
-            cursor: pointer;
-            font-size: 13px;
-            transition: background var(--transition), color var(--transition), border-color var(--transition);
-        }
+.nav-action-btn:hover {
+    background: var(--color-hover);
+    color: var(--color-text);
+}
 
-        .nav-toggle-btn:hover {
-            background: var(--color-hover);
-            color: var(--color-text);
-        }
+.nav-action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
 
-        .nav-toggle-icon {
-            display: inline-block;
-            transition: transform var(--transition);
-            color: var(--color-text-muted);
-            font-size: 14px;
-            line-height: 1;
-        }
+.nav-action-icon {
+    display: inline-block;
+    color: var(--color-text-muted);
+    font-size: 14px;
+    line-height: 1;
+    transition: transform var(--transition);
+}
 
-        .sidebar.nav-collapsed .nav-toggle-icon {
-            transform: rotate(-90deg);
-        }
-
-        .sidebar.nav-collapsed .nav-tree,
-        .sidebar.nav-collapsed .search-results {
-            display: none;
-        }
-
-        /* Navigation Tree */
+.nav-action-btn[aria-pressed="true"] .nav-action-icon {
+    transform: rotate(90deg);
+}
+/* Navigation Tree */
         .nav-tree {
             flex: 1;
             overflow-y: auto;
@@ -690,6 +689,10 @@
             margin-left: 12px;
             margin-top: 4px;
         }
+
+        .nav-tree.folded .nav-children {
+            display: none;
+        }
 .nav-activity {
             padding: 8px 12px;
             margin: 2px 0;
@@ -700,48 +703,50 @@
             transition: all var(--transition);
             border-left: 3px solid transparent;
             text-transform: lowercase;
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .nav-activity-label {
+            flex: 1;
+            min-width: 0;
+            color: inherit;
         }
 
         .nav-activity:hover {
             background: var(--color-hover);
+        }
+
+        .nav-activity:hover .nav-activity-label {
             color: var(--color-text);
         }
 
         .nav-activity.active {
             background: var(--color-primary-light);
-            color: var(--color-primary);
             border-left-color: var(--color-primary);
             font-weight: 500;
         }
 
-        .nav-activity.visited {
-            color: var(--color-success);
-            font-weight: 500;
-            position: relative;
+        .nav-activity.active .nav-activity-label {
+            color: var(--color-primary);
         }
 
-        .nav-activity.visited::after {
-            content: '✓';
-            position: absolute;
-            right: 12px;
-            color: var(--color-success);
-            font-weight: 600;
-            font-size: 12px;
+        /* Covered activity indicator (no ticks): title turns green */
+        .nav-activity.completed:not(.active) {
+            border-left-color: var(--color-success);
         }
 
-        .nav-activity.completed {
+        .nav-activity.completed:not(.active) .nav-activity-label {
             color: var(--color-success);
             font-weight: 500;
         }
 
-        .nav-activity.completed::after {
-            content: '✓';
-            position: absolute;
-            right: 12px;
-            color: var(--color-success);
-            font-weight: 600;
-            font-size: 14px;
+        .nav-activity.completed:not(.active):hover {
+            background: var(--color-success-light);
         }
+
 
         /* Moment and Submoment completion indicators */
         .nav-item-header.has-progress {
@@ -873,6 +878,39 @@
             z-index: 101;
         }
 
+        .font-size-control {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 10px;
+            padding-left: 10px;
+            border-left: 1px solid var(--color-border);
+        }
+
+        .font-size-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            user-select: none;
+        }
+
+        .font-size-select {
+            height: 34px;
+            padding: 0 10px;
+            border-radius: 10px;
+            border: 1px solid var(--color-border);
+            background: var(--color-surface);
+            color: var(--color-text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            outline: none;
+        }
+
+        .font-size-select:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
         .zoom-btn {
             width: 32px;
             height: 32px;
@@ -975,23 +1013,33 @@
         }
 
         .slide-content {
-            font-size: 18px;
+            font-size: var(--slide-font-size);
             color: var(--color-text-secondary);
-            line-height: 1.7;
+            line-height: 1.4;
+        }
+
+        /* More compact typography inside slides */
+        .slide-content h1,
+        .slide-content h2,
+        .slide-content h3,
+        .slide-content h4 {
+            line-height: 1.2;
+            margin: 0 0 10px;
         }
 
         .slide-content ul,
         .slide-content ol {
-            margin-left: 24px;
-            margin-top: 16px;
+            margin-left: 22px;
+            margin-top: 10px;
+            margin-bottom: 10px;
         }
 
         .slide-content li {
-            margin-bottom: 12px;
+            margin-bottom: 4px;
         }
 
         .slide-content p {
-            margin-bottom: 10px;
+            margin: 0 0 4px;
         }
 
         .slide-content img.md-image {
@@ -1848,13 +1896,11 @@
                     <button class="search-clear" id="searchClear" aria-label="Clear search">×</button>
                 </div>
             </div>
-
-
-            <!-- Navigation Toggle -->
-            <div class="nav-toggle-row">
-                <button class="nav-toggle-btn" id="navToggleBtn" type="button" aria-expanded="true">
-                    <span class="nav-toggle-label">Hide navigation</span>
-                    <span class="nav-toggle-icon">▾</span>
+                        <!-- Navigation Fold/Unfold -->
+            <div class="nav-actions-row">
+                <button class="nav-action-btn" id="navFoldAllBtn" type="button" aria-pressed="false">
+                    <span class="nav-action-label">Fold all</span>
+                    <span class="nav-action-icon">▸</span>
                 </button>
             </div>
 
@@ -1876,14 +1922,6 @@
                     </div>
                 </div>
                 <div class="footer-buttons">
-                    <button class="import-btn" onclick="app.openImportDialog()">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="17 8 12 3 7 8"></polyline>
-                            <line x1="12" y1="3" x2="12" y2="15"></line>
-                        </svg>
-                        Import JSON
-                    </button>
                     <button class="about-btn" onclick="app.openAboutModal()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="10"></circle>
@@ -1891,6 +1929,14 @@
                             <line x1="12" y1="8" x2="12.01" y2="8"></line>
                         </svg>
                         About This Training
+                    </button>
+                    <button class="import-btn" onclick="app.openImportDialog()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        Import JSON
                     </button>
                     <button class="export-btn" onclick="app.openExportModal()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1933,6 +1979,19 @@
                         <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
                     </svg>
                 </button>
+                <div class="font-size-control">
+                    <span class="font-size-label">Text</span>
+                    <select class="font-size-select" id="fontSizeSelect" aria-label="Text size">
+                        <option value="14">Very small (14px)</option>
+                        <option value="16">Small (16px)</option>
+                        <option value="18" selected>Medium (18px)</option>
+                        <option value="20">Large (20px)</option>
+                        <option value="22">Extra large (22px)</option>
+                        <option value="24">XXL (24px)</option>
+                        <option value="26">Huge (26px)</option>
+                        <option value="28">Max (28px)</option>
+                    </select>
+                </div>
             </div>
 
             <!-- Content Header -->
@@ -1951,7 +2010,7 @@
                         <br><br>
                         You can import any structured training material in JSON format with modules, activities, and slides.
                     </p>
-                    <button class="btn btn-success welcome-cta" onclick="app.openImportDialog()" style="background: var(--color-success); border-color: var(--color-success);">
+                    <button class="btn btn-success welcome-cta" onclick="app.openImportDialog()" style="background: #10B981; border-color: #10B981;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; margin-right: 8px;">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                             <polyline points="17 8 12 3 7 8"></polyline>
@@ -2096,6 +2155,47 @@
                         <span class="about-info-value" id="aboutTitleValue">No content loaded</span>
                     </div>
                     <div class="about-info-row">
+                        <span class="about-info-label">Author(s):</span>
+                        <span class="about-info-value" id="aboutAuthorsValue">–</span>
+                    </div>
+                    <div class="about-info-row">
+                        <span class="about-info-label">Trainer(s):</span>
+                        <span class="about-info-value" id="aboutTrainersValue">–</span>
+                    </div>
+                    <div class="about-info-row">
+                        <span class="about-info-label">Level:</span>
+                        <span class="about-info-value" id="aboutLevelValue">–</span>
+                    </div>
+                    <div class="about-info-row">
+                        <span class="about-info-label">Mode:</span>
+                        <span class="about-info-value" id="aboutModeValue">–</span>
+                    </div>
+                    <div class="about-info-row">
+                        <span class="about-info-label">Cohort size:</span>
+                        <span class="about-info-value" id="aboutCohortValue">–</span>
+                    </div>
+                    <div class="about-info-row">
+    <span class="about-info-label">Target audience:</span>
+    <span class="about-info-value" id="aboutAudienceValue">–</span>
+</div>
+<div class="about-info-row">
+    <span class="about-info-label">Prerequisites:</span>
+    <span class="about-info-value" id="aboutPrerequisitesValue">–</span>
+</div>
+<div class="about-info-row">
+                        <span class="about-info-label">Learning time:</span>
+                        <span class="about-info-value" id="aboutLearningTimeValue">–</span>
+                    </div>
+                    <div class="about-info-row">
+                        <span class="about-info-label">Licence:</span>
+                        <span class="about-info-value" id="aboutLicenceValue">–</span>
+                    </div>
+                    <div class="about-info-row">
+                        <span class="about-info-label">Version:</span>
+                        <span class="about-info-value" id="aboutVersionValue">–</span>
+                    </div>
+
+                    <div class="about-info-row">
                         <span class="about-info-label">Modules:</span>
                         <span class="about-info-value" id="aboutModulesValue">–</span>
                     </div>
@@ -2139,6 +2239,82 @@
         </div>
     </div>
 
+
+    <!-- Export Modal -->
+    <div class="export-modal" id="exportModal" onclick="if(event.target === this) app.closeExportModal()">
+        <div class="export-modal-content">
+            <div class="export-modal-header">
+                <h2 class="export-modal-title">Export Content</h2>
+                <button class="export-close-btn" onclick="app.closeExportModal()" aria-label="Close export">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="export-modal-body">
+                <p class="export-description">
+                    Choose a format to export the imported training content.
+                </p>
+
+                <div class="export-options">
+                    <div class="export-option" onclick="app.exportAsMarkdown()">
+                        <div class="export-option-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <path d="M8 13h8"></path>
+                                <path d="M8 17h6"></path>
+                            </svg>
+                        </div>
+                        <div class="export-option-content">
+                            <div class="export-option-title">Markdown (.md)</div>
+                            <div class="export-option-desc">Plain text, easy to edit and share.</div>
+                        </div>
+                    </div>
+
+                    <div class="export-option" onclick="app.exportAsRTF()">
+                        <div class="export-option-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <path d="M8 13h8"></path>
+                                <path d="M8 17h8"></path>
+                            </svg>
+                        </div>
+                        <div class="export-option-content">
+                            <div class="export-option-title">RTF (.rtf)</div>
+                            <div class="export-option-desc">Word-friendly export for document workflows.</div>
+                        </div>
+                    </div>
+
+                    <div class="export-option" onclick="app.exportAsJSON()">
+                        <div class="export-option-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 7h-7"></path>
+                                <path d="M20 12h-7"></path>
+                                <path d="M20 17h-7"></path>
+                                <path d="M4 7h.01"></path>
+                                <path d="M4 12h.01"></path>
+                                <path d="M4 17h.01"></path>
+                            </svg>
+                        </div>
+                        <div class="export-option-content">
+                            <div class="export-option-title">JSON (.json)</div>
+                            <div class="export-option-desc">Structured data for re-importing and archiving.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="export-modal-footer">
+                <button class="export-cancel-btn" onclick="app.closeExportModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+
     <script>
         // ===== DATA STRUCTURE =====
         // Course data is now loaded dynamically via JSON import
@@ -2153,8 +2329,7 @@
             currentSlideIndex: 0,
             searchQuery: '',
             expandedNodes: new Set(),
-            navCollapsed: false,
-            
+navAllFolded: false,
             // Timer state
             activityTimer: {
                 elapsed: 0,
@@ -2174,6 +2349,7 @@
 
             // Zoom state
             zoomLevel: 100,
+            slideFontSize: 18,
             zoomMin: 80,
             zoomMax: 200,
             zoomStep: 20,
@@ -2187,10 +2363,12 @@
                 
                 this.buildNavigation();
                 this.attachEventListeners();
-                this.loadNavCollapsedState();
+this.loadNavFoldAllState();
                 this.loadStateFromHash();
                 this.loadTimerState();
-                this.loadProgressState();
+                // Seen-state markers removed (no persistent "visited/completed" ticks)
+                this.clearSeenState();
+                this.loadFontSizePreference();
                 this.loadZoomPreference();
                 this.loadDetailsPanelState();
                 this.startTimerTicks();
@@ -2199,41 +2377,62 @@
                 console.log('courseData:', this.courseData);
             },
 
-
-            // ===== NAV TOGGLE =====
-            toggleNavCollapsed() {
-                this.navCollapsed = !this.navCollapsed;
-                this.applyNavCollapsedState(true);
-            },
-
-            applyNavCollapsedState(persist) {
-                const sidebar = document.getElementById('sidebar');
-                const btn = document.getElementById('navToggleBtn');
-                if (!sidebar || !btn) return;
-
-                sidebar.classList.toggle('nav-collapsed', !!this.navCollapsed);
-
-                const labelEl = btn.querySelector('.nav-toggle-label');
-                if (labelEl) labelEl.textContent = this.navCollapsed ? 'Show navigation' : 'Hide navigation';
-
-                btn.setAttribute('aria-expanded', this.navCollapsed ? 'false' : 'true');
-
-                if (persist) {
-                    try { localStorage.setItem('navCollapsed', this.navCollapsed ? '1' : '0'); } catch (e) {}
-                }
-            },
-
-            loadNavCollapsedState() {
+            clearSeenState() {
+                // Remove legacy persisted "seen" state keys (green ticks system removed)
+                this.completedActivities = new Set();
+                this.visitedActivities = new Set();
+                this.visitedSlides = new Set();
                 try {
-                    const v = localStorage.getItem('navCollapsed');
-                    this.navCollapsed = (v === '1');
-                } catch (e) {
-                    this.navCollapsed = false;
-                }
-                this.applyNavCollapsedState(false);
+                    localStorage.removeItem('completedActivities');
+                    localStorage.removeItem('visitedActivities');
+                    localStorage.removeItem('visitedSlides');
+                
+                    localStorage.removeItem('navCollapsed');} catch (e) {}
             },
+
+// ===== NAV FOLD/UNFOLD ALL =====
+toggleNavFoldAll() {
+    this.navAllFolded = !this.navAllFolded;
+    this.applyNavFoldAllState(true);
+},
+
+applyNavFoldAllState(persist) {
+    const navTree = document.getElementById('navTree');
+    const btn = document.getElementById('navFoldAllBtn');
+
+    if (navTree) {
+        navTree.classList.toggle('folded', !!this.navAllFolded);
+    }
+
+    if (btn) {
+        btn.setAttribute('aria-pressed', this.navAllFolded ? 'true' : 'false');
+        const labelEl = btn.querySelector('.nav-action-label');
+        if (labelEl) labelEl.textContent = this.navAllFolded ? 'Unfold all' : 'Fold all';
+    }
+
+    if (persist) {
+        this.safeLocalStorageSet('navAllFolded', this.navAllFolded ? '1' : '0');
+    }
+},
+
+loadNavFoldAllState() {
+    const saved = this.safeLocalStorageGet('navAllFolded');
+    this.navAllFolded = (saved === '1');
+    this.updateNavFoldAllAvailability();
+    this.applyNavFoldAllState(false);
+},
+
+updateNavFoldAllAvailability() {
+    const btn = document.getElementById('navFoldAllBtn');
+    if (!btn) return;
+
+    const hasContent = !!(this.courseData && Array.isArray(this.courseData.modules) && this.courseData.modules.length > 0);
+    btn.disabled = !hasContent;
+    btn.setAttribute('aria-disabled', (!hasContent).toString());
+},
 
             buildNavigation() {
+
                 const navTree = document.getElementById('navTree');
                 navTree.innerHTML = '';
 
@@ -2247,8 +2446,13 @@
                     navTree.appendChild(moduleEl);
                 });
 
+                this.updateNavFoldAllAvailability();
+
+                this.applyNavFoldAllState(false);
+
                 // Apply visual state after building navigation
-                setTimeout(() => this.updateNavigationVisualState(), 0);
+                this.updateCompletedActivitiesInNav();
+                this.updateActiveNav();
             },
 
             createModuleElement(module, moduleIndex) {
@@ -2321,9 +2525,10 @@
                 activityDiv.className = 'nav-activity';
                 activityDiv.dataset.activityId = activity.id;
                 
-                const slideCount = activity.slides.length;
+                const slideCount = (activity.slides && activity.slides.length) ? activity.slides.length : 0;
+                const labelText = `${moduleIndex + 1}.${momentIndex + 1}.${submomentIndex + 1}.${activityIndex + 1} ${this.sanitizeHTML(String(activity.title || ''))}`;
                 activityDiv.innerHTML = `
-                    ${moduleIndex + 1}.${momentIndex + 1}.${submomentIndex + 1}.${activityIndex + 1} ${activity.title}
+                    <span class="nav-activity-label">${labelText}</span>
                     <span class="slide-count">${slideCount} slide${slideCount !== 1 ? 's' : ''}</span>
                 `;
 
@@ -2346,14 +2551,9 @@
                     Math.min((typeof slideIndex === 'number' ? slideIndex : 0), activity.slides.length - 1)
                 );
                 this.currentSlideIndex = idx;
-
-                // Mark activity as visited
-                this.visitedActivities.add(activity.id);
-
                 this.updateActivityHeader();
                 this.renderSlide();
                 this.updateActiveNav();
-                this.updateNavigationVisualState();
                 this.updateNextSectionButton();
                 this.closeMobileMenu();
                 this.updateHash();
@@ -2375,7 +2575,6 @@
                 this.updateActivityProgress();
 
                 // Save progress
-                this.saveProgressState();
             },
 
             updateActivityHeader() {
@@ -2424,16 +2623,16 @@
                         <div class="slide-content">${slide.content}</div>
                     </div>
                 `;
-
-                // Track visited slide
-                const slideKey = `${this.currentActivity.id}-slide-${this.currentSlideIndex}`;
-                this.visitedSlides.add(slideKey);
-
                 this.updateSlideCounter();
                 this.updateNavigationButtons();
                 this.updateActivityProgress();
                 this.updateGeneralProgress();
-                this.saveProgressState();
+
+                // Mark activity as covered when the final slide has been reached
+                const totalSlides = (this.currentActivity.slides && this.currentActivity.slides.length) ? this.currentActivity.slides.length : 0;
+                if (totalSlides > 0 && this.currentSlideIndex >= totalSlides - 1) {
+                    this.markActivityCovered(this.currentActivity.id);
+                }
 
                 // Reapply zoom after slide content changes
                 setTimeout(() => this.applyZoom(), 0);
@@ -2457,6 +2656,8 @@
             },
 
             updateActiveNav() {
+                if (!this.currentActivity) return;
+
                 // Remove all active classes
                 document.querySelectorAll('.nav-activity').forEach(el => {
                     el.classList.remove('active');
@@ -2467,7 +2668,28 @@
                 if (activeEl) {
                     activeEl.classList.add('active');
                 }
+
+                // Ensure covered-state colouring is applied as well
+                this.updateCompletedActivitiesInNav();
             },
+
+            updateCompletedActivitiesInNav() {
+                document.querySelectorAll('.nav-activity').forEach(el => {
+                    const id = el.dataset.activityId;
+                    if (!id) return;
+                    el.classList.toggle('completed', this.completedActivities.has(id));
+                });
+            },
+
+            markActivityCovered(activityId) {
+                const id = (activityId === undefined || activityId === null) ? '' : String(activityId).trim();
+                if (!id) return;
+                if (!this.completedActivities.has(id)) {
+                    this.completedActivities.add(id);
+                    this.updateCompletedActivitiesInNav();
+                }
+            },
+
             nextSlide() {
                 if (this.currentSlideIndex < this.currentActivity.slides.length - 1) {
                     this.currentSlideIndex++;
@@ -2477,10 +2699,7 @@
                 }
 
                 // We are on the last slide of the current activity
-                this.completedActivities.add(this.currentActivity.id);
                 this.updateGeneralProgress();
-                this.updateNavigationVisualState();
-                this.saveProgressState();
 
                 const nextActivity = this.getNextActivity();
                 if (nextActivity) {
@@ -2646,14 +2865,6 @@
                 searchResults.classList.remove('visible');
                 searchResults.innerHTML = '';
                 this.searchQuery = '';
-
-                // Ensure navigation remains visible after import/reset
-                this.navCollapsed = false;
-                this.applyNavCollapsedState(false);
-
-                // Reset search UI (avoids nav hidden behind search results)
-                try { this.clearSearch(); } catch (e) {}
-
             },
 
             // Mobile menu
@@ -2702,12 +2913,19 @@
             },
 
             attachEventListeners() {
-                const navToggleBtn = document.getElementById('navToggleBtn');
-                if (navToggleBtn) {
-                    navToggleBtn.addEventListener('click', () => this.toggleNavCollapsed());
-                }
 
-                // Search
+                // Font size (slide content)
+                const fontSizeSelect = document.getElementById('fontSizeSelect');
+                if (fontSizeSelect) {
+                    fontSizeSelect.addEventListener('change', () => {
+                        this.setSlideFontSize(fontSizeSelect.value, true);
+                    });
+                }
+                const navFoldAllBtn = document.getElementById('navFoldAllBtn');
+                if (navFoldAllBtn) {
+                    navFoldAllBtn.addEventListener('click', () => this.toggleNavFoldAll());
+                }
+// Search
                 const searchInput = document.getElementById('searchInput');
                 const searchClear = document.getElementById('searchClear');
 
@@ -2766,9 +2984,9 @@
                             // Close modals if open
                             const aboutModal = document.getElementById('aboutModal');
                             const exportModal = document.getElementById('exportModal');
-                            if (aboutModal.classList.contains('visible')) {
+                            if (aboutModal && aboutModal.classList.contains('visible')) {
                                 this.closeAboutModal();
-                            } else if (exportModal.classList.contains('visible')) {
+                            } else if (exportModal && exportModal.classList.contains('visible')) {
                                 this.closeExportModal();
                             }
                             break;
@@ -2831,6 +3049,31 @@
                 this.zoomLevel = 100;
                 this.applyZoom();
             },
+
+            // ===== FONT SIZE (SLIDE CONTENT) =====
+            loadFontSizePreference() {
+                const allowed = [14, 16, 18, 20, 22, 24, 26, 28];
+                let px = 18;
+                const saved = this.safeLocalStorageGet('slideFontSize');
+                const n = parseInt(saved, 10);
+                if (allowed.includes(n)) px = n;
+                this.setSlideFontSize(px, false);
+            },
+
+            setSlideFontSize(px, persist = true) {
+                const allowed = [14, 16, 18, 20, 22, 24, 26, 28];
+                const n = parseInt(px, 10);
+                const finalPx = allowed.includes(n) ? n : 18;
+
+                document.documentElement.style.setProperty('--slide-font-size', `${finalPx}px`);
+                this.slideFontSize = finalPx;
+
+                const select = document.getElementById('fontSizeSelect');
+                if (select) select.value = String(finalPx);
+
+                if (persist) this.safeLocalStorageSet('slideFontSize', String(finalPx));
+            },
+
 
             applyZoom() {
                 const slide = document.querySelector('.slide');
@@ -3049,158 +3292,38 @@
             // ===== PROGRESS METHODS =====
 
             updateNavigationVisualState() {
-                // Update all activities
-                document.querySelectorAll('.nav-activity').forEach(el => {
-                    const activityId = el.dataset.activityId;
-                    
-                    // Remove all state classes first
-                    el.classList.remove('visited', 'completed');
-                    
-                    // Add appropriate class
-                    if (this.completedActivities.has(activityId)) {
-                        el.classList.add('completed');
-                    } else if (this.visitedActivities.has(activityId)) {
-                        el.classList.add('visited');
-                    }
-                });
-
-                // Update moments and submoments with progress badges
-                this.updateMomentProgress();
-                this.updateModuleHeaderProgress();
+                // Seen-state markers removed (no green ticks / visited/completed states)
             },
 
             updateMomentProgress() {
-                if (!this.courseData || !this.courseData.modules) return;
-
-                this.courseData.modules.forEach(module => {
-                    module.moments.forEach(moment => {
-                        // Calculate moment progress
-                        let totalActivities = 0;
-                        let completedActivities = 0;
-                        let visitedActivities = 0;
-
-                        moment.submoments.forEach(submoment => {
-                            submoment.activities.forEach(activity => {
-                                totalActivities++;
-                                if (this.completedActivities.has(activity.id)) {
-                                    completedActivities++;
-                                } else if (this.visitedActivities.has(activity.id)) {
-                                    visitedActivities++;
-                                }
-                            });
-                        });
-
-                        // Find moment header and update badge
-                        const momentHeaders = document.querySelectorAll('.nav-item-header');
-                        momentHeaders.forEach(header => {
-                            const titleElement = header.querySelector('.nav-item-title');
-                            if (titleElement && titleElement.textContent.includes(moment.title)) {
-                                // Remove existing badge
-                                const existingBadge = header.querySelector('.nav-progress-badge');
-                                if (existingBadge) {
-                                    existingBadge.remove();
-                                }
-
-                                // Add new badge if there's progress
-                                if (totalActivities > 0) {
-                                    const badge = document.createElement('span');
-                                    badge.className = 'nav-progress-badge';
-                                    
-                                    if (completedActivities === totalActivities) {
-                                        badge.classList.add('completed');
-                                        badge.textContent = '✓';
-                                    } else if (completedActivities > 0 || visitedActivities > 0) {
-                                        badge.classList.add('in-progress');
-                                        badge.textContent = `${completedActivities}/${totalActivities}`;
-                                    } else {
-                                        badge.textContent = `0/${totalActivities}`;
-                                    }
-                                    
-                                    header.classList.add('has-progress');
-                                    header.appendChild(badge);
-                                }
-                            }
-                        });
-                    });
-                });
+                // Seen-state markers removed (no per-moment progress ticks/badges)
             },
 
             updateModuleHeaderProgress() {
-                if (!this.courseData || !this.courseData.modules) return;
-
-                this.courseData.modules.forEach(module => {
-                    // Calculate module progress
-                    let totalActivities = 0;
-                    let completedActivities = 0;
-
-                    module.moments.forEach(moment => {
-                        moment.submoments.forEach(submoment => {
-                            submoment.activities.forEach(activity => {
-                                totalActivities++;
-                                if (this.completedActivities.has(activity.id)) {
-                                    completedActivities++;
-                                }
-                            });
-                        });
-                    });
-
-                    // Find module header and update
-                    const moduleHeaders = document.querySelectorAll('.nav-module-header');
-                    moduleHeaders.forEach(header => {
-                        if (header.textContent.includes(module.title)) {
-                            // Remove existing progress indicator
-                            const existingProgress = header.querySelector('.nav-module-progress');
-                            if (existingProgress) {
-                                existingProgress.remove();
-                            }
-
-                            // Add progress indicator if there's any progress
-                            if (totalActivities > 0 && (completedActivities > 0 || this.hasAnyVisitedActivitiesInModule(module))) {
-                                const progressDiv = document.createElement('div');
-                                progressDiv.className = 'nav-module-progress';
-                                
-                                if (completedActivities === totalActivities) {
-                                    progressDiv.classList.add('completed');
-                                    progressDiv.textContent = `✓ Completed (${completedActivities}/${totalActivities})`;
-                                } else {
-                                    progressDiv.textContent = `Progress: ${completedActivities}/${totalActivities} activities`;
-                                }
-                                
-                                header.appendChild(progressDiv);
-                            }
-                        }
-                    });
-                });
+                // Seen-state markers removed (no per-module progress indicators)
             },
 
             hasAnyVisitedActivitiesInModule(module) {
-                return module.moments.some(moment => 
-                    moment.submoments.some(submoment =>
-                        submoment.activities.some(activity =>
-                            this.visitedActivities.has(activity.id)
-                        )
-                    )
-                );
+                return false;
             },
+
 
             updateActivityProgress() {
                 if (!this.currentActivity) return;
 
-                const totalSlides = this.currentActivity.slides.length;
-                const visitedCount = this.currentActivity.slides.filter((slide, index) => {
-                    const slideKey = `${this.currentActivity.id}-slide-${index}`;
-                    return this.visitedSlides.has(slideKey);
-                }).length;
+                const totalSlides = (this.currentActivity.slides && this.currentActivity.slides.length) ? this.currentActivity.slides.length : 0;
+                const current = totalSlides > 0
+                    ? Math.min(Math.max(this.currentSlideIndex + 1, 1), totalSlides)
+                    : 0;
+                const percentage = totalSlides > 0 ? Math.round((current / totalSlides) * 100) : 0;
 
-                const percentage = Math.round((visitedCount / totalSlides) * 100);
-                
                 const fillElement = document.getElementById('activityProgressFill');
                 const textElement = document.getElementById('activityProgressText');
-                
+
                 if (fillElement && textElement) {
                     fillElement.style.width = `${percentage}%`;
                     textElement.textContent = `${percentage}%`;
-                    
+
                     if (percentage === 100) {
                         fillElement.classList.add('complete');
                     } else {
@@ -3308,44 +3431,15 @@
             },
 
             saveProgressState() {
-                this.safeLocalStorageSet('completedActivities', JSON.stringify(Array.from(this.completedActivities)));
-                this.safeLocalStorageSet('visitedActivities', JSON.stringify(Array.from(this.visitedActivities)));
-                this.safeLocalStorageSet('visitedSlides', JSON.stringify(Array.from(this.visitedSlides)));
+                // Removed (legacy seen-state persistence)
             },
 
             loadProgressState() {
-                const savedCompleted = this.safeLocalStorageGet('completedActivities');
-                const savedVisited = this.safeLocalStorageGet('visitedActivities');
-                const savedSlides = this.safeLocalStorageGet('visitedSlides');
-                
-                try {
-                    if (savedCompleted) {
-                        this.completedActivities = new Set(JSON.parse(savedCompleted));
-                    }
-                    
-                    if (savedVisited) {
-                        this.visitedActivities = new Set(JSON.parse(savedVisited));
-                    }
-                    
-                    if (savedSlides) {
-                        this.visitedSlides = new Set(JSON.parse(savedSlides));
-                    }
-                } catch (error) {
-                    console.warn('Failed to parse saved progress state:', error.message);
-                    // Reset to empty sets if data is corrupted
-                    this.completedActivities = new Set();
-                    this.visitedActivities = new Set();
-                    this.visitedSlides = new Set();
-                }
-
-                // Update visual state after loading
-                this.updateNavigationVisualState();
-                
-                // Update general progress if there's any progress
-                if (this.completedActivities.size > 0 || this.visitedActivities.size > 0) {
-                    this.updateGeneralProgress();
-                }
+                // Removed (legacy seen-state persistence)
+                this.clearSeenState();
             },
+
+
 
             // ===== TIMER METHODS =====
             
@@ -3683,11 +3777,26 @@
 
             transformSchema2(sourceData) {
                 // Adapts Learning Design Schema (Schema 2) to Presentation Schema
+                // Schema 2 stores "targetTime" at module level; unit is indicated in keyParams (e.g., hours).
+                const globalTargetUnit = (sourceData.keyParams && (sourceData.keyParams.learningTimeUnit || sourceData.keyParams.designedTimeUnit)) 
+                    ? String(sourceData.keyParams.learningTimeUnit || sourceData.keyParams.designedTimeUnit).trim() 
+                    : 'minutes';
+
+                const toMinutes = (val, unit) => {
+                    const raw = (val === undefined || val === null) ? '' : String(val).trim();
+                    const num = Number(raw);
+                    if (!Number.isFinite(num)) return 0;
+                    const u = (unit === undefined || unit === null) ? '' : String(unit).trim().toLowerCase();
+                    if (u.startsWith('hour') || u === 'h' || u === 'hrs' || u === 'hr') return Math.round(num * 60);
+                    // Default: treat as minutes
+                    return Math.round(num);
+                };
+
                 const modules = sourceData.activities.map(srcModule => {
                     return {
                         id: srcModule.id || `mod-${Math.random().toString(36).substr(2, 9)}`,
                         title: srcModule.title || 'Untitled Module',
-                        plannedMinutes: parseInt(srcModule.targetTime || 0),
+                        plannedMinutes: toMinutes(srcModule.targetTime || 0, globalTargetUnit),
                         moments: (srcModule.moments || []).map(srcMoment => {
                             return {
                                 id: srcMoment.id || `mom-${Math.random().toString(36).substr(2, 9)}`,
@@ -3756,7 +3865,7 @@
                                             return {
                                                 id: srcStep.id || `act-${Math.random().toString(36).substr(2, 9)}`,
                                                 title: srcStep.title || 'Untitled Activity',
-                                                plannedMinutes: parseInt(srcStep.duration || 0),
+                                                plannedMinutes: toMinutes(srcStep.duration || 0, srcStep.durationUnit || 'minutes'),
                                                 slides: slides
                                             };
                                         })
@@ -3768,7 +3877,12 @@
                 });
 
                 return {
-                    title: sourceData.keyParams ? sourceData.keyParams.title : 'Imported Course',
+                    title: (sourceData.keyParams && (sourceData.keyParams.title || sourceData.keyParams.name)) ? (sourceData.keyParams.title || sourceData.keyParams.name) : 'Imported Course',
+                    description: (sourceData.keyParams && sourceData.keyParams.description) ? sourceData.keyParams.description : '',
+                    keyParams: sourceData.keyParams || {},
+                    version: sourceData.version || '',
+                    schemaVersion: sourceData.schemaVersion || 2,
+                    exportedAt: sourceData.exportedAt || '',
                     modules: modules
                 };
             },
@@ -3975,6 +4089,17 @@ this.activityTimer = {
 
             populateAboutModal() {
                 const titleEl = document.getElementById('aboutTitleValue');
+                const authorsEl = document.getElementById('aboutAuthorsValue');
+                const trainersEl = document.getElementById('aboutTrainersValue');
+                const levelEl = document.getElementById('aboutLevelValue');
+                const modeEl = document.getElementById('aboutModeValue');
+                const cohortEl = document.getElementById('aboutCohortValue');
+                const audienceEl = document.getElementById('aboutAudienceValue');
+                const prereqEl = document.getElementById('aboutPrerequisitesValue');
+                const learningEl = document.getElementById('aboutLearningTimeValue');
+                const licenceEl = document.getElementById('aboutLicenceValue');
+                const versionEl = document.getElementById('aboutVersionValue');
+
                 const modulesEl = document.getElementById('aboutModulesValue');
                 const activitiesEl = document.getElementById('aboutActivitiesValue');
                 const slidesEl = document.getElementById('aboutSlidesValue');
@@ -3984,27 +4109,95 @@ this.activityTimer = {
 
                 if (!titleEl || !modulesEl || !activitiesEl || !slidesEl || !plannedEl || !descEl || !modulesListEl) return;
 
+                const setText = (el, value, fallback = '–') => {
+                    if (!el) return;
+                    const v = (value === undefined || value === null) ? '' : String(value);
+                    const clean = v.trim();
+                    el.textContent = clean ? clean : fallback;
+                };
+
+                const formatValUnit = (val, unit) => {
+                    const raw = (val === undefined || val === null) ? '' : String(val).trim();
+                    if (!raw) return '';
+                    const num = Number(raw);
+                    const u = (unit === undefined || unit === null) ? '' : String(unit).trim().toLowerCase();
+
+                    if (Number.isFinite(num) && u) {
+                        if (u.startsWith('hour') || u === 'h') return `${num} ${num === 1 ? 'hour' : 'hours'}`;
+                        if (u.startsWith('min')) return `${num} ${num === 1 ? 'minute' : 'minutes'}`;
+                        return `${num} ${u}`;
+                    }
+
+                    if (u) return `${raw} ${u}`;
+                    return raw;
+                };
+
                 // Reset UI
                 modulesListEl.innerHTML = '';
 
                 if (!this.courseData || !Array.isArray(this.courseData.modules)) {
                     titleEl.textContent = 'No content loaded';
+                    setText(authorsEl, '', '–');
+                    setText(trainersEl, '', '–');
+                    setText(levelEl, '', '–');
+                    setText(modeEl, '', '–');
+                    setText(cohortEl, '', '–');
+                    setText(audienceEl, '', '–');
+                    setText(prereqEl, '', '–');
+                    setText(learningEl, '', '–');
+                    setText(licenceEl, '', '–');
+                    setText(versionEl, '', '–');
+
                     modulesEl.textContent = '–';
                     activitiesEl.textContent = '–';
                     slidesEl.textContent = '–';
                     plannedEl.textContent = '–';
                     descEl.textContent = 'Import a JSON file to populate this section.';
+                    descEl.style.display = 'block';
                     return;
                 }
 
                 const cd = this.courseData;
+                const meta = (cd && typeof cd === 'object' && cd.keyParams && typeof cd.keyParams === 'object') 
+                    ? cd.keyParams 
+                    : ((cd && typeof cd === 'object' && cd.meta && typeof cd.meta === 'object') ? cd.meta : {});
 
-                // Title & description (if present in JSON)
-                titleEl.textContent = cd.title || 'Training content';
-                const descCandidate = cd.description || cd.summary || cd.context || '';
-                descEl.textContent = descCandidate ? String(descCandidate) : '';
+                // Title & description (prefer keyParams when available)
+                const titleText = meta.title || meta.name || cd.title || 'Training content';
+                titleEl.textContent = titleText;
 
-                let moduleCount = cd.modules.length;
+                const descCandidate = meta.description || cd.description || cd.summary || cd.context || '';
+                if (descCandidate) {
+                    descEl.textContent = String(descCandidate);
+                    descEl.style.display = 'block';
+                } else {
+                    descEl.textContent = '';
+                    descEl.style.display = 'none';
+                }
+
+                // Minimal upgrade fields (from keyParams if present)
+                setText(authorsEl, meta.authors || cd.authors);
+                setText(trainersEl, meta.trainers || cd.trainers);
+                setText(levelEl, meta.level || cd.level);
+                setText(modeEl, meta.mode || cd.mode);
+                setText(cohortEl, meta.cohortSize || cd.cohortSize);
+
+                setText(audienceEl, meta.targetAudience || cd.targetAudience);
+                setText(prereqEl, meta.prerequisites || cd.prerequisites);
+                const learningTimeText = formatValUnit(
+                    meta.learningTimeVal || cd.learningTimeVal || cd.learningTime,
+                    meta.learningTimeUnit || cd.learningTimeUnit
+                );
+                setText(learningEl, learningTimeText);
+
+                const licenceText = meta.licence || meta.license || cd.licence || cd.license || '';
+                setText(licenceEl, licenceText);
+
+                const versionText = meta.versionNumber || cd.versionNumber || cd.version || '';
+                setText(versionEl, versionText);
+
+                // Counts
+                const moduleCount = cd.modules.length;
                 let activityCount = 0;
                 let slideCount = 0;
 
@@ -4068,14 +4261,14 @@ this.activityTimer = {
                     if (activities) parts.push(`${activities} activit${activities !== 1 ? 'ies' : 'y'}`);
                     desc.textContent = parts.length ? parts.join(' • ') : '';
 
-                    const meta = document.createElement('div');
-                    meta.className = 'about-module-meta';
+                    const metaLine = document.createElement('div');
+                    metaLine.className = 'about-module-meta';
                     const pm = parseInt(module.plannedMinutes || 0, 10) || 0;
-                    meta.textContent = pm > 0 ? `Planned: ${this.formatMinutes(pm)}` : '';
+                    metaLine.textContent = pm > 0 ? `Planned: ${this.formatMinutes(pm)}` : '';
 
                     card.appendChild(title);
                     card.appendChild(desc);
-                    if (meta.textContent) card.appendChild(meta);
+                    if (metaLine.textContent) card.appendChild(metaLine);
 
                     modulesListEl.appendChild(card);
                 });
