@@ -11636,7 +11636,8 @@ function updateOutcomeBloom(levelSelect) {
                 'textarea.step-input-trainer-tasks',
                 'textarea.step-input-notes',
                 'textarea.step-input-eval-followup',
-                'textarea#ctx-objective'
+                'textarea#ctx-objective',
+                'textarea#ctx-presentation'
             ].join(',');
 
             const list = scope.querySelectorAll(selector);
@@ -28315,6 +28316,20 @@ document.addEventListener('DOMContentLoaded', () => {
   function __ctxQ(sel, root){ try { return (root || document).querySelector(sel); } catch(_) { return null; } }
   function __ctxQA(sel, root){ try { return Array.from((root || document).querySelectorAll(sel)); } catch(_) { return []; } }
 
+
+  function __ctxAllSteps(){
+    try { return __ctxQA('.step-card'); } catch(_) { return []; }
+  }
+  function __ctxNeighbourStep(stepEl, dir){
+    try {
+      if (!stepEl) return null;
+      const all = __ctxAllSteps();
+      const i = all.indexOf(stepEl);
+      if (i < 0) return null;
+      return all[i + (dir || 0)] || null;
+    } catch(_) { return null; }
+  }
+
   function __ctxGetText(v){ return (v == null) ? '' : String(v); }
 
   function __ctxSelectedOptions(selectEl){
@@ -28359,6 +28374,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function __ctxOpenPanel(){
     const panel = __ctxQ('#context-panel');
+    try { __ctxCollapsePanels(); } catch(_){ __ldSilentErr(_); }
     const handle = __ctxQ('#context-panel-handle');
     if (panel) panel.classList.remove('hidden');
     if (panel) panel.classList.add('flex');
@@ -28371,6 +28387,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const handle = __ctxQ('#context-panel-handle');
     if (panel) { panel.classList.add('hidden'); panel.classList.remove('flex'); }
     if (handle) handle.classList.remove('hidden');
+  }
+
+  function __ctxCollapsePanels(){
+    try {
+      const d1 = __ctxQ('#ctx-details-align');
+      const d2 = __ctxQ('#ctx-details-tools');
+      if (d1) d1.removeAttribute('open');
+      if (d2) d2.removeAttribute('open');
+    } catch(_){ __ldSilentErr(_); }
   }
 
   function __ctxSetPinned(v){
@@ -28393,6 +28418,7 @@ document.addEventListener('DOMContentLoaded', () => {
     stepEl.classList.add('ring-2','ring-indigo-400','ring-offset-1');
 
     __ctxUpdatePanel(stepEl);
+    try { __ctxCollapsePanels(); } catch(_){ __ldSilentErr(_); }
     if (!opts || opts.openPanel !== false) __ctxOpenPanel();
   }
 
@@ -28407,18 +28433,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const durUnitSrc = __ctxQ('.duration-unit', stepEl);
     const evalSrc = __ctxQ('.evaluation-select', stepEl);
     const objSrc = __ctxQ('.step-input-objective', stepEl);
+    const presSrc = __ctxQ('.step-input-presentation', stepEl);
 
     const title = __ctxQ('#ctx-title');
     const dur = __ctxQ('#ctx-duration');
     const durUnit = __ctxQ('#ctx-duration-unit');
     const evalSel = __ctxQ('#ctx-evaluation');
     const obj = __ctxQ('#ctx-objective');
+    const pres = __ctxQ('#ctx-presentation');
 
     if (title && titleSrc) title.value = titleSrc.value || '';
     if (dur && durSrc) dur.value = durSrc.value || '';
     if (durUnit && durUnitSrc) durUnit.value = durUnitSrc.value || '60';
     if (evalSel && evalSrc) evalSel.value = evalSrc.value || 'Aucune';
     if (obj && objSrc) obj.value = objSrc.value || '';
+    if (pres && presSrc) pres.value = presSrc.value || '';
 
     // Alignement
     const alignBox = __ctxQ('#ctx-align');
@@ -28458,9 +28487,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Scroll button
-    const scrollBtn = __ctxQ('#ctx-scroll-to-step');
-    if (scrollBtn) scrollBtn.disabled = !stepEl;
-  }
+const scrollBtn = __ctxQ('#ctx-scroll-to-step');
+const prevBtn = __ctxQ('#ctx-prev-step');
+const nextBtn = __ctxQ('#ctx-next-step');
+if (scrollBtn) scrollBtn.disabled = !stepEl;
+
+// Prev/Next buttons
+if (prevBtn) prevBtn.disabled = !__ctxNeighbourStep(stepEl, -1);
+if (nextBtn) nextBtn.disabled = !__ctxNeighbourStep(stepEl, 1);
+}
 
   function __ctxEsc(s){
     return __ctxGetText(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c] || c));
@@ -28711,6 +28746,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const close = __ctxQ('#context-panel-close');
     const pin = __ctxQ('#context-panel-pin');
     const scrollBtn = __ctxQ('#ctx-scroll-to-step');
+    const prevBtn = __ctxQ('#ctx-prev-step');
+    const nextBtn = __ctxQ('#ctx-next-step');
 
     if (handle) handle.addEventListener('click', () => {
       if (__ctxSelectedStep) __ctxOpenPanel();
@@ -28723,12 +28760,28 @@ document.addEventListener('DOMContentLoaded', () => {
       try { __ctxSelectedStep.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(_){ __ldSilentErr(_); }
     });
 
+    if (prevBtn) prevBtn.addEventListener('click', () => {
+      if (!__ctxSelectedStep) return;
+      const target = __ctxNeighbourStep(__ctxSelectedStep, -1);
+      if (!target) return;
+      __ctxSelectStep(target, { openPanel: true });
+      try { target.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(_){ __ldSilentErr(_); }
+    });
+    if (nextBtn) nextBtn.addEventListener('click', () => {
+      if (!__ctxSelectedStep) return;
+      const target = __ctxNeighbourStep(__ctxSelectedStep, 1);
+      if (!target) return;
+      __ctxSelectStep(target, { openPanel: true });
+      try { target.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(_){ __ldSilentErr(_); }
+    });
+
     // Quick-edit bindings
     const ctxTitle = __ctxQ('#ctx-title');
     const ctxDur = __ctxQ('#ctx-duration');
     const ctxDurUnit = __ctxQ('#ctx-duration-unit');
     const ctxEval = __ctxQ('#ctx-evaluation');
     const ctxObj = __ctxQ('#ctx-objective');
+    const ctxPres = __ctxQ('#ctx-presentation');
 
     function mirrorInput(ctxEl, srcSelector, evtName){
       if (!ctxEl) return;
@@ -28752,6 +28805,7 @@ document.addEventListener('DOMContentLoaded', () => {
     mirrorInput(ctxDurUnit, '.duration-unit', 'change');
     mirrorInput(ctxEval, '.evaluation-select', 'change');
     mirrorInput(ctxObj, '.step-input-objective', 'input');
+    mirrorInput(ctxPres, '.step-input-presentation', 'input');
 
     // Click-to-select step
     document.addEventListener('click', (e) => {
@@ -28825,6 +28879,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, true);
 
     // Initialise panel state
+    try { __ctxCollapsePanels(); } catch(_){ __ldSilentErr(_); }
     __ctxClosePanel(true);
   }
 
@@ -28914,7 +28969,16 @@ function init(){
                 rows="2"></textarea>
     </div>
 
-    <details class="border border-slate-200 rounded-lg bg-white" open>
+
+    <div>
+      <label class="text-[11px] text-slate-500 font-semibold uppercase">Présentation</label>
+      <textarea class="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none resize-y"
+                id="ctx-presentation"
+                rows="3"
+                placeholder="Présentation"></textarea>
+    </div>
+
+    <details id="ctx-details-align" class="border border-slate-200 rounded-lg bg-white">
       <summary class="cursor-pointer select-none flex items-center justify-between px-3 py-2 text-sm font-semibold text-slate-700">
         Alignement
         <span class="material-icons-round text-[16px] text-slate-400">expand_more</span>
@@ -28922,7 +28986,7 @@ function init(){
       <div class="px-3 pb-3 text-sm text-slate-700" id="ctx-align"></div>
     </details>
 
-    <details class="border border-slate-200 rounded-lg bg-white" open>
+    <details id="ctx-details-tools" class="border border-slate-200 rounded-lg bg-white">
       <summary class="cursor-pointer select-none flex items-center justify-between px-3 py-2 text-sm font-semibold text-slate-700">
         Outils et matériel
         <span class="material-icons-round text-[16px] text-slate-400">expand_more</span>
@@ -28931,11 +28995,32 @@ function init(){
     </details>
   </div>
 
-  <div class="px-4 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-2">
-    <div class="text-xs text-slate-500" id="ctx-hint">Cliquez une activité pour afficher ses détails.</div>
-    <button class="px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white hover:bg-slate-50"
-            id="ctx-scroll-to-step"
-            type="button">Aller à l’activité</button>
+  <div class="px-4 py-3 border-t border-slate-200 bg-slate-50">
+    <div class="flex flex-col gap-2">
+      <div class="flex items-center justify-between gap-2">
+        <button class="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
+                id="ctx-prev-step"
+                type="button"
+                title="Activité précédente">
+          <span class="material-icons-round text-[16px]">chevron_left</span>
+          Précédente
+        </button>
+        <button class="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
+                id="ctx-next-step"
+                type="button"
+                title="Activité suivante">
+          Suivante
+          <span class="material-icons-round text-[16px]">chevron_right</span>
+        </button>
+      </div>
+
+      <div class="flex items-center justify-between gap-2">
+        <div class="text-xs text-slate-500" id="ctx-hint">Cliquez une activité pour afficher ses détails.</div>
+        <button class="px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                id="ctx-scroll-to-step"
+                type="button">Aller à l’activité</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -30775,6 +30860,10 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
   opacity: 1;
 }
 
+.ld-textarea-wrapper--always .ld-textarea-fullscreen-btn {
+  opacity: 1;
+}
+
 .ld-textarea-fullscreen-btn:hover {
   background-color: #eef2ff;
   border-color: #c7d2fe;
@@ -30861,7 +30950,10 @@ kbd {
     '#param-description',       // Informations et paramètres - Description générale
     '#param-target-audience',   // Informations et paramètres - Public cible
     '#param-prerequisites',     // Informations et paramètres - Prérequis
-    '#param-tools-materials-notes'  // Informations et paramètres - Notes outils/matériel
+    '#param-tools-materials-notes',
+    // Informations et paramètres - Notes outils/matériel,
+    '#ctx-objective',
+    '#ctx-presentation'
   ];
 
   function updateCharCount() {
@@ -31039,6 +31131,13 @@ kbd {
         // Create wrapper
         const wrapper = document.createElement('div');
         wrapper.className = 'ld-textarea-wrapper';
+
+        // Keep the fullscreen button always visible for key side-panel fields
+        try {
+          if (textarea && textarea.classList && (textarea.classList.contains('step-input-objective') || textarea.classList.contains('step-input-presentation') || textarea.id === 'ctx-objective' || textarea.id === 'ctx-presentation')) {
+            wrapper.classList.add('ld-textarea-wrapper--always');
+          }
+        } catch(_){ }
         
         // Create fullscreen button
         const btn = document.createElement('button');
@@ -31057,8 +31156,24 @@ kbd {
         textarea.parentNode.insertBefore(wrapper, textarea);
         wrapper.appendChild(textarea);
         wrapper.appendChild(btn);
+
+
       });
     });
+  }
+
+
+  // Ensure advanced side-panel sections are collapsed by default
+  function collapseAdvancedSideSections(scopeEl) {
+    try {
+      const scope = scopeEl && scopeEl.querySelectorAll ? scopeEl : document;
+      const steps = scope.querySelectorAll ? scope.querySelectorAll('.step-card') : [];
+      steps.forEach(step => {
+        step.querySelectorAll('[data-step-panel="alignment"] details, [data-step-panel="resources"] details').forEach(d => {
+          try { d.removeAttribute('open'); } catch(_){}
+        });
+      });
+    } catch(_){}
   }
 
   // Event listeners
@@ -31131,6 +31246,7 @@ kbd {
   // Initialize on DOM ready
   function init() {
     wrapTextareas();
+    collapseAdvancedSideSections(document);
   }
 
   if (document.readyState === 'loading') {
@@ -31158,7 +31274,7 @@ kbd {
       });
     });
     if (shouldWrap) {
-      setTimeout(wrapTextareas, 100);
+      setTimeout(() => { wrapTextareas(); collapseAdvancedSideSections(root); }, 100);
     }
   });
 
