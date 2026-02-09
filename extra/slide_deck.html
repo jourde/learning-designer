@@ -1690,6 +1690,39 @@
             50% { opacity: 0.7; }
         }
 
+        .timer-main {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 140px;
+        }
+
+        .timer-progress-track {
+            height: 6px;
+            background: var(--color-border-light);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .timer-progress-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 999px;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .timer-progress-fill.green {
+            background: #2E7D32;
+        }
+
+        .timer-progress-fill.orange {
+            background: #E65100;
+        }
+
+        .timer-progress-fill.red {
+            background: #C62828;
+        }
+
         .timer-elapsed {
             min-width: 55px;
         }
@@ -2067,12 +2100,17 @@
                             <div class="section-label">Timers</div>
                             <div class="timers-row">
                                                                 <!-- Activity Timer -->
-                            <div class="timer-container activity-timer" id="activityTimer">
+                                                        <div class="timer-container activity-timer" id="activityTimer">
                                 <span class="timer-label">Activity</span>
-                                <div class="timer-display green">
-                                    <span class="timer-elapsed" id="activityElapsed">00:00</span>
-                                    <span class="timer-separator">/</span>
-                                    <span class="timer-planned" id="activityPlanned">00:00</span>
+                                <div class="timer-main">
+                                    <div class="timer-display green">
+                                        <span class="timer-elapsed" id="activityElapsed">00:00</span>
+                                        <span class="timer-separator">/</span>
+                                        <span class="timer-planned" id="activityPlanned">00:00</span>
+                                    </div>
+                                    <div class="timer-progress-track" aria-label="Activity time progress">
+                                        <div class="timer-progress-fill green" id="activityTimeProgressFill" style="width: 0%"></div>
+                                    </div>
                                 </div>
                                 <div class="timer-controls">
                                     <button class="timer-btn" id="activityPlayBtn" onclick="app.toggleActivityTimer()" title="Start/Pause">
@@ -2532,9 +2570,6 @@ updateNavFoldAllAvailability() {
                     <span class="slide-count">${slideCount} slide${slideCount !== 1 ? 's' : ''}</span>
                 `;
 
-                activityDiv.addEventListener('click', () => {
-                    this.loadActivity(activity);
-                });
 
                 return activityDiv;
             },
@@ -2924,6 +2959,26 @@ updateNavFoldAllAvailability() {
                 const navFoldAllBtn = document.getElementById('navFoldAllBtn');
                 if (navFoldAllBtn) {
                     navFoldAllBtn.addEventListener('click', () => this.toggleNavFoldAll());
+                }
+
+                // Navigation click (event delegation) - robust even after re-render
+                const navTree = document.getElementById('navTree');
+                if (navTree) {
+                    navTree.addEventListener('click', (e) => {
+                        try {
+                            const activityEl = e.target.closest('.nav-activity');
+                            if (!activityEl) return;
+                            const activityId = activityEl.dataset.activityId;
+                            if (!activityId) return;
+                            const activity = this.findActivityById(activityId);
+                            if (activity) {
+                                this.loadActivity(activity);
+                            }
+                        } catch (err) {
+                            console.error('Navigation click error:', err);
+                            this.setStatus('Navigation error: ' + (err && err.message ? err.message : String(err)), 'error');
+                        }
+                    });
                 }
 // Search
                 const searchInput = document.getElementById('searchInput');
@@ -3457,17 +3512,29 @@ updateNavFoldAllAvailability() {
                 return 'red';
             },
 
-
             updateActivityTimerDisplay() {
                 const display = document.querySelector('#activityTimer .timer-display');
                 const elapsed = document.getElementById('activityElapsed');
                 const planned = document.getElementById('activityPlanned');
-                
-                elapsed.textContent = this.formatTime(this.activityTimer.elapsed);
-                planned.textContent = this.formatTime(this.activityTimer.planned);
-                
+                const fill = document.getElementById('activityTimeProgressFill');
+
+                if (elapsed) elapsed.textContent = this.formatTime(this.activityTimer.elapsed);
+                if (planned) planned.textContent = this.formatTime(this.activityTimer.planned);
+
                 const color = this.getTimerColor(this.activityTimer.elapsed, this.activityTimer.planned);
-                display.className = `timer-display ${color}`;
+
+                if (display) {
+                    display.className = `timer-display ${color}`;
+                }
+
+                if (fill) {
+                    const plannedSec = this.activityTimer.planned || 0;
+                    const pct = plannedSec > 0
+                        ? Math.min(100, (this.activityTimer.elapsed / plannedSec) * 100)
+                        : 0;
+                    fill.style.width = `${pct}%`;
+                    fill.className = `timer-progress-fill ${color}`;
+                }
             },
 
 
