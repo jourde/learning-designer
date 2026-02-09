@@ -42,6 +42,26 @@
             --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
+        /* ===== DARK MODE ===== */
+        [data-theme="dark"] {
+            --color-bg: #111827;
+            --color-surface: #1F2937;
+            --color-text: #F9FAFB;
+            --color-text-secondary: #D1D5DB;
+            --color-text-muted: #6B7280;
+            --color-border: #374151;
+            --color-border-light: #1F2937;
+            --color-hover: #374151;
+            --color-primary: #3B82F6;
+            --color-primary-light: #1E3A5F;
+            --color-primary-dark: #2563EB;
+            --color-success: #10B981;
+            --color-success-light: #064E3B;
+            --color-warning: #F59E0B;
+            --color-warning-light: #78350F;
+            --color-sidebar: #1F2937;
+        }
+
         html {
             scroll-behavior: smooth;
         }
@@ -1076,6 +1096,39 @@
             padding: 0;
         }
 
+        .slide-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.95em;
+        }
+
+        .slide-content th,
+        .slide-content td {
+            border: 1px solid var(--color-border);
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .slide-content th {
+            background: var(--color-border-light);
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .slide-content tr:nth-child(even) td {
+            background: var(--color-hover);
+        }
+
+        .slide-content blockquote {
+            border-left: 4px solid var(--color-primary);
+            margin: 12px 0;
+            padding: 8px 16px;
+            background: var(--color-primary-light);
+            color: var(--color-text-secondary);
+            border-radius: 0 6px 6px 0;
+        }
+
         /* Navigation Controls */
         .slide-controls {
             display: flex;
@@ -1889,6 +1942,104 @@
         .nav-tree::-webkit-scrollbar-thumb:hover {
             background: var(--color-text-muted);
         }
+        /* ===== DARK MODE TOGGLE ===== */
+        .dark-mode-toggle {
+            width: 100%;
+            padding: 10px 16px;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            background: var(--color-surface);
+            color: var(--color-text);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .dark-mode-toggle:hover {
+            background: var(--color-hover);
+            border-color: var(--color-text-muted);
+        }
+
+        .dark-mode-toggle svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        /* ===== PRINT STYLES ===== */
+        @media print {
+            .sidebar,
+            .mobile-header,
+            .mobile-overlay,
+            .zoom-controls,
+            .slide-controls,
+            .search-container,
+            .nav-actions-row,
+            .sidebar-footer,
+            .export-modal,
+            .about-modal,
+            .dark-mode-toggle {
+                display: none !important;
+            }
+
+            .main-content {
+                margin-left: 0 !important;
+            }
+
+            .slide-container {
+                padding: 20px !important;
+                max-width: 100% !important;
+            }
+
+            .slide {
+                page-break-inside: avoid;
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+
+            .content-header {
+                position: static !important;
+                border-bottom: 2px solid #333 !important;
+                margin-bottom: 20px;
+            }
+
+            body {
+                background: white !important;
+                color: black !important;
+                font-size: 12pt;
+            }
+
+            .slide-content {
+                font-size: 12pt !important;
+                color: black !important;
+            }
+
+            .slide-content a {
+                color: black !important;
+                text-decoration: underline;
+            }
+
+            .slide-content a::after {
+                content: " (" attr(href) ")";
+                font-size: 9pt;
+                color: #555;
+            }
+
+            .slide-content table {
+                border: 1px solid #333;
+            }
+
+            .slide-content th,
+            .slide-content td {
+                border: 1px solid #333;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1938,7 +2089,7 @@
             </div>
 
             <!-- Navigation Tree -->
-            <nav class="nav-tree" id="navTree"></nav>
+            <nav class="nav-tree" id="navTree" aria-label="Training navigation"></nav>
 
             <!-- Search Results -->
             <div class="search-results" id="searchResults"></div>
@@ -1955,6 +2106,12 @@
                     </div>
                 </div>
                 <div class="footer-buttons">
+                    <button class="dark-mode-toggle" id="darkModeToggle" onclick="app.toggleDarkMode()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="darkModeIcon">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                        <span id="darkModeLabel">Dark Mode</span>
+                    </button>
                     <button class="about-btn" onclick="app.openAboutModal()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="10"></circle>
@@ -2034,7 +2191,7 @@
             </div>
 
             <!-- Slide Container -->
-            <div class="slide-container" id="slideContainer">
+            <div class="slide-container" id="slideContainer" role="region" aria-label="Slide content" aria-live="polite">
                 <div class="welcome-screen">
                     <h1 class="welcome-title">Training Slide Deck Platform</h1>
                     <p class="welcome-subtitle">Import your content to begin</p>
@@ -2164,10 +2321,10 @@
     <input type="file" id="importFileInput" accept=".json,application/json" style="display: none;" onchange="app.handleFileSelect(event)">
 
     <!-- About Modal -->
-    <div class="about-modal" id="aboutModal" onclick="if(event.target === this) app.closeAboutModal()">
+    <div class="about-modal" id="aboutModal" role="dialog" aria-modal="true" aria-labelledby="aboutModalTitle" onclick="if(event.target === this) app.closeAboutModal()">
         <div class="about-modal-content">
             <div class="export-modal-header">
-                <h2 class="export-modal-title">About This Training</h2>
+                <h2 class="export-modal-title" id="aboutModalTitle">About This Training</h2>
                 <button class="export-close-btn" onclick="app.closeAboutModal()">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -2279,10 +2436,10 @@
 
 
     <!-- Export Modal -->
-    <div class="export-modal" id="exportModal" onclick="if(event.target === this) app.closeExportModal()">
+    <div class="export-modal" id="exportModal" role="dialog" aria-modal="true" aria-labelledby="exportModalTitle" onclick="if(event.target === this) app.closeExportModal()">
         <div class="export-modal-content">
             <div class="export-modal-header">
-                <h2 class="export-modal-title">Export Content</h2>
+                <h2 class="export-modal-title" id="exportModalTitle">Export Content</h2>
                 <button class="export-close-btn" onclick="app.closeExportModal()" aria-label="Close export">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -2406,6 +2563,7 @@ this.loadNavFoldAllState();
                 this.loadTimerState();
                 // Seen-state markers removed (no persistent "visited/completed" ticks)
                 this.clearSeenState();
+                this.loadThemePreference();
                 this.loadFontSizePreference();
                 this.loadZoomPreference();
                 this.loadDetailsPanelState();
@@ -2561,6 +2719,8 @@ updateNavFoldAllAvailability() {
             createActivityElement(activity, moduleIndex, momentIndex, submomentIndex, activityIndex) {
                 const activityDiv = document.createElement('div');
                 activityDiv.className = 'nav-activity';
+                activityDiv.setAttribute('role', 'button');
+                activityDiv.setAttribute('tabindex', '0');
                 activityDiv.dataset.activityId = activity.id;
                 
                 const slideCount = (activity.slides && activity.slides.length) ? activity.slides.length : 0;
@@ -2646,6 +2806,65 @@ updateNavFoldAllAvailability() {
                 return div.innerHTML;
             },
 
+            /**
+             * Sanitize rich HTML content (slides) — allows safe formatting tags
+             * but strips dangerous elements (script, iframe, event handlers, etc.).
+             */
+            sanitizeRichHTML(html) {
+                if (!html) return '';
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+
+                const ALLOWED_TAGS = new Set([
+                    'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'del',
+                    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+                    'ul', 'ol', 'li', 'dl', 'dt', 'dd',
+                    'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption',
+                    'blockquote', 'pre', 'code', 'hr', 'div', 'span',
+                    'a', 'img', 'figure', 'figcaption', 'sup', 'sub', 'mark',
+                ]);
+                const ALLOWED_ATTRS = new Set([
+                    'href', 'src', 'alt', 'title', 'class', 'id',
+                    'target', 'rel', 'loading', 'width', 'height',
+                    'colspan', 'rowspan', 'scope',
+                ]);
+
+                const walk = (node) => {
+                    const toRemove = [];
+                    for (const child of node.childNodes) {
+                        if (child.nodeType === Node.ELEMENT_NODE) {
+                            const tag = child.tagName.toLowerCase();
+                            if (!ALLOWED_TAGS.has(tag)) {
+                                toRemove.push(child);
+                                continue;
+                            }
+                            // Strip disallowed attributes (especially event handlers)
+                            const attrs = Array.from(child.attributes);
+                            for (const attr of attrs) {
+                                const name = attr.name.toLowerCase();
+                                if (!ALLOWED_ATTRS.has(name) || name.startsWith('on')) {
+                                    child.removeAttribute(attr.name);
+                                }
+                            }
+                            // Sanitize href/src to prevent javascript: URLs
+                            for (const urlAttr of ['href', 'src']) {
+                                const val = (child.getAttribute(urlAttr) || '').trim().toLowerCase();
+                                if (val.startsWith('javascript:') || val.startsWith('data:text/html')) {
+                                    child.removeAttribute(urlAttr);
+                                }
+                            }
+                            walk(child);
+                        }
+                    }
+                    for (const el of toRemove) {
+                        el.remove();
+                    }
+                };
+
+                walk(temp);
+                return temp.innerHTML;
+            },
+
             renderSlide() {
                 const slide = this.currentActivity.slides[this.currentSlideIndex];
                 const container = document.getElementById('slideContainer');
@@ -2655,7 +2874,7 @@ updateNavFoldAllAvailability() {
                 
                 container.innerHTML = `
                     <div class="slide">
-                        <div class="slide-content">${slide.content}</div>
+                        <div class="slide-content">${this.sanitizeRichHTML(slide.content)}</div>
                     </div>
                 `;
                 this.updateSlideCounter();
@@ -2862,13 +3081,15 @@ updateNavFoldAllAvailability() {
 
             highlightText(text, query) {
                 if (!query) return text;
-                
+
                 // Remove HTML tags for highlighting
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = text;
                 const plainText = tempDiv.textContent || tempDiv.innerText;
-                
-                const regex = new RegExp(`(${query})`, 'gi');
+
+                // Escape regex special characters to prevent regex injection
+                const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`(${escaped})`, 'gi');
                 return plainText.substring(0, 150).replace(regex, '<span class="search-highlight">$1</span>');
             },
 
@@ -2964,7 +3185,7 @@ updateNavFoldAllAvailability() {
                 // Navigation click (event delegation) - robust even after re-render
                 const navTree = document.getElementById('navTree');
                 if (navTree) {
-                    navTree.addEventListener('click', (e) => {
+                    const handleNavActivation = (e) => {
                         try {
                             const activityEl = e.target.closest('.nav-activity');
                             if (!activityEl) return;
@@ -2977,6 +3198,14 @@ updateNavFoldAllAvailability() {
                         } catch (err) {
                             console.error('Navigation click error:', err);
                             this.setStatus('Navigation error: ' + (err && err.message ? err.message : String(err)), 'error');
+                        }
+                    };
+
+                    navTree.addEventListener('click', handleNavActivation);
+                    navTree.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleNavActivation(e);
                         }
                     });
                 }
@@ -3176,7 +3405,11 @@ updateNavFoldAllAvailability() {
                 }
             },
 
+            _cachedActivitiesInOrder: null,
+
             getAllActivitiesInOrder() {
+                if (this._cachedActivitiesInOrder) return this._cachedActivitiesInOrder;
+
                 const list = [];
                 if (!this.courseData || !this.courseData.modules) return list;
 
@@ -3190,6 +3423,7 @@ updateNavFoldAllAvailability() {
                     });
                 });
 
+                this._cachedActivitiesInOrder = list;
                 return list;
             },
 
@@ -3717,7 +3951,7 @@ updateNavFoldAllAvailability() {
             handleFileSelect(event) {
                 try {
                     console.log('handleFileSelect called', event);
-                    
+
                     const file = event.target.files[0];
                     if (!file) {
                         console.log('No file selected');
@@ -3729,32 +3963,43 @@ updateNavFoldAllAvailability() {
                     // Check file size (max 10MB)
                     if (file.size > 10 * 1024 * 1024) {
                         this.setStatus('Import error: file is too large (max 10MB).', 'error');
-                        event.target.value = ''; // Reset input
+                        event.target.value = '';
                         return;
                     }
 
+                    // Confirm before replacing existing content
+                    if (this.courseData && this.courseData.modules && this.courseData.modules.length > 0) {
+                        if (!confirm('Importing a new file will replace the current training content and reset all progress.\n\nContinue?')) {
+                            event.target.value = '';
+                            return;
+                        }
+                    }
+
+                    // Show loading indicator
+                    this.setStatus('Loading "' + file.name + '"...', 'info');
+
                     const reader = new FileReader();
-                    
+
                     reader.onload = (e) => {
                         try {
                             console.log('File loaded, parsing JSON...');
                             const jsonData = JSON.parse(e.target.result);
                             console.log('JSON parsed successfully');
                             this.importJSON(jsonData);
-                            event.target.value = ''; // Reset input for next import
+                            event.target.value = '';
                         } catch (error) {
                             console.error('JSON parse error:', error);
                             this.setStatus('Import error: invalid JSON. ' + error.message, 'error');
                             event.target.value = '';
                         }
                     };
-                    
+
                     reader.onerror = (error) => {
                         console.error('File read error:', error);
                         this.setStatus('Import error: could not read the file. Please try again.', 'error');
                         event.target.value = '';
                     };
-                    
+
                     console.log('Starting file read...');
                     reader.readAsText(file);
                 } catch (error) {
@@ -3990,9 +4235,45 @@ updateNavFoldAllAvailability() {
                 // Italic (e.g., *italic* -> <em>italic</em>) - avoid matching **bold**
                 html = html.replace(/\*(?!\*)([^*\n]+?)\*(?!\*)/gim, '<em>$1</em>');
 
-                // Lists (basic)
+                // Blockquotes (e.g., > text -> <blockquote>)
+                html = html.replace(/^>\s+(.*)/gim, '<blockquote>$1</blockquote>');
+                // Merge consecutive blockquotes
+                html = html.replace(/<\/blockquote>\s*<blockquote>/gim, '<br>');
+
+                // Unordered lists (basic: - item)
                 html = html.replace(/^\s*-\s+(.*)/gim, '<li>$1</li>');
                 html = html.replace(/(?:<li>.*?<\/li>\s*)+/gim, (m) => `<ul>${m}</ul>`);
+
+                // Ordered lists (e.g., 1. item)
+                html = html.replace(/^\s*\d+\.\s+(.*)/gim, '<oli>$1</oli>');
+                html = html.replace(/(?:<oli>.*?<\/oli>\s*)+/gim, (m) => {
+                    const items = m.replace(/<\/?oli>/g, (t) => t === '<oli>' ? '<li>' : '</li>');
+                    return `<ol>${items}</ol>`;
+                });
+
+                // Simple tables (pipe-delimited)
+                html = html.replace(/((?:^\|.+\|$\n?)+)/gim, (tableBlock) => {
+                    const rows = tableBlock.trim().split('\n').filter(r => r.trim());
+                    if (rows.length === 0) return tableBlock;
+
+                    let result = '<table>';
+                    rows.forEach((row, idx) => {
+                        const trimmed = row.trim();
+                        // Skip separator rows (e.g., |---|---|)
+                        if (/^\|[\s\-:]+\|$/.test(trimmed)) return;
+
+                        const cells = trimmed.split('|').filter((_, i, arr) => i > 0 && i < arr.length - 1);
+                        const tag = idx === 0 ? 'th' : 'td';
+                        const rowTag = idx === 0 ? 'thead' : (idx === 1 ? 'tbody' : '');
+                        if (rowTag === 'thead') result += '<thead>';
+                        if (rowTag === 'tbody') result += '<tbody>';
+                        result += '<tr>' + cells.map(c => `<${tag}>${c.trim()}</${tag}>`).join('') + '</tr>';
+                        if (rowTag === 'thead') result += '</thead>';
+                    });
+                    if (rows.length > 1) result += '</tbody>';
+                    result += '</table>';
+                    return result;
+                });
 
                 // Line breaks
                 html = html.replace(/\n/g, '<br>');
@@ -4095,6 +4376,9 @@ this.activityTimer = {
                     activityId: null
                 };
                 this.timerIntervalId = null;
+
+                // Invalidate activity cache
+                this._cachedActivitiesInOrder = null;
 
                 // Reset UI state
                 this.currentActivity = null;
@@ -4341,21 +4625,107 @@ this.activityTimer = {
                 });
             },
 
+            // ===== DARK MODE =====
+
+            toggleDarkMode() {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                const newTheme = isDark ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                this.updateDarkModeButton(newTheme);
+                this.safeLocalStorageSet('theme', newTheme);
+            },
+
+            updateDarkModeButton(theme) {
+                const label = document.getElementById('darkModeLabel');
+                const icon = document.getElementById('darkModeIcon');
+                if (label) {
+                    label.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+                }
+                if (icon) {
+                    icon.innerHTML = theme === 'dark'
+                        ? '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>'
+                        : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+                }
+            },
+
+            loadThemePreference() {
+                const saved = this.safeLocalStorageGet('theme');
+                // Respect system preference if no saved preference
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const theme = saved || (prefersDark ? 'dark' : 'light');
+                if (theme === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                }
+                this.updateDarkModeButton(theme);
+            },
+
+            // ===== MODAL FOCUS TRAPPING =====
+            _focusTrapHandler: null,
+            _lastFocusedElement: null,
+
+            trapFocus(modalEl) {
+                this._lastFocusedElement = document.activeElement;
+                const focusable = modalEl.querySelectorAll(
+                    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                );
+                if (focusable.length === 0) return;
+
+                const first = focusable[0];
+                const last = focusable[focusable.length - 1];
+
+                this._focusTrapHandler = (e) => {
+                    if (e.key !== 'Tab') return;
+                    if (e.shiftKey) {
+                        if (document.activeElement === first) {
+                            e.preventDefault();
+                            last.focus();
+                        }
+                    } else {
+                        if (document.activeElement === last) {
+                            e.preventDefault();
+                            first.focus();
+                        }
+                    }
+                };
+
+                modalEl.addEventListener('keydown', this._focusTrapHandler);
+                first.focus();
+            },
+
+            releaseFocus(modalEl) {
+                if (this._focusTrapHandler) {
+                    modalEl.removeEventListener('keydown', this._focusTrapHandler);
+                    this._focusTrapHandler = null;
+                }
+                if (this._lastFocusedElement && this._lastFocusedElement.focus) {
+                    this._lastFocusedElement.focus();
+                    this._lastFocusedElement = null;
+                }
+            },
+
             openAboutModal() {
                 this.populateAboutModal();
-                document.getElementById('aboutModal').classList.add('visible');
+                const modal = document.getElementById('aboutModal');
+                modal.classList.add('visible');
+                this.trapFocus(modal);
             },
 
             closeAboutModal() {
-                document.getElementById('aboutModal').classList.remove('visible');
+                const modal = document.getElementById('aboutModal');
+                this.releaseFocus(modal);
+                modal.classList.remove('visible');
             },
 
             openExportModal() {
-                document.getElementById('exportModal').classList.add('visible');
+                const modal = document.getElementById('exportModal');
+                modal.classList.add('visible');
+                this.trapFocus(modal);
             },
 
             closeExportModal() {
-                document.getElementById('exportModal').classList.remove('visible');
+                const modal = document.getElementById('exportModal');
+                this.releaseFocus(modal);
+                modal.classList.remove('visible');
             },
 
             exportAsMarkdown() {
