@@ -1367,9 +1367,9 @@
             text-align: center;
         }
 
-        /* Zoomed content */
+        /* Zoomed content - centered in viewport */
         .slide {
-            transform-origin: top center;
+            transform-origin: center center;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -1396,6 +1396,15 @@
             max-width: 1100px;
             margin: 0 auto;
             width: 100%;
+            overflow: visible;
+            position: relative;
+            scroll-behavior: smooth;
+        }
+
+        /* When content might overflow due to zoom, allow scrolling on main-content instead */
+        .main-content {
+            overflow-x: auto;
+            overflow-y: auto;
         }
 
         .slide {
@@ -1409,6 +1418,12 @@
             display: flex;
             flex-direction: column;
             animation: slideIn 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        /* Ensure zoomed slides don't get cut off */
+        .slide[style*="scale"] {
+            margin: auto;
         }
 
         @keyframes slideIn {
@@ -4515,9 +4530,38 @@ updateNavFoldAllAvailability() {
 
             applyZoom() {
                 const slide = document.querySelector('.slide');
+                const slideContainer = document.querySelector('.slide-container');
+                const mainContent = document.querySelector('.main-content');
+
                 if (slide) {
                     const scale = this.zoomLevel / 100;
                     slide.style.transform = `scale(${scale})`;
+
+                    // Adjust container padding based on zoom level to prevent cutoff
+                    if (slideContainer) {
+                        if (scale > 1) {
+                            // Reduce padding proportionally when zoomed in
+                            const basePadding = 48;
+                            const adjustedPadding = Math.max(basePadding / scale, 20);
+                            slideContainer.style.padding = `${adjustedPadding}px`;
+                        } else {
+                            // Restore normal padding
+                            slideContainer.style.padding = '56px 48px';
+                        }
+                    }
+
+                    // Ensure main content area handles overflow properly when zoomed
+                    if (mainContent) {
+                        if (scale > 1) {
+                            // Enable scrolling on main-content for zoomed content
+                            mainContent.style.overflowX = 'auto';
+                            mainContent.style.overflowY = 'auto';
+                        } else {
+                            // Normal scrolling at 100% or less
+                            mainContent.style.overflowX = 'hidden';
+                            mainContent.style.overflowY = 'auto';
+                        }
+                    }
                 }
 
                 // Update zoom level display
