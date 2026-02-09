@@ -582,6 +582,50 @@
             display: flex;
         }
 
+
+        /* Navigation Toggle */
+        .nav-toggle-row {
+            padding: 0 20px 12px;
+        }
+
+        .nav-toggle-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--color-border);
+            background: var(--color-border-light);
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            font-size: 13px;
+            transition: background var(--transition), color var(--transition), border-color var(--transition);
+        }
+
+        .nav-toggle-btn:hover {
+            background: var(--color-hover);
+            color: var(--color-text);
+        }
+
+        .nav-toggle-icon {
+            display: inline-block;
+            transition: transform var(--transition);
+            color: var(--color-text-muted);
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        .sidebar.nav-collapsed .nav-toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .sidebar.nav-collapsed .nav-tree,
+        .sidebar.nav-collapsed .search-results {
+            display: none;
+        }
+
         /* Navigation Tree */
         .nav-tree {
             flex: 1;
@@ -611,7 +655,7 @@
             display: flex;
             align-items: center;
             padding: 8px 12px;
-            cursor: pointer;
+            cursor: default;
             border-radius: 6px;
             transition: background var(--transition);
             user-select: none;
@@ -642,16 +686,11 @@
         }
 
         .nav-children {
-            display: none;
+            display: block;
             margin-left: 12px;
             margin-top: 4px;
         }
-
-        .nav-children.expanded {
-            display: block;
-        }
-
-        .nav-activity {
+.nav-activity {
             padding: 8px 12px;
             margin: 2px 0;
             border-radius: 6px;
@@ -1810,6 +1849,15 @@
                 </div>
             </div>
 
+
+            <!-- Navigation Toggle -->
+            <div class="nav-toggle-row">
+                <button class="nav-toggle-btn" id="navToggleBtn" type="button" aria-expanded="true">
+                    <span class="nav-toggle-label">Hide navigation</span>
+                    <span class="nav-toggle-icon">▾</span>
+                </button>
+            </div>
+
             <!-- Navigation Tree -->
             <nav class="nav-tree" id="navTree"></nav>
 
@@ -2031,7 +2079,7 @@
                 </button>
             </div>
 
-            <!-- Course Overview -->
+                        <!-- Course Overview (dynamic, from imported JSON) -->
             <div class="about-section">
                 <div class="about-section-header">
                     <div class="about-section-icon">
@@ -2040,109 +2088,36 @@
                             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                         </svg>
                     </div>
-                    <h3 class="about-section-title">Course Overview</h3>
+                    <h3 class="about-section-title">Training overview</h3>
                 </div>
                 <div class="about-section-content">
                     <div class="about-info-row">
                         <span class="about-info-label">Title:</span>
-                        <span class="about-info-value">AI and Generative AI training</span>
+                        <span class="about-info-value" id="aboutTitleValue">No content loaded</span>
                     </div>
                     <div class="about-info-row">
-                        <span class="about-info-label">Author & Trainer:</span>
-                        <span class="about-info-value">François Jourde</span>
+                        <span class="about-info-label">Modules:</span>
+                        <span class="about-info-value" id="aboutModulesValue">–</span>
                     </div>
                     <div class="about-info-row">
-                        <span class="about-info-label">Version:</span>
-                        <span class="about-info-value">1.8</span>
+                        <span class="about-info-label">Activities:</span>
+                        <span class="about-info-value" id="aboutActivitiesValue">–</span>
                     </div>
                     <div class="about-info-row">
-                        <span class="about-info-label">Last Updated:</span>
-                        <span class="about-info-value">7 February 2026</span>
+                        <span class="about-info-label">Slides:</span>
+                        <span class="about-info-value" id="aboutSlidesValue">–</span>
                     </div>
                     <div class="about-info-row">
-                        <span class="about-info-label">Level:</span>
-                        <span class="about-info-value">Intermediate</span>
+                        <span class="about-info-label">Planned time:</span>
+                        <span class="about-info-value" id="aboutPlannedValue">–</span>
                     </div>
-                </div>
-            </div>
-
-            <!-- Description -->
-            <div class="about-section">
-                <div class="about-section-header">
-                    <div class="about-section-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                            <polyline points="10 9 9 9 8 9"></polyline>
-                        </svg>
-                    </div>
-                    <h3 class="about-section-title">Description</h3>
-                </div>
-                <div class="about-section-content">
-                    <p class="about-description">
-                        This 3-day training develops Portuguese school inspectors' digital competences, enabling them to work 
-                        confidently, responsibly, and efficiently with AI, including generative AI, in their professional practice. 
-                        The goal is to transform AI from an abstract concept into a tangible tool that solves work-related friction.
-                    </p>
-                    <p class="about-description">
-                        <strong>Note:</strong> The trainer does not use PowerPoint presentations. Instead, all participants receive 
-                        this HTML-based single-page web application that can be opened in any browser and updated in real-time.
+                    <p class="about-description" id="aboutDescriptionValue" style="margin-top: 12px;">
+                        Import a JSON file to populate this section.
                     </p>
                 </div>
             </div>
 
-            <!-- Target Audience -->
-            <div class="about-section">
-                <div class="about-section-header">
-                    <div class="about-section-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
-                    </div>
-                    <h3 class="about-section-title">Target Audience</h3>
-                </div>
-                <div class="about-section-content">
-                    <p class="about-description">
-                        <strong>General Inspectorate of Education and Science (IGEC):</strong> Portuguese school inspectors 
-                        working across primary and secondary education cycles (English as a foreign language).
-                    </p>
-                    <p class="about-description">
-                        Participants have varying digital competences and need to develop their skills to work responsibly 
-                        and efficiently with AI, including generative AI.
-                    </p>
-                    <div class="about-info-row" style="margin-top: 16px;">
-                        <span class="about-info-label">Cohort Size:</span>
-                        <span class="about-info-value">30 participants</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Prerequisites -->
-            <div class="about-section">
-                <div class="about-section-header">
-                    <div class="about-section-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="9 11 12 14 22 4"></polyline>
-                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                        </svg>
-                    </div>
-                    <h3 class="about-section-title">Prerequisites</h3>
-                </div>
-                <div class="about-section-content">
-                    <ul class="about-list">
-                        <li>Basic familiarity with Microsoft Office suite</li>
-                        <li>Access credentials for Microsoft Copilot (distributed in advance)</li>
-                        <li>Basic level of literacy sufficient to decode visual, textual and audio information</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Duration & Structure -->
+            <!-- Structure (dynamic) -->
             <div class="about-section">
                 <div class="about-section-header">
                     <div class="about-section-icon">
@@ -2151,90 +2126,12 @@
                             <polyline points="12 6 12 12 16 14"></polyline>
                         </svg>
                     </div>
-                    <h3 class="about-section-title">Duration & Structure</h3>
+                    <h3 class="about-section-title">Structure</h3>
                 </div>
                 <div class="about-section-content">
-                    <div class="about-info-row">
-                        <span class="about-info-label">Total Duration:</span>
-                        <span class="about-info-value">18 hours (3 days)</span>
-                    </div>
-                    <div class="about-info-row">
-                        <span class="about-info-label">Designed Duration:</span>
-                        <span class="about-info-value">17.3 hours</span>
-                    </div>
-                    <div class="about-modules">
-                        <div class="about-module-card">
-                            <div class="about-module-title">Day 1: Understanding GenAI</div>
-                            <div class="about-module-desc">Foundations, Governance, Legal, Ethics and competences</div>
-                            <div class="about-module-meta">Duration: 6 hours</div>
-                        </div>
-                        <div class="about-module-card">
-                            <div class="about-module-title">Day 2: Practical Application & Prompting</div>
-                            <div class="about-module-desc">Hands-on practice with AI tools and prompting techniques</div>
-                            <div class="about-module-meta">Duration: 6 hours</div>
-                        </div>
-                        <div class="about-module-card">
-                            <div class="about-module-title">Day 3: Building Shared Prompt Libraries</div>
-                            <div class="about-module-desc">Equipping the inspectorate with shared resources</div>
-                            <div class="about-module-meta">Duration: 6 hours</div>
-                        </div>
-                    </div>
+                    <div class="about-modules" id="aboutModulesList"></div>
                 </div>
             </div>
-
-            <!-- Learning Approach -->
-            <div class="about-section">
-                <div class="about-section-header">
-                    <div class="about-section-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="about-section-title">Learning Approach</h3>
-                </div>
-                <div class="about-section-content">
-                    <div class="about-info-row">
-                        <span class="about-info-label">Modality:</span>
-                        <span class="about-info-value">Blended Learning</span>
-                    </div>
-                    <p class="about-description" style="margin-top: 12px;">
-                        The training combines theoretical foundations with hands-on practice, encouraging active participation 
-                        and collaborative learning. Participants progress from understanding AI concepts to applying them 
-                        in their professional context and creating shared resources for their organization.
-                    </p>
-                </div>
-            </div>
-
-            <!-- Tools & Materials -->
-            <div class="about-section">
-                <div class="about-section-header">
-                    <div class="about-section-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-                        </svg>
-                    </div>
-                    <h3 class="about-section-title">Tools & Materials</h3>
-                </div>
-                <div class="about-section-content">
-                    <div style="margin-bottom: 12px;">
-                        <span class="about-badge">LMS</span>
-                        <span class="about-badge">GenAI</span>
-                        <span class="about-badge">EdTech</span>
-                        <span class="about-badge">Web Tools</span>
-                    </div>
-                    <ul class="about-list">
-                        <li>Microsoft Teams (Learning Management)</li>
-                        <li>Microsoft Copilot (Generative AI)</li>
-                        <li>Microsoft Word (Word Processing)</li>
-                        <li>Wooclap (Audience Response System)</li>
-                        <li>Transformer Explainer (Web Simulation)</li>
-                        <li>Prompting Coach (ChatBot)</li>
-                    </ul>
-                </div>
-            </div>
-
             <!-- Footer -->
             <div class="export-modal-footer">
                 <button class="export-cancel-btn" onclick="app.closeAboutModal()">Close</button>
@@ -2256,6 +2153,7 @@
             currentSlideIndex: 0,
             searchQuery: '',
             expandedNodes: new Set(),
+            navCollapsed: false,
             
             // Timer state
             activityTimer: {
@@ -2289,6 +2187,7 @@
                 
                 this.buildNavigation();
                 this.attachEventListeners();
+                this.loadNavCollapsedState();
                 this.loadStateFromHash();
                 this.loadTimerState();
                 this.loadProgressState();
@@ -2300,6 +2199,40 @@
                 console.log('courseData:', this.courseData);
             },
 
+
+            // ===== NAV TOGGLE =====
+            toggleNavCollapsed() {
+                this.navCollapsed = !this.navCollapsed;
+                this.applyNavCollapsedState(true);
+            },
+
+            applyNavCollapsedState(persist) {
+                const sidebar = document.getElementById('sidebar');
+                const btn = document.getElementById('navToggleBtn');
+                if (!sidebar || !btn) return;
+
+                sidebar.classList.toggle('nav-collapsed', !!this.navCollapsed);
+
+                const labelEl = btn.querySelector('.nav-toggle-label');
+                if (labelEl) labelEl.textContent = this.navCollapsed ? 'Show navigation' : 'Hide navigation';
+
+                btn.setAttribute('aria-expanded', this.navCollapsed ? 'false' : 'true');
+
+                if (persist) {
+                    try { localStorage.setItem('navCollapsed', this.navCollapsed ? '1' : '0'); } catch (e) {}
+                }
+            },
+
+            loadNavCollapsedState() {
+                try {
+                    const v = localStorage.getItem('navCollapsed');
+                    this.navCollapsed = (v === '1');
+                } catch (e) {
+                    this.navCollapsed = false;
+                }
+                this.applyNavCollapsedState(false);
+            },
+
             buildNavigation() {
                 const navTree = document.getElementById('navTree');
                 navTree.innerHTML = '';
@@ -2309,8 +2242,8 @@
                     return;
                 }
 
-                this.courseData.modules.forEach(module => {
-                    const moduleEl = this.createModuleElement(module);
+                this.courseData.modules.forEach((module, moduleIndex) => {
+                    const moduleEl = this.createModuleElement(module, moduleIndex);
                     navTree.appendChild(moduleEl);
                 });
 
@@ -2318,107 +2251,79 @@
                 setTimeout(() => this.updateNavigationVisualState(), 0);
             },
 
-            createModuleElement(module) {
+            createModuleElement(module, moduleIndex) {
                 const moduleDiv = document.createElement('div');
                 moduleDiv.className = 'nav-module';
 
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'nav-module-header';
-                headerDiv.textContent = module.title;
+                headerDiv.textContent = `${moduleIndex + 1}. ${module.title}`;
                 moduleDiv.appendChild(headerDiv);
 
-                module.moments.forEach(moment => {
-                    const momentEl = this.createMomentElement(moment);
+                (module.moments || []).forEach((moment, momentIndex) => {
+                    const momentEl = this.createMomentElement(moment, moduleIndex, momentIndex);
                     moduleDiv.appendChild(momentEl);
                 });
 
                 return moduleDiv;
             },
 
-            createMomentElement(moment) {
-                const momentDiv = document.createElement('div');
-                momentDiv.className = 'nav-moment';
+            createMomentElement(moment, moduleIndex, momentIndex) {
+    const momentDiv = document.createElement('div');
+    momentDiv.className = 'nav-moment';
 
-                const headerDiv = document.createElement('div');
-                headerDiv.className = 'nav-item-header';
-                headerDiv.innerHTML = `
-                    <svg class="nav-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
-                    <span class="nav-item-title">${moment.title}</span>
-                `;
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'nav-item-header nav-moment-header';
+    headerDiv.innerHTML = `
+        <span class="nav-item-title">${moduleIndex + 1}.${momentIndex + 1} ${this.sanitizeHTML(String(moment.title || ''))}</span>
+    `;
 
-                const childrenDiv = document.createElement('div');
-                childrenDiv.className = 'nav-children';
+    const childrenDiv = document.createElement('div');
+    childrenDiv.className = 'nav-children';
 
-                headerDiv.addEventListener('click', () => {
-                    const isExpanded = childrenDiv.classList.toggle('expanded');
-                    headerDiv.querySelector('.nav-expand-icon').classList.toggle('expanded', isExpanded);
-                    
-                    if (isExpanded) {
-                        this.expandedNodes.add(moment.id);
-                    } else {
-                        this.expandedNodes.delete(moment.id);
-                    }
-                });
+    (moment.submoments || []).forEach((submoment, submomentIndex) => {
+        const submomentEl = this.createSubmomentElement(submoment, moduleIndex, momentIndex, submomentIndex);
+        childrenDiv.appendChild(submomentEl);
+    });
 
-                moment.submoments.forEach(submoment => {
-                    const submomentEl = this.createSubmomentElement(submoment);
-                    childrenDiv.appendChild(submomentEl);
-                });
+    momentDiv.appendChild(headerDiv);
+    momentDiv.appendChild(childrenDiv);
 
-                momentDiv.appendChild(headerDiv);
-                momentDiv.appendChild(childrenDiv);
+    return momentDiv;
+},
 
-                return momentDiv;
-            },
+            createSubmomentElement(submoment, moduleIndex, momentIndex, submomentIndex) {
+    const submomentDiv = document.createElement('div');
+    submomentDiv.className = 'nav-submoment';
 
-            createSubmomentElement(submoment) {
-                const submomentDiv = document.createElement('div');
-                submomentDiv.className = 'nav-submoment';
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'nav-item-header nav-submoment-header';
+    headerDiv.innerHTML = `
+        <span class="nav-item-title">${moduleIndex + 1}.${momentIndex + 1}.${submomentIndex + 1} ${this.sanitizeHTML(String(submoment.title || ''))}</span>
+    `;
 
-                const headerDiv = document.createElement('div');
-                headerDiv.className = 'nav-item-header';
-                headerDiv.innerHTML = `
-                    <svg class="nav-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
-                    <span class="nav-item-title">${submoment.title}</span>
-                `;
+    const childrenDiv = document.createElement('div');
+    childrenDiv.className = 'nav-children';
 
-                const childrenDiv = document.createElement('div');
-                childrenDiv.className = 'nav-children';
+    (submoment.activities || []).forEach((activity, activityIndex) => {
+        const activityEl = this.createActivityElement(activity, moduleIndex, momentIndex, submomentIndex, activityIndex);
+        childrenDiv.appendChild(activityEl);
+    });
 
-                headerDiv.addEventListener('click', () => {
-                    const isExpanded = childrenDiv.classList.toggle('expanded');
-                    headerDiv.querySelector('.nav-expand-icon').classList.toggle('expanded', isExpanded);
-                    
-                    if (isExpanded) {
-                        this.expandedNodes.add(submoment.id);
-                    } else {
-                        this.expandedNodes.delete(submoment.id);
-                    }
-                });
+    submomentDiv.appendChild(headerDiv);
+    submomentDiv.appendChild(childrenDiv);
 
-                submoment.activities.forEach(activity => {
-                    const activityEl = this.createActivityElement(activity);
-                    childrenDiv.appendChild(activityEl);
-                });
+    return submomentDiv;
+},
 
-                submomentDiv.appendChild(headerDiv);
-                submomentDiv.appendChild(childrenDiv);
-
-                return submomentDiv;
-            },
-
-            createActivityElement(activity) {
+            createActivityElement(activity, moduleIndex, momentIndex, submomentIndex, activityIndex) {
                 const activityDiv = document.createElement('div');
                 activityDiv.className = 'nav-activity';
                 activityDiv.dataset.activityId = activity.id;
                 
                 const slideCount = activity.slides.length;
                 activityDiv.innerHTML = `
-                    ${activity.title}
+                    ${moduleIndex + 1}.${momentIndex + 1}.${submomentIndex + 1}.${activityIndex + 1} ${activity.title}
                     <span class="slide-count">${slideCount} slide${slideCount !== 1 ? 's' : ''}</span>
                 `;
 
@@ -2741,6 +2646,14 @@
                 searchResults.classList.remove('visible');
                 searchResults.innerHTML = '';
                 this.searchQuery = '';
+
+                // Ensure navigation remains visible after import/reset
+                this.navCollapsed = false;
+                this.applyNavCollapsedState(false);
+
+                // Reset search UI (avoids nav hidden behind search results)
+                try { this.clearSearch(); } catch (e) {}
+
             },
 
             // Mobile menu
@@ -2789,6 +2702,11 @@
             },
 
             attachEventListeners() {
+                const navToggleBtn = document.getElementById('navToggleBtn');
+                if (navToggleBtn) {
+                    navToggleBtn.addEventListener('click', () => this.toggleNavCollapsed());
+                }
+
                 // Search
                 const searchInput = document.getElementById('searchInput');
                 const searchClear = document.getElementById('searchClear');
@@ -3614,13 +3532,6 @@
                 try {
                     console.log('openImportDialog called');
                     
-                    // Check if user has progress
-                    if (this.hasProgress()) {
-                        if (!confirm('⚠️ Warning: Importing new content will reset your current progress.\n\nYou will lose:\n• Completed activities\n• Timer data\n• Navigation history\n\nDo you want to continue?')) {
-                            return;
-                        }
-                    }
-                    
                     const fileInput = document.getElementById('importFileInput');
                     if (!fileInput) {
                         console.error('File input element not found!');
@@ -4052,7 +3963,126 @@ this.activityTimer = {
                 this.closeExportModal();
             },
 
+            // ===== ABOUT MODAL (DYNAMIC FROM IMPORTED JSON) =====
+            formatMinutes(mins) {
+                const m = Math.max(0, parseInt(mins || 0, 10));
+                const h = Math.floor(m / 60);
+                const r = m % 60;
+                if (h <= 0) return `${m} min`;
+                if (r === 0) return `${h} h`;
+                return `${h} h ${r} min`;
+            },
+
+            populateAboutModal() {
+                const titleEl = document.getElementById('aboutTitleValue');
+                const modulesEl = document.getElementById('aboutModulesValue');
+                const activitiesEl = document.getElementById('aboutActivitiesValue');
+                const slidesEl = document.getElementById('aboutSlidesValue');
+                const plannedEl = document.getElementById('aboutPlannedValue');
+                const descEl = document.getElementById('aboutDescriptionValue');
+                const modulesListEl = document.getElementById('aboutModulesList');
+
+                if (!titleEl || !modulesEl || !activitiesEl || !slidesEl || !plannedEl || !descEl || !modulesListEl) return;
+
+                // Reset UI
+                modulesListEl.innerHTML = '';
+
+                if (!this.courseData || !Array.isArray(this.courseData.modules)) {
+                    titleEl.textContent = 'No content loaded';
+                    modulesEl.textContent = '–';
+                    activitiesEl.textContent = '–';
+                    slidesEl.textContent = '–';
+                    plannedEl.textContent = '–';
+                    descEl.textContent = 'Import a JSON file to populate this section.';
+                    return;
+                }
+
+                const cd = this.courseData;
+
+                // Title & description (if present in JSON)
+                titleEl.textContent = cd.title || 'Training content';
+                const descCandidate = cd.description || cd.summary || cd.context || '';
+                descEl.textContent = descCandidate ? String(descCandidate) : '';
+
+                let moduleCount = cd.modules.length;
+                let activityCount = 0;
+                let slideCount = 0;
+
+                // Planned minutes: prefer module.plannedMinutes if provided, else sum activity.plannedMinutes
+                let plannedFromModules = 0;
+                let plannedFromActivities = 0;
+
+                cd.modules.forEach((module) => {
+                    plannedFromModules += parseInt(module.plannedMinutes || 0, 10) || 0;
+
+                    (module.moments || []).forEach((moment) => {
+                        (moment.submoments || []).forEach((submoment) => {
+                            (submoment.activities || []).forEach((activity) => {
+                                activityCount += 1;
+                                plannedFromActivities += parseInt(activity.plannedMinutes || 0, 10) || 0;
+                                const slides = Array.isArray(activity.slides) ? activity.slides : [];
+                                slideCount += slides.length;
+                            });
+                        });
+                    });
+                });
+
+                const plannedMinutes = plannedFromModules > 0 ? plannedFromModules : plannedFromActivities;
+
+                modulesEl.textContent = String(moduleCount);
+                activitiesEl.textContent = String(activityCount);
+                slidesEl.textContent = String(slideCount);
+                plannedEl.textContent = plannedMinutes > 0 ? this.formatMinutes(plannedMinutes) : '–';
+
+                // Build module cards directly from imported JSON
+                cd.modules.forEach((module, moduleIndex) => {
+                    const card = document.createElement('div');
+                    card.className = 'about-module-card';
+
+                    const title = document.createElement('div');
+                    title.className = 'about-module-title';
+                    title.textContent = `${moduleIndex + 1}. ${module.title || 'Untitled module'}`;
+
+                    const desc = document.createElement('div');
+                    desc.className = 'about-module-desc';
+                    const moments = Array.isArray(module.moments) ? module.moments.length : 0;
+
+                    // Count submoments and activities for quick scan
+                    let submoments = 0;
+                    let activities = 0;
+                    if (Array.isArray(module.moments)) {
+                        module.moments.forEach(m => {
+                            const subs = Array.isArray(m.submoments) ? m.submoments.length : 0;
+                            submoments += subs;
+                            if (Array.isArray(m.submoments)) {
+                                m.submoments.forEach(s => {
+                                    activities += Array.isArray(s.activities) ? s.activities.length : 0;
+                                });
+                            }
+                        });
+                    }
+
+                    const parts = [];
+                    if (moments) parts.push(`${moments} moment${moments !== 1 ? 's' : ''}`);
+                    if (submoments) parts.push(`${submoments} sub-moment${submoments !== 1 ? 's' : ''}`);
+                    if (activities) parts.push(`${activities} activit${activities !== 1 ? 'ies' : 'y'}`);
+                    desc.textContent = parts.length ? parts.join(' • ') : '';
+
+                    const meta = document.createElement('div');
+                    meta.className = 'about-module-meta';
+                    const pm = parseInt(module.plannedMinutes || 0, 10) || 0;
+                    meta.textContent = pm > 0 ? `Planned: ${this.formatMinutes(pm)}` : '';
+
+                    card.appendChild(title);
+                    card.appendChild(desc);
+                    if (meta.textContent) card.appendChild(meta);
+
+                    modulesListEl.appendChild(card);
+                });
+            },
+
             openAboutModal() {
+                this.populateAboutModal();
                 document.getElementById('aboutModal').classList.add('visible');
             },
 
