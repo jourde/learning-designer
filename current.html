@@ -349,6 +349,42 @@ html.hide-target-durations #timeline-activities-planned-labels {
   display: none !important;
 }
 
+/* Beginner Mode: hide complex features */
+html.hide-beginner-features .activity-description,
+html.hide-beginner-features .moment-description-wrap,
+html.hide-beginner-features .submoment-notes-wrap,
+html.hide-beginner-features .step-tabs,
+html.hide-beginner-features .step-tabpanel,
+html.hide-beginner-features .step-group-details,
+html.hide-beginner-features .activity-target-wrap,
+html.hide-beginner-features .moment-target-wrap,
+html.hide-beginner-features .submoment-target-wrap,
+html.hide-beginner-features .module-time-compare,
+html.hide-beginner-features .moment-time-compare,
+html.hide-beginner-features .submoment-time-compare,
+html.hide-beginner-features .step-status-select,
+html.hide-beginner-features .ld-ignore-toggle,
+html.hide-beginner-features .ld-ignore-label,
+html.hide-beginner-features .ld-delta-bar,
+html.hide-beginner-features .activity-type-bar,
+html.hide-beginner-features button[data-action="duplicate-module"],
+html.hide-beginner-features button[data-action="focus-module"],
+html.hide-beginner-features button[data-action="toggle-module-subblocks"],
+html.hide-beginner-features button[data-action="toggle-moment-description"],
+html.hide-beginner-features button[data-action="toggle-submoment-notes"],
+html.hide-beginner-features .ld-batch-checkbox,
+html.hide-beginner-features #btn-more,
+html.hide-beginner-features #top-tabs-bar-wrap,
+html.hide-beginner-features #btn-toggle-target-durations,
+html.hide-beginner-features #status-display-menu,
+html.hide-beginner-features #key-params-wrapper,
+html.hide-beginner-features #visualisations-wrapper,
+html.hide-beginner-features #analysis-tabs-wrap,
+html.hide-beginner-features .step-status-dot,
+html.hide-beginner-features .ld-status-summary {
+  display: none !important;
+}
+
         .activity-container {
             border-left: 3px solid #cbd5e1; 
         }
@@ -818,6 +854,8 @@ input, select, textarea {
 }
 .step-card .step-left-label{
   font-size: 0.75rem !important;
+  color: #475569 !important; /* slate-600 for better contrast */
+  font-weight: 700 !important;
 }
 
 .step-card .step-group-mode,
@@ -2105,6 +2143,7 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
       'toggle-all-activities': () => call('toggleAllActivities'),
       'toggle-learning-types': () => call('toggleLearningTypes'),
       'toggle-target-durations': () => call('toggleTargetDurations'),
+      'toggle-beginner-mode': () => call('toggleBeginnerMode'),
       'toggle-panel': ({btn}) => {
         const pid = btn && btn.dataset ? btn.dataset.panel : null;
         if (pid) call('togglePanel', pid);
@@ -2552,6 +2591,23 @@ document.addEventListener('DOMContentLoaded', function() {
     Concepteur Pédagogique - Learning Designer
   </h1>
 <div class="mt-2 flex flex-wrap gap-x-2 gap-y-2 no-print items-start content-start">
+<!-- Beginner Mode Toggle - Prominent Position -->
+<div class="flex flex-col relative gap-0.5 bg-gradient-to-br from-indigo-50 to-blue-50 border-2 border-indigo-300 rounded-lg p-0.5 shadow-sm">
+<span class="text-[9px] font-bold text-indigo-700 uppercase tracking-wider pl-1">
+       Mode
+      </span>
+<div class="flex items-center bg-white border border-indigo-200 rounded-md p-0.5 gap-0.5 shadow-sm h-[30px]">
+<button id="btn-toggle-beginner-mode"
+        class="text-indigo-600 hover:text-white hover:bg-indigo-600 px-2 py-0.5 rounded transition-colors flex items-center gap-1.5 font-semibold"
+        data-action="toggle-beginner-mode"
+        aria-pressed="false"
+        title="Passer en mode simple"
+        aria-label="Passer en mode simple">
+  <span class="material-icons-round text-lg" id="icon-toggle-beginner-mode">visibility</span>
+  <span class="text-xs font-semibold" id="text-toggle-beginner-mode">Avancé</span>
+</button>
+</div>
+</div>
 <div class="flex flex-col relative gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
 <span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider pl-1" data-i18n="grp_project">
        Projet
@@ -4066,7 +4122,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
         <span class="hidden xl:inline" id="text-toggle-target-durations">Cibles</span>
       </button>
 
-      <details class="relative">
+      <details class="relative" id="status-display-menu">
         <summary class="ld-control-btn list-none select-none bg-white">
           <span class="material-icons-round text-[16px]">tune</span>
           <span class="hidden lg:inline">Affichage des états</span>
@@ -10074,6 +10130,50 @@ function toggleTargetDurations() {
 document.addEventListener('DOMContentLoaded', () => {
     setTargetDurationsHidden(true);
 });
+
+// Beginner Mode: hide complex features for simplified interface
+function setBeginnerModeHidden(hideComplexFeatures) {
+    const isHidden = !!hideComplexFeatures;
+
+    document.documentElement.classList.toggle('hide-beginner-features', isHidden);
+    document.body.classList.toggle('hide-beginner-features', isHidden);
+
+    const btn = document.getElementById('btn-toggle-beginner-mode');
+    const icon = document.getElementById('icon-toggle-beginner-mode');
+    const text = document.getElementById('text-toggle-beginner-mode');
+
+    if (btn) btn.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+    if (icon) icon.innerText = isHidden ? 'visibility_off' : 'visibility';
+
+    if (btn) {
+        btn.title = isHidden ? 'Passer en mode avancé' : 'Passer en mode simple';
+        btn.setAttribute('aria-label', btn.title);
+    }
+
+    if (text) {
+        text.textContent = isHidden ? 'Simple' : 'Avancé';
+    }
+
+    try {
+        localStorage.setItem('ld_beginner_mode', isHidden ? '1' : '0');
+    } catch(_) { __ldSilentErr(_); }
+}
+
+function toggleBeginnerMode() {
+    const currentlyHidden =
+        document.documentElement.classList.contains('hide-beginner-features') ||
+        document.body.classList.contains('hide-beginner-features');
+    setBeginnerModeHidden(!currentlyHidden);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        const saved = localStorage.getItem('ld_beginner_mode');
+        const shouldHide = (saved === '1');
+        setBeginnerModeHidden(shouldHide);
+    } catch(_) { __ldSilentErr(_); }
+});
+
 function toggleActivity(btn) {
             const activityGroup = btn.closest('.activity-group');
             if (!activityGroup) return;
