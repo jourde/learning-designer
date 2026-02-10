@@ -385,6 +385,92 @@ html.hide-beginner-features .ld-status-summary {
   display: none !important;
 }
 
+/* Simple Mode: Icon-based controls */
+.ld-simple-controls {
+    display: none; /* Hidden by default */
+}
+
+html.hide-beginner-features .ld-simple-controls {
+    display: flex !important; /* Show in simple mode */
+}
+
+html.hide-beginner-features .step-body > div.flex.flex-col.lg\:flex-row {
+    display: none !important; /* Hide original dropdown layout */
+}
+
+.ld-icon-control {
+    position: relative;
+}
+
+.ld-icon-btn {
+    position: relative;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+}
+
+.ld-icon-btn:hover {
+    background-color: #f1f5f9;
+}
+
+.ld-icon-btn:active {
+    transform: scale(0.95);
+}
+
+.ld-icon-dropdown {
+    position: absolute;
+    max-height: 280px;
+    overflow-y: auto;
+    z-index: 10000;
+}
+
+/* Ensure step-header and step-card don't clip dropdowns in simple mode */
+html.hide-beginner-features .step-header {
+    overflow: visible !important;
+}
+
+html.hide-beginner-features .step-card {
+    overflow: visible !important;
+}
+
+html.hide-beginner-features .submoment-body {
+    overflow: visible !important;
+}
+
+html.hide-beginner-features .submoment-steps {
+    overflow: visible !important;
+}
+
+html.hide-beginner-features .steps-container {
+    overflow: visible !important;
+}
+
+/* Ensure duration input and unit select have equal height */
+.duration-input,
+.duration-unit {
+    height: 32px !important;
+    min-height: 32px !important;
+}
+
+.ld-icon-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.ld-icon-dropdown::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.ld-icon-dropdown button:first-child {
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
+.ld-icon-dropdown button:last-child {
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
         .activity-container {
             border-left: 3px solid #cbd5e1; 
         }
@@ -4919,7 +5005,7 @@ Cochez les éléments que vous souhaitez inclure dans l'export. Les éléments p
 </div>
 <div class="flex items-center gap-1">
 <input class="duration-input w-16 px-2 py-0.5 text-xs font-semibold border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none h-[22px] text-right text-slate-600" min="0" data-action-input="update-stats-debounced" placeholder="0" type="number"/>
-<select class="duration-unit w-24 px-2 py-0.5 text-xs border border-slate-200 rounded bg-slate-50 focus:ring-1 focus:ring-indigo-500 outline-none h-[22px]" data-action-change="update-stats">
+<select class="duration-unit w-16 px-2 py-0.5 text-xs border border-slate-200 rounded bg-slate-50 focus:ring-1 focus:ring-indigo-500 outline-none h-[22px]" data-action-change="update-stats">
 <option data-i18n="unit_mins" value="60">
         min
        </option>
@@ -9751,8 +9837,22 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
                 }
             } catch(_){ __ldSilentErr(_); }
 
+            // Initialize icon controls for new step if in simple mode
+            try {
+                if (document.body.classList.contains('hide-beginner-features') && newStep) {
+                    const iconHtml = createSimpleModeIconControls(newStep);
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = iconHtml;
+                    const stepHeader = newStep.querySelector('.step-header');
+                    const learningTypeContainer = stepHeader ? stepHeader.querySelector('.learning-type-container') : null;
+                    if (stepHeader && learningTypeContainer) {
+                        stepHeader.insertBefore(tempDiv.firstElementChild, learningTypeContainer);
+                    }
+                }
+            } catch(_){ __ldSilentErr(_); }
+
             try { updateStats(); } catch(_){ __ldSilentErr(_); }
-            
+
             // CRITICAL FIX: Scroll to the new activity and highlight it
             try {
                 // Force a small delay to ensure view change is applied
@@ -10157,6 +10257,13 @@ function setBeginnerModeHidden(hideComplexFeatures) {
     try {
         localStorage.setItem('ld_beginner_mode', isHidden ? '1' : '0');
     } catch(_) { __ldSilentErr(_); }
+
+    // Initialize or remove icon controls
+    if (isHidden) {
+        initSimpleModeIconControls();
+    } else {
+        document.querySelectorAll('.ld-simple-controls').forEach(el => el.remove());
+    }
 }
 
 function toggleBeginnerMode() {
@@ -10171,8 +10278,298 @@ document.addEventListener('DOMContentLoaded', () => {
         const saved = localStorage.getItem('ld_beginner_mode');
         const shouldHide = (saved === '1');
         setBeginnerModeHidden(shouldHide);
+
+        // Also try to initialize icons after a short delay to ensure DOM is ready
+        if (shouldHide) {
+            setTimeout(() => {
+                initSimpleModeIconControls();
+            }, 100);
+        }
     } catch(_) { __ldSilentErr(_); }
 });
+
+// Also initialize on window load as a fallback
+window.addEventListener('load', () => {
+    try {
+        if (document.body.classList.contains('hide-beginner-features')) {
+            setTimeout(() => {
+                initSimpleModeIconControls();
+            }, 200);
+        }
+    } catch(_) { __ldSilentErr(_); }
+});
+
+// Watch for dynamically added step-cards (when projects are loaded)
+if (typeof MutationObserver !== 'undefined') {
+    const observer = new MutationObserver((mutations) => {
+        if (!document.body.classList.contains('hide-beginner-features')) return;
+
+        let shouldInit = false;
+        mutations.forEach(mutation => {
+            mutation.addedNodes.forEach(node => {
+                if (node.nodeType === 1) { // Element node
+                    if (node.classList && node.classList.contains('step-card')) {
+                        shouldInit = true;
+                    } else if (node.querySelectorAll) {
+                        const steps = node.querySelectorAll('.step-card');
+                        if (steps.length > 0) shouldInit = true;
+                    }
+                }
+            });
+        });
+
+        if (shouldInit) {
+            setTimeout(() => initSimpleModeIconControls(), 50);
+        }
+    });
+
+    // Start observing when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+        observer.observe(document.body, { childList: true, subtree: true });
+    });
+}
+
+// Simple Mode: Icon configurations for horizontal controls
+const SIMPLE_MODE_ICONS = {
+    groupMode: {
+        class: { icon: 'groups', label: 'Groupe entier', color: 'text-gray-500' },
+        groups: { icon: 'group_work', label: 'Sous-groupe', color: 'text-gray-500' },
+        individual: { icon: 'person', label: 'Individuel', color: 'text-gray-500' }
+    },
+    trainer: {
+        present: { icon: 'face', label: 'Formateur présent', color: 'text-gray-500' },
+        absent: { icon: 'person_off', label: 'Formateur absent', color: 'text-gray-400' }
+    },
+    place: {
+        situ: { icon: 'business', label: 'Présentiel', color: 'text-gray-500' },
+        online: { icon: 'computer', label: 'Distanciel', color: 'text-gray-500' },
+        hybrid: { icon: 'hub', label: 'Hybride', color: 'text-gray-500' }
+    },
+    time: {
+        sync: { icon: 'schedule', label: 'Synchrone', color: 'text-gray-500' },
+        async: { icon: 'update', label: 'Asynchrone', color: 'text-gray-500' }
+    },
+    evaluation: {
+        Aucune: { icon: 'radio_button_unchecked', label: 'Aucune évaluation', color: 'text-gray-400' },
+        Diagnostique: { icon: 'search', label: 'Diagnostique', color: 'text-gray-500' },
+        Formative: { icon: 'school', label: 'Formative', color: 'text-gray-500' },
+        'Certificative/Sommative': { icon: 'verified', label: 'Certificative', color: 'text-gray-500' }
+    }
+};
+
+function createSimpleModeIconControls(stepEl) {
+    const groupMode = stepEl.querySelector('.step-group-mode').value;
+    const trainer = stepEl.querySelector('.trainer-select').value;
+    const place = stepEl.querySelector('.place-select').value;
+    const time = stepEl.querySelector('.time-select').value;
+    const evaluation = stepEl.querySelector('.evaluation-select').value;
+
+    const iconHtml = `
+        <div class="ld-simple-controls flex items-center gap-1.5">
+            <div class="ld-icon-control relative" data-control="groupMode">
+                <button type="button"
+                        class="ld-icon-btn flex items-center justify-center w-7 h-7 rounded hover:bg-slate-100 transition-colors ${SIMPLE_MODE_ICONS.groupMode[groupMode].color}"
+                        title="${SIMPLE_MODE_ICONS.groupMode[groupMode].label}"
+                        aria-label="${SIMPLE_MODE_ICONS.groupMode[groupMode].label}">
+                    <span class="material-icons-round text-sm">${SIMPLE_MODE_ICONS.groupMode[groupMode].icon}</span>
+                </button>
+                <div class="ld-icon-dropdown hidden absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 min-w-[160px]">
+                    ${Object.entries(SIMPLE_MODE_ICONS.groupMode).map(([val, cfg]) => `
+                        <button type="button"
+                                class="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 text-left transition-colors ${groupMode === val ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700'}"
+                                data-value="${val}">
+                            <span class="material-icons-round text-base ${cfg.color}">${cfg.icon}</span>
+                            <span class="text-sm">${cfg.label}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="ld-icon-control relative" data-control="trainer">
+                <button type="button"
+                        class="ld-icon-btn flex items-center justify-center w-7 h-7 rounded hover:bg-slate-100 transition-colors ${SIMPLE_MODE_ICONS.trainer[trainer].color}"
+                        title="${SIMPLE_MODE_ICONS.trainer[trainer].label}"
+                        aria-label="${SIMPLE_MODE_ICONS.trainer[trainer].label}">
+                    <span class="material-icons-round text-sm">${SIMPLE_MODE_ICONS.trainer[trainer].icon}</span>
+                </button>
+                <div class="ld-icon-dropdown hidden absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 min-w-[160px]">
+                    ${Object.entries(SIMPLE_MODE_ICONS.trainer).map(([val, cfg]) => `
+                        <button type="button"
+                                class="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 text-left transition-colors ${trainer === val ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700'}"
+                                data-value="${val}">
+                            <span class="material-icons-round text-base ${cfg.color}">${cfg.icon}</span>
+                            <span class="text-sm">${cfg.label}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="ld-icon-control relative" data-control="place">
+                <button type="button"
+                        class="ld-icon-btn flex items-center justify-center w-7 h-7 rounded hover:bg-slate-100 transition-colors ${SIMPLE_MODE_ICONS.place[place].color}"
+                        title="${SIMPLE_MODE_ICONS.place[place].label}"
+                        aria-label="${SIMPLE_MODE_ICONS.place[place].label}">
+                    <span class="material-icons-round text-sm">${SIMPLE_MODE_ICONS.place[place].icon}</span>
+                </button>
+                <div class="ld-icon-dropdown hidden absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 min-w-[180px]">
+                    ${Object.entries(SIMPLE_MODE_ICONS.place).map(([val, cfg]) => `
+                        <button type="button"
+                                class="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 text-left transition-colors ${place === val ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700'}"
+                                data-value="${val}">
+                            <span class="material-icons-round text-base ${cfg.color}">${cfg.icon}</span>
+                            <span class="text-sm">${cfg.label}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="ld-icon-control relative" data-control="time">
+                <button type="button"
+                        class="ld-icon-btn flex items-center justify-center w-7 h-7 rounded hover:bg-slate-100 transition-colors ${SIMPLE_MODE_ICONS.time[time].color}"
+                        title="${SIMPLE_MODE_ICONS.time[time].label}"
+                        aria-label="${SIMPLE_MODE_ICONS.time[time].label}">
+                    <span class="material-icons-round text-sm">${SIMPLE_MODE_ICONS.time[time].icon}</span>
+                </button>
+                <div class="ld-icon-dropdown hidden absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 min-w-[160px]">
+                    ${Object.entries(SIMPLE_MODE_ICONS.time).map(([val, cfg]) => `
+                        <button type="button"
+                                class="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 text-left transition-colors ${time === val ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700'}"
+                                data-value="${val}">
+                            <span class="material-icons-round text-base ${cfg.color}">${cfg.icon}</span>
+                            <span class="text-sm">${cfg.label}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="ld-icon-control relative" data-control="evaluation">
+                <button type="button"
+                        class="ld-icon-btn flex items-center justify-center w-7 h-7 rounded hover:bg-slate-100 transition-colors ${SIMPLE_MODE_ICONS.evaluation[evaluation].color}"
+                        title="${SIMPLE_MODE_ICONS.evaluation[evaluation].label}"
+                        aria-label="${SIMPLE_MODE_ICONS.evaluation[evaluation].label}">
+                    <span class="material-icons-round text-sm">${SIMPLE_MODE_ICONS.evaluation[evaluation].icon}</span>
+                </button>
+                <div class="ld-icon-dropdown hidden absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 min-w-[200px]">
+                    ${Object.entries(SIMPLE_MODE_ICONS.evaluation).map(([val, cfg]) => `
+                        <button type="button"
+                                class="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 text-left transition-colors ${evaluation === val ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700'}"
+                                data-value="${val}">
+                            <span class="material-icons-round text-base ${cfg.color}">${cfg.icon}</span>
+                            <span class="text-sm">${cfg.label}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+
+    return iconHtml;
+}
+
+function initSimpleModeIconControls() {
+    if (!document.body.classList.contains('hide-beginner-features')) return;
+
+    document.querySelectorAll('.step-card').forEach(stepEl => {
+        const stepHeader = stepEl.querySelector('.step-header');
+        if (!stepHeader) return;
+
+        // Check if already initialized
+        if (stepHeader.querySelector('.ld-simple-controls')) return;
+
+        // Generate icon controls HTML
+        const iconHtml = createSimpleModeIconControls(stepEl);
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = iconHtml;
+
+        // Insert icons after the title input (inside the flex-1 div) and before learning-type-container
+        const learningTypeContainer = stepHeader.querySelector('.learning-type-container');
+        if (learningTypeContainer) {
+            stepHeader.insertBefore(tempDiv.firstElementChild, learningTypeContainer);
+        }
+    });
+
+    attachIconControlListeners();
+}
+
+let iconListenersAttached = false;
+
+function attachIconControlListeners() {
+    if (iconListenersAttached) return;
+    iconListenersAttached = true;
+
+    document.addEventListener('click', (e) => {
+        const iconBtn = e.target.closest('.ld-icon-btn');
+        if (iconBtn) {
+            e.stopPropagation();
+            const control = iconBtn.closest('.ld-icon-control');
+            const dropdown = control.querySelector('.ld-icon-dropdown');
+
+            document.querySelectorAll('.ld-icon-dropdown').forEach(d => {
+                if (d !== dropdown) d.classList.add('hidden');
+            });
+
+            dropdown.classList.toggle('hidden');
+            return;
+        }
+
+        const dropdownBtn = e.target.closest('.ld-icon-dropdown button[data-value]');
+        if (dropdownBtn) {
+            e.stopPropagation();
+            const control = dropdownBtn.closest('.ld-icon-control');
+            const controlType = control.dataset.control;
+            const newValue = dropdownBtn.dataset.value;
+            const stepCard = control.closest('.step-card');
+
+            let selectEl;
+            if (controlType === 'groupMode') selectEl = stepCard.querySelector('.step-group-mode');
+            if (controlType === 'trainer') selectEl = stepCard.querySelector('.trainer-select');
+            if (controlType === 'place') selectEl = stepCard.querySelector('.place-select');
+            if (controlType === 'time') selectEl = stepCard.querySelector('.time-select');
+            if (controlType === 'evaluation') selectEl = stepCard.querySelector('.evaluation-select');
+
+            if (selectEl) {
+                selectEl.value = newValue;
+                selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            const iconBtn = control.querySelector('.ld-icon-btn');
+            const config = SIMPLE_MODE_ICONS[controlType][newValue];
+            iconBtn.querySelector('.material-icons-round').textContent = config.icon;
+            iconBtn.className = `ld-icon-btn flex items-center justify-center w-9 h-9 rounded-lg hover:bg-white transition-colors ${config.color}`;
+            iconBtn.title = config.label;
+            iconBtn.setAttribute('aria-label', config.label);
+
+            control.querySelectorAll('.ld-icon-dropdown button').forEach(btn => {
+                if (btn.dataset.value === newValue) {
+                    btn.className = 'w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 text-left transition-colors bg-indigo-50 text-indigo-700';
+                } else {
+                    btn.className = 'w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 text-left transition-colors text-slate-700';
+                }
+            });
+
+            control.querySelector('.ld-icon-dropdown').classList.add('hidden');
+            return;
+        }
+
+        if (!e.target.closest('.ld-icon-control')) {
+            document.querySelectorAll('.ld-icon-dropdown').forEach(d => d.classList.add('hidden'));
+        }
+    });
+
+    document.addEventListener('change', (e) => {
+        if (!e.target.matches('.step-group-mode, .trainer-select, .place-select, .time-select, .evaluation-select')) return;
+        if (!document.body.classList.contains('hide-beginner-features')) return;
+
+        const stepCard = e.target.closest('.step-card');
+        if (!stepCard) return;
+
+        const stepHeader = stepCard.querySelector('.step-header');
+        const existingControls = stepHeader ? stepHeader.querySelector('.ld-simple-controls') : null;
+
+        if (existingControls) {
+            const newIconHtml = createSimpleModeIconControls(stepCard);
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = newIconHtml;
+            existingControls.replaceWith(tempDiv.firstElementChild);
+        }
+    });
+}
 
 function toggleActivity(btn) {
             const activityGroup = btn.closest('.activity-group');
@@ -15577,9 +15974,23 @@ try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closes
                 }
             } catch(_){ __ldSilentErr(_); }
 
+            // Initialize icon controls for new step if in simple mode
+            try {
+                if (document.body.classList.contains('hide-beginner-features') && newStep) {
+                    const iconHtml = createSimpleModeIconControls(newStep);
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = iconHtml;
+                    const stepHeader = newStep.querySelector('.step-header');
+                    const learningTypeContainer = stepHeader ? stepHeader.querySelector('.learning-type-container') : null;
+                    if (stepHeader && learningTypeContainer) {
+                        stepHeader.insertBefore(tempDiv.firstElementChild, learningTypeContainer);
+                    }
+                }
+            } catch(_){ __ldSilentErr(_); }
+
             // Ensure UI updates
             updateStats();
-            
+
             // CRITICAL FIX: Scroll to the new activity and highlight it
             try {
                 // Force a small delay to ensure view change is applied
