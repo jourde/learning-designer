@@ -406,6 +406,13 @@ html.hide-beginner-features .step-body > div.flex.flex-col.lg\:flex-row {
     border: none;
     background: transparent;
     flex-shrink: 0;
+    width: 28px;           /* Fixed width matching w-7 */
+    height: 28px;          /* Fixed height matching h-7 */
+    min-width: 28px;       /* Prevent shrinking */
+    min-height: 28px;      /* Prevent shrinking */
+    line-height: 1;        /* Prevent icon height shifts */
+    padding: 0;            /* Remove any padding */
+    display: flex;         /* Ensure flex context for align-items/justify-content */
     align-items: center;
     justify-content: center;
 }
@@ -431,8 +438,9 @@ html.hide-beginner-features .step-body > div.flex.flex-col.lg\:flex-row {
     z-index: 10000;
 }
 
-/* Ensure step-header and step-card don't clip dropdowns (all modes) */
+/* Force consistent vertical alignment of step header */
 .step-header {
+    align-items: center !important;
     overflow: visible !important;
 }
 
@@ -10532,7 +10540,7 @@ function attachIconControlListeners() {
             const iconBtn = control.querySelector('.ld-icon-btn');
             const config = SIMPLE_MODE_ICONS[controlType][newValue];
             iconBtn.querySelector('.material-icons-round').textContent = config.icon;
-            iconBtn.className = `ld-icon-btn flex items-center justify-center w-9 h-9 rounded-lg hover:bg-white transition-colors ${config.color}`;
+            iconBtn.className = `ld-icon-btn flex items-center justify-center w-7 h-7 rounded hover:bg-slate-100 transition-colors ${config.color}`;
             iconBtn.title = config.label;
             iconBtn.setAttribute('aria-label', config.label);
 
