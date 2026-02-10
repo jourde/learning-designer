@@ -381,17 +381,15 @@ html.hide-beginner-features #key-params-wrapper,
 html.hide-beginner-features #visualisations-wrapper,
 html.hide-beginner-features #analysis-tabs-wrap,
 html.hide-beginner-features .step-status-dot,
-html.hide-beginner-features .ld-status-summary {
+html.hide-beginner-features .ld-status-summary,
+html.hide-beginner-features button[data-action="toggle-step"] {
   display: none !important;
 }
 
 /* Simple Mode: Icon-based controls */
+/* Icon controls visible in ALL modes */
 .ld-simple-controls {
-    display: none; /* Hidden by default */
-}
-
-html.hide-beginner-features .ld-simple-controls {
-    display: flex !important; /* Show in simple mode */
+    display: flex !important; /* Always visible */
 }
 
 html.hide-beginner-features .step-body > div.flex.flex-col.lg\:flex-row {
@@ -407,6 +405,9 @@ html.hide-beginner-features .step-body > div.flex.flex-col.lg\:flex-row {
     cursor: pointer;
     border: none;
     background: transparent;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
 }
 
 .ld-icon-btn:hover {
@@ -417,6 +418,12 @@ html.hide-beginner-features .step-body > div.flex.flex-col.lg\:flex-row {
     transform: scale(0.95);
 }
 
+/* Ensure consistent alignment of icon controls container */
+.ld-simple-controls {
+    align-items: center;
+    flex-shrink: 0;
+}
+
 .ld-icon-dropdown {
     position: absolute;
     max-height: 280px;
@@ -424,24 +431,24 @@ html.hide-beginner-features .step-body > div.flex.flex-col.lg\:flex-row {
     z-index: 10000;
 }
 
-/* Ensure step-header and step-card don't clip dropdowns in simple mode */
-html.hide-beginner-features .step-header {
+/* Ensure step-header and step-card don't clip dropdowns (all modes) */
+.step-header {
     overflow: visible !important;
 }
 
-html.hide-beginner-features .step-card {
+.step-card {
     overflow: visible !important;
 }
 
-html.hide-beginner-features .submoment-body {
+.submoment-body {
     overflow: visible !important;
 }
 
-html.hide-beginner-features .submoment-steps {
+.submoment-steps {
     overflow: visible !important;
 }
 
-html.hide-beginner-features .steps-container {
+.steps-container {
     overflow: visible !important;
 }
 
@@ -9837,9 +9844,9 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
                 }
             } catch(_){ __ldSilentErr(_); }
 
-            // Initialize icon controls for new step if in simple mode
+            // Initialize icon controls for new step (all modes)
             try {
-                if (document.body.classList.contains('hide-beginner-features') && newStep) {
+                if (newStep) {
                     const iconHtml = createSimpleModeIconControls(newStep);
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = iconHtml;
@@ -10258,12 +10265,9 @@ function setBeginnerModeHidden(hideComplexFeatures) {
         localStorage.setItem('ld_beginner_mode', isHidden ? '1' : '0');
     } catch(_) { __ldSilentErr(_); }
 
-    // Initialize or remove icon controls
-    if (isHidden) {
-        initSimpleModeIconControls();
-    } else {
-        document.querySelectorAll('.ld-simple-controls').forEach(el => el.remove());
-    }
+    // Icons are always present, CSS handles visibility
+    // Just ensure they're initialized
+    initSimpleModeIconControls();
 }
 
 function toggleBeginnerMode() {
@@ -10279,30 +10283,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const shouldHide = (saved === '1');
         setBeginnerModeHidden(shouldHide);
 
-        // Also try to initialize icons after a short delay to ensure DOM is ready
-        if (shouldHide) {
-            setTimeout(() => {
-                initSimpleModeIconControls();
-            }, 100);
-        }
+        // Always initialize icons regardless of mode
+        setTimeout(() => {
+            initSimpleModeIconControls();
+        }, 100);
     } catch(_) { __ldSilentErr(_); }
 });
 
 // Also initialize on window load as a fallback
 window.addEventListener('load', () => {
     try {
-        if (document.body.classList.contains('hide-beginner-features')) {
-            setTimeout(() => {
-                initSimpleModeIconControls();
-            }, 200);
-        }
+        // Always initialize icons regardless of mode
+        setTimeout(() => {
+            initSimpleModeIconControls();
+        }, 200);
     } catch(_) { __ldSilentErr(_); }
 });
 
 // Watch for dynamically added step-cards (when projects are loaded)
 if (typeof MutationObserver !== 'undefined') {
     const observer = new MutationObserver((mutations) => {
-        if (!document.body.classList.contains('hide-beginner-features')) return;
+        // Observe in all modes (not just Simple mode)
 
         let shouldInit = false;
         mutations.forEach(mutation => {
@@ -10463,7 +10464,7 @@ function createSimpleModeIconControls(stepEl) {
 }
 
 function initSimpleModeIconControls() {
-    if (!document.body.classList.contains('hide-beginner-features')) return;
+    // Initialize icons for ALL modes (not just Simple mode)
 
     document.querySelectorAll('.step-card').forEach(stepEl => {
         const stepHeader = stepEl.querySelector('.step-header');
@@ -10554,7 +10555,7 @@ function attachIconControlListeners() {
 
     document.addEventListener('change', (e) => {
         if (!e.target.matches('.step-group-mode, .trainer-select, .place-select, .time-select, .evaluation-select')) return;
-        if (!document.body.classList.contains('hide-beginner-features')) return;
+        // Update icons in all modes (not just Simple mode)
 
         const stepCard = e.target.closest('.step-card');
         if (!stepCard) return;
@@ -15974,9 +15975,9 @@ try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closes
                 }
             } catch(_){ __ldSilentErr(_); }
 
-            // Initialize icon controls for new step if in simple mode
+            // Initialize icon controls for new step (all modes)
             try {
-                if (document.body.classList.contains('hide-beginner-features') && newStep) {
+                if (newStep) {
                     const iconHtml = createSimpleModeIconControls(newStep);
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = iconHtml;
