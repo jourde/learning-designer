@@ -16099,11 +16099,21 @@ try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closes
             const clone = original.cloneNode(true);
             original.after(clone);
             copyFormValues(original, clone);
-            
+
             // Explicitly rebind buttons in the clone to be safe - CRITICAL FIX
             // Remove any manual rebind logic that depends on titles and let inline handlers work
             // The cloneNode(true) copies the type="button" data-action="duplicate-module" correctly.
-            
+
+            // Remove data-fs-ready markers from cloned fullscreen buttons so they get re-wrapped
+            clone.querySelectorAll('.ld-textarea-fullscreen-btn[data-fs-ready]').forEach(btn => {
+              btn.removeAttribute('data-fs-ready');
+            });
+
+            // Re-wrap textareas to attach event listeners
+            if (typeof window.__ldWrapTextareas === 'function') {
+              setTimeout(() => window.__ldWrapTextareas(), 10);
+            }
+
             const momentsRoot = clone.querySelector('.activity-moments-container');
             initSortableMoments(momentsRoot);
             clone.querySelectorAll('.activity-steps-container').forEach((c) => initSortableSteps(c));
@@ -16120,6 +16130,17 @@ try { const _tmD = newStep.querySelector('.step-tools-materials-select')?.closes
             const clone = original.cloneNode(true);
             original.after(clone);
             copyFormValues(original, clone);
+
+            // Remove data-fs-ready markers from cloned fullscreen buttons so they get re-wrapped
+            clone.querySelectorAll('.ld-textarea-fullscreen-btn[data-fs-ready]').forEach(btn => {
+              btn.removeAttribute('data-fs-ready');
+            });
+
+            // Re-wrap textareas to attach event listeners
+            if (typeof window.__ldWrapTextareas === 'function') {
+              setTimeout(() => window.__ldWrapTextareas(), 10);
+            }
+
             const select = clone.querySelector('.learning-type-select');
             updateStepType(select);
             updateStats();
@@ -28900,6 +28921,20 @@ document.addEventListener('DOMContentLoaded', () => {
       if (title && title.value && !/\(copie\)\s*$/i.test(title.value)) title.value = title.value + ' (copie)';
     } catch(_){ __ldSilentErr(_); }
 
+    // Remove data-fs-ready markers from cloned fullscreen buttons so they get re-wrapped
+    try {
+      clone.querySelectorAll('.ld-textarea-fullscreen-btn[data-fs-ready]').forEach(btn => {
+        btn.removeAttribute('data-fs-ready');
+      });
+    } catch(_){ __ldSilentErr(_); }
+
+    // Re-wrap textareas to attach event listeners
+    try {
+      if (typeof window.__ldWrapTextareas === 'function') {
+        setTimeout(() => window.__ldWrapTextareas(), 10);
+      }
+    } catch(_){ __ldSilentErr(_); }
+
     // Reapply type UI + stats
     try { const select = clone.querySelector('.learning-type-select'); if (select) updateStepType(select); } catch(_){ __ldSilentErr(_); }
     try { if (typeof updateStats === 'function') updateStats(); } catch(_){ __ldSilentErr(_); }
@@ -32328,10 +32363,31 @@ kbd {
   function wrapTextareas() {
     TEXTAREA_SELECTORS.forEach(selector => {
       document.querySelectorAll(selector).forEach(textarea => {
-        // Skip if already wrapped
-        if (textarea.closest('.ld-textarea-wrapper')) return;
-        
-        // Create wrapper
+        const existingWrapper = textarea.closest('.ld-textarea-wrapper');
+
+        // If already wrapped, check if button has event listener (by checking for a marker)
+        if (existingWrapper) {
+          const existingBtn = existingWrapper.querySelector('.ld-textarea-fullscreen-btn');
+          // If button exists and has our marker attribute, skip
+          if (existingBtn && existingBtn.hasAttribute('data-fs-ready')) return;
+
+          // Otherwise, re-attach event listener to existing button (for cloned elements)
+          if (existingBtn) {
+            existingBtn.setAttribute('data-fs-ready', 'true');
+            // Remove old listeners by cloning and replacing (clean approach)
+            const newBtn = existingBtn.cloneNode(true);
+            existingBtn.parentNode.replaceChild(newBtn, existingBtn);
+
+            newBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              openFullscreen(textarea);
+            });
+            return;
+          }
+        }
+
+        // Create wrapper (for textareas not yet wrapped)
         const wrapper = document.createElement('div');
         wrapper.className = 'ld-textarea-wrapper';
 
@@ -32341,20 +32397,21 @@ kbd {
             wrapper.classList.add('ld-textarea-wrapper--always');
           }
         } catch(_){ }
-        
+
         // Create fullscreen button
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'ld-textarea-fullscreen-btn';
         btn.title = 'Éditer en plein écran';
+        btn.setAttribute('data-fs-ready', 'true');
         __ldSetSafeHtml(btn, '<span class="material-icons-round">fullscreen</span>');
-        
+
         btn.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
           openFullscreen(textarea);
         });
-        
+
         // Wrap textarea
         textarea.parentNode.insertBefore(wrapper, textarea);
         wrapper.appendChild(textarea);
@@ -32465,19 +32522,21 @@ kbd {
     init();
   }
 
-  // Re-wrap when new steps are added
+  // Re-wrap when new steps are added or DOM changes
   const observer = new MutationObserver((mutations) => {
     let shouldWrap = false;
     mutations.forEach(mutation => {
       mutation.addedNodes.forEach(node => {
         if (node.nodeType === 1) {
-          // Check for step cards, submoment cards, or activity groups
-          if (node.classList.contains('step-card') || 
+          // Check for step cards, submoment cards, activity groups, or any textarea
+          if (node.classList.contains('step-card') ||
               node.classList.contains('submoment-card') ||
               node.classList.contains('activity-group') ||
               node.querySelector('.step-card') ||
               node.querySelector('.submoment-card') ||
-              node.querySelector('.activity-group')) {
+              node.querySelector('.activity-group') ||
+              node.tagName === 'TEXTAREA' ||
+              node.querySelector('textarea')) {
             shouldWrap = true;
           }
         }
@@ -32493,8 +32552,37 @@ kbd {
     observer.observe(root, { childList: true, subtree: true });
   }
 
+  // Also observe the entire document body for textareas added elsewhere (e.g., side panels)
+  const bodyObserver = new MutationObserver((mutations) => {
+    let shouldWrap = false;
+    mutations.forEach(mutation => {
+      mutation.addedNodes.forEach(node => {
+        if (node.nodeType === 1) {
+          if (node.tagName === 'TEXTAREA' || node.querySelector('textarea')) {
+            shouldWrap = true;
+          }
+        }
+      });
+    });
+    if (shouldWrap) {
+      setTimeout(() => { wrapTextareas(); }, 100);
+    }
+  });
+
+  bodyObserver.observe(document.body, { childList: true, subtree: true });
+
   // Expose for external use if needed
   window.__ldOpenFullscreenTextarea = openFullscreen;
+  window.__ldWrapTextareas = wrapTextareas;
+
+  // Re-wrap textareas periodically to catch any missed ones
+  setInterval(() => {
+    try {
+      wrapTextareas();
+    } catch(e) {
+      __ldSilentErr(e);
+    }
+  }, 2000);
 })();
 </script>
 
