@@ -31612,8 +31612,10 @@ kbd {
 .md-preview pre { background: rgba(15, 23, 42, 0.06); padding: 0.75rem; border-radius: 0.5rem; overflow: auto; margin: 0.75rem 0; }
 .md-preview pre code { background: transparent; padding: 0; }
 .md-preview blockquote { border-left: 4px solid rgba(100, 116, 139, 0.5); padding: 0.25rem 0.75rem; margin: 0.75rem 0; color: #334155; background: rgba(226, 232, 240, 0.45); border-radius: 0.25rem; }
-.md-preview ul, .md-preview ol { margin: 0.5rem 0 0.5rem 1.25rem; }
-.md-preview li { margin: 0.2rem 0; }
+.md-preview ul, .md-preview ol { margin: 0.5rem 0 0.5rem 1.25rem; padding-left: 1.5rem; }
+.md-preview ul { list-style-type: disc; }
+.md-preview ol { list-style-type: decimal; }
+.md-preview li { margin: 0.2rem 0; display: list-item; }
 .md-preview hr { border: none; border-top: 1px solid rgba(148, 163, 184, 0.6); margin: 1rem 0; }
 .md-preview table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 0.95rem; }
 .md-preview th, .md-preview td { border: 1px solid rgba(203, 213, 225, 0.9); padding: 0.4rem 0.5rem; vertical-align: top; }
@@ -31832,7 +31834,7 @@ kbd {
 
       // Lists (UL / OL / tasks, single-level)
       const taskRe = /^\s*([-*+])\s+\[(\s|x|X)\]\s+(.*)$/;
-      const ulRe = /^\s*([-*+])\s+(.*)$/;
+      const ulRe = /^\s*([-*+])\s+(.*)$/;  // Standard: requires space after marker
       const olRe = /^\s*(\d+)[\.)]\s+(.*)$/;
 
       if (taskRe.test(line) || ulRe.test(line) || olRe.test(line)) {
@@ -31885,8 +31887,8 @@ kbd {
       const pbuf = [line];
       i++;
       while (i < lines.length && lines[i].trim() && !/^(#{1,6})\s+/.test(lines[i]) && !/^```/.test(lines[i]) && !/^\s*>/.test(lines[i]) && !lines[i].includes('|')) {
-        // Stop before potential list
-        if (/^\s*([-*+])\s+/.test(lines[i]) || /^\s*\d+[\.)]\s+/.test(lines[i])) break;
+        // Stop before potential list (allow optional space after marker)
+        if (/^\s*([-*+])\s*/.test(lines[i]) || /^\s*\d+[\.)]\s+/.test(lines[i])) break;
         pbuf.push(lines[i]);
         i++;
       }
