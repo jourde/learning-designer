@@ -731,11 +731,11 @@ input, select, textarea {
           outline-offset: 2px;
         }
 
-        /* Force white background for the "Affichage des états" summary button */
-        #view-controls-toolbar details > summary.ld-control-btn{
+        /* Force white background for details summary buttons in control areas */
+        details > summary.ld-control-btn{
           background-color: #ffffff !important;
         }
-        #view-controls-toolbar details > summary.ld-control-btn:hover{
+        details > summary.ld-control-btn:hover{
           background-color: var(--ld-control-bg-hover) !important;
         }
 
@@ -2751,12 +2751,12 @@ document.addEventListener('DOMContentLoaded', function() {
       | <span id="mode-indicator-text">vue avancée</span>
     </span>
   </h1>
-<div class="mt-2 flex flex-wrap gap-x-2 gap-y-2 no-print items-start content-start">
+<div class="mt-2 flex flex-wrap gap-x-2 gap-y-2 no-print items-stretch content-start">
 <div class="flex flex-col relative gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
 <span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider pl-1" data-i18n="grp_view">
        Vue
       </span>
-<div class="flex items-center bg-white border border-slate-200 rounded-md p-0.5 gap-1 shadow-sm h-[30px]">
+<div class="flex flex-wrap items-center bg-white border border-slate-200 rounded-md p-0.5 gap-1 shadow-sm min-h-[30px]">
 <button id="btn-toggle-beginner-mode"
         class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-2 py-0.5 rounded transition-colors flex items-center gap-1.5 font-semibold"
         data-action="toggle-beginner-mode"
@@ -2810,13 +2810,106 @@ document.addEventListener('DOMContentLoaded', function() {
 <span class="material-icons-round text-sm" id="icon-toggle-types">visibility_off</span>
 <span class="text-[10px] font-bold" data-i18n="btn_toggle_types">Types</span>
 </button>
+<div class="w-px h-5 bg-slate-200"></div>
+<select id="jump-to-select" class="ld-control-select min-w-[100px] max-w-[160px] sm:min-w-[120px] sm:max-w-[180px]" aria-label="Navigation rapide vers un élément">
+  <option value="" data-i18n="opt_goto">Aller à…</option>
+</select>
+<button id="jump-to-refresh" class="ld-control-btn border-slate-300 hover:border-indigo-400" type="button" title="Actualiser la liste de navigation" aria-label="Actualiser la navigation">
+  <span class="material-icons-round text-[16px]">refresh</span>
+</button>
+<div class="w-px h-5 bg-slate-200"></div>
+<details class="relative" id="view-level-menu">
+  <summary class="ld-control-btn list-none cursor-pointer select-none">
+    <span class="material-icons-round text-[16px]">view_agenda</span>
+    <span class="hidden md:inline" id="current-view-level-label">Activités</span>
+    <span class="material-icons-round text-[14px] ml-0.5">expand_more</span>
+  </summary>
+  <div class="absolute right-0 mt-1 w-64 bg-white border border-slate-200 rounded-md shadow-lg z-50">
+    <!-- Niveaux d'affichage -->
+    <div class="p-1 border-b border-slate-100">
+      <div class="px-2 py-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Niveau d'affichage</div>
+      <button class="ld-view-level-option w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" data-level="activities" data-i18n="btn_view_activities">
+        <span>Activités</span>
+      </button>
+      <button class="ld-view-level-option w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" data-level="submoments" data-i18n="btn_view_submoments">
+        <span>Sous-moments</span>
+      </button>
+      <button class="ld-view-level-option w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" data-level="moments" data-i18n="btn_view_moments">
+        <span>Moments</span>
+      </button>
+      <button class="ld-view-level-option w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" data-level="modules" data-i18n="btn_view_modules">
+        <span>Modules</span>
+      </button>
+      <button class="ld-view-level-option w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" data-level="panorama" data-i18n="btn_view_panorama">
+        <span>Panorama</span>
+      </button>
+    </div>
+    <!-- Action replier/déplier -->
+    <div class="p-1">
+      <button id="btn-toggle-all-main" data-action="toggle-all-activities" class="w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" aria-label="Replier ou déplier tous les modules" title="Replier ou déplier tous les modules">
+        <span class="material-icons-round text-[16px]" id="icon-toggle-all-main">unfold_less</span>
+        <span data-i18n="btn_collapse_all" id="text-toggle-all-main">Tout replier</span>
+      </button>
+    </div>
+  </div>
+</details>
+<select id="ld-view-level-select" class="hidden" aria-label="Sélection du affichage">
+  <option value="activities" data-i18n="btn_view_activities" selected>Activités</option>
+  <option value="submoments" data-i18n="btn_view_submoments">Sous-moments</option>
+  <option value="moments" data-i18n="btn_view_moments">Moments</option>
+  <option value="modules" data-i18n="btn_view_modules">Modules</option>
+  <option value="panorama" data-i18n="btn_view_panorama">Panorama</option>
+</select>
+<div class="w-px h-5 bg-slate-200"></div>
+<div class="contents" id="filter-container">
+<select id="status-filter" class="ld-control-select" title="Filtrer l'affichage par état" aria-label="Filtrer par état de réalisation">
+  <option value="all" selected data-i18n="opt_all_statuses">Tous</option>
+  <option value="review" data-i18n="opt_status_review">À revoir</option>
+  <option value="in_progress" data-i18n="opt_status_inprogress">En cours</option>
+  <option value="done" data-i18n="opt_status_completed">Finalisé</option>
+</select>
+<button id="status-filter-clear" class="ld-control-btn px-1.5" title="Réinitialiser le filtre" aria-label="Réinitialiser le filtre">
+  <span class="material-icons-round text-[16px]">restart_alt</span>
+</button>
+<button id="btn-toggle-target-durations"
+        class="ld-control-btn"
+        data-action="toggle-target-durations"
+        aria-pressed="false"
+        title="Afficher les durées cibles"
+        aria-label="Afficher les durées cibles">
+  <span class="material-icons-round text-[16px]" id="icon-toggle-target-durations">visibility_off</span>
+  <span class="hidden xl:inline" id="text-toggle-target-durations">Cibles</span>
+</button>
+<details class="relative" id="status-display-menu">
+  <summary class="ld-control-btn list-none select-none bg-white">
+    <span class="material-icons-round text-[16px]">tune</span>
+    <span class="hidden lg:inline">Affichage des états</span>
+  </summary>
+  <div class="absolute right-0 mt-1 w-56 bg-white border border-slate-200 rounded-md shadow-lg z-50 p-1">
+    <button id="btn-toggle-status-summaries" type="button" aria-pressed="true"
+      class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2"
+      title="Afficher ou masquer les synthèses d'état">
+      <span class="material-icons-round text-[16px]" id="icon-toggle-status-summaries">visibility_off</span>
+      <span id="text-toggle-status-summaries">Masquer synthèses</span>
+    </button>
+
+    <button id="btn-toggle-status-selectors" type="button" aria-pressed="false"
+      class="w-full text-left px-2 py-1.5 rounded bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-2"
+      data-i18n-title="title_toggle_status_selectors"
+      title="Afficher ou masquer les sélecteurs d'état dans les activités">
+      <span class="material-icons-round text-[16px]" id="icon-toggle-status-selectors">visibility</span>
+      <span id="text-toggle-status-selectors" data-i18n="btn_show_status_selectors">Afficher états</span>
+    </button>
+  </div>
+</details>
+</div>
 </div>
 </div>
 <div class="flex flex-col relative gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
 <span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider pl-1" data-i18n="grp_project">
        Projet
       </span>
-<div class="flex items-center bg-white border border-slate-200 rounded-md p-0.5 gap-0.5 shadow-sm h-[30px]">
+<div class="flex flex-wrap items-center bg-white border border-slate-200 rounded-md p-0.5 gap-0.5 shadow-sm min-h-[30px]">
 <button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors flex items-center gap-1.5" data-i18n-title="title_save_project" data-action="save-project">
 <span class="material-icons-round text-lg">
          save
@@ -4187,128 +4280,6 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div>
 </div></div></details>
 <div class="ld-page" id="view-designer">
-<div class="flex flex-wrap items-center justify-between mb-2 no-print gap-2" id="view-controls-toolbar">
-
-  <!-- SECTION 1: NAVIGATION -->
-  <div class="flex items-center gap-2 flex-shrink-0">
-    <span class="hidden lg:inline text-[10px] font-bold text-slate-500 uppercase tracking-wider" aria-hidden="true">Navigation</span>
-    <select id="jump-to-select" class="ld-control-select min-w-[140px] max-w-[220px] sm:min-w-[200px] sm:max-w-[300px]" aria-label="Navigation rapide vers un élément">
-      <option value="" data-i18n="opt_goto">Aller à…</option>
-    </select>
-    <button id="jump-to-refresh" class="ld-control-btn border-slate-300 hover:border-indigo-400" type="button" title="Actualiser la liste de navigation" aria-label="Actualiser la navigation">
-      <span class="material-icons-round text-[16px]">refresh</span>
-    </button>
-  </div>
-
-  <!-- SÉPARATEUR -->
-  <div class="ld-separator hidden xl:block" role="separator" aria-hidden="true"></div>
-
-  <!-- SECTION 2: CONTRÔLES D'AFFICHAGE -->
-  <div class="flex flex-wrap items-center justify-end gap-2 flex-grow">
-
-    <!-- GROUPE: Niveau d'affichage (unifié) -->
-    <div class="ld-control-group">
-      <details class="relative" id="view-level-menu">
-        <summary class="ld-control-btn list-none cursor-pointer select-none">
-          <span class="material-icons-round text-[16px]">view_agenda</span>
-          <span class="hidden md:inline" id="current-view-level-label">Activités</span>
-          <span class="material-icons-round text-[14px] ml-0.5">expand_more</span>
-        </summary>
-        <div class="absolute right-0 mt-1 w-64 bg-white border border-slate-200 rounded-md shadow-lg z-50">
-          <!-- Niveaux d'affichage -->
-          <div class="p-1 border-b border-slate-100">
-            <div class="px-2 py-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Niveau d'affichage</div>
-            <button class="ld-view-level-option w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" data-level="activities" data-i18n="btn_view_activities">
-              <span>Activités</span>
-            </button>
-            <button class="ld-view-level-option w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" data-level="submoments" data-i18n="btn_view_submoments">
-              <span>Sous-moments</span>
-            </button>
-            <button class="ld-view-level-option w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" data-level="moments" data-i18n="btn_view_moments">
-              <span>Moments</span>
-            </button>
-            <button class="ld-view-level-option w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" data-level="modules" data-i18n="btn_view_modules">
-              <span>Modules</span>
-            </button>
-            <button class="ld-view-level-option w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" data-level="panorama" data-i18n="btn_view_panorama">
-              <span>Panorama</span>
-            </button>
-          </div>
-          <!-- Action replier/déplier -->
-          <div class="p-1">
-            <button id="btn-toggle-all-main" data-action="toggle-all-activities" class="w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors" aria-label="Replier ou déplier tous les modules" title="Replier ou déplier tous les modules">
-              <span class="material-icons-round text-[16px]" id="icon-toggle-all-main">unfold_less</span>
-              <span data-i18n="btn_collapse_all" id="text-toggle-all-main">Tout replier</span>
-            </button>
-          </div>
-        </div>
-      </details>
-      
-      <!-- Hidden select for compatibility with existing code -->
-      <select id="ld-view-level-select" class="hidden" aria-label="Sélection du affichage">
-        <option value="activities" data-i18n="btn_view_activities" selected>Activités</option>
-        <option value="submoments" data-i18n="btn_view_submoments">Sous-moments</option>
-        <option value="moments" data-i18n="btn_view_moments">Moments</option>
-        <option value="modules" data-i18n="btn_view_modules">Modules</option>
-        <option value="panorama" data-i18n="btn_view_panorama">Panorama</option>
-      </select>
-    </div>
-
-    <!-- SÉPARATEUR -->
-    <div class="ld-separator hidden xl:block" role="separator" aria-hidden="true"></div>
-
-    <!-- GROUPE: Filtres et états -->
-    <div class="ld-control-group" id="filter-container">
-      <span class="hidden md:inline text-xs text-slate-500 font-extrabold" aria-hidden="true">Filtre</span>
-
-      <select id="status-filter" class="ld-control-select" title="Filtrer l'affichage par état" aria-label="Filtrer par état de réalisation">
-        <option value="all" selected data-i18n="opt_all_statuses">Tous</option>
-        <option value="review" data-i18n="opt_status_review">À revoir</option>
-        <option value="in_progress" data-i18n="opt_status_inprogress">En cours</option>
-        <option value="done" data-i18n="opt_status_completed">Finalisé</option>
-      </select>
-
-      <button id="status-filter-clear" class="ld-control-btn px-1.5" title="RÃ©initialiser le filtre" aria-label="RÃ©initialiser le filtre">
-        <span class="material-icons-round text-[16px]">restart_alt</span>
-      </button>
-
-      <button id="btn-toggle-target-durations"
-              class="ld-control-btn"
-              data-action="toggle-target-durations"
-              aria-pressed="false"
-              title="Afficher les durées cibles"
-              aria-label="Afficher les durées cibles">
-        <span class="material-icons-round text-[16px]" id="icon-toggle-target-durations">visibility_off</span>
-        <span class="hidden xl:inline" id="text-toggle-target-durations">Cibles</span>
-      </button>
-
-      <details class="relative" id="status-display-menu">
-        <summary class="ld-control-btn list-none select-none bg-white">
-          <span class="material-icons-round text-[16px]">tune</span>
-          <span class="hidden lg:inline">Affichage des états</span>
-        </summary>
-        <div class="absolute right-0 mt-1 w-56 bg-white border border-slate-200 rounded-md shadow-lg z-50 p-1">
-          <button id="btn-toggle-status-summaries" type="button" aria-pressed="true"
-            class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2"
-            title="Afficher ou masquer les synthÃ¨ses d'Ã©tat">
-            <span class="material-icons-round text-[16px]" id="icon-toggle-status-summaries">visibility_off</span>
-            <span id="text-toggle-status-summaries">Masquer synthÃ¨ses</span>
-          </button>
-
-          <button id="btn-toggle-status-selectors" type="button" aria-pressed="false"
-            class="w-full text-left px-2 py-1.5 rounded bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-2"
-            data-i18n-title="title_toggle_status_selectors"
-            title="Afficher ou masquer les sÃ©lecteurs d'Ã©tat dans les activitÃ©s">
-            <span class="material-icons-round text-[16px]" id="icon-toggle-status-selectors">visibility</span>
-            <span id="text-toggle-status-selectors" data-i18n="btn_show_status_selectors">Afficher Ã©tats</span>
-          </button>
-        </div>
-      </details>
-    </div>
-
-  </div>
-</div>
-</div>
 <div class="ld-page" id="designer-flow">
 
 <div id="panorama-view" class="hidden mt-2">
