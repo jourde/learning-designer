@@ -63,6 +63,15 @@ document.addEventListener('DOMContentLoaded', ()=>{
   }catch(_){ __ldSilentErr(_); }
 });
 
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    if (typeof initViewStyleMenu === 'function') {
+      initViewStyleMenu();
+    }
+  } catch(e) {
+    console.error('[InitViewStyleMenuError]', e);
+  }
+});
 
 
 
@@ -374,6 +383,7 @@ html.hide-beginner-features button[data-action="toggle-moment-description"],
 html.hide-beginner-features button[data-action="toggle-submoment-notes"],
 html.hide-beginner-features .ld-batch-checkbox,
 html.hide-beginner-features #btn-more,
+html.hide-beginner-features #more-button-wrapper,
 html.hide-beginner-features #top-tabs-bar-wrap,
 html.hide-beginner-features #btn-toggle-target-durations,
 html.hide-beginner-features #status-display-menu,
@@ -382,6 +392,7 @@ html.hide-beginner-features #visualisations-wrapper,
 html.hide-beginner-features #analysis-tabs-wrap,
 html.hide-beginner-features .step-status-dot,
 html.hide-beginner-features .ld-status-summary,
+html.hide-beginner-features #filter-container,
 html.hide-beginner-features button[data-action="toggle-step"] {
   display: none !important;
 }
@@ -1781,6 +1792,30 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
     if (menu) menu.classList.add('hidden');
   };
 
+  // Menu Fold/Unfold dropdown
+  window.toggleFoldUnfoldMenu = function(ev){
+    try { if (ev) { ev.preventDefault(); ev.stopPropagation(); } } catch(_){ __ldSilentErr(_); }
+    const menu = document.getElementById('fold-unfold-menu');
+    if (!menu) return;
+    menu.classList.toggle('hidden');
+  };
+  window.closeFoldUnfoldMenu = function(){
+    const menu = document.getElementById('fold-unfold-menu');
+    if (menu) menu.classList.add('hidden');
+  };
+
+  // Menu View Style dropdown
+  window.toggleViewStyleMenu = function(ev){
+    try { if (ev) { ev.preventDefault(); ev.stopPropagation(); } } catch(_){ __ldSilentErr(_); }
+    const menu = document.getElementById('view-style-menu');
+    if (!menu) return;
+    menu.classList.toggle('hidden');
+  };
+  window.closeViewStyleMenu = function(){
+    const menu = document.getElementById('view-style-menu');
+    if (menu) menu.classList.add('hidden');
+  };
+
   // Fermeture au clic extérieur (capture pour ne pas dépendre de l'ordre des handlers)
   document.addEventListener('click', function(e){
     const menu = document.getElementById('more-menu');
@@ -1790,8 +1825,28 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
     menu.classList.add('hidden');
   }, true);
 
+  document.addEventListener('click', function(e){
+    const menu = document.getElementById('fold-unfold-menu');
+    const btn = document.getElementById('btn-fold-unfold-menu');
+    if (!menu || menu.classList.contains('hidden')) return;
+    if (menu.contains(e.target) || (btn && btn.contains(e.target))) return;
+    menu.classList.add('hidden');
+  }, true);
+
+  document.addEventListener('click', function(e){
+    const menu = document.getElementById('view-style-menu');
+    const btn = document.getElementById('btn-view-style-menu');
+    if (!menu || menu.classList.contains('hidden')) return;
+    if (menu.contains(e.target) || (btn && btn.contains(e.target))) return;
+    menu.classList.add('hidden');
+  }, true);
+
   document.addEventListener('keydown', function(e){
-    if (e.key === 'Escape') window.closeMoreMenu();
+    if (e.key === 'Escape') {
+      window.closeMoreMenu();
+      window.closeFoldUnfoldMenu();
+      window.closeViewStyleMenu();
+    }
   }, true);
 
 
@@ -2236,6 +2291,8 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
       'save-project': () => call('saveProject'),
       'load-project': () => call('triggerFileLoad'),
       'toggle-more-menu': ({event}) => call('toggleMoreMenu', event),
+      'toggle-fold-unfold-menu': ({event}) => call('toggleFoldUnfoldMenu', event),
+      'toggle-view-style-menu': ({event}) => call('toggleViewStyleMenu', event),
       'open-template-export-modal': () => { call('openTemplateExportModal'); call('closeMoreMenu'); },
       'open-template-import-modal': () => { call('openTemplateImportModal'); call('closeMoreMenu'); },
       'trigger-language-pack-load': () => { call('triggerLanguagePackLoad'); call('closeMoreMenu'); },
@@ -2690,22 +2747,68 @@ document.addEventListener('DOMContentLoaded', function() {
 <header class="mb-3">
 <h1 class="text-2xl font-bold text-slate-900 leading-tight">
     Concepteur Pédagogique - Learning Designer
+    <span id="mode-indicator" class="text-2xl font-bold transition-colors">
+      | <span id="mode-indicator-text">vue avancée</span>
+    </span>
   </h1>
 <div class="mt-2 flex flex-wrap gap-x-2 gap-y-2 no-print items-start content-start">
-<!-- Beginner Mode Toggle - Prominent Position -->
-<div class="flex flex-col relative gap-0.5 bg-gradient-to-br from-indigo-50 to-blue-50 border-2 border-indigo-300 rounded-lg p-0.5 shadow-sm">
-<span class="text-[9px] font-bold text-indigo-700 uppercase tracking-wider pl-1">
-       Mode
+<div class="flex flex-col relative gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
+<span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider pl-1" data-i18n="grp_view">
+       Vue
       </span>
-<div class="flex items-center bg-white border border-indigo-200 rounded-md p-0.5 gap-0.5 shadow-sm h-[30px]">
+<div class="flex items-center bg-white border border-slate-200 rounded-md p-0.5 gap-1 shadow-sm h-[30px]">
 <button id="btn-toggle-beginner-mode"
-        class="text-indigo-600 hover:text-white hover:bg-indigo-600 px-2 py-0.5 rounded transition-colors flex items-center gap-1.5 font-semibold"
+        class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-2 py-0.5 rounded transition-colors flex items-center gap-1.5 font-semibold"
         data-action="toggle-beginner-mode"
         aria-pressed="false"
         title="Passer en mode simple"
         aria-label="Passer en mode simple">
-  <span class="material-icons-round text-lg" id="icon-toggle-beginner-mode">visibility</span>
+  <span class="material-icons-round text-lg" id="icon-toggle-beginner-mode">school</span>
   <span class="text-xs font-semibold" id="text-toggle-beginner-mode">Avancé</span>
+</button>
+<div class="w-px h-5 bg-slate-200"></div>
+<div class="relative">
+<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded transition-colors flex items-center justify-center" id="btn-fold-unfold-menu" data-action="toggle-fold-unfold-menu" title="Options de pliage" type="button">
+<span class="material-icons-round text-xl" id="icon-toggle-all">unfold_less</span>
+<span class="material-icons-round text-sm">arrow_drop_down</span>
+</button>
+<div class="hidden absolute left-0 top-[34px] w-56 bg-white border border-slate-200 rounded-md shadow-lg z-50 p-1" id="fold-unfold-menu">
+<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-action="toggle-all-activities" type="button">
+<span class="material-icons-round text-base text-slate-500" id="icon-fold-unfold-menu">unfold_less</span>
+<span class="text-sm">Tout plier/déplier</span>
+</button>
+</div>
+</div>
+<div class="w-px h-5 bg-slate-200">
+</div>
+<div class="relative">
+  <button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded transition-colors flex items-center justify-center gap-1"
+          id="btn-view-style-menu"
+          data-action="toggle-view-style-menu"
+          title="Style d'affichage"
+          type="button">
+    <span class="material-icons-round text-base" id="icon-view-style">visibility</span>
+    <span class="material-icons-round text-sm">arrow_drop_down</span>
+  </button>
+  <div class="hidden absolute left-0 top-[34px] w-64 bg-white border border-slate-200 rounded-md shadow-lg z-50 p-1" id="view-style-menu">
+    <button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2"
+            data-view-style="std"
+            type="button">
+      <span class="material-icons-round text-base text-slate-500">visibility</span>
+      <span class="text-sm">Standard - Vue par défaut</span>
+    </button>
+    <button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2"
+            data-view-style="hc"
+            type="button">
+      <span class="material-icons-round text-base text-slate-500">contrast</span>
+      <span class="text-sm">Contraste Élevé - Accessibilité</span>
+    </button>
+  </div>
+</div>
+<div class="w-px h-5 bg-slate-200"></div>
+<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-1 py-0.5 rounded transition-colors flex items-center gap-0.5 justify-center" data-i18n-title="title_toggle_types" data-action="toggle-learning-types" type="button">
+<span class="material-icons-round text-sm" id="icon-toggle-types">visibility_off</span>
+<span class="text-[10px] font-bold" data-i18n="btn_toggle_types">Types</span>
 </button>
 </div>
 </div>
@@ -2748,12 +2851,7 @@ document.addEventListener('DOMContentLoaded', function() {
   <span class="material-icons-round text-[16px]">search</span>
   <span class="text-xs font-medium hidden md:inline">Recherche</span>
 </button>
-<input accept=".json" class="hidden" id="load-file-input" data-action-change="load-project-file" type="file"/>
-</div>
-</div>
-<div class="flex flex-col relative gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
-<span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider pl-1" data-i18n="label_more">Plus</span>
-<div class="flex items-center bg-white border border-slate-200 rounded-md p-0.5 gap-0.5 shadow-sm h-[30px] min-w-max relative">
+<div class="relative">
 <button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors flex items-center gap-1.5" id="btn-more" data-action="toggle-more-menu" title="Plus d'actions" type="button">
 <span class="material-icons-round text-lg">more_horiz</span>
 <span class="text-xs font-medium hidden md:inline">Plus…</span>
@@ -2783,7 +2881,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <span class="text-sm" data-i18n="btn_i18n_audit">Vérifier traductions</span>
 </button>
 <div class="px-2 pt-2 pb-1">
-<div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1" data-i18n="title_ui_language_select">Choisir la langue de l’interface</div>
+<div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1" data-i18n="title_ui_language_select">Choisir la langue de l'interface</div>
 <select class="w-full appearance-none bg-white border border-slate-200 text-slate-700 px-2 pr-8 py-1 rounded-md outline-none cursor-pointer text-sm" id="ui-lang-select" data-action-change="handle-ui-language-change">
 <option data-i18n="opt_lang_fr" value="fr">Français</option>
 <option data-i18n="opt_lang_loaded" data-role="loaded-lang" disabled="" value="">Langue chargée</option>
@@ -2798,49 +2896,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 </div>
+</div>
+<input accept=".json" class="hidden" id="load-file-input" data-action-change="load-project-file" type="file"/>
 <input accept=".json" class="hidden" id="template-file-input" type="file"/>
 <input accept=".json,application/json" class="hidden" id="lang-pack-input" data-action-change="load-language-pack" type="file"/>
-</div>
-</div>
-<div class="flex flex-col relative gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
-<span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider pl-1" data-i18n="grp_view">
-       Vue
-      </span>
-<div class="flex items-center bg-white border border-slate-200 rounded-md p-0.5 gap-1 shadow-sm h-[30px]">
-<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded transition-colors flex items-center justify-center ml-0.5" data-i18n-title="title_fold_all" id="btn-toggle-all-header" data-action="toggle-all-activities">
-<span class="material-icons-round text-xl" id="icon-toggle-all">
-         unfold_less
-        </span>
-</button>
-<div class="w-px h-5 bg-slate-200">
-</div>
-<div class="relative">
-<select class="appearance-none bg-white border border-slate-200 text-slate-700 pl-2 pr-7 h-[26px] rounded-md outline-none cursor-pointer text-[11px] font-extrabold tracking-wide" id="view-style-select" data-action-change="handle-view-style-change" title="Style d'affichage">
-<option value="std" data-i18n="opt_chart_style_std">STD</option>
-<option value="hc" data-i18n="opt_chart_style_hc">HC</option>
-<option value="contrast" data-i18n="opt_chart_style_contrast">Contraste+</option>
-<option value="transparent" data-i18n="opt_chart_style_transparent">Transparent</option>
-</select>
-<span class="material-icons-round pointer-events-none text-slate-500 text-base absolute right-1 top-1/2 -translate-y-1/2">expand_more</span>
-</div>
-<div class="relative">
-<select class="appearance-none bg-white border border-slate-200 text-slate-700 pl-2 pr-7 h-[26px] rounded-md outline-none cursor-pointer text-[11px] font-extrabold tracking-wide" id="ui-theme-select" data-action-change="handle-ui-theme-change" title="Thème interface">
-<option value="light" data-i18n="opt_chart_style_light">Clair</option>
-<option value="dark" data-i18n="opt_chart_style_dark">Sombre</option>
-</select>
-<span class="material-icons-round pointer-events-none text-slate-500 text-base absolute right-1 top-1/2 -translate-y-1/2">expand_more</span>
-</div>
-</div>
-</div>
-<div class="flex flex-col relative gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
-<span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider pl-1" data-i18n="label_learning_types">
-       Types
-      </span>
-<div class="flex items-center bg-white border border-slate-200 rounded-md p-0.5 gap-1 shadow-sm h-[30px]">
-<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-1 py-0.5 rounded transition-colors flex items-center gap-0.5 justify-center" data-i18n-title="title_toggle_types" data-action="toggle-learning-types" type="button">
-<span class="material-icons-round text-sm" id="icon-toggle-types">visibility_off</span>
-<span class="text-[10px] font-bold" data-i18n="btn_toggle_types">Types</span>
-</button>
 </div>
 </div>
 <div class="flex flex-col relative gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
@@ -4199,7 +4258,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
     <div class="ld-separator hidden xl:block" role="separator" aria-hidden="true"></div>
 
     <!-- GROUPE: Filtres et états -->
-    <div class="ld-control-group">
+    <div class="ld-control-group" id="filter-container">
       <span class="hidden md:inline text-xs text-slate-500 font-extrabold" aria-hidden="true">Filtre</span>
 
       <select id="status-filter" class="ld-control-select" title="Filtrer l'affichage par état" aria-label="Filtrer par état de réalisation">
@@ -10135,6 +10194,15 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             }
 
             if(headerBtnIcon) headerBtnIcon.innerText = iconText;
+
+            // Update menu icon too
+            const menuIcon = document.getElementById('icon-fold-unfold-menu');
+            if(menuIcon) menuIcon.innerText = iconText;
+
+            // Close the fold/unfold menu
+            if (typeof window.closeFoldUnfoldMenu === 'function') {
+                window.closeFoldUnfoldMenu();
+            }
         }
 
         // Force all modules to be collapsed (used after loading a saved file).
@@ -10258,7 +10326,7 @@ function setBeginnerModeHidden(hideComplexFeatures) {
     const text = document.getElementById('text-toggle-beginner-mode');
 
     if (btn) btn.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
-    if (icon) icon.innerText = isHidden ? 'visibility_off' : 'visibility';
+    if (icon) icon.innerText = isHidden ? 'school' : 'rocket';
 
     if (btn) {
         btn.title = isHidden ? 'Passer en mode avancé' : 'Passer en mode simple';
@@ -10266,7 +10334,22 @@ function setBeginnerModeHidden(hideComplexFeatures) {
     }
 
     if (text) {
-        text.textContent = isHidden ? 'Simple' : 'Avancé';
+        text.textContent = isHidden ? 'Avancé' : 'Simple';
+    }
+
+    const modeIndicator = document.getElementById('mode-indicator');
+    const modeIndicatorText = document.getElementById('mode-indicator-text');
+
+    if (modeIndicator && modeIndicatorText) {
+        if (isHidden) {
+            // Simple mode: green text for beginner-friendly appearance
+            modeIndicator.className = 'text-2xl font-bold text-green-600 transition-colors';
+            modeIndicatorText.textContent = 'vue simplifiée';
+        } else {
+            // Advanced mode: indigo text for professional appearance
+            modeIndicator.className = 'text-2xl font-bold text-indigo-600 transition-colors';
+            modeIndicatorText.textContent = 'vue avancée';
+        }
     }
 
     try {
@@ -24340,6 +24423,44 @@ try { if (typeof syncViewStyleSelect === 'function') syncViewStyleSelect(); } ca
                 setViewStyle(selectEl && selectEl.value);
             } catch (e) {
                 console.error('[ViewStyleChangeError]', e);
+            }
+        }
+
+        function initViewStyleMenu() {
+            const menuButtons = document.querySelectorAll('#view-style-menu button[data-view-style]');
+            const mainIcon = document.getElementById('icon-view-style');
+
+            menuButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const style = this.getAttribute('data-view-style');
+
+                    // Apply the view style
+                    setViewStyle(style);
+
+                    // Update main button icon based on selected style
+                    if (mainIcon) {
+                        if (style === 'std') {
+                            mainIcon.textContent = 'visibility';
+                        } else if (style === 'hc') {
+                            mainIcon.textContent = 'contrast';
+                        }
+                    }
+
+                    // Close the menu
+                    if (typeof window.closeViewStyleMenu === 'function') {
+                        window.closeViewStyleMenu();
+                    }
+                });
+            });
+
+            // Initialize icon from localStorage
+            const savedStyle = localStorage.getItem('ld_view_mode') || 'std';
+            if (mainIcon) {
+                if (savedStyle === 'std') {
+                    mainIcon.textContent = 'visibility';
+                } else if (savedStyle === 'hc') {
+                    mainIcon.textContent = 'contrast';
+                }
             }
         }
 
