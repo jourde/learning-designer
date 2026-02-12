@@ -75,6 +75,69 @@
             overflow-x: hidden;
         }
 
+        /* ===== ACCESSIBILITY ===== */
+        /* Skip Navigation Link */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--color-primary);
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 0 0 4px 0;
+            z-index: 10000;
+            font-weight: 600;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* Visually Hidden Class */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            padding: 0;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Enhanced Focus Indicators for Accessibility */
+        .footer-icon-btn:focus-visible,
+        .zoom-btn:focus-visible,
+        .nav-item:focus-visible,
+        .nav-activity:focus-visible,
+        .search-history-item:focus-visible,
+        .btn:focus-visible,
+        .toggle-panel-btn:focus-visible,
+        .search-clear:focus-visible,
+        .nav-action-btn:focus-visible {
+            outline: 3px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+
+        .export-option:focus-visible {
+            outline: 3px solid var(--color-primary);
+            outline-offset: 2px;
+            border-color: var(--color-primary);
+        }
+
+        /* Dark mode focus */
+        [data-theme="dark"] .footer-icon-btn:focus-visible,
+        [data-theme="dark"] .zoom-btn:focus-visible,
+        [data-theme="dark"] .nav-item:focus-visible,
+        [data-theme="dark"] .nav-activity:focus-visible,
+        [data-theme="dark"] .btn:focus-visible,
+        [data-theme="dark"] .toggle-panel-btn:focus-visible,
+        [data-theme="dark"] .export-option:focus-visible {
+            outline-color: var(--color-primary-dark);
+        }
+
         /* ===== LAYOUT ===== */
         .app-container {
             display: flex;
@@ -103,14 +166,14 @@
         }
 
         .sidebar-title {
-            font-size: 18px;
+            font-size: 1.125rem;
             font-weight: 600;
             color: var(--color-text);
             margin-bottom: 4px;
         }
 
         .sidebar-subtitle {
-            font-size: 13px;
+            font-size: 0.8125rem;
             color: var(--color-text-secondary);
         }
 
@@ -469,6 +532,12 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            width: 100%;
+            background: var(--color-surface);
+            color: var(--color-text);
+            text-align: left;
+            font-family: inherit;
+            font-size: inherit;
         }
 
         .export-option:hover {
@@ -757,6 +826,9 @@
     padding: 0 20px 12px;
     border-bottom: 1px solid var(--color-border);
     background: var(--color-surface);
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .nav-action-btn {
@@ -778,6 +850,42 @@
 .nav-action-btn:hover {
     background: var(--color-hover);
     color: var(--color-text);
+}
+
+.nav-icon-text-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.15s ease;
+}
+
+.nav-icon-text-btn:hover {
+    background: var(--color-hover);
+}
+
+.nav-icon-text-btn .material-symbols-outlined {
+    font-size: 22px;
+    color: var(--color-text-secondary);
+}
+
+.nav-icon-text-btn span:last-child {
+    font-size: 13px;
+    color: #6B7280;
+    font-weight: 500;
+}
+
+.nav-icon-text-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.nav-icon-text-btn:disabled:hover {
+    background: none;
 }
 
 .nav-action-btn:disabled {
@@ -809,7 +917,7 @@
 
         .nav-module-header {
             padding: 8px 12px;
-            font-size: 13px;
+            font-size: 0.8125rem;
             font-weight: 600;
             color: var(--color-text-secondary);
             text-transform: lowercase;
@@ -1063,7 +1171,7 @@
         }
 
         .search-history-title {
-            font-size: 11px;
+            font-size: 0.6875rem;
             font-weight: 600;
             color: var(--color-text-muted);
             text-transform: uppercase;
@@ -1161,7 +1269,7 @@
         }
 
         .search-result-thumbnail-text {
-            font-size: 10px;
+            font-size: 0.625rem;
             font-weight: 600;
             color: var(--color-text-secondary);
             text-align: center;
@@ -1833,6 +1941,183 @@
             font-size: 16px;
         }
 
+        /* ===== TIMELINE INTRO SLIDE ===== */
+        .timeline-intro-slide {
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 32px;
+            height: 100%;
+        }
+
+        .timeline-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .timeline-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--color-text);
+            margin-bottom: 12px;
+        }
+
+        .timeline-subtitle {
+            font-size: 1.125rem;
+            color: var(--color-text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .timeline-stats {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            font-size: 0.9375rem;
+            color: var(--color-text-muted);
+        }
+
+        .timeline-stat-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Timeline Content - Scrollable */
+        .timeline-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 16px;
+            margin-bottom: 24px;
+        }
+
+        /* Module Card */
+        .timeline-module {
+            background: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.2s ease;
+        }
+
+        .timeline-module:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .timeline-module-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .timeline-module-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .timeline-module-duration {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--color-primary);
+            background: var(--color-primary-light);
+            padding: 4px 12px;
+            border-radius: 6px;
+        }
+
+        /* Moments Container */
+        .timeline-moments {
+            margin-top: 12px;
+        }
+
+        .timeline-moment {
+            margin-bottom: 16px;
+            padding-left: 16px;
+            border-left: 3px solid var(--color-border-light);
+        }
+
+        .timeline-moment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .timeline-moment-title {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--color-text);
+        }
+
+        .timeline-moment-duration {
+            font-size: 0.875rem;
+            color: var(--color-text-secondary);
+        }
+
+        /* Submoments Container */
+        .timeline-submoments {
+            margin-top: 8px;
+            padding-left: 16px;
+        }
+
+        .timeline-submoment {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            background: var(--color-hover);
+            border-radius: 6px;
+            transition: background 0.15s ease;
+        }
+
+        .timeline-submoment:hover {
+            background: var(--color-border-light);
+        }
+
+        .timeline-submoment-title {
+            font-size: 0.9375rem;
+            color: var(--color-text-secondary);
+        }
+
+        .timeline-submoment-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.8125rem;
+            color: var(--color-text-muted);
+        }
+
+        .timeline-submoment-duration {
+            font-weight: 500;
+        }
+
+        /* Footer Button */
+        .timeline-footer {
+            text-align: center;
+            padding-top: 16px;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .timeline-start-btn {
+            padding: 14px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .timeline-start-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
         /* ===== RESPONSIVE ===== */
         @media (max-width: 1024px) {
             :root {
@@ -1881,6 +2166,20 @@
 
             .slide-title {
                 font-size: 24px;
+            }
+
+            /* Timeline responsive */
+            .timeline-intro-slide {
+                padding: 24px 16px;
+            }
+
+            .timeline-title {
+                font-size: 2rem;
+            }
+
+            .timeline-stats {
+                flex-direction: column;
+                gap: 8px;
             }
 
             .slide-content {
@@ -2968,6 +3267,9 @@
     </style>
 </head>
 <body>
+    <!-- Skip Navigation Link -->
+    <a href="#slideContainer" class="skip-link">Skip to main content</a>
+
     <!-- Mobile Header -->
     <div class="mobile-header">
         <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
@@ -2995,10 +3297,11 @@
             <!-- Search -->
             <div class="search-container">
                 <div class="search-box">
-                    <input 
-                        type="text" 
-                        class="search-input" 
-                        id="searchInput" 
+                    <label for="searchInput" class="visually-hidden">Search activities and slides</label>
+                    <input
+                        type="text"
+                        class="search-input"
+                        id="searchInput"
                         placeholder="Search activities and slides..."
                         autocomplete="off"
                     >
@@ -3007,9 +3310,17 @@
             </div>
                         <!-- Navigation Fold/Unfold -->
             <div class="nav-actions-row">
-                <button class="nav-action-btn" id="navFoldAllBtn" type="button" aria-pressed="false">
+                <button class="nav-icon-text-btn" id="navFoldAllBtn" type="button" aria-pressed="false">
+                    <span class="material-symbols-outlined nav-action-icon" aria-hidden="true">unfold_less</span>
                     <span class="nav-action-label">Fold all</span>
-                    <span class="nav-action-icon">▸</span>
+                </button>
+                <button class="nav-icon-text-btn" onclick="app.showTimeline()" aria-label="Afficher la chronologie de la formation" type="button">
+                    <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+                    <span>Plan</span>
+                </button>
+                <button class="nav-icon-text-btn" onclick="app.openAboutModal()" aria-label="À propos de cette formation" type="button">
+                    <span class="material-symbols-outlined" aria-hidden="true">info</span>
+                    <span>info</span>
                 </button>
             </div>
 
@@ -3047,18 +3358,18 @@
 
                 <!-- Results Header -->
                 <div class="search-results-header" id="searchResultsHeader" style="display: none;">
-                    <span class="search-results-count" id="searchResultsCount">0 results</span>
+                    <span class="search-results-count" id="searchResultsCount" role="status" aria-live="polite">0 results</span>
                     <button class="search-clear-filters" id="clearFiltersBtn" style="display: none;">Clear filters</button>
                 </div>
 
                 <!-- Results List -->
-                <div id="searchResultsList"></div>
+                <div id="searchResultsList" role="region" aria-live="polite"></div>
             </div>
 
             <!-- Export Button -->
             <div class="sidebar-footer">
                 <div class="progress-wrapper">
-                    <div class="progress-label">
+                    <div class="progress-label" aria-live="polite" aria-atomic="true">
                         <span>Progress</span>
                         <span id="sidebar-progress-text">0%</span>
                     </div>
@@ -3068,20 +3379,20 @@
                 </div>
                 <!-- Compact Icon-Based Footer Actions -->
                 <div class="footer-actions">
-                    <button class="footer-icon-btn" onclick="app.toggleDarkMode()" data-tooltip="Dark Mode" id="darkModeToggle">
-                        <span class="material-symbols-outlined" id="darkModeIcon">dark_mode</span>
+                    <button class="footer-icon-btn" onclick="app.toggleDarkMode()" data-tooltip="Dark Mode" aria-label="Toggle dark mode" id="darkModeToggle">
+                        <span class="material-symbols-outlined" id="darkModeIcon" aria-hidden="true">dark_mode</span>
                     </button>
-                    <button class="footer-icon-btn" onclick="toggleShortcutsModal()" data-tooltip="Shortcuts">
-                        <span class="material-symbols-outlined">keyboard</span>
+                    <button class="footer-icon-btn" onclick="toggleShortcutsModal()" data-tooltip="Shortcuts" aria-label="View keyboard shortcuts">
+                        <span class="material-symbols-outlined" aria-hidden="true">keyboard</span>
                     </button>
-                    <button class="footer-icon-btn" onclick="app.openAboutModal()" data-tooltip="About">
-                        <span class="material-symbols-outlined">info</span>
+                    <button class="footer-icon-btn" onclick="app.openAboutModal()" data-tooltip="About" aria-label="About this application">
+                        <span class="material-symbols-outlined" aria-hidden="true">info</span>
                     </button>
-                    <button class="footer-icon-btn import-action" onclick="app.openImportDialog()" data-tooltip="Import">
-                        <span class="material-symbols-outlined">upload_file</span>
+                    <button class="footer-icon-btn import-action" onclick="app.openImportDialog()" data-tooltip="Import" aria-label="Import data from JSON file">
+                        <span class="material-symbols-outlined" aria-hidden="true">upload_file</span>
                     </button>
-                    <button class="footer-icon-btn export-action" onclick="app.openExportModal()" data-tooltip="Export">
-                        <span class="material-symbols-outlined">download</span>
+                    <button class="footer-icon-btn export-action" onclick="app.openExportModal()" data-tooltip="Export" aria-label="Export data to JSON file">
+                        <span class="material-symbols-outlined" aria-hidden="true">download</span>
                     </button>
                 </div>
                 <div class="import-status" id="importStatus" aria-live="polite"></div>
@@ -3093,24 +3404,24 @@
         <main class="main-content">
             <!-- Zoom Controls -->
             <div class="zoom-controls" id="zoomControls" style="display: none;">
-                <button class="zoom-btn" id="zoomOutBtn" onclick="app.zoomOut()" title="Zoom out">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <button class="zoom-btn" id="zoomOutBtn" onclick="app.zoomOut()" title="Zoom out" aria-label="Zoom out">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <circle cx="11" cy="11" r="8"></circle>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         <line x1="8" y1="11" x2="14" y2="11"></line>
                     </svg>
                 </button>
                 <span class="zoom-level" id="zoomLevel">100%</span>
-                <button class="zoom-btn" id="zoomInBtn" onclick="app.zoomIn()" title="Zoom in">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <button class="zoom-btn" id="zoomInBtn" onclick="app.zoomIn()" title="Zoom in" aria-label="Zoom in">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <circle cx="11" cy="11" r="8"></circle>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         <line x1="11" y1="8" x2="11" y2="14"></line>
                         <line x1="8" y1="11" x2="14" y2="11"></line>
                     </svg>
                 </button>
-                <button class="zoom-btn" id="zoomResetBtn" onclick="app.zoomReset()" title="Reset zoom">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <button class="zoom-btn" id="zoomResetBtn" onclick="app.zoomReset()" title="Reset zoom" aria-label="Reset zoom to 100%">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M1 4v6h6"></path>
                         <path d="M23 20v-6h-6"></path>
                         <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
@@ -3147,8 +3458,8 @@
                         <br><br>
                         You can import any structured training material in JSON format with modules, activities, and slides.
                     </p>
-                    <button class="btn btn-success welcome-cta" onclick="app.openImportDialog()" style="background: #10B981; border-color: #10B981;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; margin-right: 8px;">
+                    <button class="btn btn-success welcome-cta" onclick="app.openImportDialog()" aria-label="Import JSON file to begin training" style="background: #10B981; border-color: #10B981;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; margin-right: 8px;" aria-hidden="true">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                             <polyline points="17 8 12 3 7 8"></polyline>
                             <line x1="12" y1="3" x2="12" y2="15"></line>
@@ -3163,8 +3474,8 @@
                 <!-- Navigation Bar - Always Visible -->
                 <div class="nav-bar">
                     <div class="nav-bar-left">
-                        <button class="toggle-panel-btn" id="togglePanelBtn" onclick="app.toggleDetailsPanel()">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <button class="toggle-panel-btn" id="togglePanelBtn" onclick="app.toggleDetailsPanel()" aria-label="Toggle details panel">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                 <polyline points="6 9 12 15 18 9"></polyline>
                             </svg>
                             <span id="togglePanelText">Details</span>
@@ -3173,20 +3484,20 @@
                     </div>
                     <div class="nav-bar-right">
                         <div class="slide-nav-buttons">
-                            <button class="btn btn-secondary" id="prevSlideBtn" onclick="app.prevSlide()">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <button class="btn btn-secondary" id="prevSlideBtn" onclick="app.prevSlide()" aria-label="Go to previous slide">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                     <polyline points="15 18 9 12 15 6"></polyline>
                                 </svg>
                                 Previous
                             </button>
-                            <button class="btn btn-primary" id="nextSlideBtn" onclick="app.nextSlide()">
+                            <button class="btn btn-primary" id="nextSlideBtn" onclick="app.nextSlide()" aria-label="Go to next slide">
                                 Next
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                     <polyline points="9 18 15 12 9 6"></polyline>
                                 </svg>
                             </button>
-                            <button class="btn btn-next-section" id="nextSectionBtn" onclick="app.goToNextSection()">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <button class="btn btn-next-section" id="nextSectionBtn" onclick="app.goToNextSection()" aria-label="Go to next section">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                     <polyline points="9 18 15 12 9 6"></polyline>
                                     <polyline points="15 18 21 12 15 6"></polyline>
                                 </svg>
@@ -3207,7 +3518,7 @@
                                                         <div class="timer-container activity-timer" id="activityTimer">
                                 <span class="timer-label">Activity</span>
                                 <div class="timer-main">
-                                    <div class="timer-display green">
+                                    <div class="timer-display green" role="timer" aria-live="off" aria-atomic="true">
                                         <span class="timer-elapsed" id="activityElapsed">00:00</span>
                                         <span class="timer-separator">/</span>
                                         <span class="timer-planned" id="activityPlanned">00:00</span>
@@ -3272,8 +3583,8 @@
         <div class="about-modal-content">
             <div class="export-modal-header">
                 <h2 class="export-modal-title" id="aboutModalTitle">About This Training</h2>
-                <button class="export-close-btn" onclick="app.closeAboutModal()">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <button class="export-close-btn" onclick="app.closeAboutModal()" aria-label="Close about modal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
@@ -3284,7 +3595,7 @@
             <div class="about-section">
                 <div class="about-section-header">
                     <div class="about-section-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
                             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                         </svg>
@@ -3388,7 +3699,7 @@
             <div class="export-modal-header">
                 <h2 class="export-modal-title" id="exportModalTitle">Export Content</h2>
                 <button class="export-close-btn" onclick="app.closeExportModal()" aria-label="Close export">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
@@ -3401,9 +3712,9 @@
                 </p>
 
                 <div class="export-options">
-                    <div class="export-option" onclick="app.exportAsMarkdown()">
+                    <button type="button" class="export-option" onclick="app.exportAsMarkdown()">
                         <div class="export-option-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                 <polyline points="14 2 14 8 20 8"></polyline>
                                 <path d="M8 13h8"></path>
@@ -3414,11 +3725,11 @@
                             <div class="export-option-title">Markdown (.md)</div>
                             <div class="export-option-desc">Plain text, easy to edit and share.</div>
                         </div>
-                    </div>
+                    </button>
 
-                    <div class="export-option" onclick="app.exportAsRTF()">
+                    <button type="button" class="export-option" onclick="app.exportAsRTF()">
                         <div class="export-option-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                 <polyline points="14 2 14 8 20 8"></polyline>
                                 <path d="M8 13h8"></path>
@@ -3429,11 +3740,11 @@
                             <div class="export-option-title">RTF (.rtf)</div>
                             <div class="export-option-desc">Word-friendly export for document workflows.</div>
                         </div>
-                    </div>
+                    </button>
 
-                    <div class="export-option" onclick="app.exportAsJSON()">
+                    <button type="button" class="export-option" onclick="app.exportAsJSON()">
                         <div class="export-option-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                 <path d="M20 7h-7"></path>
                                 <path d="M20 12h-7"></path>
                                 <path d="M20 17h-7"></path>
@@ -3446,7 +3757,7 @@
                             <div class="export-option-title">JSON (.json)</div>
                             <div class="export-option-desc">Structured data for re-importing and archiving.</div>
                         </div>
-                    </div>
+                    </button>
                 </div>
             </div>
 
@@ -3551,7 +3862,9 @@ applyNavFoldAllState(persist) {
     if (btn) {
         btn.setAttribute('aria-pressed', this.navAllFolded ? 'true' : 'false');
         const labelEl = btn.querySelector('.nav-action-label');
+        const iconEl = btn.querySelector('.nav-action-icon');
         if (labelEl) labelEl.textContent = this.navAllFolded ? 'Unfold all' : 'Fold all';
+        if (iconEl) iconEl.textContent = this.navAllFolded ? 'unfold_more' : 'unfold_less';
     }
 
     if (persist) {
@@ -5276,6 +5589,21 @@ updateNavFoldAllAvailability() {
                         console.log('Document title updated to:', processedData.title);
                     }
 
+                    // Afficher la slide de chronologie au lieu de la première activité
+                    this.generateTimelineSlide();
+
+                    // Masquer les contrôles de slides (non applicable pour la timeline)
+                    const slideControls = document.getElementById('slideControls');
+                    if (slideControls) {
+                        slideControls.classList.add('hidden');
+                    }
+
+                    // Masquer les contrôles de zoom (non applicable pour la timeline)
+                    const zoomControls = document.getElementById('zoomControls');
+                    if (zoomControls) {
+                        zoomControls.style.display = 'none';
+                    }
+
                     // Import feedback (non-modal)
                     this.setStatus('Content loaded: ' + (processedData.title || 'Training content') + '.', 'success');
                     console.log('Import completed successfully');
@@ -5823,6 +6151,192 @@ this.activityTimer = {
                 });
             },
 
+            // ===== TIMELINE INTRO SLIDE =====
+
+            generateTimelineSlide() {
+                if (!this.courseData || !this.courseData.modules) {
+                    return; // Pas de données à afficher
+                }
+
+                const data = this.courseData;
+                const container = document.getElementById('slideContainer');
+
+                // Calculer les statistiques globales
+                let totalModules = data.modules.length;
+                let totalActivities = 0;
+                let totalMinutes = 0;
+
+                // Fonction helper pour calculer la durée d'un sous-moment
+                const calculateSubmomentDuration = (submoment) => {
+                    if (!submoment.activities) return 0;
+                    return submoment.activities.reduce((sum, act) => {
+                        return sum + (act.plannedMinutes || 0);
+                    }, 0);
+                };
+
+                // Fonction helper pour calculer la durée d'un moment
+                const calculateMomentDuration = (moment) => {
+                    if (!moment.submoments) return 0;
+                    return moment.submoments.reduce((sum, sub) => {
+                        return sum + calculateSubmomentDuration(sub);
+                    }, 0);
+                };
+
+                // Compter activités et durée totale
+                data.modules.forEach(module => {
+                    let moduleDuration = module.plannedMinutes || 0;
+
+                    if (!moduleDuration && module.moments) {
+                        // Calculer depuis les moments si plannedMinutes n'existe pas
+                        moduleDuration = module.moments.reduce((sum, mom) => {
+                            return sum + calculateMomentDuration(mom);
+                        }, 0);
+                    }
+
+                    totalMinutes += moduleDuration;
+
+                    // Compter activités
+                    module.moments?.forEach(mom => {
+                        mom.submoments?.forEach(sub => {
+                            totalActivities += sub.activities?.length || 0;
+                        });
+                    });
+                });
+
+                // Générer HTML de la timeline
+                let html = `
+                    <div class="timeline-intro-slide">
+                        <div class="timeline-header">
+                            <h1 class="timeline-title">${this.escapeHTML(data.title || 'Formation')}</h1>
+                            <p class="timeline-subtitle">Vue d'ensemble de la chronologie</p>
+                            <div class="timeline-stats">
+                                <span class="timeline-stat-item">
+                                    <strong>${totalModules}</strong> module${totalModules > 1 ? 's' : ''}
+                                </span>
+                                <span class="timeline-stat-item">•</span>
+                                <span class="timeline-stat-item">
+                                    <strong>${totalActivities}</strong> activité${totalActivities > 1 ? 's' : ''}
+                                </span>
+                                <span class="timeline-stat-item">•</span>
+                                <span class="timeline-stat-item">
+                                    <strong>${this.formatMinutes(totalMinutes)}</strong> au total
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="timeline-content">
+                `;
+
+                // Générer chaque module
+                data.modules.forEach((module, modIndex) => {
+                    const moduleNum = modIndex + 1;
+                    let moduleDuration = module.plannedMinutes || 0;
+
+                    if (!moduleDuration && module.moments) {
+                        moduleDuration = module.moments.reduce((sum, mom) => {
+                            return sum + calculateMomentDuration(mom);
+                        }, 0);
+                    }
+
+                    html += `
+                        <div class="timeline-module">
+                            <div class="timeline-module-header">
+                                <h2 class="timeline-module-title">Module ${moduleNum}. ${this.escapeHTML(module.title)}</h2>
+                                <span class="timeline-module-duration">${this.formatMinutes(moduleDuration)}</span>
+                            </div>
+                    `;
+
+                    // Générer les moments
+                    if (module.moments && module.moments.length > 0) {
+                        html += `<div class="timeline-moments">`;
+
+                        module.moments.forEach((moment, momIndex) => {
+                            const momentNum = `${moduleNum}.${momIndex + 1}`;
+                            const momentDuration = calculateMomentDuration(moment);
+
+                            html += `
+                                <div class="timeline-moment">
+                                    <div class="timeline-moment-header">
+                                        <h3 class="timeline-moment-title">${momentNum} ${this.escapeHTML(moment.title)}</h3>
+                                        <span class="timeline-moment-duration">${this.formatMinutes(momentDuration)}</span>
+                                    </div>
+                            `;
+
+                            // Générer les sous-moments
+                            if (moment.submoments && moment.submoments.length > 0) {
+                                html += `<div class="timeline-submoments">`;
+
+                                moment.submoments.forEach((submoment, subIndex) => {
+                                    const subNum = `${momentNum}.${subIndex + 1}`;
+                                    const subDuration = calculateSubmomentDuration(submoment);
+                                    const actCount = submoment.activities?.length || 0;
+
+                                    html += `
+                                        <div class="timeline-submoment">
+                                            <span class="timeline-submoment-title">${subNum} ${this.escapeHTML(submoment.title)}</span>
+                                            <div class="timeline-submoment-info">
+                                                <span class="timeline-submoment-activities">${actCount} activité${actCount > 1 ? 's' : ''}</span>
+                                                <span class="timeline-submoment-duration">${this.formatMinutes(subDuration)}</span>
+                                            </div>
+                                        </div>
+                                    `;
+                                });
+
+                                html += `</div>`; // .timeline-submoments
+                            }
+
+                            html += `</div>`; // .timeline-moment
+                        });
+
+                        html += `</div>`; // .timeline-moments
+                    }
+
+                    html += `</div>`; // .timeline-module
+                });
+
+                html += `
+                        </div>
+
+                        <div class="timeline-footer">
+                            <button class="btn btn-primary timeline-start-btn" onclick="app.startTraining()" aria-label="Commencer la formation">
+                                Commencer la formation
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                container.innerHTML = html;
+            },
+
+            startTraining() {
+                // Aller à la première activité
+                const allActivities = this.getAllActivitiesInOrder();
+                if (allActivities.length > 0) {
+                    this.loadActivity(allActivities[0]);
+                }
+            },
+
+            showTimeline() {
+                this.generateTimelineSlide();
+
+                // Masquer contrôles
+                const slideControls = document.getElementById('slideControls');
+                if (slideControls) slideControls.classList.add('hidden');
+
+                const zoomControls = document.getElementById('zoomControls');
+                if (zoomControls) zoomControls.style.display = 'none';
+            },
+
+            escapeHTML(str) {
+                if (!str) return '';
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            },
+
             // ===== DARK MODE =====
 
             toggleDarkMode() {
@@ -6234,14 +6748,14 @@ this.activityTimer = {
         <div class="shortcuts-panel">
             <div class="shortcuts-header">
                 <h2 class="shortcuts-title" id="shortcutsTitle">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <rect x="2" y="4" width="20" height="16" rx="2"></rect>
                         <path d="M6 8h.01M10 8h.01M14 8h.01M6 12h.01M10 12h.01M14 12h.01M6 16h.01M10 16h.01M14 16h.01"></path>
                     </svg>
                     Keyboard Shortcuts
                 </h2>
                 <button class="shortcuts-close" onclick="toggleShortcutsModal()" aria-label="Close shortcuts">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
