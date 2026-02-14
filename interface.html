@@ -31541,7 +31541,7 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
     <div class="flex items-center justify-between px-6 py-4 bg-slate-50 border-b border-slate-200">
       <div class="flex items-center gap-3">
         <span class="material-icons-round text-indigo-600">edit_note</span>
-        <h3 id="fullscreen-textarea-title" class="text-lg font-semibold text-slate-800">Édition plein écran</h3>
+        <h3 id="fullscreen-textarea-title" class="text-lg font-semibold text-slate-800 truncate max-w-3xl">Édition plein écran</h3>
       </div>
       <div class="flex items-center gap-2">
         <span class="text-xs text-slate-500">Appuyez sur <kbd class="px-1.5 py-0.5 bg-slate-200 rounded text-[10px] font-mono">Échap</kbd> pour fermer</span>
@@ -32529,6 +32529,35 @@ kbd {
     try { schedulePreview(); } catch(_) {}
   }
 
+  /**
+   * Récupère le titre de l'activité/étape parente d'un textarea
+   * @param {HTMLElement} textarea - Le textarea dont on cherche l'activité parente
+   * @returns {string|null} Le titre de l'étape ou null si pas d'activité parente
+   */
+  function __ldGetActivityTitleFromTextarea(textarea) {
+    if (!textarea) return null;
+
+    // Chercher d'abord si le textarea est dans une step-card (étape individuelle)
+    const stepCard = textarea.closest('.step-card');
+    if (stepCard) {
+      // Récupérer le titre de l'étape
+      const stepTitleInput = stepCard.querySelector('.step-input-title');
+      const stepTitle = stepTitleInput?.value?.trim();
+      if (stepTitle) return stepTitle;
+    }
+
+    // Sinon, chercher dans activity-group (module) pour les champs du module
+    const activityGroup = textarea.closest('.activity-group');
+    if (activityGroup) {
+      const activityTitleInput = activityGroup.querySelector('.activity-title');
+      const activityTitle = activityTitleInput?.value?.trim();
+      if (activityTitle) return activityTitle;
+    }
+
+    // Pas de titre trouvé
+    return null;
+  }
+
   function openFullscreen(textarea) {
     if (!textarea) return;
     
@@ -32538,9 +32567,14 @@ kbd {
     // Set modal content
     modalContent.value = originalValue;
     
-    // Set title based on textarea placeholder or label
-    const placeholder = textarea.getAttribute('placeholder') || textarea.getAttribute('data-i18n-placeholder') || 'Édition';
-    modalTitle.textContent = placeholder;
+    // Set title based on activity title (if available), fallback to placeholder
+    const activityTitle = __ldGetActivityTitleFromTextarea(textarea);
+    if (activityTitle) {
+      modalTitle.textContent = activityTitle;
+    } else {
+      const placeholder = textarea.getAttribute('placeholder') || textarea.getAttribute('data-i18n-placeholder') || 'Édition';
+      modalTitle.textContent = placeholder;
+    }
     
     // Update char count
     updateCharCount();
