@@ -2819,6 +2819,76 @@ document.addEventListener('DOMContentLoaded', __ldEnablePlainTextPaste);
   }
 </style>
 
+<!-- ========================================
+     STICKY HEADER IMPLEMENTATION
+     ======================================== -->
+<style id="sticky-header-styles">
+/* Wrapper for all sticky elements */
+.ld-sticky-header-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #f8fafc; /* slate-50 - matches body background */
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .ld-sticky-header-wrapper {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+}
+
+/* Individual sticky sections */
+.ld-sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 103;
+  background: #f8fafc;
+}
+
+.ld-sticky-tabs {
+  position: sticky;
+  top: 80px; /* Will be updated by JavaScript */
+  z-index: 102;
+  background: #f8fafc;
+}
+
+.ld-sticky-vue {
+  position: sticky;
+  top: 160px; /* Will be updated by JavaScript */
+  z-index: 101;
+  background: #f8fafc;
+}
+
+/* Dropdown menus need higher z-index to appear above sticky sections */
+.ld-sticky-header [id*="menu"],
+.ld-sticky-tabs [id*="menu"],
+.ld-sticky-vue [id*="menu"],
+.ld-sticky-vue details[open] {
+  z-index: 110 !important;
+}
+
+/* Print styles: disable sticky behavior */
+@media print {
+  .ld-sticky-header-wrapper,
+  .ld-sticky-header,
+  .ld-sticky-tabs,
+  .ld-sticky-vue {
+    position: static !important;
+    z-index: auto !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+}
+
+/* Optional: Shadow effect when scrolling */
+.ld-sticky-header-wrapper.is-scrolled {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s ease-in-out;
+}
+</style>
 
 <script>
   // Masquer les durées cibles dès le tout début du rendu (évite tout flash)
@@ -2852,6 +2922,52 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<!-- ========================================
+     STICKY HEADER DYNAMIC OFFSET CALCULATION
+     ======================================== -->
+<script>
+(function() {
+  function updateStickyOffsets() {
+    const header = document.querySelector('.ld-sticky-header');
+    const tabs = document.querySelector('.ld-sticky-tabs');
+    const vue = document.querySelector('.ld-sticky-vue');
+
+    if (header && tabs && vue) {
+      const headerHeight = header.offsetHeight;
+      const tabsHeight = tabs.offsetHeight;
+
+      // Update sticky positions dynamically
+      tabs.style.top = headerHeight + 'px';
+      vue.style.top = (headerHeight + tabsHeight) + 'px';
+    }
+  }
+
+  // Add scroll shadow effect
+  function handleStickyScroll() {
+    const wrapper = document.querySelector('.ld-sticky-header-wrapper');
+    if (!wrapper) return;
+
+    if (window.scrollY > 10) {
+      wrapper.classList.add('is-scrolled');
+    } else {
+      wrapper.classList.remove('is-scrolled');
+    }
+  }
+
+  // Run on load and resize
+  window.addEventListener('load', updateStickyOffsets);
+  window.addEventListener('resize', updateStickyOffsets);
+  window.addEventListener('scroll', handleStickyScroll, { passive: true });
+
+  // Observe header size changes (e.g., when buttons wrap)
+  if (typeof ResizeObserver !== 'undefined') {
+    const observer = new ResizeObserver(updateStickyOffsets);
+    const header = document.querySelector('.ld-sticky-header');
+    if (header) observer.observe(header);
+  }
+})();
+</script>
 </head>
 <body class="p-2 md:p-4 hide-types text-slate-900 hide-target-durations" data-view-level="activities">
 <!-- Skip to main content link for keyboard accessibility -->
@@ -2859,7 +2975,8 @@ document.addEventListener('DOMContentLoaded', function() {
   Aller au contenu principal
 </a>
 <div class="ld-page">
-<header class="mb-3">
+<div class="ld-sticky-header-wrapper">
+<header class="mb-3 ld-sticky-header">
 <h1 class="text-2xl font-bold text-slate-900 leading-tight">
     Concepteur Pédagogique - Learning Designer
     <span id="mode-indicator" class="text-2xl font-bold transition-colors">
@@ -2975,7 +3092,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 </div>
 </header>
-<div class="mb-3 no-print w-full" id="top-tabs-bar-wrap">
+<div class="mb-3 no-print w-full ld-sticky-tabs" id="top-tabs-bar-wrap">
   <div class="bg-white rounded-lg border border-slate-200 p-1.5 flex gap-1.5 shadow-md" role="tablist" aria-label="Sections">
     <button type="button" id="top-tab-btn-info" role="tab" aria-selected="false" aria-controls="key-params-wrapper" class="top-tab-btn">
       <span class="material-icons-round text-sm">tune</span>
@@ -2993,7 +3110,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <!-- VUE Toolbar (repositioned below main tabs) -->
-<div class="mb-3 no-print w-full">
+<div class="mb-3 no-print w-full ld-sticky-vue">
 <div class="flex flex-col relative gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5 shadow-sm">
 <span class="text-[10px] font-bold text-slate-600 uppercase tracking-wider pl-1.5 py-0.5" data-i18n="grp_view">
        Vue
@@ -3148,6 +3265,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 </div>
 </div>
+</div><!-- End .ld-sticky-header-wrapper -->
 
 <div id="main-content" tabindex="-1">
 <div id="key-params-wrapper" role="tabpanel" aria-labelledby="top-tab-btn-info" class="mb-3 bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
