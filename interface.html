@@ -2974,6 +2974,21 @@ document.addEventListener('DOMContentLoaded', function() {
 <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-indigo-600 focus:text-white focus:rounded focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
   Aller au contenu principal
 </a>
+
+<!-- Scroll to Top/Bottom Buttons -->
+<button id="scroll-to-top-btn"
+        class="fixed left-6 bottom-20 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 border border-slate-300 rounded-full p-2.5 shadow-md transition-all duration-300 opacity-0 pointer-events-none z-40 no-print"
+        title="Aller en haut de la page"
+        aria-label="Aller en haut de la page">
+  <span class="material-icons-round text-xl">arrow_upward</span>
+</button>
+
+<button id="scroll-to-bottom-btn"
+        class="fixed left-6 bottom-6 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 border border-slate-300 rounded-full p-2.5 shadow-md transition-all duration-300 opacity-0 pointer-events-none z-40 no-print"
+        title="Aller en bas de la page"
+        aria-label="Aller en bas de la page">
+  <span class="material-icons-round text-xl">arrow_downward</span>
+</button>
 <div class="ld-page">
 <div class="ld-sticky-header-wrapper">
 <header class="mb-3 ld-sticky-header">
@@ -32957,6 +32972,11 @@ kbd {
 
   // Re-wrap when new steps are added or DOM changes
   const observer = new MutationObserver((mutations) => {
+    // Skip if fullscreen modal is open to prevent freezing
+    if (modal && !modal.classList.contains('hidden')) {
+      return;
+    }
+
     let shouldWrap = false;
     mutations.forEach(mutation => {
       mutation.addedNodes.forEach(node => {
@@ -32987,6 +33007,11 @@ kbd {
 
   // Also observe the entire document body for textareas added elsewhere (e.g., side panels)
   const bodyObserver = new MutationObserver((mutations) => {
+    // Skip if fullscreen modal is open to prevent freezing
+    if (modal && !modal.classList.contains('hidden')) {
+      return;
+    }
+
     let shouldWrap = false;
     mutations.forEach(mutation => {
       mutation.addedNodes.forEach(node => {
@@ -33009,8 +33034,13 @@ kbd {
   window.__ldWrapTextareas = wrapTextareas;
 
   // Re-wrap textareas periodically to catch any missed ones
+  // Skip when fullscreen modal is open to prevent freezing
   setInterval(() => {
     try {
+      // Skip if fullscreen modal is open
+      if (modal && !modal.classList.contains('hidden')) {
+        return;
+      }
       wrapTextareas();
     } catch(e) {
       __ldSilentErr(e);
@@ -33559,6 +33589,67 @@ kbd {
 })();
 </script>
 
+<script>
+// Scroll to Top/Bottom functionality
+(function() {
+  try {
+    const scrollToTopBtn = document.getElementById('scroll-to-top-btn');
+    const scrollToBottomBtn = document.getElementById('scroll-to-bottom-btn');
+
+    if (!scrollToTopBtn || !scrollToBottomBtn) return;
+
+    // Show/hide buttons based on scroll position
+    function updateScrollButtonsVisibility() {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = document.documentElement.clientHeight;
+      const scrollBottom = scrollHeight - scrollTop - clientHeight;
+
+      // Show scroll-to-top button when scrolled down more than 300px
+      if (scrollTop > 300) {
+        scrollToTopBtn.classList.remove('opacity-0', 'pointer-events-none');
+        scrollToTopBtn.classList.add('opacity-100', 'pointer-events-auto');
+      } else {
+        scrollToTopBtn.classList.remove('opacity-100', 'pointer-events-auto');
+        scrollToTopBtn.classList.add('opacity-0', 'pointer-events-none');
+      }
+
+      // Show scroll-to-bottom button when not at bottom (more than 300px from bottom)
+      if (scrollBottom > 300) {
+        scrollToBottomBtn.classList.remove('opacity-0', 'pointer-events-none');
+        scrollToBottomBtn.classList.add('opacity-100', 'pointer-events-auto');
+      } else {
+        scrollToBottomBtn.classList.remove('opacity-100', 'pointer-events-auto');
+        scrollToBottomBtn.classList.add('opacity-0', 'pointer-events-none');
+      }
+    }
+
+    // Scroll to top smoothly
+    scrollToTopBtn.addEventListener('click', function() {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
+
+    // Scroll to bottom smoothly
+    scrollToBottomBtn.addEventListener('click', function() {
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: 'smooth'
+      });
+    });
+
+    // Update button visibility on scroll
+    window.addEventListener('scroll', updateScrollButtonsVisibility);
+
+    // Initial check
+    updateScrollButtonsVisibility();
+  } catch (e) {
+    console.error('[ScrollButtonsError]', e);
+  }
+})();
+</script>
 
 </body>
 </html>
