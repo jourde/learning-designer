@@ -24,7 +24,7 @@ Charger un fichier JSON produit avec le Learning Designer pour afficher le suppo
 - [**Guide d'utilisation**](https://github.com/jourde/learning-designer/wiki)
 ### Outils
 - [**Application de création de requête d'amélioration d'un scénario**](https://jourde.github.io/learning-designer/development/enhacement-prompt-builder.html)
-- [**Génération de diaporama (web app html)**](https://jourde.github.io/learning-designer/extra/slide_deck.html)
+- ...
 
 ## Autres
 - [**Page web associée**](https://jourde.github.io/learning-designer/)
