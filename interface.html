@@ -14905,7 +14905,7 @@ if (m.targetTimeSec == null) {
 
                                             s.objective = _trimText(s.objective ?? s.objectifActivite ?? "", 5000);
                                             s.tasks = _trimText(s.tasks ?? s.aFaire ?? "", 8000);
-                                            s.presentation = _trimText(s.presentation ?? "", 8000);
+                                            s.presentation = _trimText(s.presentation ?? "", 500000);
                                             s.notes = _trimText(s.notes ?? "", 8000);
                                             s.trainer = _trimText(s.trainer ?? s.formateur ?? "", 200);
                                             s.place = _trimText(s.place ?? s.lieu ?? "", 200);
@@ -14978,7 +14978,7 @@ s.unite = s.unit;
                             // Text fields
                             s.objective = _trimText(s.objective ?? s.objectifActivite ?? "", 5000);
                             s.tasks = _trimText(s.tasks ?? s.aFaire ?? "", 8000);
-                            s.presentation = _trimText(s.presentation ?? "", 8000);
+                            s.presentation = _trimText(s.presentation ?? "", 500000);
                             s.notes = _trimText(s.notes ?? "", 8000);
                             s.trainer = _trimText(s.trainer ?? s.formateur ?? "", 200);
                             s.place = _trimText(s.place ?? s.lieu ?? "", 200);
@@ -32099,48 +32099,78 @@ kbd {
         continue;
       }
 
-      // Lists (UL / OL / tasks, single-level)
-      const taskRe = /^\s*([-*+])\s+\[(\s|x|X)\]\s+(.*)$/;
-      const ulRe = /^\s*([-*+])\s+(.*)$/;  // Standard: requires space after marker
-      const olRe = /^\s*(\d+)[\.)]\s+(.*)$/;
+      // Lists (UL / OL / tasks) with nested support
+      const taskRe = /^(\s*)([-*+])\s+\[(\s|x|X)\]\s+(.*)$/;
+      const ulRe = /^(\s*)([-*+])\s+(.*)$/;  // Standard: requires space after marker
+      const olRe = /^(\s*)(\d+)[\.)]\s+(.*)$/;
 
       if (taskRe.test(line) || ulRe.test(line) || olRe.test(line)) {
-        const isOl = olRe.test(line) && !taskRe.test(line);
-        const listTag = isOl ? 'ol' : 'ul';
-        const items = [];
+        // Helper to parse list recursively with nesting
+        const parseList = (startIdx, baseIndent) => {
+          const isOl = olRe.test(lines[startIdx]) && !taskRe.test(lines[startIdx]);
+          const listTag = isOl ? 'ol' : 'ul';
+          const items = [];
+          let j = startIdx;
 
-        while (i < lines.length) {
-          const ln = lines[i];
-          if (ln.trim() === '') break;
+          while (j < lines.length) {
+            const ln = lines[j];
+            if (ln.trim() === '') break;
 
-          const tm = ln.match(taskRe);
-          if (tm) {
-            const checked = String(tm[2]).toLowerCase() === 'x';
-            const text = _renderInline(tm[3]);
-            items.push(`<li><span class="md-task"><input type="checkbox" disabled ${checked ? 'checked' : ''}> <span>${text}</span></span></li>`);
-            i++;
-            continue;
+            // Measure indentation
+            const indent = ln.match(/^\s*/)[0].length;
+
+            // If less indented than base, stop (parent list)
+            if (indent < baseIndent) break;
+
+            // If more indented than base, it's a nested list - skip for now
+            if (indent > baseIndent) {
+              const nested = parseList(j, indent);
+              if (items.length > 0) {
+                // Append nested list to last item
+                items[items.length - 1] = items[items.length - 1].replace(/<\/li>$/, nested.html + '</li>');
+              }
+              j = nested.nextIdx;
+              continue;
+            }
+
+            // Same level: process item
+            const tm = ln.match(taskRe);
+            if (tm && tm[1].length === baseIndent) {
+              const checked = String(tm[3]).toLowerCase() === 'x';
+              const text = _renderInline(tm[4]);
+              items.push(`<li><span class="md-task"><input type="checkbox" disabled ${checked ? 'checked' : ''}> <span>${text}</span></span></li>`);
+              j++;
+              continue;
+            }
+
+            const om = ln.match(olRe);
+            if (om && isOl && om[1].length === baseIndent) {
+              items.push(`<li>${_renderInline(om[3])}</li>`);
+              j++;
+              continue;
+            }
+
+            const um = ln.match(ulRe);
+            if (um && !isOl && !taskRe.test(ln) && um[1].length === baseIndent) {
+              items.push(`<li>${_renderInline(um[3])}</li>`);
+              j++;
+              continue;
+            }
+
+            // Stop when pattern doesn't match
+            break;
           }
 
-          const om = ln.match(olRe);
-          if (om && isOl) {
-            items.push(`<li>${_renderInline(om[2])}</li>`);
-            i++;
-            continue;
-          }
+          return {
+            html: `<${listTag}>${items.join('')}</${listTag}>`,
+            nextIdx: j
+          };
+        };
 
-          const um = ln.match(ulRe);
-          if (um && !isOl && !taskRe.test(ln)) {
-            items.push(`<li>${_renderInline(um[2])}</li>`);
-            i++;
-            continue;
-          }
-
-          // Stop when list type changes
-          break;
-        }
-
-        out.push(`<${listTag}>${items.join('')}</${listTag}>`);
+        const baseIndent = line.match(/^\s*/)[0].length;
+        const result = parseList(i, baseIndent);
+        out.push(result.html);
+        i = result.nextIdx;
         continue;
       }
 
