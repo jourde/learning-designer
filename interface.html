@@ -88,6 +88,22 @@ document.addEventListener('DOMContentLoaded', function() {
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
 <style>
 
+/* Enhanced focus indicators for accessibility (WCAG 2.1 compliance) */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #4f46e5; /* indigo-600 */
+  outline-offset: 2px;
+}
+
+/* Ensure Material Icons buttons have visible focus */
+.material-icons-round:focus-visible,
+button .material-icons-round:focus-visible {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* Locked duration unit selects (global unit controlled in initial parameters) */
 .ld-locked-unit { opacity: 1 !important; background-color: #f8fafc !important; color: #475569 !important; }
 
@@ -234,6 +250,20 @@ textarea{resize:vertical;}
           --ld-control-border: #94a3b8; /* slate-400 */
         }
 
+        /* WCAG AA Compliant text colors - Override Tailwind for accessibility */
+        /* Ensure minimum 4.5:1 contrast ratio for normal text on white background */
+        .text-slate-400 {
+          color: #64748b !important; /* slate-500 instead of slate-400 for better contrast */
+        }
+        .text-slate-300 {
+          color: #64748b !important; /* slate-500 instead of slate-300 for better contrast */
+        }
+        /* Icons and secondary text should still be readable */
+        .material-icons-round.text-slate-400,
+        .material-icons-round.text-slate-300 {
+          color: #64748b !important; /* slate-500 for better visibility */
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
@@ -241,8 +271,39 @@ textarea{resize:vertical;}
             font-size: 0.92rem;line-height: 1.4;
         }
 
-        
-        
+        /* Screen reader only - accessible skip link */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+        .sr-only:focus {
+            position: static;
+            width: auto;
+            height: auto;
+            padding: inherit;
+            margin: inherit;
+            overflow: visible;
+            clip: auto;
+            white-space: normal;
+        }
+        .focus\:not-sr-only:focus {
+            position: static !important;
+            width: auto !important;
+            height: auto !important;
+            padding: inherit !important;
+            margin: inherit !important;
+            overflow: visible !important;
+            clip: auto !important;
+            white-space: normal !important;
+        }
+
         /* Collapsible UI: hide native disclosure markers for consistent design */
         details > summary { list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
@@ -2743,6 +2804,10 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </head>
 <body class="p-2 md:p-4 hide-types text-slate-900 hide-target-durations" data-view-level="activities">
+<!-- Skip to main content link for keyboard accessibility -->
+<a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-indigo-600 focus:text-white focus:rounded focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+  Aller au contenu principal
+</a>
 <div class="ld-page">
 <header class="mb-3">
 <h1 class="text-2xl font-bold text-slate-900 leading-tight">
@@ -2752,6 +2817,133 @@ document.addEventListener('DOMContentLoaded', function() {
     </span>
   </h1>
 <div class="mt-2 flex flex-wrap gap-x-2 gap-y-2 no-print items-stretch content-start">
+<div class="flex flex-col relative gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
+<span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider pl-1" data-i18n="grp_project">
+       Projet
+      </span>
+<div class="flex flex-wrap items-center bg-white border border-slate-200 rounded-md p-0.5 gap-0.5 shadow-sm min-h-[30px]">
+<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors flex items-center gap-1.5" data-i18n-title="title_save_project" data-action="save-project">
+<span class="material-icons-round text-lg">
+         save
+        </span>
+<span class="text-xs font-medium hidden md:inline" data-i18n="btn_save">
+         Enregistrer
+        </span>
+</button>
+<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors flex items-center gap-1.5" data-i18n-title="title_load_project" data-action="load-project">
+<span class="material-icons-round text-lg">
+         file_upload
+        </span>
+<span class="text-xs font-medium hidden md:inline" data-i18n="btn_load">
+         Charger
+        </span>
+</button>
+<div class="w-px bg-slate-200 my-1 mx-0.5">
+</div>
+<div class="relative group">
+<button id="open-export-modal-btn"
+        class="flex items-center gap-1 bg-transparent hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 pl-2 pr-3 py-1 rounded transition-colors text-xs font-medium h-[26px]"
+        data-i18n-title="title_export_dropdown"
+        type="button">
+  <span class="material-icons-round text-lg">download</span>
+  <span data-i18n="btn_export_dropdown">Exporter...</span>
+</button>
+</div>
+<button id="open-global-search-btn"
+        class="text-slate-600 hover:text-indigo-700 hover:bg-indigo-50 rounded px-2 py-1 flex items-center gap-1"
+        title="Recherche globale (Ctrl+K)"
+        type="button">
+  <span class="material-icons-round text-[16px]">search</span>
+  <span class="text-xs font-medium hidden md:inline">Recherche</span>
+</button>
+<div class="relative">
+<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors flex items-center gap-1.5" id="btn-more" data-action="toggle-more-menu" title="Plus d'actions" aria-label="Plus d'actions" type="button">
+<span class="material-icons-round text-lg">more_horiz</span>
+<span class="text-xs font-medium hidden md:inline">Plus…</span>
+</button>
+<div class="hidden absolute right-0 top-[34px] w-72 bg-white border border-slate-200 rounded-md shadow-lg z-50 p-1" id="more-menu">
+<div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 py-1" data-i18n="label_templates">Modèles</div>
+<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-action="open-template-export-modal" type="button">
+<span class="material-icons-round text-base text-slate-500">upload_file</span>
+<span class="text-sm">Exporter un modèle</span>
+</button>
+<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-action="open-template-import-modal" type="button">
+<span class="material-icons-round text-base text-slate-500">download_for_offline</span>
+<span class="text-sm">Importer un modèle</span>
+</button>
+<div class="my-1 border-t border-slate-200"></div>
+<div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 py-1" data-i18n="grp_interface">Interface</div>
+<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-action="trigger-language-pack-load" type="button">
+<span class="material-icons-round text-base text-slate-500">translate</span>
+<span class="text-sm" data-i18n="btn_load_language_pack">Charger langue</span>
+</button>
+<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-i18n-title="title_export_language_template" data-action="export-language-pack-template" type="button">
+<span class="material-icons-round text-base text-slate-500">download</span>
+<span class="text-sm" data-i18n="btn_export_language_template">Exporter modèle</span>
+</button>
+<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-i18n-title="title_i18n_audit" data-action="open-i18n-audit" type="button">
+<span class="material-icons-round text-base text-slate-500">fact_check</span>
+<span class="text-sm" data-i18n="btn_i18n_audit">Vérifier traductions</span>
+</button>
+<div class="px-2 pt-2 pb-1">
+<div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1" data-i18n="title_ui_language_select">Choisir la langue de l'interface</div>
+<select class="w-full appearance-none bg-white border border-slate-200 text-slate-700 px-2 pr-8 py-1 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer text-sm" id="ui-lang-select" data-action-change="handle-ui-language-change">
+<option data-i18n="opt_lang_fr" value="fr">Français</option>
+<option data-i18n="opt_lang_loaded" data-role="loaded-lang" disabled="" value="">Langue chargée</option>
+</select>
+</div>
+<div class="my-1 border-t border-slate-200"></div>
+<div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 py-1">Diagnostic</div>
+<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-action="toggle-debug-ui" type="button">
+<span class="material-icons-round text-base text-slate-500">bug_report</span>
+<span class="text-sm">Diagnostic UI</span>
+</button>
+
+
+</div>
+</div>
+<input accept=".json" class="hidden" id="load-file-input" data-action-change="load-project-file" type="file"/>
+<input accept=".json" class="hidden" id="template-file-input" type="file"/>
+<input accept=".json,application/json" class="hidden" id="lang-pack-input" data-action-change="load-language-pack" type="file"/>
+</div>
+</div>
+<div class="flex flex-col relative gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
+<span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider pl-1" data-i18n="label_designed_time">
+       Temps Conçu (Planifié)
+      </span>
+<div class="flex items-center bg-white border border-slate-200 rounded-md px-2 gap-1 shadow-sm h-[30px]">
+<span class="material-icons-round text-slate-600 text-lg">
+         schedule
+        </span>
+<span class="text-xs font-extrabold text-slate-800 tabular-nums" id="header-designed-val">
+         0
+        </span>
+<span class="text-xs font-bold text-slate-600" id="header-designed-unit">
+         min
+        </span>
+</div>
+</div>
+</div>
+</header>
+<div class="mb-3 no-print w-full" id="top-tabs-bar-wrap">
+  <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-1 flex gap-1" role="tablist" aria-label="Sections">
+    <button type="button" id="top-tab-btn-info" role="tab" aria-selected="false" aria-controls="key-params-wrapper" class="top-tab-btn">
+      <span class="material-icons-round text-sm">tune</span>
+      <span class="top-tab-label" data-i18n="tab_info">INFORMATIONS ET PARAMÈTRES DE LA FORMATION</span>
+    </button>
+    <button type="button" id="top-tab-btn-visual" role="tab" aria-selected="false" aria-controls="visualisations-wrapper" class="top-tab-btn">
+      <span class="material-icons-round text-sm">insights</span>
+      <span class="top-tab-label" data-i18n="tab_visual">VISUALISATIONS DES SÉQUENCES</span>
+    </button>
+    <button type="button" id="top-tab-btn-analysis" role="tab" aria-selected="false" aria-controls="analysis-tabs-wrap" class="top-tab-btn">
+      <span class="material-icons-round text-sm">bar_chart</span>
+      <span class="top-tab-label" data-i18n="tab_analysis">GRAPHIQUES D'ANALYSE</span>
+    </button>
+  </div>
+</div>
+
+<!-- VUE Toolbar (repositioned below main tabs) -->
+<div class="mb-3 no-print w-full">
 <div class="flex flex-col relative gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
 <span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider pl-1" data-i18n="grp_view">
        Vue
@@ -2768,7 +2960,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </button>
 <div class="w-px h-5 bg-slate-200"></div>
 <div class="relative">
-<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded transition-colors flex items-center justify-center" id="btn-fold-unfold-menu" data-action="toggle-fold-unfold-menu" title="Options de pliage" type="button">
+<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded transition-colors flex items-center justify-center" id="btn-fold-unfold-menu" data-action="toggle-fold-unfold-menu" title="Options de pliage" aria-label="Options de pliage" type="button">
 <span class="material-icons-round text-xl" id="icon-toggle-all">unfold_less</span>
 <span class="material-icons-round text-sm">arrow_drop_down</span>
 </button>
@@ -2878,7 +3070,7 @@ document.addEventListener('DOMContentLoaded', function() {
         title="Afficher les durées cibles"
         aria-label="Afficher les durées cibles">
   <span class="material-icons-round text-[16px]" id="icon-toggle-target-durations">visibility_off</span>
-  <span class="hidden xl:inline" id="text-toggle-target-durations">Cibles</span>
+  <span class="hidden xl:inline" id="text-toggle-target-durations">Durées ciblées</span>
 </button>
 <details class="relative" id="status-display-menu">
   <summary class="ld-control-btn list-none select-none bg-white">
@@ -2905,131 +3097,9 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 </div>
 </div>
-<div class="flex flex-col relative gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
-<span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider pl-1" data-i18n="grp_project">
-       Projet
-      </span>
-<div class="flex flex-wrap items-center bg-white border border-slate-200 rounded-md p-0.5 gap-0.5 shadow-sm min-h-[30px]">
-<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors flex items-center gap-1.5" data-i18n-title="title_save_project" data-action="save-project">
-<span class="material-icons-round text-lg">
-         save
-        </span>
-<span class="text-xs font-medium hidden md:inline" data-i18n="btn_save">
-         Enregistrer
-        </span>
-</button>
-<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors flex items-center gap-1.5" data-i18n-title="title_load_project" data-action="load-project">
-<span class="material-icons-round text-lg">
-         file_upload
-        </span>
-<span class="text-xs font-medium hidden md:inline" data-i18n="btn_load">
-         Charger
-        </span>
-</button>
-<div class="w-px bg-slate-200 my-1 mx-0.5">
-</div>
-<div class="relative group">
-<button id="open-export-modal-btn"
-        class="flex items-center gap-1 bg-transparent hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 pl-2 pr-3 py-1 rounded transition-colors text-xs font-medium h-[26px]"
-        data-i18n-title="title_export_dropdown"
-        type="button">
-  <span class="material-icons-round text-lg">download</span>
-  <span data-i18n="btn_export_dropdown">Exporter...</span>
-</button>
-</div>
-<button id="open-global-search-btn"
-        class="text-slate-600 hover:text-indigo-700 hover:bg-indigo-50 rounded px-2 py-1 flex items-center gap-1"
-        title="Recherche globale (Ctrl+K)"
-        type="button">
-  <span class="material-icons-round text-[16px]">search</span>
-  <span class="text-xs font-medium hidden md:inline">Recherche</span>
-</button>
-<div class="relative">
-<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors flex items-center gap-1.5" id="btn-more" data-action="toggle-more-menu" title="Plus d'actions" type="button">
-<span class="material-icons-round text-lg">more_horiz</span>
-<span class="text-xs font-medium hidden md:inline">Plus…</span>
-</button>
-<div class="hidden absolute right-0 top-[34px] w-72 bg-white border border-slate-200 rounded-md shadow-lg z-50 p-1" id="more-menu">
-<div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 py-1" data-i18n="label_templates">Modèles</div>
-<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-action="open-template-export-modal" type="button">
-<span class="material-icons-round text-base text-slate-500">upload_file</span>
-<span class="text-sm">Exporter un modèle</span>
-</button>
-<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-action="open-template-import-modal" type="button">
-<span class="material-icons-round text-base text-slate-500">download_for_offline</span>
-<span class="text-sm">Importer un modèle</span>
-</button>
-<div class="my-1 border-t border-slate-200"></div>
-<div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 py-1" data-i18n="grp_interface">Interface</div>
-<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-action="trigger-language-pack-load" type="button">
-<span class="material-icons-round text-base text-slate-500">translate</span>
-<span class="text-sm" data-i18n="btn_load_language_pack">Charger langue</span>
-</button>
-<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-i18n-title="title_export_language_template" data-action="export-language-pack-template" type="button">
-<span class="material-icons-round text-base text-slate-500">download</span>
-<span class="text-sm" data-i18n="btn_export_language_template">Exporter modèle</span>
-</button>
-<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-i18n-title="title_i18n_audit" data-action="open-i18n-audit" type="button">
-<span class="material-icons-round text-base text-slate-500">fact_check</span>
-<span class="text-sm" data-i18n="btn_i18n_audit">Vérifier traductions</span>
-</button>
-<div class="px-2 pt-2 pb-1">
-<div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1" data-i18n="title_ui_language_select">Choisir la langue de l'interface</div>
-<select class="w-full appearance-none bg-white border border-slate-200 text-slate-700 px-2 pr-8 py-1 rounded-md outline-none cursor-pointer text-sm" id="ui-lang-select" data-action-change="handle-ui-language-change">
-<option data-i18n="opt_lang_fr" value="fr">Français</option>
-<option data-i18n="opt_lang_loaded" data-role="loaded-lang" disabled="" value="">Langue chargée</option>
-</select>
-</div>
-<div class="my-1 border-t border-slate-200"></div>
-<div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 py-1">Diagnostic</div>
-<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-action="toggle-debug-ui" type="button">
-<span class="material-icons-round text-base text-slate-500">bug_report</span>
-<span class="text-sm">Diagnostic UI</span>
-</button>
-
-
-</div>
-</div>
-<input accept=".json" class="hidden" id="load-file-input" data-action-change="load-project-file" type="file"/>
-<input accept=".json" class="hidden" id="template-file-input" type="file"/>
-<input accept=".json,application/json" class="hidden" id="lang-pack-input" data-action-change="load-language-pack" type="file"/>
-</div>
-</div>
-<div class="flex flex-col relative gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
-<span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider pl-1" data-i18n="label_designed_time">
-       Temps Conçu (Planifié)
-      </span>
-<div class="flex items-center bg-white border border-slate-200 rounded-md px-2 gap-1 shadow-sm h-[30px]">
-<span class="material-icons-round text-slate-600 text-lg">
-         schedule
-        </span>
-<span class="text-xs font-extrabold text-slate-800 tabular-nums" id="header-designed-val">
-         0
-        </span>
-<span class="text-xs font-bold text-slate-600" id="header-designed-unit">
-         min
-        </span>
-</div>
-</div>
-</div>
-</header>
-<div class="mb-3 no-print w-full" id="top-tabs-bar-wrap">
-  <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-1 flex gap-1" role="tablist" aria-label="Sections">
-    <button type="button" id="top-tab-btn-info" role="tab" aria-selected="false" aria-controls="key-params-wrapper" class="top-tab-btn">
-      <span class="material-icons-round text-sm">tune</span>
-      <span class="top-tab-label" data-i18n="tab_info">INFORMATIONS ET PARAMÈTRES DE LA FORMATION</span>
-    </button>
-    <button type="button" id="top-tab-btn-visual" role="tab" aria-selected="false" aria-controls="visualisations-wrapper" class="top-tab-btn">
-      <span class="material-icons-round text-sm">insights</span>
-      <span class="top-tab-label" data-i18n="tab_visual">VISUALISATIONS DES SÉQUENCES</span>
-    </button>
-    <button type="button" id="top-tab-btn-analysis" role="tab" aria-selected="false" aria-controls="analysis-tabs-wrap" class="top-tab-btn">
-      <span class="material-icons-round text-sm">bar_chart</span>
-      <span class="top-tab-label" data-i18n="tab_analysis">GRAPHIQUES D'ANALYSE</span>
-    </button>
-  </div>
 </div>
 
+<div id="main-content" tabindex="-1">
 <div id="key-params-wrapper" role="tabpanel" aria-labelledby="top-tab-btn-info" class="mb-3 bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
 <button class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors no-print h-[32px] rounded-lg border border-slate-200 rounded-lg border border-slate-200" data-i18n-title="title_toggle_panel" data-action="toggle-panel" data-panel="key-params-panel">
 <div class="flex items-center gap-1.5">
@@ -3073,19 +3143,19 @@ document.addEventListener('DOMContentLoaded', function() {
     </h3>
         <div class="flex flex-col md:flex-row md:items-end gap-3">
 <div class="flex-1 min-w-[240px]">
-      <label class="compact-label block" data-i18n="label_course_name">
+      <label for="param-name" class="compact-label block" data-i18n="label_course_name">
       Nom de la formation
       </label>
       <input class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" data-i18n-placeholder="ph_course_name" id="param-name" placeholder="Entrez le nom de la formation..." type="text"/>
       </div>
 <div class="w-full md:w-28">
-      <label class="compact-label block" data-i18n="label_version_number">
+      <label for="param-version-number" class="compact-label block" data-i18n="label_version_number">
       Version
       </label>
       <input class="w-full md:w-24 px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none text-center font-mono" data-i18n-placeholder="ph_version_number" id="param-version-number" maxlength="12" inputmode="text" pattern="[0-9A-Za-z.+_-]{0,12}" autocomplete="off" placeholder="Entrez un numéro de version..." type="text"/>
       </div>
 <div class="w-full md:w-72">
-      <label class="compact-label block" data-i18n="label_license">
+      <label for="param-license" class="compact-label block" data-i18n="label_license">
       Licence
       </label>
       <select class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none bg-white" id="param-license">
@@ -3110,7 +3180,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </h3>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
       <div>
-        <label class="compact-label block" data-i18n="label_learning_time">
+        <label for="param-learning-val" class="compact-label block" data-i18n="label_learning_time">
           Temps d'Apprentissage (Cible)
         </label>
         <div class="flex gap-1">
@@ -3126,7 +3196,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
 
       <div>
-        <label class="compact-label block">Unité préférée (Modules / Moments / Activités)</label>
+        <label for="param-preferred-unit" class="compact-label block">Unité préférée (Modules / Moments / Activités)</label>
         <select class="w-full px-2 py-1 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" id="param-preferred-unit">
           <option value="60" data-i18n="unit_mins">min</option>
           <option value="3600" data-i18n="unit_hours">Heures</option>
@@ -3138,7 +3208,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
 
       <div>
-        <label class="compact-label block" data-i18n="label_designed_time">
+        <label for="param-designed-val" class="compact-label block" data-i18n="label_designed_time">
           Temps Conçu (Planifié)
         </label>
         <div class="flex gap-1 items-center">
@@ -3166,19 +3236,19 @@ document.addEventListener('DOMContentLoaded', function() {
     </h3>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
       <div>
-        <label class="compact-label block" data-i18n="label_authors">
+        <label for="param-authors" class="compact-label block" data-i18n="label_authors">
           Concepteurs(s)
         </label>
         <input class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" data-i18n-placeholder="ph_authors" id="param-authors" placeholder="Entrez le nom du/des concepteurs..." type="text"/>
       </div>
       <div>
-        <label class="compact-label block" data-i18n="label_trainers">
+        <label for="param-trainers" class="compact-label block" data-i18n="label_trainers">
           Formateur(s)
         </label>
         <input class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" data-i18n-placeholder="ph_trainers" id="param-trainers" placeholder="Entrez le nom du/des formateur(s)..." type="text"/>
       </div>
       <div>
-        <label class="compact-label block" data-i18n="label_mode">
+        <label for="param-mode" class="compact-label block" data-i18n="label_mode">
           Modalité
         </label>
         <select class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none bg-white" id="param-mode">
@@ -3199,7 +3269,7 @@ document.addEventListener('DOMContentLoaded', function() {
       Description
     </h3>
     <div>
-      <label class="compact-label block" data-i18n="label_description">
+      <label for="param-description" class="compact-label block" data-i18n="label_description">
         Description générale
       </label>
       <textarea class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y" data-i18n-placeholder="ph_description" id="param-description" placeholder="Description détaillée..." rows="3"></textarea>
@@ -3211,11 +3281,11 @@ document.addEventListener('DOMContentLoaded', function() {
 <section class="kpwiz-step hidden" id="kpwiz-step-2">
 <div class="p-3 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
 <div class="md:col-span-2 lg:col-span-3">
-<label class="compact-label block" data-i18n="label_target_audience">Public cible</label>
+<label for="param-target-audience" class="compact-label block" data-i18n="label_target_audience">Public cible</label>
 <textarea class="w-full px-2 py-1 border border-slate-200 rounded text-sm focus:ring-1 focus:ring-indigo-500 outline-none resize-y" id="param-target-audience" placeholder="" rows="1"></textarea>
 </div>
 <div>
-<label class="compact-label block" data-i18n="label_level">Niveau</label>
+<label for="param-level" class="compact-label block" data-i18n="label_level">Niveau</label>
 <select class="w-full px-2 py-1 border border-slate-200 rounded text-sm focus:ring-1 focus:ring-indigo-500 outline-none bg-white" id="param-level">
 <option data-i18n="opt_level_unspecified" selected="" value="unspecified">Non spécifié</option>
 <option data-i18n="opt_level_mixed" value="mixed">Mixte</option>
@@ -3226,13 +3296,13 @@ document.addEventListener('DOMContentLoaded', function() {
 </select>
 </div>
 <div>
-<label class="compact-label block" data-i18n="label_class_size">
+<label for="global-class-size" class="compact-label block" data-i18n="label_class_size">
        Taille de la cohorte
       </label>
 <input class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none font-bold text-slate-800" id="global-class-size" min="1" data-action-input="update-stats-debounced" type="number" value="30"/>
 </div>
 <div class="md:col-span-2 lg:col-span-3">
-<label class="compact-label block" data-i18n="label_prerequisites">Prérequis</label>
+<label for="param-prerequisites" class="compact-label block" data-i18n="label_prerequisites">Prérequis</label>
 <textarea class="w-full px-2 py-1 border border-slate-200 rounded text-sm focus:ring-1 focus:ring-indigo-500 outline-none resize-y" id="param-prerequisites" placeholder="" rows="1"></textarea>
 </div>
 </div>
@@ -3257,8 +3327,8 @@ document.addEventListener('DOMContentLoaded', function() {
 <button class="text-[10px] font-bold text-indigo-700 bg-white border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-100 transition-colors" data-action="back-to-aims-origin" data-i18n="btn_back_to_activity">Retour à l'activité</button>
 </div>
 <div class="flex items-center gap-2 mb-2 flex-wrap no-print">
-<button class="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-slate-200 transition-colors flex items-center gap-1" id="btn-load-aims-csv" title="Charger une liste d'objectifs (CSV/TSV/TXT)" type="button">
-<span class="material-icons-round text-sm">upload_file</span>
+<button class="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-slate-200 transition-colors flex items-center gap-1" id="btn-load-aims-csv" title="Charger une liste d'objectifs (CSV/TSV/TXT)" aria-label="Charger une liste d'objectifs (CSV/TSV/TXT)" type="button">
+<span class="material-icons-round text-sm" aria-hidden="true">upload_file</span>
             Charger fichier (CSV/TSV/TXT)
           </button>
 <button class="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-slate-200 transition-colors flex items-center gap-1" id="btn-download-aims-template" title="Télécharger un modèle CSV" type="button">
@@ -3292,8 +3362,8 @@ document.addEventListener('DOMContentLoaded', function() {
 <datalist id="aims-subcat-datalist"></datalist>
 <div class="flex gap-1 flex-col sm:flex-row sm:items-center sm:col-span-8">
 <input class="flex-1 px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none text-xs" id="new-aim-item-input" placeholder="Ajouter un objectif..." type="text"/>
-<button class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-bold hover:bg-indigo-200 transition-colors flex items-center justify-center h-[26px]" data-action="add-aim-item" title="Ajouter un objectif" type="button">
-<span class="material-icons-round text-sm">add</span>
+<button class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-bold hover:bg-indigo-200 transition-colors flex items-center justify-center h-[26px]" data-action="add-aim-item" title="Ajouter un objectif" aria-label="Ajouter un objectif" type="button">
+<span class="material-icons-round text-sm" aria-hidden="true">add</span>
 </button>
 </div>
 </div>
@@ -3511,17 +3581,17 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="mt-2 p-2 bg-slate-50 border border-slate-200 rounded-lg">
   <div class="flex flex-col sm:flex-row gap-2 items-end">
     <div class="flex-1 min-w-0">
-      <label class="compact-label">Rechercher</label>
+      <label for="tools-materials-search" class="compact-label">Rechercher</label>
       <input id="tools-materials-search" class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm" type="text" placeholder="Rechercher un outil, une catégorie ou une sous-catégorie..." />
     </div>
     <div class="sm:w-48">
-      <label class="compact-label">Catégorie</label>
+      <label for="tools-materials-filter-cat" class="compact-label">Catégorie</label>
       <select id="tools-materials-filter-cat" class="w-full px-2 py-1 border border-slate-200 rounded bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
         <option value="" data-i18n="opt_all_categories">Toutes</option>
       </select>
     </div>
     <div class="sm:w-56">
-      <label class="compact-label">Sous-catégorie</label>
+      <label for="tools-materials-filter-subcat" class="compact-label">Sous-catégorie</label>
       <select id="tools-materials-filter-subcat" class="w-full px-2 py-1 border border-slate-200 rounded bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
         <option value="" data-i18n="opt_all_categories">Toutes</option>
       </select>
@@ -3776,7 +3846,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <div class="w-full h-9 relative mt-1 select-none pointer-events-none rounded-lg bg-transparent timeline-zoom-outer" id="timeline-ruler">
 <div class="timeline-inner" id="timeline-ruler-inner"></div>
 </div>
-<div aria-label="Défilement horizontal des visualisations" class="timeline-hscroll no-print" id="timeline-hscroll" role="scrollbar"><div id="timeline-hscroll-inner"></div><div aria-hidden="true" id="timeline-hscroll-thumb"></div></div></div>
+<div aria-label="Défilement horizontal des visualisations" class="timeline-hscroll no-print" id="timeline-hscroll" role="region" aria-live="polite"><div id="timeline-hscroll-inner"></div><div aria-hidden="true" id="timeline-hscroll-thumb"></div></div></div>
 </div>
 </div>
 <details class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden w-full flex flex-col justify-center ld-page mt-2" id="analysis-tabs-wrap" role="tabpanel" aria-labelledby="top-tab-btn-analysis"><summary class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 border-b border-slate-200 cursor-pointer select-none"><div class="flex items-center gap-1.5">
