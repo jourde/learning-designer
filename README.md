@@ -13,9 +13,11 @@ En complément de la saisie, l’application propose des visualisations et analy
 
 N.B. : Cette application a été développée avec l'aide de chatbots d'IA générative : ChatGPT (5.2 Thinking) et Claude (Sonnet 4.5, embarqué dans Visual Studio Code).  
 
-## Application web
-### ➜ [https://jourde.github.io/learning-designer/interface.html](https://jourde.github.io/learning-designer/interface.html)
+## Applications web
+### ➜ [Concepteur pédagogique - learning designer](https://jourde.github.io/learning-designer/interface.html)
 🔥 *Point de vigilance : bien que globalement fonctionnel, l'outil reste expérimental et peut présenter des anomalies. Je vous conseille notamment de télécharger la version que vous utilisez (fichier "main.html") afin d'assurer la compatibilité avec vos sauvegardes, en cas de mise à jour du fichier sur ce dépôt.*
+### ➜ [Interface de présentation - Slide Deck](https://jourde.github.io/learning-designer/slidedeck.html)
+Charger un fichier JSON produit avec le Learning Designer pour afficher le support de présentation (l'application lit le contenu des champs "présentation" des activités.
 
 ## Ressources
 ### Guides
