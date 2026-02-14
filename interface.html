@@ -1634,6 +1634,9 @@ body[data-view-level="submoments"] [data-action="add-step-submoment"] { display:
 /* Niveau 3 : Sous-moment */
 .submoment-card::before { background: rgba(203, 213, 225, 0.95); } /* grey */
 
+/* Sous-moment : barre verte quand toutes les tâches sont finalisées */
+.submoment-card[data-status="done"]::before { background: rgba(34, 197, 94, 0.75); } /* vert */
+
 /* Overrides for dark/high-contrast modes (keep the rail visible) */
 html.ui-dark .activity-group::before,
 html.ui-dark .moment-group::before,
@@ -16769,7 +16772,15 @@ document.addEventListener('DOMContentLoaded', () => { try { __ldInitStatusSelect
             // Sous-moments
             document.querySelectorAll('.submoment-card').forEach(subEl => {
                 const sumEl = __ldEnsureSubmomentSummaryEl(subEl);
-                __ldRenderStatusSummary(sumEl, __ldComputeStatusCounts(subEl));
+                const counts = __ldComputeStatusCounts(subEl);
+                __ldRenderStatusSummary(sumEl, counts);
+
+                // Appliquer data-status="done" si toutes les tâches sont finalisées
+                if (counts.total > 0 && counts.done === counts.total) {
+                    subEl.setAttribute('data-status', 'done');
+                } else {
+                    subEl.removeAttribute('data-status');
+                }
             });
         }
 
@@ -29081,6 +29092,9 @@ document.addEventListener('DOMContentLoaded', () => {
       try { const t = clone.querySelector('.step-input-tasks'); if (t) t.value = ''; } catch(_){ __ldSilentErr(_); }
       try { const t = clone.querySelector('.step-input-trainer-tasks'); if (t) t.value = ''; } catch(_){ __ldSilentErr(_); }
       try { const t = clone.querySelector('.step-input-notes'); if (t) t.value = ''; } catch(_){ __ldSilentErr(_); }
+      try { const t = clone.querySelector('.step-input-presentation'); if (t) t.value = ''; } catch(_){ __ldSilentErr(_); }
+      try { const t = clone.querySelector('.step-input-eval-followup'); if (t) t.value = ''; } catch(_){ __ldSilentErr(_); }
+      try { const t = clone.querySelector('.step-input-linksrefs'); if (t) t.value = ''; } catch(_){ __ldSilentErr(_); }
     }
 
     // Visual cue in title (non-destructive)
