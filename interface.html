@@ -62,20 +62,29 @@ document.addEventListener('change', (e)=>{
     __ldSyncLearningTypeSelectVisual(t);
   }
 }, true);
-document.addEventListener('DOMContentLoaded', ()=>{
-  try{
-    document.querySelectorAll('.learning-type-select').forEach(__ldSyncLearningTypeSelectVisual);
-  }catch(err){ __ldSilentErr(err); }
-});
 
-document.addEventListener('DOMContentLoaded', function() {
+// Consolidated initialization on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function __ldInitializeApp() {
   try {
+    // Initialize learning type selects visual sync
+    document.querySelectorAll('.learning-type-select').forEach(__ldSyncLearningTypeSelectVisual);
+  } catch(err) { __ldSilentErr(err); }
+
+  try {
+    // Initialize view style menu
     if (typeof initViewStyleMenu === 'function') {
       initViewStyleMenu();
     }
-  } catch(e) {
-    console.error('[InitViewStyleMenuError]', e);
+  } catch(err) {
+    console.error('[InitViewStyleMenuError]', err);
   }
+
+  try {
+    // Enable plain text paste (will be called again when defined)
+    if (typeof __ldEnablePlainTextPaste === 'function') {
+      __ldEnablePlainTextPaste();
+    }
+  } catch(err) { __ldSilentErr(err); }
 });
 
 
@@ -1807,6 +1816,37 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
   );
 }
 
+/* ---- Utility Classes (Phase 3 cleanup - replaces inline styles) ---- */
+
+/* Off-screen element positioning (for clipboard helpers, accessibility) */
+.ld-offscreen {
+  position: fixed !important;
+  left: -9999px !important;
+  top: 0 !important;
+}
+
+/* Visibility control */
+.ld-visible {
+  display: block !important;
+}
+
+/* Scrollable area with height constraints */
+.ld-scrollable-area {
+  min-height: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Table column width utilities */
+.col-xs { width: 30px; }
+.col-sm { width: 44px; }
+.col-84 { width: 84px; }
+.col-96 { width: 96px; }
+.col-132 { width: 132px; }
+.col-md { width: 240px; }
+.col-lg { width: 300px; }
+.col-xl { width: 400px; }
+
 </style>
 <script>
 /* Modèles: stubs globaux disponibles dès le chargement (évite les clics "inerte" avant l'initialisation).
@@ -2106,9 +2146,7 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
           const ta = document.createElement('textarea');
           ta.value = String(text || '');
           ta.setAttribute('readonly', '');
-          ta.style.position = 'fixed';
-          ta.style.left = '-9999px';
-          ta.style.top = '0';
+          ta.className = 'ld-offscreen';
           document.body.appendChild(ta);
           ta.select();
           const ok = document.execCommand && document.execCommand('copy');
@@ -2218,7 +2256,7 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
         const banner = qs('js-error-banner');
         if (banner) {
           try {
-            banner.style.display = 'block';
+            banner.classList.add('ld-visible');
             const t = banner.querySelector('[data-js-error-text]');
             if (t) t.innerText = msg;
           } catch(err){ __ldSilentErr(err); }
@@ -2251,7 +2289,7 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
           if (window.__pendingJsError) {
             const banner = qs('js-error-banner');
             if (banner) {
-              banner.style.display = 'block';
+              banner.classList.add('ld-visible');
               const t = banner.querySelector('[data-js-error-text]');
               if (t) t.innerText = window.__pendingJsError;
               window.__pendingJsError = null;
@@ -2689,7 +2727,7 @@ function __ldEnablePlainTextPaste(){
     }
   }, true);
 }
-document.addEventListener('DOMContentLoaded', __ldEnablePlainTextPaste);
+// Note: __ldEnablePlainTextPaste is now called from consolidated __ldInitializeApp
 
 </script>
 
@@ -3322,7 +3360,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <span class="material-icons-round text-slate-400 rotate-icon text-sm" id="key-params-panel-icon">
       expand_more
      </span>
-</button><div class="panel-content" id="key-params-panel" style="display: none;">
+</button><div class="panel-content" id="key-params-panel" class="hidden">
 <!-- Key parameters wizard (Option 6) -->
 <div class="px-3 py-2 border-t border-slate-100 bg-white flex items-center justify-between gap-2 flex-wrap" id="kpwiz-bar">
 <div class="flex items-center gap-2">
@@ -3839,7 +3877,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 </div><!-- /kpwiz-steps-wrapper -->
 </div>
 </div>
-<div id="visualisations-wrapper" role="tabpanel" aria-labelledby="top-tab-btn-visual" class="mb-3 no-print flex flex-col gap-3 ld-page">
+<div id="visualisations-wrapper" role="tabpanel" aria-labelledby="top-tab-btn-visual" class="hidden mb-3 no-print flex flex-col gap-3 ld-page">
 <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col justify-center ld-page" id="timelines-wrapper">
 <button class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors no-print h-[32px] rounded-lg border border-slate-200" data-i18n-title="title_toggle_panel" data-action="toggle-panel" data-panel="timeline-panel">
 <div class="flex items-center gap-1.5">
@@ -3854,7 +3892,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
        expand_more
       </span>
 </button>
-<div class="panel-content w-full flex flex-col gap-2 mt-2 p-2 rounded-xl border border-slate-200 bg-slate-50" id="timeline-panel" style="display: none;">
+<div class="panel-content w-full flex flex-col gap-2 mt-2 p-2 rounded-xl border border-slate-200 bg-slate-50" id="timeline-panel" class="hidden">
 <div class="flex justify-end">
 <span class="text-slate-400 text-[10px] italic" data-i18n="status_calculating" id="stats-update-info"></span>
 </div>
@@ -3978,7 +4016,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
         expand_more
        </span>
 </button>
-<div class="panel-content w-full flex flex-col gap-2" data-display="flex" id="timeline-details" style="display: none;">
+<div class="panel-content w-full flex flex-col gap-2" data-display="flex" id="timeline-details" class="hidden">
 <div class="timeline-track bg-white rounded-xl border border-slate-200 p-1.5 flex flex-col gap-1">
 <div class="flex items-center justify-between gap-2 flex-wrap">
 <div class="flex items-center gap-1.5">
@@ -4058,7 +4096,7 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
 <div aria-label="Défilement horizontal des visualisations" class="timeline-hscroll no-print" id="timeline-hscroll" role="region" aria-live="polite"><div id="timeline-hscroll-inner"></div><div aria-hidden="true" id="timeline-hscroll-thumb"></div></div></div>
 </div>
 </div>
-<details class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden w-full flex flex-col justify-center ld-page mt-2" id="analysis-tabs-wrap" role="tabpanel" aria-labelledby="top-tab-btn-analysis"><summary class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 border-b border-slate-200 cursor-pointer select-none"><div class="flex items-center gap-1.5">
+<details class="hidden bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden w-full flex flex-col justify-center ld-page mt-2" id="analysis-tabs-wrap" role="tabpanel" aria-labelledby="top-tab-btn-analysis"><summary class="w-full px-3 py-2 flex items-center justify-between bg-slate-50 border-b border-slate-200 cursor-pointer select-none"><div class="flex items-center gap-1.5">
 <span class="material-icons-round text-slate-500 text-sm">insights</span>
 <span class="font-bold text-slate-700 uppercase text-xs tracking-wide">Graphiques d'analyse</span>
 </div><span class="material-icons-round text-slate-500 text-sm analysis-chevron">expand_more</span></summary><div class="w-full"><div class="px-3 pt-2">
@@ -4606,15 +4644,15 @@ Vous pouvez importer une liste (CSV/TSV/TXT) ou ajouter des éléments manuellem
   <div class="border border-slate-200 rounded-lg bg-white overflow-auto">
     <table class="w-full text-[11px] leading-tight" id="panorama-table">
       <colgroup>
-        <col style="width:30px">
-        <col style="width:44px">
-        <col style="width:240px">
-        <col style="width:240px">
-        <col style="width:240px">
-        <col style="width:240px">
-        <col style="width:132px">
-        <col style="width:96px">
-        <col style="width:84px">
+        <col class="col-xs">
+        <col class="col-sm">
+        <col class="col-md">
+        <col class="col-md">
+        <col class="col-md">
+        <col class="col-md">
+        <col class="col-132">
+        <col class="col-96">
+        <col class="col-84">
       </colgroup>
 
       <thead class="sticky top-0 bg-slate-50 border-b border-slate-200">
@@ -6988,9 +7026,7 @@ function initViewLevelSegmentedUI() {
                 const ta = document.createElement('textarea');
                 ta.value = text;
                 ta.setAttribute('readonly', '');
-                ta.style.position = 'fixed';
-                ta.style.left = '-9999px';
-                ta.style.top = '0';
+                ta.className = 'ld-offscreen';
                 document.body.appendChild(ta);
                 ta.select();
                 ta.setSelectionRange(0, ta.value.length);
@@ -31526,7 +31562,7 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
       btn.tabIndex = hasTab ? (active ? 0 : -1) : 0;
 
       if(active){
-        panel.style.display = '';
+        panel.classList.remove('hidden');
         if(t.isDetails){
           try { panel.open = true; } catch(e){}
         }
@@ -31537,7 +31573,7 @@ mo.observe(menu, { attributes: true, attributeFilter: ['class','style'] });
           } catch(err){ __ldSilentErr(err); }
         }
       } else {
-        panel.style.display = 'none';
+        panel.classList.add('hidden');
         if(t.isDetails){
           // Keep details closed when hidden to avoid confusing state if styles change later
           try { panel.open = false; } catch(e){}
