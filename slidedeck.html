@@ -3921,10 +3921,24 @@ updateNavFoldAllAvailability() {
                 headerDiv.textContent = `${moduleIndex + 1}. ${module.title}`;
                 moduleDiv.appendChild(headerDiv);
 
+                // Render moments if they exist
                 (module.moments || []).forEach((moment, momentIndex) => {
                     const momentEl = this.createMomentElement(moment, moduleIndex, momentIndex);
                     moduleDiv.appendChild(momentEl);
                 });
+
+                // Render module-level activities if they exist (without moments/submoments)
+                if (module.activities && Array.isArray(module.activities) && module.activities.length > 0) {
+                    const childrenDiv = document.createElement('div');
+                    childrenDiv.className = 'nav-children';
+
+                    module.activities.forEach((activity, activityIndex) => {
+                        const activityEl = this.createActivityElement(activity, moduleIndex, -1, -1, activityIndex);
+                        childrenDiv.appendChild(activityEl);
+                    });
+
+                    moduleDiv.appendChild(childrenDiv);
+                }
 
                 return moduleDiv;
             },
@@ -3983,9 +3997,19 @@ updateNavFoldAllAvailability() {
                 activityDiv.setAttribute('role', 'button');
                 activityDiv.setAttribute('tabindex', '0');
                 activityDiv.dataset.activityId = activity.id;
-                
+
                 const slideCount = (activity.slides && activity.slides.length) ? activity.slides.length : 0;
-                const labelText = `${moduleIndex + 1}.${momentIndex + 1}.${submomentIndex + 1}.${activityIndex + 1} ${this.sanitizeHTML(String(activity.title || ''))}`;
+
+                // Generate label based on whether it's a module-level activity or nested
+                let labelText;
+                if (momentIndex === -1 && submomentIndex === -1) {
+                    // Module-level activity (no moment or submoment)
+                    labelText = `${moduleIndex + 1}.${activityIndex + 1} ${this.sanitizeHTML(String(activity.title || ''))}`;
+                } else {
+                    // Nested activity within moment and submoment
+                    labelText = `${moduleIndex + 1}.${momentIndex + 1}.${submomentIndex + 1}.${activityIndex + 1} ${this.sanitizeHTML(String(activity.title || ''))}`;
+                }
+
                 activityDiv.innerHTML = `
                     <span class="nav-activity-label">${labelText}</span>
                     <span class="slide-count">${slideCount} slide${slideCount !== 1 ? 's' : ''}</span>
@@ -4044,13 +4068,29 @@ updateNavFoldAllAvailability() {
             getBreadcrumb(activityId) {
                 // Find the activity in the data structure and build breadcrumb
                 if (!this.courseData || !this.courseData.modules) return '';
-                
+
                 for (const module of this.courseData.modules) {
-                    for (const moment of module.moments) {
-                        for (const submoment of moment.submoments) {
-                            for (const activity of submoment.activities) {
-                                if (activity.id === activityId) {
-                                    return `${moment.title.split(':')[0]} → ${submoment.title.split(':')[0]}`;
+                    // Check module-level activities first (without moments/submoments)
+                    if (module.activities && Array.isArray(module.activities)) {
+                        for (const activity of module.activities) {
+                            if (activity.id === activityId) {
+                                return module.title; // Only module title for module-level activities
+                            }
+                        }
+                    }
+
+                    // Check activities within moments and submoments
+                    if (module.moments && Array.isArray(module.moments)) {
+                        for (const moment of module.moments) {
+                            if (moment.submoments && Array.isArray(moment.submoments)) {
+                                for (const submoment of moment.submoments) {
+                                    if (submoment.activities && Array.isArray(submoment.activities)) {
+                                        for (const activity of submoment.activities) {
+                                            if (activity.id === activityId) {
+                                                return `${moment.title.split(':')[0]} → ${submoment.title.split(':')[0]}`;
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -4241,10 +4281,14 @@ updateNavFoldAllAvailability() {
                     alert('⚠️ No content loaded.\n\nPlease import a JSON file to begin.');
                     return;
                 }
-                
-                // Load the first activity
-                const firstActivity = this.courseData.modules[0].moments[0].submoments[0].activities[0];
-                this.loadActivity(firstActivity);
+
+                // Load the first activity from getAllActivitiesInOrder
+                const allActivities = this.getAllActivitiesInOrder();
+                if (allActivities.length > 0) {
+                    this.loadActivity(allActivities[0]);
+                } else {
+                    alert('⚠️ No activities found in the course data.');
+                }
             },
 
             // Search functionality
@@ -4270,55 +4314,74 @@ updateNavFoldAllAvailability() {
 
                 const results = [];
 
-                // Search through all activities and slides
-                this.courseData.modules.forEach(module => {
-                    module.moments.forEach(moment => {
-                        moment.submoments.forEach(submoment => {
-                            submoment.activities.forEach(activity => {
-                                // Check activity title
-                                if (activity.title.toLowerCase().includes(this.searchQuery)) {
+                // Helper function to search through activities
+                const searchActivities = (activities, module, moment = null, submoment = null) => {
+                    activities.forEach(activity => {
+                        // Check activity title
+                        if (activity.title.toLowerCase().includes(this.searchQuery)) {
+                            results.push({
+                                type: 'activity',
+                                activity: activity,
+                                module: module,
+                                moment: moment,
+                                submoment: submoment,
+                                title: activity.title,
+                                context: 'Activity match',
+                                timestamp: Date.now()
+                            });
+                        }
+
+                        // Check slide content
+                        if (activity.slides && Array.isArray(activity.slides)) {
+                            activity.slides.forEach((slide, index) => {
+                                const slideText = (slide.title + ' ' + slide.content).toLowerCase();
+                                if (slideText.includes(this.searchQuery)) {
+                                    // Extract context with search term
+                                    const contextText = slide.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                                    const queryIndex = contextText.toLowerCase().indexOf(this.searchQuery);
+                                    const contextStart = Math.max(0, queryIndex - 50);
+                                    const contextEnd = Math.min(contextText.length, queryIndex + this.searchQuery.length + 50);
+                                    const contextSnippet = (contextStart > 0 ? '...' : '') +
+                                                         contextText.substring(contextStart, contextEnd) +
+                                                         (contextEnd < contextText.length ? '...' : '');
+
                                     results.push({
-                                        type: 'activity',
+                                        type: 'slide',
                                         activity: activity,
                                         module: module,
                                         moment: moment,
                                         submoment: submoment,
-                                        title: activity.title,
-                                        context: 'Activity match',
+                                        slideIndex: index,
+                                        title: `${activity.title}`,
+                                        slideTitle: slide.title || `Slide ${index + 1}`,
+                                        context: contextSnippet || slide.title || 'Slide content',
                                         timestamp: Date.now()
                                     });
                                 }
+                            });
+                        }
+                    });
+                };
 
-                                // Check slide content
-                                activity.slides.forEach((slide, index) => {
-                                    const slideText = (slide.title + ' ' + slide.content).toLowerCase();
-                                    if (slideText.includes(this.searchQuery)) {
-                                        // Extract context with search term
-                                        const contextText = slide.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-                                        const queryIndex = contextText.toLowerCase().indexOf(this.searchQuery);
-                                        const contextStart = Math.max(0, queryIndex - 50);
-                                        const contextEnd = Math.min(contextText.length, queryIndex + this.searchQuery.length + 50);
-                                        const contextSnippet = (contextStart > 0 ? '...' : '') +
-                                                             contextText.substring(contextStart, contextEnd) +
-                                                             (contextEnd < contextText.length ? '...' : '');
+                // Search through all activities and slides
+                this.courseData.modules.forEach(module => {
+                    // Search module-level activities
+                    if (module.activities && Array.isArray(module.activities)) {
+                        searchActivities(module.activities, module, null, null);
+                    }
 
-                                        results.push({
-                                            type: 'slide',
-                                            activity: activity,
-                                            module: module,
-                                            moment: moment,
-                                            submoment: submoment,
-                                            slideIndex: index,
-                                            title: `${activity.title}`,
-                                            slideTitle: slide.title || `Slide ${index + 1}`,
-                                            context: contextSnippet || slide.title || 'Slide content',
-                                            timestamp: Date.now()
-                                        });
+                    // Search activities within moments and submoments
+                    if (module.moments && Array.isArray(module.moments)) {
+                        module.moments.forEach(moment => {
+                            if (moment.submoments && Array.isArray(moment.submoments)) {
+                                moment.submoments.forEach(submoment => {
+                                    if (submoment.activities && Array.isArray(submoment.activities)) {
+                                        searchActivities(submoment.activities, module, moment, submoment);
                                     }
                                 });
-                            });
+                            }
                         });
-                    });
+                    }
                 });
 
                 this.displaySearchResults(results);
@@ -4529,11 +4592,27 @@ updateNavFoldAllAvailability() {
             findActivityById(activityId) {
                 if (!this.courseData || !this.courseData.modules) return null;
                 for (const module of this.courseData.modules) {
-                    for (const moment of module.moments) {
-                        for (const submoment of moment.submoments) {
-                            for (const activity of submoment.activities) {
-                                if (activity.id === activityId) {
-                                    return activity;
+                    // Check module-level activities first
+                    if (module.activities && Array.isArray(module.activities)) {
+                        for (const activity of module.activities) {
+                            if (activity.id === activityId) {
+                                return activity;
+                            }
+                        }
+                    }
+
+                    // Check activities within moments and submoments
+                    if (module.moments && Array.isArray(module.moments)) {
+                        for (const moment of module.moments) {
+                            if (moment.submoments && Array.isArray(moment.submoments)) {
+                                for (const submoment of moment.submoments) {
+                                    if (submoment.activities && Array.isArray(submoment.activities)) {
+                                        for (const activity of submoment.activities) {
+                                            if (activity.id === activityId) {
+                                                return activity;
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -4925,13 +5004,27 @@ updateNavFoldAllAvailability() {
                 if (!this.courseData || !this.courseData.modules) return list;
 
                 this.courseData.modules.forEach(module => {
-                    module.moments.forEach(moment => {
-                        moment.submoments.forEach(submoment => {
-                            submoment.activities.forEach(activity => {
-                                list.push(activity);
-                            });
+                    // Add module-level activities first (if they exist)
+                    if (module.activities && Array.isArray(module.activities)) {
+                        module.activities.forEach(activity => {
+                            list.push(activity);
                         });
-                    });
+                    }
+
+                    // Add activities from moments and submoments
+                    if (module.moments && Array.isArray(module.moments)) {
+                        module.moments.forEach(moment => {
+                            if (moment.submoments && Array.isArray(moment.submoments)) {
+                                moment.submoments.forEach(submoment => {
+                                    if (submoment.activities && Array.isArray(submoment.activities)) {
+                                        submoment.activities.forEach(activity => {
+                                            list.push(activity);
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }
                 });
 
                 this._cachedActivitiesInOrder = list;
@@ -4957,95 +5050,13 @@ updateNavFoldAllAvailability() {
             getNextSection() {
                 if (!this.currentActivity) return null;
 
-                const currentActivityId = this.currentActivity.id;
-                let foundCurrent = false;
-                let nextActivity = null;
-                let nextSubmoment = null;
-                let nextMoment = null;
-                let nextModule = null;
-
-                // Search through all modules to find current activity and next sections
-                for (let moduleIndex = 0; moduleIndex < this.courseData.modules.length; moduleIndex++) {
-                    const module = this.courseData.modules[moduleIndex];
-
-                    for (let momentIndex = 0; momentIndex < module.moments.length; momentIndex++) {
-                        const moment = module.moments[momentIndex];
-
-                        for (let submomentIndex = 0; submomentIndex < moment.submoments.length; submomentIndex++) {
-                            const submoment = moment.submoments[submomentIndex];
-
-                            for (let activityIndex = 0; activityIndex < submoment.activities.length; activityIndex++) {
-                                const activity = submoment.activities[activityIndex];
-
-                                if (foundCurrent && !nextActivity) {
-                                    // Found the next activity
-                                    nextActivity = {
-                                        type: 'activity',
-                                        data: activity,
-                                        label: 'Next Activity'
-                                    };
-                                    return nextActivity;
-                                }
-
-                                if (activity.id === currentActivityId) {
-                                    foundCurrent = true;
-
-                                    // Check if there's a next activity in same submoment
-                                    if (activityIndex < submoment.activities.length - 1) {
-                                        return {
-                                            type: 'activity',
-                                            data: submoment.activities[activityIndex + 1],
-                                            label: 'Next Activity'
-                                        };
-                                    }
-
-                                    // Check if there's a next submoment
-                                    if (submomentIndex < moment.submoments.length - 1) {
-                                        const nextSub = moment.submoments[submomentIndex + 1];
-                                        if (nextSub.activities.length > 0) {
-                                            return {
-                                                type: 'submoment',
-                                                data: nextSub.activities[0],
-                                                label: 'Next Sub-moment',
-                                                submomentTitle: nextSub.title
-                                            };
-                                        }
-                                    }
-
-                                    // Check if there's a next moment
-                                    if (momentIndex < module.moments.length - 1) {
-                                        const nextMom = module.moments[momentIndex + 1];
-                                        if (nextMom.submoments.length > 0 && nextMom.submoments[0].activities.length > 0) {
-                                            return {
-                                                type: 'moment',
-                                                data: nextMom.submoments[0].activities[0],
-                                                label: 'Next Moment',
-                                                momentTitle: nextMom.title
-                                            };
-                                        }
-                                    }
-
-                                    // Check if there's a next module
-                                    if (moduleIndex < this.courseData.modules.length - 1) {
-                                        const nextMod = this.courseData.modules[moduleIndex + 1];
-                                        if (nextMod.moments.length > 0 && 
-                                            nextMod.moments[0].submoments.length > 0 && 
-                                            nextMod.moments[0].submoments[0].activities.length > 0) {
-                                            return {
-                                                type: 'module',
-                                                data: nextMod.moments[0].submoments[0].activities[0],
-                                                label: 'Next Module',
-                                                moduleTitle: nextMod.title
-                                            };
-                                        }
-                                    }
-
-                                    // No next section found
-                                    return null;
-                                }
-                            }
-                        }
-                    }
+                const nextActivity = this.getNextActivity();
+                if (nextActivity) {
+                    return {
+                        type: 'activity',
+                        data: nextActivity,
+                        label: 'Next Activity'
+                    };
                 }
 
                 return null;
@@ -5625,93 +5636,125 @@ updateNavFoldAllAvailability() {
                     const num = Number(raw);
                     if (!Number.isFinite(num)) return 0;
                     const u = (unit === undefined || unit === null) ? '' : String(unit).trim().toLowerCase();
+
+                    // Check if unit is numeric (multiplier in seconds)
+                    const numericUnit = Number(u);
+                    if (Number.isFinite(numericUnit) && numericUnit > 0) {
+                        // Unit is a numeric multiplier in seconds, convert to minutes
+                        return Math.round((num * numericUnit) / 60);
+                    }
+
+                    // Check for text-based units
                     if (u.startsWith('hour') || u === 'h' || u === 'hrs' || u === 'hr') return Math.round(num * 60);
                     // Default: treat as minutes
                     return Math.round(num);
                 };
 
-                const modules = sourceData.activities.map(srcModule => {
+                // Helper function to convert a step to an activity
+                const stepToActivity = (srcStep) => {
+                    let slides = [];
+
+                    if (srcStep.presentation) {
+                        if (Array.isArray(srcStep.presentation)) {
+                            slides = srcStep.presentation.map((slide, idx) => ({
+                                number: idx + 1,
+                                title: '',
+                                content: slide.content || slide.html || ''
+                            }));
+                        } else if (typeof srcStep.presentation === 'string') {
+                            const mdSlideSeparator = /(?:^|\r?\n)\s*---\s*(?:\r?\n|$)/;
+
+                            if (mdSlideSeparator.test(srcStep.presentation)) {
+                                const rawSlides = srcStep.presentation.split(mdSlideSeparator);
+                                const cleanSlides = rawSlides
+                                    .map(s => (s || '').trim())
+                                    .filter(s => s.length > 0);
+
+                                if (cleanSlides.length > 0) {
+                                    slides = cleanSlides.map((content, idx) => ({
+                                        number: idx + 1,
+                                        title: '',
+                                        content: this.simpleMarkdownToHtml(content)
+                                    }));
+                                }
+                            }
+
+                            if (slides.length === 0) {
+                                slides = [{
+                                    number: 1,
+                                    title: '',
+                                    content: this.simpleMarkdownToHtml(srcStep.presentation)
+                                }];
+                            }
+                        }
+                    }
+
+                    if (slides.length === 0) {
+                        slides = [{
+                            number: 1,
+                            title: '',
+                            content: '<div class="slide-content"><p><em>No presentation content defined for this activity.</em></p></div>'
+                        }];
+                    }
+
                     return {
-                        id: srcModule.id || `mod-${Math.random().toString(36).substr(2, 9)}`,
-                        title: srcModule.title || 'Untitled Module',
-                        plannedMinutes: toMinutes(srcModule.targetTime || 0, globalTargetUnit),
-                        moments: (srcModule.moments || []).map(srcMoment => {
-                            return {
+                        id: srcStep.id || `act-${Math.random().toString(36).substr(2, 9)}`,
+                        title: srcStep.title || 'Untitled Activity',
+                        plannedMinutes: toMinutes(srcStep.duration || 0, srcStep.unit || srcStep.durationUnit || 'minutes'),
+                        slides: slides
+                    };
+                };
+
+                const modules = sourceData.activities.map(srcModule => {
+                    // Collect all activities from all moments, handling each moment individually
+                    const moduleActivities = [];
+                    const moments = [];
+
+                    (srcModule.moments || []).forEach(srcMoment => {
+                        const hasSubmoments = (srcMoment.subMoments && srcMoment.subMoments.length > 0) ||
+                                             (srcMoment.submoments && srcMoment.submoments.length > 0);
+                        const hasStepsDirectly = srcMoment.steps && Array.isArray(srcMoment.steps) && srcMoment.steps.length > 0;
+
+                        if (hasStepsDirectly && !hasSubmoments) {
+                            // This moment has steps directly - convert to module-level activities
+                            srcMoment.steps.forEach(srcStep => {
+                                moduleActivities.push(stepToActivity(srcStep));
+                            });
+                        } else if (hasSubmoments) {
+                            // This moment has proper hierarchy - keep as moment
+                            moments.push({
                                 id: srcMoment.id || `mom-${Math.random().toString(36).substr(2, 9)}`,
                                 title: srcMoment.title || 'Untitled Moment',
                                 submoments: (srcMoment.subMoments || srcMoment.submoments || []).map(srcSub => {
                                     return {
                                         id: srcSub.id || `sub-${Math.random().toString(36).substr(2, 9)}`,
                                         title: srcSub.title || 'Untitled Submoment',
-                                        activities: (srcSub.steps || []).map(srcStep => {
-                                            // Handle presentation field for slides
-                                            let slides = [];
-                                            
-                                            // Check if presentation exists (priority as requested)
-                                            if (srcStep.presentation) {
-                                                if (Array.isArray(srcStep.presentation)) {
-                                                    // Multiple slides (Array format)
-                                                    slides = srcStep.presentation.map((slide, idx) => ({
-                                                        number: idx + 1,
-                                                        title: '', // Intentionally empty title as per requirements
-                                                        content: slide.content || slide.html || ''
-                                                    }));
-                                                } else if (typeof srcStep.presentation === 'string') {
-                                                    // String format - Split into slides using Markdown separator line: ---
-                                                    // A new slide starts whenever a line containing only --- appears.
-                                                    const mdSlideSeparator = /(?:^|\r?\n)\s*---\s*(?:\r?\n|$)/;
-                                                    
-                                                    if (mdSlideSeparator.test(srcStep.presentation)) {
-                                                        // Split by Markdown HR separator
-                                                        const rawSlides = srcStep.presentation.split(mdSlideSeparator);
-                                                        
-                                                        // Filter out empty/whitespace-only slides resulting from the split
-                                                        const cleanSlides = rawSlides
-                                                            .map(s => (s || '').trim())
-                                                            .filter(s => s.length > 0);
-                                                        
-                                                        if (cleanSlides.length > 0) {
-                                                            slides = cleanSlides.map((content, idx) => ({
-                                                                number: idx + 1,
-                                                                title: '', // Intentionally empty title as per requirements
-                                                                content: this.simpleMarkdownToHtml(content) // Basic conversion
-                                                            }));
-                                                        }
-                                                    }
-
-                                                    
-                                                    // If no Markdown separator was found (or split produced no content), treat as single slide
-                                                    if (slides.length === 0) {
-                                                         slides = [{
-                                                            number: 1,
-                                                            title: '', // Intentionally empty title as per requirements
-                                                            content: this.simpleMarkdownToHtml(srcStep.presentation)
-                                                        }];
-                                                    }
-                                                }
-                                            }
-                                            
-                                            // If no presentation content or empty array, fallback to placeholder
-                                            if (slides.length === 0) {
-                                                slides = [{
-                                                    number: 1,
-                                                    title: '', // Intentionally empty title as per requirements
-                                                    content: '<div class="slide-content"><p><em>No presentation content defined for this activity.</em></p></div>'
-                                                }];
-                                            }
-
-                                            return {
-                                                id: srcStep.id || `act-${Math.random().toString(36).substr(2, 9)}`,
-                                                title: srcStep.title || 'Untitled Activity',
-                                                plannedMinutes: toMinutes(srcStep.duration || 0, srcStep.durationUnit || 'minutes'),
-                                                slides: slides
-                                            };
-                                        })
+                                        activities: (srcSub.steps || []).map(srcStep => stepToActivity(srcStep))
                                     };
                                 })
-                            };
-                        })
+                            });
+                        }
+                        // If moment has neither submoments nor steps, skip it (empty moment like lunch break)
+                    });
+
+                    // Build module object with appropriate structure
+                    const moduleObj = {
+                        id: srcModule.id || `mod-${Math.random().toString(36).substr(2, 9)}`,
+                        title: srcModule.title || 'Untitled Module',
+                        plannedMinutes: toMinutes(srcModule.targetTime || 0, globalTargetUnit)
                     };
+
+                    // Add moments if any exist
+                    if (moments.length > 0) {
+                        moduleObj.moments = moments;
+                    }
+
+                    // Add module-level activities if any exist
+                    if (moduleActivities.length > 0) {
+                        moduleObj.activities = moduleActivities;
+                    }
+
+                    return moduleObj;
                 });
 
                 return {
@@ -5735,11 +5778,33 @@ updateNavFoldAllAvailability() {
                 // 2) Remove purely whitespace lines left behind
                 html = html.replace(/^\s*[\r\n]/gm, '');
 
+                // Handle malformed Base64 images (missing closing parenthesis)
+                // Pattern: ![...]data:image/...base64,... without closing )
+                html = html.replace(/!\[([^\]]*)\]\((data:image\/[^;]+;base64,[A-Za-z0-9+/=]+)(?!\))/gim, (m, alt, url) => {
+                    console.warn('Detected malformed Base64 image (missing closing parenthesis):', m.substring(0, 100) + '...');
+                    return `<div class="image-error" style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 20px; margin: 10px 0; text-align: center;">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ffc107" stroke-width="2" style="margin-bottom: 10px;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <h3 style="color: #856404; margin: 10px 0; font-size: 18px;">Image Data Error</h3>
+                        <p style="color: #856404; margin: 5px 0;">The Base64 image data is incomplete or malformed.</p>
+                        <p style="color: #856404; margin: 5px 0; font-size: 14px;">Please re-export your JSON file with complete image data.</p>
+                        <details style="margin-top: 15px; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto;">
+                            <summary style="cursor: pointer; color: #856404; font-weight: bold;">Technical Details</summary>
+                            <p style="color: #856404; font-size: 12px; margin-top: 10px; word-break: break-all;">The markdown image syntax is missing the closing parenthesis. Expected format: <code>![alt](data:image/...)</code></p>
+                        </details>
+                    </div>`;
+                });
+
                 // Images: ![alt](url) -> <img>
                 // (Do this before link handling so images are not converted into anchors.)
-                html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/gim, (m, alt, url) => {
+                // Updated regex to handle long Base64 strings (including newlines)
+                html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/gims, (m, alt, url) => {
                     const safeAlt = (alt || '').replace(/"/g, '&quot;');
-                    const safeUrl = (url || '').trim().replace(/"/g, '&quot;');
+                    // Remove any whitespace/newlines from the URL (important for Base64)
+                    const safeUrl = (url || '').replace(/\s/g, '').replace(/"/g, '&quot;');
                     return `<img class="md-image" src="${safeUrl}" alt="${safeAlt}" loading="lazy">`;
                 });
 
@@ -5827,15 +5892,43 @@ updateNavFoldAllAvailability() {
                 // Validate each module
                 data.modules.forEach((module, moduleIndex) => {
                     const prefix = `Module ${moduleIndex + 1}`;
-                    
+
                     if (!module.id) errors.push(`${prefix}: Missing "id"`);
                     if (!module.title) errors.push(`${prefix}: Missing "title"`);
-                    if (!Array.isArray(module.moments)) {
-                        errors.push(`${prefix}: Missing or invalid "moments" array`);
+
+                    // Module must have either moments or activities
+                    const hasMoments = Array.isArray(module.moments) && module.moments.length > 0;
+                    const hasActivities = Array.isArray(module.activities) && module.activities.length > 0;
+
+                    if (!hasMoments && !hasActivities) {
+                        errors.push(`${prefix}: Must have either "moments" or "activities" array`);
                         return;
                     }
 
-                    module.moments.forEach((moment, momentIndex) => {
+                    // Validate module-level activities if they exist
+                    if (hasActivities) {
+                        module.activities.forEach((activity, actIndex) => {
+                            const actPrefix = `${prefix} > Activity ${actIndex + 1}`;
+
+                            if (!activity.id) errors.push(`${actPrefix}: Missing "id"`);
+                            if (!activity.title) errors.push(`${actPrefix}: Missing "title"`);
+                            if (!Array.isArray(activity.slides)) {
+                                errors.push(`${actPrefix}: Missing or invalid "slides" array`);
+                            } else if (activity.slides.length === 0) {
+                                errors.push(`${actPrefix}: At least one slide is required`);
+                            } else {
+                                activity.slides.forEach((slide, slideIndex) => {
+                                    const slidePrefix = `${actPrefix} > Slide ${slideIndex + 1}`;
+                                    if (slide.number === undefined) errors.push(`${slidePrefix}: Missing "number"`);
+                                    if (!slide.content) errors.push(`${slidePrefix}: Missing "content"`);
+                                });
+                            }
+                        });
+                    }
+
+                    // Validate moments if they exist
+                    if (hasMoments) {
+                        module.moments.forEach((moment, momentIndex) => {
                         const momentPrefix = `${prefix} > Moment ${momentIndex + 1}`;
                         
                         if (!moment.id) errors.push(`${momentPrefix}: Missing "id"`);
@@ -5845,39 +5938,40 @@ updateNavFoldAllAvailability() {
                             return;
                         }
 
-                        moment.submoments.forEach((submoment, subIndex) => {
-                            const subPrefix = `${momentPrefix} > Submoment ${subIndex + 1}`;
-                            
-                            if (!submoment.id) errors.push(`${subPrefix}: Missing "id"`);
-                            if (!submoment.title) errors.push(`${subPrefix}: Missing "title"`);
-                            if (!Array.isArray(submoment.activities)) {
-                                errors.push(`${subPrefix}: Missing or invalid "activities" array`);
-                                return;
-                            }
+                            moment.submoments.forEach((submoment, subIndex) => {
+                                const subPrefix = `${momentPrefix} > Submoment ${subIndex + 1}`;
 
-                            submoment.activities.forEach((activity, actIndex) => {
-                                const actPrefix = `${subPrefix} > Activity ${actIndex + 1}`;
-                                
-                                if (!activity.id) errors.push(`${actPrefix}: Missing "id"`);
-                                if (!activity.title) errors.push(`${actPrefix}: Missing "title"`);
-                                if (!Array.isArray(activity.slides)) {
-                                    errors.push(`${actPrefix}: Missing or invalid "slides" array`);
+                                if (!submoment.id) errors.push(`${subPrefix}: Missing "id"`);
+                                if (!submoment.title) errors.push(`${subPrefix}: Missing "title"`);
+                                if (!Array.isArray(submoment.activities)) {
+                                    errors.push(`${subPrefix}: Missing or invalid "activities" array`);
                                     return;
                                 }
 
-                                if (activity.slides.length === 0) {
-                                    errors.push(`${actPrefix}: At least one slide is required`);
-                                }
+                                submoment.activities.forEach((activity, actIndex) => {
+                                    const actPrefix = `${subPrefix} > Activity ${actIndex + 1}`;
 
-                                activity.slides.forEach((slide, slideIndex) => {
-                                    const slidePrefix = `${actPrefix} > Slide ${slideIndex + 1}`;
-                                    
-                                    if (slide.number === undefined) errors.push(`${slidePrefix}: Missing "number"`);
-                                    if (!slide.content) errors.push(`${slidePrefix}: Missing "content"`);
+                                    if (!activity.id) errors.push(`${actPrefix}: Missing "id"`);
+                                    if (!activity.title) errors.push(`${actPrefix}: Missing "title"`);
+                                    if (!Array.isArray(activity.slides)) {
+                                        errors.push(`${actPrefix}: Missing or invalid "slides" array`);
+                                        return;
+                                    }
+
+                                    if (activity.slides.length === 0) {
+                                        errors.push(`${actPrefix}: At least one slide is required`);
+                                    }
+
+                                    activity.slides.forEach((slide, slideIndex) => {
+                                        const slidePrefix = `${actPrefix} > Slide ${slideIndex + 1}`;
+
+                                        if (slide.number === undefined) errors.push(`${slidePrefix}: Missing "number"`);
+                                        if (!slide.content) errors.push(`${slidePrefix}: Missing "content"`);
+                                    });
                                 });
                             });
                         });
-                    });
+                    }
                 });
 
                 return {
@@ -6085,6 +6179,17 @@ this.activityTimer = {
                 cd.modules.forEach((module) => {
                     plannedFromModules += parseInt(module.plannedMinutes || 0, 10) || 0;
 
+                    // Count module-level activities
+                    if (module.activities && Array.isArray(module.activities)) {
+                        module.activities.forEach((activity) => {
+                            activityCount += 1;
+                            plannedFromActivities += parseInt(activity.plannedMinutes || 0, 10) || 0;
+                            const slides = Array.isArray(activity.slides) ? activity.slides : [];
+                            slideCount += slides.length;
+                        });
+                    }
+
+                    // Count activities within moments and submoments
                     (module.moments || []).forEach((moment) => {
                         (moment.submoments || []).forEach((submoment) => {
                             (submoment.activities || []).forEach((activity) => {
@@ -6120,6 +6225,13 @@ this.activityTimer = {
                     // Count submoments and activities for quick scan
                     let submoments = 0;
                     let activities = 0;
+
+                    // Count module-level activities
+                    if (Array.isArray(module.activities)) {
+                        activities += module.activities.length;
+                    }
+
+                    // Count activities within moments and submoments
                     if (Array.isArray(module.moments)) {
                         module.moments.forEach(m => {
                             const subs = Array.isArray(m.submoments) ? m.submoments.length : 0;
@@ -6186,6 +6298,16 @@ this.activityTimer = {
                 data.modules.forEach(module => {
                     let moduleDuration = module.plannedMinutes || 0;
 
+                    // Count module-level activities
+                    if (module.activities && Array.isArray(module.activities)) {
+                        totalActivities += module.activities.length;
+                        if (!moduleDuration) {
+                            moduleDuration += module.activities.reduce((sum, act) => {
+                                return sum + (act.plannedMinutes || 0);
+                            }, 0);
+                        }
+                    }
+
                     if (!moduleDuration && module.moments) {
                         // Calculer depuis les moments si plannedMinutes n'existe pas
                         moduleDuration = module.moments.reduce((sum, mom) => {
@@ -6195,7 +6317,7 @@ this.activityTimer = {
 
                     totalMinutes += moduleDuration;
 
-                    // Compter activités
+                    // Compter activités dans moments/submoments
                     module.moments?.forEach(mom => {
                         mom.submoments?.forEach(sub => {
                             totalActivities += sub.activities?.length || 0;
@@ -6245,6 +6367,27 @@ this.activityTimer = {
                                 <span class="timeline-module-duration">${this.formatMinutes(moduleDuration)}</span>
                             </div>
                     `;
+
+                    // Show module-level activities if they exist
+                    if (module.activities && Array.isArray(module.activities) && module.activities.length > 0) {
+                        html += `<div class="timeline-submoments">`;
+                        module.activities.forEach((activity, actIndex) => {
+                            const actNum = `${moduleNum}.${actIndex + 1}`;
+                            const actDuration = activity.plannedMinutes || 0;
+                            const slideCount = (activity.slides && activity.slides.length) ? activity.slides.length : 0;
+
+                            html += `
+                                <div class="timeline-submoment">
+                                    <span class="timeline-submoment-title">${actNum} ${this.escapeHTML(activity.title)}</span>
+                                    <div class="timeline-submoment-info">
+                                        <span class="timeline-submoment-activities">${slideCount} slide${slideCount !== 1 ? 's' : ''}</span>
+                                        <span class="timeline-submoment-duration">${this.formatMinutes(actDuration)}</span>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        html += `</div>`;
+                    }
 
                     // Générer les moments
                     if (module.moments && module.moments.length > 0) {
