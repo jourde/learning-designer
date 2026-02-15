@@ -823,12 +823,13 @@
         }
 
 .nav-actions-row {
-    padding: 0 20px 12px;
+    padding: 0 12px 12px;
     border-bottom: 1px solid var(--color-border);
     background: var(--color-surface);
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 4px;
+    flex-wrap: nowrap;
 }
 
 .nav-action-btn {
@@ -855,13 +856,16 @@
 .nav-icon-text-btn {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     background: none;
     border: none;
     cursor: pointer;
-    padding: 4px 8px;
+    padding: 6px 6px;
     border-radius: 6px;
     transition: background 0.15s ease;
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
 }
 
 .nav-icon-text-btn:hover {
@@ -869,14 +873,18 @@
 }
 
 .nav-icon-text-btn .material-symbols-outlined {
-    font-size: 22px;
+    font-size: 20px;
     color: var(--color-text-secondary);
+    flex-shrink: 0;
 }
 
 .nav-icon-text-btn span:last-child {
-    font-size: 13px;
+    font-size: 12px;
     color: #6B7280;
     font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .nav-icon-text-btn:disabled {
@@ -904,6 +912,62 @@
 .nav-action-btn[aria-pressed="true"] .nav-action-icon {
     transform: rotate(90deg);
 }
+
+/* Ignored elements styles */
+.nav-moment.ignored,
+.nav-submoment.ignored,
+.nav-activity.ignored {
+    display: none !important;
+}
+
+body.show-ignored .nav-moment.ignored,
+body.show-ignored .nav-submoment.ignored,
+body.show-ignored .nav-activity.ignored {
+    display: block !important;
+    opacity: 1;
+    background-color: #E5E7EB !important;
+    border-left: 3px solid #9CA3AF !important;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Apply background to child headers for moments/submoments */
+body.show-ignored .nav-moment.ignored .nav-item-header,
+body.show-ignored .nav-submoment.ignored .nav-item-header {
+    background-color: transparent !important;
+}
+
+/* Grey text and strikethrough for ignored items */
+body.show-ignored .nav-moment.ignored .nav-item-title,
+body.show-ignored .nav-submoment.ignored .nav-item-title,
+body.show-ignored .nav-activity.ignored .nav-activity-label {
+    color: #6B7280 !important;
+    text-decoration: line-through;
+}
+
+body.show-ignored .nav-moment.ignored .nav-item-title::after,
+body.show-ignored .nav-submoment.ignored .nav-item-title::after,
+body.show-ignored .nav-activity.ignored .nav-activity-label::after {
+    content: " (ignored)";
+    font-size: 0.75em;
+    color: #9CA3AF;
+    font-style: italic;
+    text-decoration: none;
+}
+
+/* Dark mode adjustments for ignored items */
+[data-theme="dark"] body.show-ignored .nav-moment.ignored,
+[data-theme="dark"] body.show-ignored .nav-submoment.ignored,
+[data-theme="dark"] body.show-ignored .nav-activity.ignored {
+    background-color: #374151 !important;
+    border-left-color: #6B7280 !important;
+}
+
+[data-theme="dark"] body.show-ignored .nav-moment.ignored .nav-item-title,
+[data-theme="dark"] body.show-ignored .nav-submoment.ignored .nav-item-title,
+[data-theme="dark"] body.show-ignored .nav-activity.ignored .nav-activity-label {
+    color: #9CA3AF !important;
+}
+
 /* Navigation Tree */
         .nav-tree {
             flex: 1;
@@ -1543,6 +1607,55 @@
 
         .slide-title {
             display: none; /* Force hide any slide titles */
+        }
+
+        /* Ignored slide banner */
+        .ignored-slide-banner {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: #E5E7EB;
+            border-left: 4px solid #9CA3AF;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            font-size: 16px;
+            color: #6B7280;
+        }
+
+        .ignored-slide-banner .material-symbols-outlined {
+            font-size: 24px;
+        }
+
+        /* Dark mode for ignored banner */
+        [data-theme="dark"] .ignored-slide-banner {
+            background: #374151;
+            border-left-color: #6B7280;
+            color: #9CA3AF;
+        }
+
+        /* Grey out ignored slide content */
+        .slide-ignored .slide-content {
+            background: #F3F4F6;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #E5E7EB;
+        }
+
+        .slide-ignored .slide-content * {
+            color: #9CA3AF !important;
+            text-decoration: line-through;
+        }
+
+        /* Dark mode for ignored slide content */
+        [data-theme="dark"] .slide-ignored .slide-content {
+            background: #1F2937;
+            border-color: #374151;
+        }
+
+        [data-theme="dark"] .slide-ignored .slide-content * {
+            color: #6B7280 !important;
         }
 
         .slide-content {
@@ -3310,6 +3423,10 @@
                     <span class="material-symbols-outlined nav-action-icon" aria-hidden="true">unfold_less</span>
                     <span class="nav-action-label">Fold all</span>
                 </button>
+                <button class="nav-icon-text-btn" id="toggleIgnoredBtn" type="button" aria-pressed="false" title="Show/hide ignored items">
+                    <span class="material-symbols-outlined" aria-hidden="true">visibility_off</span>
+                    <span>Ignored</span>
+                </button>
                 <button class="nav-icon-text-btn" onclick="app.showTimeline()" aria-label="Afficher la chronologie de la formation" type="button">
                     <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
                     <span>Plan</span>
@@ -3779,6 +3896,7 @@
             searchQuery: '',
             expandedNodes: new Set(),
 navAllFolded: false,
+showIgnored: false,
             // Timer state
             activityTimer: {
                 elapsed: 0,
@@ -3813,6 +3931,7 @@ navAllFolded: false,
                 this.buildNavigation();
                 this.attachEventListeners();
                 this.loadNavFoldAllState();
+                this.loadIgnoredState();
                 this.loadStateFromHash();
                 this.loadTimerState();
                 // Seen-state markers removed (no persistent "visited/completed" ticks)
@@ -3904,6 +4023,47 @@ updateNavFoldAllAvailability() {
     btn.setAttribute('aria-disabled', (!hasContent).toString());
 },
 
+// ===== TOGGLE IGNORED ITEMS =====
+toggleIgnored() {
+    this.showIgnored = !this.showIgnored;
+    console.log('Toggle ignored items:', this.showIgnored);
+    this.applyIgnoredState(true);
+},
+
+applyIgnoredState(persist) {
+    const btn = document.getElementById('toggleIgnoredBtn');
+
+    if (this.showIgnored) {
+        document.body.classList.add('show-ignored');
+        console.log('Added show-ignored class to body');
+    } else {
+        document.body.classList.remove('show-ignored');
+        console.log('Removed show-ignored class from body');
+    }
+
+    if (btn) {
+        btn.setAttribute('aria-pressed', this.showIgnored ? 'true' : 'false');
+        const iconEl = btn.querySelector('.material-symbols-outlined');
+        if (iconEl) {
+            iconEl.textContent = this.showIgnored ? 'visibility' : 'visibility_off';
+        }
+    }
+
+    if (persist) {
+        this.safeLocalStorageSet('showIgnored', this.showIgnored ? '1' : '0');
+    }
+
+    // Log ignored elements for debugging
+    const ignoredElements = document.querySelectorAll('.nav-moment.ignored, .nav-submoment.ignored, .nav-activity.ignored');
+    console.log('Found', ignoredElements.length, 'ignored elements');
+},
+
+loadIgnoredState() {
+    const saved = this.safeLocalStorageGet('showIgnored');
+    this.showIgnored = (saved === '1');
+    this.applyIgnoredState(false);
+},
+
             buildNavigation() {
 
                 const navTree = document.getElementById('navTree');
@@ -3963,6 +4123,11 @@ updateNavFoldAllAvailability() {
     const momentDiv = document.createElement('div');
     momentDiv.className = 'nav-moment';
 
+    // Add ignored class if moment is marked as ignored
+    if (moment.ignored === true) {
+        momentDiv.classList.add('ignored');
+    }
+
     const headerDiv = document.createElement('div');
     headerDiv.className = 'nav-item-header nav-moment-header';
     headerDiv.innerHTML = `
@@ -4005,6 +4170,11 @@ updateNavFoldAllAvailability() {
             createSubmomentElement(submoment, moduleIndex, momentIndex, submomentIndex) {
     const submomentDiv = document.createElement('div');
     submomentDiv.className = 'nav-submoment';
+
+    // Add ignored class if submoment is marked as ignored
+    if (submoment.ignored === true) {
+        submomentDiv.classList.add('ignored');
+    }
 
     const headerDiv = document.createElement('div');
     headerDiv.className = 'nav-item-header nav-submoment-header';
@@ -4051,6 +4221,11 @@ updateNavFoldAllAvailability() {
                 activityDiv.setAttribute('role', 'button');
                 activityDiv.setAttribute('tabindex', '0');
                 activityDiv.dataset.activityId = activity.id;
+
+                // Add ignored class if activity is marked as ignored
+                if (activity.ignored === true) {
+                    activityDiv.classList.add('ignored');
+                }
 
                 const slideCount = (activity.slides && activity.slides.length) ? activity.slides.length : 0;
 
@@ -4226,9 +4401,16 @@ updateNavFoldAllAvailability() {
 
                 // We purposefully do NOT render the title here as per requirements.
                 // Only the content is shown.
-                
+
+                // Check if activity is ignored
+                const isIgnored = this.currentActivity.ignored === true;
+                const ignoredBanner = isIgnored
+                    ? '<div class="ignored-slide-banner"><span class="material-symbols-outlined">visibility_off</span> Ignored: please skip</div>'
+                    : '';
+
                 container.innerHTML = `
-                    <div class="slide">
+                    <div class="slide ${isIgnored ? 'slide-ignored' : ''}">
+                        ${ignoredBanner}
                         <div class="slide-content">${this.sanitizeRichHTML(slide.content)}</div>
                     </div>
                 `;
@@ -4371,6 +4553,9 @@ updateNavFoldAllAvailability() {
                 // Helper function to search through activities
                 const searchActivities = (activities, module, moment = null, submoment = null) => {
                     activities.forEach(activity => {
+                        // Skip ignored activities
+                        if (activity.ignored === true) return;
+
                         // Check activity title
                         if (activity.title.toLowerCase().includes(this.searchQuery)) {
                             results.push({
@@ -4427,8 +4612,14 @@ updateNavFoldAllAvailability() {
                     // Search activities within moments and submoments
                     if (module.moments && Array.isArray(module.moments)) {
                         module.moments.forEach(moment => {
+                            // Skip ignored moments
+                            if (moment.ignored === true) return;
+
                             if (moment.submoments && Array.isArray(moment.submoments)) {
                                 moment.submoments.forEach(submoment => {
+                                    // Skip ignored submoments
+                                    if (submoment.ignored === true) return;
+
                                     if (submoment.activities && Array.isArray(submoment.activities)) {
                                         searchActivities(submoment.activities, module, moment, submoment);
                                     }
@@ -4797,6 +4988,11 @@ updateNavFoldAllAvailability() {
                     navFoldAllBtn.addEventListener('click', () => this.toggleNavFoldAll());
                 }
 
+                const toggleIgnoredBtn = document.getElementById('toggleIgnoredBtn');
+                if (toggleIgnoredBtn) {
+                    toggleIgnoredBtn.addEventListener('click', () => this.toggleIgnored());
+                }
+
                 // Navigation click (event delegation) - robust even after re-render
                 const navTree = document.getElementById('navTree');
                 if (navTree) {
@@ -5061,18 +5257,30 @@ updateNavFoldAllAvailability() {
                     // Add module-level activities first (if they exist)
                     if (module.activities && Array.isArray(module.activities)) {
                         module.activities.forEach(activity => {
-                            list.push(activity);
+                            // Skip ignored activities
+                            if (activity.ignored !== true) {
+                                list.push(activity);
+                            }
                         });
                     }
 
                     // Add activities from moments and submoments
                     if (module.moments && Array.isArray(module.moments)) {
                         module.moments.forEach(moment => {
+                            // Skip ignored moments
+                            if (moment.ignored === true) return;
+
                             if (moment.submoments && Array.isArray(moment.submoments)) {
                                 moment.submoments.forEach(submoment => {
+                                    // Skip ignored submoments
+                                    if (submoment.ignored === true) return;
+
                                     if (submoment.activities && Array.isArray(submoment.activities)) {
                                         submoment.activities.forEach(activity => {
-                                            list.push(activity);
+                                            // Skip ignored activities
+                                            if (activity.ignored !== true) {
+                                                list.push(activity);
+                                            }
                                         });
                                     }
                                 });
@@ -5211,8 +5419,17 @@ updateNavFoldAllAvailability() {
 
                 this.courseData.modules.forEach(module => {
                     (module.moments || []).forEach(moment => {
+                        // Skip ignored moments
+                        if (moment.ignored === true) return;
+
                         (moment.submoments || []).forEach(submoment => {
+                            // Skip ignored submoments
+                            if (submoment.ignored === true) return;
+
                             (submoment.activities || []).forEach(activity => {
+                                // Skip ignored activities
+                                if (activity.ignored === true) return;
+
                                 const slideCount = (activity.slides && activity.slides.length) ? activity.slides.length : 0;
                                 totalSlides += slideCount;
 
@@ -5755,6 +5972,7 @@ updateNavFoldAllAvailability() {
                         id: srcStep.id || `act-${Math.random().toString(36).substr(2, 9)}`,
                         title: srcStep.title || 'Untitled Activity',
                         plannedMinutes: toMinutes(srcStep.duration || 0, srcStep.unit || srcStep.durationUnit || 'minutes'),
+                        ignored: srcStep.ignored || false,
                         slides: slides
                     };
                 };
@@ -5779,10 +5997,12 @@ updateNavFoldAllAvailability() {
                             moments.push({
                                 id: srcMoment.id || `mom-${Math.random().toString(36).substr(2, 9)}`,
                                 title: srcMoment.title || 'Untitled Moment',
+                                ignored: srcMoment.ignored || false,
                                 submoments: (srcMoment.subMoments || srcMoment.submoments || []).map(srcSub => {
                                     return {
                                         id: srcSub.id || `sub-${Math.random().toString(36).substr(2, 9)}`,
                                         title: srcSub.title || 'Untitled Submoment',
+                                        ignored: srcSub.ignored || false,
                                         activities: (srcSub.steps || []).map(srcStep => stepToActivity(srcStep))
                                     };
                                 })
@@ -6236,6 +6456,9 @@ this.activityTimer = {
                     // Count module-level activities
                     if (module.activities && Array.isArray(module.activities)) {
                         module.activities.forEach((activity) => {
+                            // Skip ignored activities
+                            if (activity.ignored === true) return;
+
                             activityCount += 1;
                             plannedFromActivities += parseInt(activity.plannedMinutes || 0, 10) || 0;
                             const slides = Array.isArray(activity.slides) ? activity.slides : [];
@@ -6245,8 +6468,17 @@ this.activityTimer = {
 
                     // Count activities within moments and submoments
                     (module.moments || []).forEach((moment) => {
+                        // Skip ignored moments
+                        if (moment.ignored === true) return;
+
                         (moment.submoments || []).forEach((submoment) => {
+                            // Skip ignored submoments
+                            if (submoment.ignored === true) return;
+
                             (submoment.activities || []).forEach((activity) => {
+                                // Skip ignored activities
+                                if (activity.ignored === true) return;
+
                                 activityCount += 1;
                                 plannedFromActivities += parseInt(activity.plannedMinutes || 0, 10) || 0;
                                 const slides = Array.isArray(activity.slides) ? activity.slides : [];
@@ -6282,17 +6514,29 @@ this.activityTimer = {
 
                     // Count module-level activities
                     if (Array.isArray(module.activities)) {
-                        activities += module.activities.length;
+                        activities += module.activities.filter(act => act.ignored !== true).length;
                     }
 
                     // Count activities within moments and submoments
                     if (Array.isArray(module.moments)) {
                         module.moments.forEach(m => {
-                            const subs = Array.isArray(m.submoments) ? m.submoments.length : 0;
-                            submoments += subs;
+                            // Skip ignored moments
+                            if (m.ignored === true) return;
+
+                            const nonIgnoredSubs = Array.isArray(m.submoments)
+                                ? m.submoments.filter(s => s.ignored !== true)
+                                : [];
+                            submoments += nonIgnoredSubs.length;
+
                             if (Array.isArray(m.submoments)) {
                                 m.submoments.forEach(s => {
-                                    activities += Array.isArray(s.activities) ? s.activities.length : 0;
+                                    // Skip ignored submoments
+                                    if (s.ignored === true) return;
+
+                                    const nonIgnoredActivities = Array.isArray(s.activities)
+                                        ? s.activities.filter(act => act.ignored !== true)
+                                        : [];
+                                    activities += nonIgnoredActivities.length;
                                 });
                             }
                         });
@@ -6336,6 +6580,8 @@ this.activityTimer = {
                 const calculateSubmomentDuration = (submoment) => {
                     if (!submoment.activities) return 0;
                     return submoment.activities.reduce((sum, act) => {
+                        // Skip ignored activities
+                        if (act.ignored === true) return sum;
                         return sum + (act.plannedMinutes || 0);
                     }, 0);
                 };
@@ -6344,6 +6590,8 @@ this.activityTimer = {
                 const calculateMomentDuration = (moment) => {
                     if (!moment.submoments) return 0;
                     return moment.submoments.reduce((sum, sub) => {
+                        // Skip ignored submoments
+                        if (sub.ignored === true) return sum;
                         return sum + calculateSubmomentDuration(sub);
                     }, 0);
                 };
@@ -6354,9 +6602,11 @@ this.activityTimer = {
 
                     // Count module-level activities
                     if (module.activities && Array.isArray(module.activities)) {
-                        totalActivities += module.activities.length;
+                        const nonIgnoredActivities = module.activities.filter(act => act.ignored !== true);
+                        totalActivities += nonIgnoredActivities.length;
                         if (!moduleDuration) {
                             moduleDuration += module.activities.reduce((sum, act) => {
+                                if (act.ignored === true) return sum;
                                 return sum + (act.plannedMinutes || 0);
                             }, 0);
                         }
@@ -6365,6 +6615,8 @@ this.activityTimer = {
                     if (!moduleDuration && module.moments) {
                         // Calculer depuis les moments si plannedMinutes n'existe pas
                         moduleDuration = module.moments.reduce((sum, mom) => {
+                            // Skip ignored moments
+                            if (mom.ignored === true) return sum;
                             return sum + calculateMomentDuration(mom);
                         }, 0);
                     }
@@ -6373,8 +6625,13 @@ this.activityTimer = {
 
                     // Compter activités dans moments/submoments
                     module.moments?.forEach(mom => {
+                        // Skip ignored moments
+                        if (mom.ignored === true) return;
                         mom.submoments?.forEach(sub => {
-                            totalActivities += sub.activities?.length || 0;
+                            // Skip ignored submoments
+                            if (sub.ignored === true) return;
+                            const nonIgnoredActivities = (sub.activities || []).filter(act => act.ignored !== true);
+                            totalActivities += nonIgnoredActivities.length;
                         });
                     });
                 });
@@ -6424,31 +6681,44 @@ this.activityTimer = {
 
                     // Show module-level activities if they exist
                     if (module.activities && Array.isArray(module.activities) && module.activities.length > 0) {
-                        html += `<div class="timeline-submoments">`;
-                        module.activities.forEach((activity, actIndex) => {
-                            const actNum = `${moduleNum}.${actIndex + 1}`;
-                            const actDuration = activity.plannedMinutes || 0;
-                            const slideCount = (activity.slides && activity.slides.length) ? activity.slides.length : 0;
+                        const nonIgnoredActivities = module.activities.filter(act => act.ignored !== true);
+                        if (nonIgnoredActivities.length > 0) {
+                            html += `<div class="timeline-submoments">`;
+                            let actIndex = 0;
+                            module.activities.forEach((activity) => {
+                                // Skip ignored activities
+                                if (activity.ignored === true) return;
 
-                            html += `
-                                <div class="timeline-submoment">
-                                    <span class="timeline-submoment-title">${actNum} ${this.escapeHTML(activity.title)}</span>
-                                    <div class="timeline-submoment-info">
-                                        <span class="timeline-submoment-activities">${slideCount} slide${slideCount !== 1 ? 's' : ''}</span>
-                                        <span class="timeline-submoment-duration">${this.formatMinutes(actDuration)}</span>
+                                actIndex++;
+                                const actNum = `${moduleNum}.${actIndex}`;
+                                const actDuration = activity.plannedMinutes || 0;
+                                const slideCount = (activity.slides && activity.slides.length) ? activity.slides.length : 0;
+
+                                html += `
+                                    <div class="timeline-submoment">
+                                        <span class="timeline-submoment-title">${actNum} ${this.escapeHTML(activity.title)}</span>
+                                        <div class="timeline-submoment-info">
+                                            <span class="timeline-submoment-activities">${slideCount} slide${slideCount !== 1 ? 's' : ''}</span>
+                                            <span class="timeline-submoment-duration">${this.formatMinutes(actDuration)}</span>
+                                        </div>
                                     </div>
-                                </div>
-                            `;
-                        });
-                        html += `</div>`;
+                                `;
+                            });
+                            html += `</div>`;
+                        }
                     }
 
                     // Générer les moments
                     if (module.moments && module.moments.length > 0) {
                         html += `<div class="timeline-moments">`;
 
-                        module.moments.forEach((moment, momIndex) => {
-                            const momentNum = `${moduleNum}.${momIndex + 1}`;
+                        let momIndex = 0;
+                        module.moments.forEach((moment) => {
+                            // Skip ignored moments
+                            if (moment.ignored === true) return;
+
+                            momIndex++;
+                            const momentNum = `${moduleNum}.${momIndex}`;
                             const momentDuration = calculateMomentDuration(moment);
 
                             html += `
@@ -6463,10 +6733,16 @@ this.activityTimer = {
                             if (moment.submoments && moment.submoments.length > 0) {
                                 html += `<div class="timeline-submoments">`;
 
-                                moment.submoments.forEach((submoment, subIndex) => {
-                                    const subNum = `${momentNum}.${subIndex + 1}`;
+                                let subIndex = 0;
+                                moment.submoments.forEach((submoment) => {
+                                    // Skip ignored submoments
+                                    if (submoment.ignored === true) return;
+
+                                    subIndex++;
+                                    const subNum = `${momentNum}.${subIndex}`;
                                     const subDuration = calculateSubmomentDuration(submoment);
-                                    const actCount = submoment.activities?.length || 0;
+                                    const nonIgnoredActivities = (submoment.activities || []).filter(act => act.ignored !== true);
+                                    const actCount = nonIgnoredActivities.length;
 
                                     html += `
                                         <div class="timeline-submoment">
