@@ -968,10 +968,6 @@
             margin-left: 12px;
             margin-top: 4px;
         }
-
-        .nav-tree.folded .nav-children {
-            display: none;
-        }
 .nav-activity {
             padding: 8px 12px;
             margin: 2px 0;
@@ -3856,7 +3852,27 @@ applyNavFoldAllState(persist) {
     const btn = document.getElementById('navFoldAllBtn');
 
     if (navTree) {
-        navTree.classList.toggle('folded', !!this.navAllFolded);
+        // Find all nav-children and expand icons
+        const allChildren = navTree.querySelectorAll('.nav-children');
+        const allIcons = navTree.querySelectorAll('.nav-expand-icon');
+
+        if (this.navAllFolded) {
+            // Collapse all sections
+            allChildren.forEach(child => {
+                child.style.display = 'none';
+            });
+            allIcons.forEach(icon => {
+                icon.classList.remove('expanded');
+            });
+        } else {
+            // Expand all sections
+            allChildren.forEach(child => {
+                child.style.display = 'block';
+            });
+            allIcons.forEach(icon => {
+                icon.classList.add('expanded');
+            });
+        }
     }
 
     if (btn) {
@@ -3950,6 +3966,9 @@ updateNavFoldAllAvailability() {
     const headerDiv = document.createElement('div');
     headerDiv.className = 'nav-item-header nav-moment-header';
     headerDiv.innerHTML = `
+        <svg class="nav-expand-icon expanded" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
         <span class="nav-item-title">${moduleIndex + 1}.${momentIndex + 1} ${this.sanitizeHTML(String(moment.title || ''))}</span>
     `;
 
@@ -3959,6 +3978,22 @@ updateNavFoldAllAvailability() {
     (moment.submoments || []).forEach((submoment, submomentIndex) => {
         const submomentEl = this.createSubmomentElement(submoment, moduleIndex, momentIndex, submomentIndex);
         childrenDiv.appendChild(submomentEl);
+    });
+
+    // Add click handler to toggle expand/collapse
+    headerDiv.style.cursor = 'pointer';
+    headerDiv.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const icon = headerDiv.querySelector('.nav-expand-icon');
+        const isExpanded = icon.classList.contains('expanded');
+
+        if (isExpanded) {
+            icon.classList.remove('expanded');
+            childrenDiv.style.display = 'none';
+        } else {
+            icon.classList.add('expanded');
+            childrenDiv.style.display = 'block';
+        }
     });
 
     momentDiv.appendChild(headerDiv);
@@ -3974,6 +4009,9 @@ updateNavFoldAllAvailability() {
     const headerDiv = document.createElement('div');
     headerDiv.className = 'nav-item-header nav-submoment-header';
     headerDiv.innerHTML = `
+        <svg class="nav-expand-icon expanded" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
         <span class="nav-item-title">${moduleIndex + 1}.${momentIndex + 1}.${submomentIndex + 1} ${this.sanitizeHTML(String(submoment.title || ''))}</span>
     `;
 
@@ -3983,6 +4021,22 @@ updateNavFoldAllAvailability() {
     (submoment.activities || []).forEach((activity, activityIndex) => {
         const activityEl = this.createActivityElement(activity, moduleIndex, momentIndex, submomentIndex, activityIndex);
         childrenDiv.appendChild(activityEl);
+    });
+
+    // Add click handler to toggle expand/collapse
+    headerDiv.style.cursor = 'pointer';
+    headerDiv.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const icon = headerDiv.querySelector('.nav-expand-icon');
+        const isExpanded = icon.classList.contains('expanded');
+
+        if (isExpanded) {
+            icon.classList.remove('expanded');
+            childrenDiv.style.display = 'none';
+        } else {
+            icon.classList.add('expanded');
+            childrenDiv.style.display = 'block';
+        }
     });
 
     submomentDiv.appendChild(headerDiv);
