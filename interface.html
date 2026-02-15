@@ -10,6 +10,11 @@
 <!-- NOTE: Tailwind CDN uses a JIT compiler; SRI is not applicable. Consider migrating to a build step for production. -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
+// ---- Naming Convention ----
+// __ld* prefix: Internal utility functions (not intended for external use)
+// window.* (no prefix): Public API functions exposed for template/external use
+// Example: __ldExpandModuleBody (internal), window.toggleMoreMenu (public API)
+
 // Stub: full implementation loaded later with __uiDiag system
 if (typeof __ldSilentErr === 'undefined') { var __ldSilentErr = function(e){ try { if(window.__uiDiagLogError) window.__uiDiagLogError(String(e&&e.message||e||'silent catch'),'catch'); } catch(err){} }; window.__ldSilentErr = __ldSilentErr; }
 
@@ -1861,65 +1866,79 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
     if (typeof fn === 'function') fn();
   };
 
+  // ---- DOM Utility Functions (consolidates repeated patterns) ----
+  function __ldHideElement(el) {
+    if (el && el.classList) el.classList.add('hidden');
+  }
+
+  function __ldShowElement(el) {
+    if (el && el.classList) el.classList.remove('hidden');
+  }
+
+  function __ldToggleElement(el) {
+    if (el && el.classList) el.classList.toggle('hidden');
+  }
+
+  function __ldRotateIcon(icon, degrees) {
+    if (icon && icon.style) icon.style.transform = `rotate(${degrees}deg)`;
+  }
+
+  function __ldExpandModuleBody(module) {
+    if (!module) return;
+    const body = module.querySelector('.activity-body');
+    if (body && body.classList.contains('collapsed')) {
+      body.classList.remove('collapsed');
+      const toggleBtn = module.querySelector('button[data-action="toggle-module"]');
+      const icon = toggleBtn ? toggleBtn.querySelector('.rotate-icon') : null;
+      __ldRotateIcon(icon, 180);
+    }
+  }
+
   // Menu "Plus…" (overflow) — fermeture auto (click extérieur / Échap)
-  window.toggleMoreMenu = function(ev){
-    try { if (ev) { ev.preventDefault(); ev.stopPropagation(); } } catch(err){ __ldSilentErr(err); }
-    const menu = document.getElementById('more-menu');
-    if (!menu) return;
-    menu.classList.toggle('hidden');
-  };
-  window.closeMoreMenu = function(){
-    const menu = document.getElementById('more-menu');
-    if (menu) menu.classList.add('hidden');
-  };
+  // Generic menu handler factory - consolidates duplicate menu toggle/close logic
+  function __ldCreateMenuHandlers(menuId, buttonId) {
+    return {
+      toggle: function(ev) {
+        try { if (ev) { ev.preventDefault(); ev.stopPropagation(); } } catch(err){ __ldSilentErr(err); }
+        const menu = document.getElementById(menuId);
+        if (!menu) return;
+        menu.classList.toggle('hidden');
+      },
+      close: function() {
+        const menu = document.getElementById(menuId);
+        if (menu) menu.classList.add('hidden');
+      }
+    };
+  }
 
-  // Menu Fold/Unfold dropdown
-  window.toggleFoldUnfoldMenu = function(ev){
-    try { if (ev) { ev.preventDefault(); ev.stopPropagation(); } } catch(err){ __ldSilentErr(err); }
-    const menu = document.getElementById('fold-unfold-menu');
-    if (!menu) return;
-    menu.classList.toggle('hidden');
-  };
-  window.closeFoldUnfoldMenu = function(){
-    const menu = document.getElementById('fold-unfold-menu');
-    if (menu) menu.classList.add('hidden');
-  };
+  // Create handlers for each menu
+  const moreMenuHandlers = __ldCreateMenuHandlers('more-menu', 'btn-more');
+  window.toggleMoreMenu = moreMenuHandlers.toggle;
+  window.closeMoreMenu = moreMenuHandlers.close;
 
-  // Menu View Style dropdown
-  window.toggleViewStyleMenu = function(ev){
-    try { if (ev) { ev.preventDefault(); ev.stopPropagation(); } } catch(err){ __ldSilentErr(err); }
-    const menu = document.getElementById('view-style-menu');
-    if (!menu) return;
-    menu.classList.toggle('hidden');
-  };
-  window.closeViewStyleMenu = function(){
-    const menu = document.getElementById('view-style-menu');
-    if (menu) menu.classList.add('hidden');
-  };
+  const foldUnfoldMenuHandlers = __ldCreateMenuHandlers('fold-unfold-menu', 'btn-fold-unfold-menu');
+  window.toggleFoldUnfoldMenu = foldUnfoldMenuHandlers.toggle;
+  window.closeFoldUnfoldMenu = foldUnfoldMenuHandlers.close;
 
-  // Fermeture au clic extérieur (capture pour ne pas dépendre de l'ordre des handlers)
-  document.addEventListener('click', function(e){
-    const menu = document.getElementById('more-menu');
-    const btn = document.getElementById('btn-more');
-    if (!menu || menu.classList.contains('hidden')) return;
-    if (menu.contains(e.target) || (btn && btn.contains(e.target))) return;
-    menu.classList.add('hidden');
-  }, true);
+  const viewStyleMenuHandlers = __ldCreateMenuHandlers('view-style-menu', 'btn-view-style-menu');
+  window.toggleViewStyleMenu = viewStyleMenuHandlers.toggle;
+  window.closeViewStyleMenu = viewStyleMenuHandlers.close;
+
+  // Consolidated click-outside handler for all dropdown menus
+  const dropdownMenus = [
+    { menuId: 'more-menu', buttonId: 'btn-more' },
+    { menuId: 'fold-unfold-menu', buttonId: 'btn-fold-unfold-menu' },
+    { menuId: 'view-style-menu', buttonId: 'btn-view-style-menu' }
+  ];
 
   document.addEventListener('click', function(e){
-    const menu = document.getElementById('fold-unfold-menu');
-    const btn = document.getElementById('btn-fold-unfold-menu');
-    if (!menu || menu.classList.contains('hidden')) return;
-    if (menu.contains(e.target) || (btn && btn.contains(e.target))) return;
-    menu.classList.add('hidden');
-  }, true);
-
-  document.addEventListener('click', function(e){
-    const menu = document.getElementById('view-style-menu');
-    const btn = document.getElementById('btn-view-style-menu');
-    if (!menu || menu.classList.contains('hidden')) return;
-    if (menu.contains(e.target) || (btn && btn.contains(e.target))) return;
-    menu.classList.add('hidden');
+    dropdownMenus.forEach(function(config){
+      const menu = document.getElementById(config.menuId);
+      const btn = document.getElementById(config.buttonId);
+      if (!menu || menu.classList.contains('hidden')) return;
+      if (menu.contains(e.target) || (btn && btn.contains(e.target))) return;
+      menu.classList.add('hidden');
+    });
   }, true);
 
   document.addEventListener('keydown', function(e){
@@ -2345,30 +2364,18 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
       'toggle-module-subblocks': ({btn}) => {
         const mod = btn.closest('.activity-group');
         if (!mod) return;
-        const body = mod.querySelector('.activity-body');
-        if (body && body.classList.contains('collapsed')) {
-          body.classList.remove('collapsed');
-          const toggleBtn = mod.querySelector('button[data-action="toggle-module"]');
-          const icon = toggleBtn ? toggleBtn.querySelector('.rotate-icon') : null;
-          if (icon) icon.style.transform = 'rotate(180deg)';
-        }
+        __ldExpandModuleBody(mod);
         const box = mod.querySelector('.module-subblocks');
         if (box) {
           const willOpen = box.classList.contains('hidden');
-          box.classList.toggle('hidden');
+          __ldToggleElement(box);
           btn.setAttribute('aria-pressed', willOpen ? 'true' : 'false');
         }
       },
       'toggle-module-competences': ({btn}) => {
         const mod = btn.closest('.activity-group');
         if (!mod) return;
-        const body = mod.querySelector('.activity-body');
-        if (body && body.classList.contains('collapsed')) {
-          body.classList.remove('collapsed');
-          const toggleBtn = mod.querySelector('button[data-action="toggle-module"]');
-          const icon = toggleBtn ? toggleBtn.querySelector('.rotate-icon') : null;
-          if (icon) icon.style.transform = 'rotate(180deg)';
-        }
+        __ldExpandModuleBody(mod);
         const det = mod.querySelector('details.module-competence-summary');
         if (det) {
           det.open = !det.open;
