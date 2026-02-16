@@ -1434,6 +1434,7 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+            padding-top: 50px;
         }
 
         .content-header {
@@ -1442,7 +1443,7 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             padding: 20px 32px;
             position: sticky;
             top: 0;
-            z-index: 100;
+            z-index: 99;
         }
 
         /* Zoom Controls */
@@ -1455,9 +1456,9 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             border: 1px solid var(--color-border);
             border-radius: 8px;
             position: absolute;
-            top: 16px;
+            top: 60px;
             right: 24px;
-            z-index: 101;
+            z-index: 160;
         }
 
         .font-size-control {
@@ -2252,6 +2253,31 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             .slide-content {
                 font-size: 16px;
             }
+
+            /* Train line - Tablet */
+            .train-line-wrapper {
+                padding: 0 16px;
+            }
+
+            .train-track {
+                left: 16px;
+                right: 16px;
+            }
+
+            .station-label {
+                font-size: 9px;
+                max-width: 60px;
+            }
+
+            .station-marker {
+                width: 28px;
+                height: 28px;
+            }
+
+            .station-marker.current {
+                width: 32px;
+                height: 32px;
+            }
         }
 
         @media (max-width: 768px) {
@@ -2265,11 +2291,65 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
 
             .main-content {
                 margin-left: 0;
-                padding-top: var(--header-height);
+                padding-top: calc(var(--header-height) + 44px);
             }
 
             .mobile-header {
                 display: flex;
+            }
+
+            /* Train line - Mobile */
+            .train-line-container {
+                height: 44px;
+                left: 0;
+            }
+
+            .train-line-wrapper {
+                display: none;
+            }
+
+            .train-line-mobile {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                height: 100%;
+                padding: 0 16px;
+            }
+
+            .mobile-progress-text {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 6px;
+            }
+
+            .mobile-progress-text span {
+                font-size: 11px;
+                font-weight: 600;
+                color: var(--color-text-secondary);
+            }
+
+            .mobile-progress-count {
+                color: var(--color-text-muted);
+            }
+
+            .mobile-progress-track {
+                width: 100%;
+                height: 4px;
+                background: var(--color-border-light);
+                border-radius: 2px;
+                overflow: hidden;
+            }
+
+            .mobile-progress-fill {
+                height: 100%;
+                background: linear-gradient(90deg, var(--color-primary), var(--color-primary-dark));
+                border-radius: 2px;
+                transition: width 0.5s ease;
+            }
+
+            .content-header {
+                top: 0;
             }
 
             .slide-container {
@@ -2808,12 +2888,14 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             .sidebar-footer,
             .export-modal,
             .about-modal,
-            .dark-mode-toggle {
+            .dark-mode-toggle,
+            .train-line-container {
                 display: none !important;
             }
 
             .main-content {
                 margin-left: 0 !important;
+                padding-top: 0 !important;
             }
 
             .slide-container {
@@ -3016,6 +3098,273 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             height: 1px;
             background: var(--color-primary);
             opacity: 0.3;
+        }
+
+        /* ===== TRAIN LINE VISUALIZATION ===== */
+        .train-line-container {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            right: 0;
+            height: 50px;
+            background: var(--color-surface);
+            border-bottom: 1px solid var(--color-border);
+            z-index: 150;
+            transition: transform var(--transition);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .train-line-wrapper {
+            max-width: 1400px;
+            height: 100%;
+            margin: 0 auto;
+            padding: 0 48px;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .train-line-mobile {
+            display: none;
+        }
+
+        .train-track {
+            position: absolute;
+            top: 50%;
+            left: 48px;
+            right: 48px;
+            height: 3px;
+            background: linear-gradient(
+                to right,
+                var(--color-border) 0%,
+                var(--color-primary) 0%,
+                var(--color-primary) var(--train-progress, 0%),
+                var(--color-border) var(--train-progress, 0%)
+            );
+            transform: translateY(-50%);
+            border-radius: 2px;
+            transition: background 0.5s ease;
+        }
+
+        .train-stations {
+            display: block; /* Changé de flex à block pour positionnement absolu */
+            width: 100%;
+            height: 100%;
+            position: relative;
+            z-index: 2;
+        }
+
+        .train-station {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            position: absolute; /* Changé pour positionnement manuel */
+            top: 50%;
+            transform: translate(-50%, -50%);
+            transition: transform var(--transition);
+        }
+
+        .train-station:hover {
+            transform: translate(-50%, -50%) translateY(-2px);
+        }
+
+        .train-station:focus-visible {
+            outline: 3px solid var(--color-primary);
+            outline-offset: 4px;
+            border-radius: 8px;
+        }
+
+        .train-station.current .station-marker {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .station-marker {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--color-surface);
+            border: 3px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.3s ease;
+            margin-bottom: 6px;
+        }
+
+        .station-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: transparent;
+            transition: all 0.3s ease;
+        }
+
+        .station-number {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            position: absolute;
+            transition: all 0.3s ease;
+        }
+
+        .station-marker.completed {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+        }
+
+        .station-marker.completed .station-dot {
+            background: white;
+        }
+
+        .station-marker.completed .station-number {
+            color: white;
+        }
+
+        .station-marker.current {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            border-width: 4px;
+            width: 36px;
+            height: 36px;
+            box-shadow: 0 0 0 4px var(--color-primary-light);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .station-marker.current .station-number {
+            color: white;
+            font-weight: 700;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 4px var(--color-primary-light);
+            }
+            50% {
+                box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.1);
+            }
+        }
+
+        .station-marker.future {
+            background: var(--color-surface);
+            border-color: var(--color-border-light);
+        }
+
+        .station-marker.future .station-number {
+            color: var(--color-text-muted);
+        }
+
+        .station-label {
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            text-align: center;
+            max-width: 80px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: color var(--transition);
+            line-height: 12px;
+            max-height: 24px;
+            display: none;
+        }
+
+        .train-station:hover .station-label {
+            color: var(--color-text);
+        }
+
+        .station-marker.current + .station-label {
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+
+        .station-progress {
+            width: 60px;
+            height: 3px;
+            background: var(--color-border-light);
+            border-radius: 2px;
+            margin-top: 4px;
+            overflow: hidden;
+            opacity: 0;
+            transition: opacity var(--transition);
+        }
+
+        .station-marker.current ~ .station-progress {
+            opacity: 1;
+        }
+
+        .station-progress-bar {
+            height: 100%;
+            background: var(--color-primary);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        /* Sous-moments - petits points sur la ligne */
+        .submoment-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--color-surface);
+            border: 2px solid var(--color-border-light);
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 1;
+        }
+
+        .submoment-dot:hover {
+            transform: translate(-50%, -50%) scale(1.3);
+        }
+
+        .submoment-dot.completed {
+            background: #93C5FD; /* bleu clair */
+            border-color: #60A5FA;
+        }
+
+        .submoment-dot.current {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            border-width: 3px;
+            width: 10px;
+            height: 10px;
+            box-shadow: 0 0 0 2px var(--color-primary-light);
+        }
+
+        .submoment-dot.future {
+            background: var(--color-surface);
+            border-color: var(--color-border-light);
+        }
+
+        /* Tooltip pour sous-moments */
+        .submoment-dot::after {
+            content: attr(data-title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            margin-bottom: 4px;
+            z-index: 200;
+        }
+
+        .submoment-dot:hover::after {
+            opacity: 1;
+        }
+
+        [data-theme="dark"] .train-line-container {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         /* ===== ENHANCEMENT 5: CIRCULAR PROGRESS INDICATORS ===== */
@@ -3261,6 +3610,11 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
         }
 
         body.presentation-mode .content-header {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        body.presentation-mode .train-line-container {
             opacity: 0;
             pointer-events: none;
         }
@@ -3560,6 +3914,28 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
                         <option value="26">Huge (26px)</option>
                         <option value="28">Max (28px)</option>
                     </select>
+                </div>
+            </div>
+
+            <!-- Train Line Visualization -->
+            <div class="train-line-container" id="trainLineContainer" style="display: none;">
+                <div class="train-line-wrapper">
+                    <!-- Ligne de train (rail) -->
+                    <div class="train-track"></div>
+
+                    <!-- Stations (générées dynamiquement par JS) -->
+                    <div class="train-stations" id="trainStations"></div>
+                </div>
+
+                <!-- Version mobile compacte -->
+                <div class="train-line-mobile" id="trainLineMobile">
+                    <div class="mobile-progress-text">
+                        <span id="mobileCurrentModule">Module 1</span>
+                        <span class="mobile-progress-count" id="mobileProgressCount">1 / 5</span>
+                    </div>
+                    <div class="mobile-progress-track">
+                        <div class="mobile-progress-fill" id="mobileProgressFill" style="width: 20%"></div>
+                    </div>
                 </div>
             </div>
 
@@ -3945,6 +4321,447 @@ showIgnored: false,
             // Details panel state
             detailsPanelExpanded: false,
 
+            // Train line visualization
+            trainLine: {
+                container: null,
+                stationsContainer: null,
+                initialized: false,
+
+                init() {
+                    if (this.initialized) return;
+
+                    this.container = document.getElementById('trainLineContainer');
+                    this.stationsContainer = document.getElementById('trainStations');
+
+                    if (!this.container || !this.stationsContainer) {
+                        console.error('Train line elements not found');
+                        return;
+                    }
+
+                    this.initialized = true;
+                    console.log('Train line initialized');
+                },
+
+                build() {
+                    if (!this.stationsContainer || !app.courseData) return;
+
+                    this.stationsContainer.innerHTML = '';
+
+                    const modules = app.courseData.modules || [];
+
+                    if (modules.length === 0) {
+                        this.container.style.display = 'none';
+                        return;
+                    }
+
+                    this.container.style.display = 'block';
+
+                    const totalModules = modules.length;
+
+                    modules.forEach((module, moduleIndex) => {
+                        // Créer et positionner la station du module
+                        const station = this.createStation(module, moduleIndex, totalModules);
+                        this.stationsContainer.appendChild(station);
+
+                        // Créer et positionner les points de sous-moments
+                        const submomentDots = this.createSubmomentDots(module, moduleIndex, totalModules);
+                        submomentDots.forEach(dot => this.stationsContainer.appendChild(dot));
+                    });
+
+                    this.update();
+                },
+
+                createStation(module, moduleIndex, totalModules) {
+                    const stationDiv = document.createElement('div');
+                    stationDiv.className = 'train-station';
+                    stationDiv.setAttribute('data-module-index', moduleIndex);
+                    stationDiv.setAttribute('data-module-id', module.id);
+                    stationDiv.setAttribute('role', 'button');
+                    stationDiv.setAttribute('tabindex', '0');
+                    stationDiv.setAttribute('aria-label', `Module ${moduleIndex + 1}: ${module.title}`);
+
+                    // Position absolue : répartir équitablement sur la largeur
+                    const positionPercent = totalModules > 1
+                        ? (moduleIndex / (totalModules - 1)) * 100
+                        : 50;
+                    stationDiv.style.left = `${positionPercent}%`;
+
+                    const marker = document.createElement('div');
+                    marker.className = 'station-marker future';
+
+                    const number = document.createElement('div');
+                    number.className = 'station-number';
+                    number.textContent = moduleIndex + 1;
+
+                    marker.appendChild(number);
+
+                    const label = document.createElement('div');
+                    label.className = 'station-label';
+                    label.textContent = module.title;
+                    label.title = module.title;
+
+                    const progressContainer = document.createElement('div');
+                    progressContainer.className = 'station-progress';
+
+                    const progressBar = document.createElement('div');
+                    progressBar.className = 'station-progress-bar';
+                    progressBar.style.width = '0%';
+
+                    progressContainer.appendChild(progressBar);
+
+                    stationDiv.appendChild(marker);
+                    stationDiv.appendChild(label);
+                    stationDiv.appendChild(progressContainer);
+
+                    stationDiv.addEventListener('click', () => this.navigateToModule(moduleIndex));
+                    stationDiv.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            this.navigateToModule(moduleIndex);
+                        }
+                    });
+
+                    return stationDiv;
+                },
+
+                createSubmomentDots(module, moduleIndex, totalModules) {
+                    const dots = [];
+
+                    if (!module.moments || !Array.isArray(module.moments)) {
+                        return dots;
+                    }
+
+                    // Compter tous les sous-moments dans ce module
+                    let allSubmoments = [];
+                    module.moments.forEach((moment, momentIndex) => {
+                        if (moment.ignored === true) return;
+                        if (moment.submoments && Array.isArray(moment.submoments)) {
+                            moment.submoments.forEach((submoment, submomentIndex) => {
+                                if (submoment.ignored === true) return;
+                                allSubmoments.push({
+                                    moment,
+                                    momentIndex,
+                                    submoment,
+                                    submomentIndex
+                                });
+                            });
+                        }
+                    });
+
+                    if (allSubmoments.length === 0) {
+                        return dots;
+                    }
+
+                    // Calculer l'espace entre ce module et le suivant
+                    const moduleStartPercent = totalModules > 1
+                        ? (moduleIndex / (totalModules - 1)) * 100
+                        : 50;
+                    const moduleEndPercent = totalModules > 1 && moduleIndex < totalModules - 1
+                        ? ((moduleIndex + 1) / (totalModules - 1)) * 100
+                        : 100;
+                    const moduleSpan = moduleEndPercent - moduleStartPercent;
+
+                    // Répartir les sous-moments dans cet espace
+                    allSubmoments.forEach((item, index) => {
+                        const dot = document.createElement('div');
+                        dot.className = 'submoment-dot future';
+                        dot.setAttribute('data-module-index', moduleIndex);
+                        dot.setAttribute('data-moment-index', item.momentIndex);
+                        dot.setAttribute('data-submoment-index', item.submomentIndex);
+                        dot.setAttribute('data-title', item.submoment.title);
+                        dot.setAttribute('role', 'button');
+                        dot.setAttribute('tabindex', '0');
+
+                        // Position : répartir entre moduleStart et moduleEnd
+                        const dotPositionInModule = (index + 1) / (allSubmoments.length + 1);
+                        const dotPositionPercent = moduleStartPercent + (dotPositionInModule * moduleSpan);
+                        dot.style.left = `${dotPositionPercent}%`;
+
+                        // Navigation au clic
+                        dot.addEventListener('click', () => this.navigateToSubmoment(moduleIndex, item.momentIndex, item.submomentIndex));
+                        dot.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                this.navigateToSubmoment(moduleIndex, item.momentIndex, item.submomentIndex);
+                            }
+                        });
+
+                        dots.push(dot);
+                    });
+
+                    return dots;
+                },
+
+                navigateToSubmoment(moduleIndex, momentIndex, submomentIndex) {
+                    if (!app.courseData || !app.courseData.modules[moduleIndex]) return;
+
+                    const module = app.courseData.modules[moduleIndex];
+                    const moment = module.moments && module.moments[momentIndex];
+                    const submoment = moment && moment.submoments && moment.submoments[submomentIndex];
+
+                    if (!submoment || !submoment.activities || submoment.activities.length === 0) {
+                        console.warn('No activities in submoment', moduleIndex, momentIndex, submomentIndex);
+                        return;
+                    }
+
+                    // Naviguer vers la première activité du sous-moment (exclure title slides)
+                    const firstActivity = submoment.activities.find(act => !act.isTitleSlide) || submoment.activities[0];
+                    app.loadActivity(firstActivity);
+                },
+
+                getCurrentPositionInfo() {
+                    if (!app.currentActivity || !app.courseData) return null;
+
+                    const modules = app.courseData.modules;
+
+                    // Trouver dans quel module/moment/sous-moment se trouve l'activité actuelle
+                    for (let modIdx = 0; modIdx < modules.length; modIdx++) {
+                        const module = modules[modIdx];
+
+                        // Chercher dans les moments/sous-moments
+                        if (module.moments && Array.isArray(module.moments)) {
+                            for (let momIdx = 0; momIdx < module.moments.length; momIdx++) {
+                                const moment = module.moments[momIdx];
+                                if (moment.ignored === true) continue;
+
+                                if (moment.submoments && Array.isArray(moment.submoments)) {
+                                    for (let subIdx = 0; subIdx < moment.submoments.length; subIdx++) {
+                                        const submoment = moment.submoments[subIdx];
+                                        if (submoment.ignored === true) continue;
+
+                                        if (submoment.activities && Array.isArray(submoment.activities)) {
+                                            const activityIndex = submoment.activities.findIndex(act =>
+                                                act.id === app.currentActivity.id
+                                            );
+
+                                            if (activityIndex !== -1) {
+                                                // Trouvé ! Calculer la progression du module
+                                                const moduleActivities = this.getAllActivitiesInModule(module);
+                                                const completedInModule = moduleActivities.filter(act =>
+                                                    app.completedActivities.has(act.id)
+                                                ).length;
+                                                const moduleProgress = moduleActivities.length > 0
+                                                    ? Math.round((completedInModule / moduleActivities.length) * 100)
+                                                    : 0;
+
+                                                return {
+                                                    moduleIndex: modIdx,
+                                                    momentIndex: momIdx,
+                                                    submomentIndex: subIdx,
+                                                    moduleProgress
+                                                };
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    return null;
+                },
+
+                update() {
+                    if (!app.currentActivity || !app.courseData) return;
+
+                    const currentInfo = this.getCurrentPositionInfo();
+
+                    if (!currentInfo) {
+                        console.warn('Could not determine current position');
+                        return;
+                    }
+
+                    const { moduleIndex, momentIndex, submomentIndex, moduleProgress } = currentInfo;
+                    const totalModules = app.courseData.modules.length;
+
+                    // Mettre à jour les stations de modules
+                    const stations = this.stationsContainer.querySelectorAll('.train-station');
+                    stations.forEach((station, index) => {
+                        const marker = station.querySelector('.station-marker');
+                        const progressBar = station.querySelector('.station-progress-bar');
+
+                        marker.classList.remove('completed', 'current', 'future');
+                        station.classList.remove('current');
+
+                        if (index < moduleIndex) {
+                            marker.classList.add('completed');
+                            progressBar.style.width = '100%';
+                        } else if (index === moduleIndex) {
+                            marker.classList.add('current');
+                            station.classList.add('current');
+                            progressBar.style.width = `${moduleProgress}%`;
+                        } else {
+                            marker.classList.add('future');
+                            progressBar.style.width = '0%';
+                        }
+                    });
+
+                    // Mettre à jour les points de sous-moments
+                    const dots = this.stationsContainer.querySelectorAll('.submoment-dot');
+                    dots.forEach(dot => {
+                        const dotModuleIndex = parseInt(dot.getAttribute('data-module-index'));
+                        const dotMomentIndex = parseInt(dot.getAttribute('data-moment-index'));
+                        const dotSubmomentIndex = parseInt(dot.getAttribute('data-submoment-index'));
+
+                        dot.classList.remove('completed', 'current', 'future');
+
+                        if (dotModuleIndex < moduleIndex) {
+                            // Sous-moment dans un module déjà complété
+                            dot.classList.add('completed');
+                        } else if (dotModuleIndex === moduleIndex && dotMomentIndex < momentIndex) {
+                            // Sous-moment dans le module actuel mais moment précédent
+                            dot.classList.add('completed');
+                        } else if (dotModuleIndex === moduleIndex && dotMomentIndex === momentIndex && dotSubmomentIndex < submomentIndex) {
+                            // Sous-moment dans le moment actuel mais précédent
+                            dot.classList.add('completed');
+                        } else if (dotModuleIndex === moduleIndex && dotMomentIndex === momentIndex && dotSubmomentIndex === submomentIndex) {
+                            // Sous-moment actuel
+                            dot.classList.add('current');
+                        } else {
+                            // Sous-moment futur
+                            dot.classList.add('future');
+                        }
+                    });
+
+                    this.updateTrackProgress(moduleIndex, moduleProgress, totalModules);
+                    this.updateMobile(moduleIndex, moduleProgress, totalModules);
+                },
+
+                getCurrentModuleInfo() {
+                    if (!app.currentActivity || !app.courseData) return null;
+
+                    const modules = app.courseData.modules;
+                    let moduleIndex = -1;
+                    let activitiesInModule = [];
+                    let currentActivityIndex = -1;
+
+                    for (let i = 0; i < modules.length; i++) {
+                        const module = modules[i];
+                        const moduleActivities = this.getAllActivitiesInModule(module);
+
+                        currentActivityIndex = moduleActivities.findIndex(act =>
+                            act.id === app.currentActivity.id
+                        );
+
+                        if (currentActivityIndex !== -1) {
+                            moduleIndex = i;
+                            activitiesInModule = moduleActivities;
+                            break;
+                        }
+                    }
+
+                    if (moduleIndex === -1) {
+                        return null;
+                    }
+
+                    const completedInModule = activitiesInModule.filter(act =>
+                        app.completedActivities.has(act.id)
+                    ).length;
+
+                    const moduleProgress = activitiesInModule.length > 0
+                        ? Math.round((completedInModule / activitiesInModule.length) * 100)
+                        : 0;
+
+                    return {
+                        moduleIndex,
+                        moduleProgress,
+                        totalModules: modules.length,
+                        activitiesInModule: activitiesInModule.length,
+                        completedInModule
+                    };
+                },
+
+                getAllActivitiesInModule(module) {
+                    const activities = [];
+
+                    if (module.activities && Array.isArray(module.activities)) {
+                        activities.push(...module.activities.filter(act => !act.isTitleSlide && act.ignored !== true));
+                    }
+
+                    if (module.moments && Array.isArray(module.moments)) {
+                        module.moments.forEach(moment => {
+                            if (moment.ignored === true) return;
+                            if (moment.submoments && Array.isArray(moment.submoments)) {
+                                moment.submoments.forEach(submoment => {
+                                    if (submoment.ignored === true) return;
+                                    if (submoment.activities && Array.isArray(submoment.activities)) {
+                                        activities.push(...submoment.activities.filter(act => !act.isTitleSlide && act.ignored !== true));
+                                    }
+                                });
+                            }
+                        });
+                    }
+
+                    return activities;
+                },
+
+                updateTrackProgress(moduleIndex, moduleProgress, totalModules) {
+                    if (!this.container || totalModules === 0) return;
+
+                    const overallProgress = (moduleIndex + (moduleProgress / 100)) / totalModules;
+                    const progressPercent = overallProgress * 100;
+
+                    this.container.style.setProperty('--train-progress', `${progressPercent}%`);
+                },
+
+                updateMobile(moduleIndex, moduleProgress, totalModules) {
+                    const mobileCurrentModule = document.getElementById('mobileCurrentModule');
+                    const mobileProgressCount = document.getElementById('mobileProgressCount');
+                    const mobileProgressFill = document.getElementById('mobileProgressFill');
+
+                    if (!mobileCurrentModule || !mobileProgressCount || !mobileProgressFill) return;
+
+                    if (app.courseData && app.courseData.modules[moduleIndex]) {
+                        mobileCurrentModule.textContent = app.courseData.modules[moduleIndex].title;
+                    }
+
+                    mobileProgressCount.textContent = `${moduleIndex + 1} / ${totalModules}`;
+
+                    const overallProgress = (moduleIndex + (moduleProgress / 100)) / totalModules;
+                    mobileProgressFill.style.width = `${overallProgress * 100}%`;
+                },
+
+                navigateToModule(moduleIndex) {
+                    if (!app.courseData || !app.courseData.modules[moduleIndex]) return;
+
+                    const module = app.courseData.modules[moduleIndex];
+                    let firstActivity = null;
+
+                    if (module.activities && module.activities.length > 0) {
+                        firstActivity = module.activities.find(act => !act.isTitleSlide) || module.activities[0];
+                    }
+
+                    if (!firstActivity && module.moments && module.moments.length > 0) {
+                        const firstMoment = module.moments[0];
+                        if (firstMoment.submoments && firstMoment.submoments.length > 0) {
+                            const firstSubmoment = firstMoment.submoments[0];
+                            if (firstSubmoment.activities && firstSubmoment.activities.length > 0) {
+                                firstActivity = firstSubmoment.activities.find(act => !act.isTitleSlide)
+                                    || firstSubmoment.activities[0];
+                            }
+                        }
+                    }
+
+                    if (firstActivity) {
+                        app.loadActivity(firstActivity);
+                    } else {
+                        console.warn('No activities found in module', moduleIndex);
+                    }
+                },
+
+                hide() {
+                    if (this.container) {
+                        this.container.style.display = 'none';
+                    }
+                },
+
+                show() {
+                    if (this.container) {
+                        this.container.style.display = 'block';
+                    }
+                }
+            },
+
             init() {
                 console.log('App initializing...');
                 console.log('App object:', this);
@@ -3963,6 +4780,9 @@ showIgnored: false,
                 this.loadDetailsPanelState();
                 this.startTimerTicks();
                 this.initSearchHandlers(); // Initialize enhanced search
+
+                // Initialize train line
+                this.trainLine.init();
 
                 console.log('App initialized successfully');
                 console.log('courseData:', this.courseData);
@@ -4107,6 +4927,11 @@ loadIgnoredState() {
                 // Apply visual state after building navigation
                 this.updateCompletedActivitiesInNav();
                 this.updateActiveNav();
+
+                // Build train line
+                if (this.trainLine && this.trainLine.initialized) {
+                    this.trainLine.build();
+                }
             },
 
             createModuleElement(module, moduleIndex) {
@@ -4270,6 +5095,11 @@ loadIgnoredState() {
             },
             loadActivity(activity) {
                 this.loadActivityAtSlide(activity, 0);
+
+                // Update train line
+                if (this.trainLine && this.trainLine.initialized) {
+                    this.trainLine.update();
+                }
             },
 
             loadActivityAtSlide(activity, slideIndex) {
@@ -4505,6 +5335,11 @@ loadIgnoredState() {
 
                 // Ensure covered-state colouring is applied as well
                 this.updateCompletedActivitiesInNav();
+
+                // Update train line
+                if (this.trainLine && this.trainLine.initialized) {
+                    this.trainLine.update();
+                }
             },
 
             updateCompletedActivitiesInNav() {
@@ -4521,6 +5356,11 @@ loadIgnoredState() {
                 if (!this.completedActivities.has(id)) {
                     this.completedActivities.add(id);
                     this.updateCompletedActivitiesInNav();
+
+                    // Update train line
+                    if (this.trainLine && this.trainLine.initialized) {
+                        this.trainLine.update();
+                    }
                 }
             },
 
