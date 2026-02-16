@@ -1847,6 +1847,37 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
 .col-lg { width: 300px; }
 .col-xl { width: 400px; }
 
+/* Time badges for schedule display */
+.module-start-time-input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.875rem;
+  width: 5.5rem;
+}
+
+.calculated-time-badge,
+.moment-calculated-time,
+.submoment-calculated-time,
+.step-calculated-time {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  min-width: 3rem;
+  text-align: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 500;
+  margin-right: 0.5rem;
+}
+
+.calculated-time-badge:empty,
+.moment-calculated-time:empty,
+.submoment-calculated-time:empty,
+.step-calculated-time:empty {
+  display: none;
+}
+
 </style>
 <script>
 /* Modèles: stubs globaux disponibles dès le chargement (évite les clics "inerte" avant l'initialisation).
@@ -2521,6 +2552,7 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
 
     const INPUT_ACTIONS = Object.freeze({
       'update-stats-debounced': () => call('updateStatsDebounced'),
+      'update-times-cascade': () => call('updateAllCalculatedTimes'),
       'update-group-math': ({el}) => {
         const mode = (el && el.dataset) ? (el.dataset.groupMath || el.dataset.arg || '') : '';
         call('updateGroupMath', el, mode);
@@ -4963,6 +4995,7 @@ Cochez les éléments que vous souhaitez inclure dans l'export. Les éléments p
 <div class="h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600 activity-index shrink-0 text-xs">
        1
       </div>
+<input type="time" class="module-start-time-input px-2 py-1 border border-slate-300 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none" data-action-input="update-times-cascade" title="Horaire de début du module"/>
 <div class="flex-1 w-full">
 <input class="activity-title text-base font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none w-full py-0.5 transition-colors" data-i18n-placeholder="ph_activity_title" data-action-input="update-stats-debounced" placeholder="Titre du module (ex: Module 1 : Introduction)" type="text"/>
 <div class="flex items-center gap-2 mt-0.5 pr-1">
@@ -5187,6 +5220,7 @@ Cochez les éléments que vous souhaitez inclure dans l'export. Les éléments p
 <div class="moment-group bg-transparent rounded-lg border border-slate-200/60">
 <div class="flex items-center justify-between px-3 py-2">
 <div class="flex items-center gap-2 flex-1 min-w-0">
+<span class="moment-calculated-time"></span>
 <div class="drag-handle-moment drag-handle text-slate-300 hover:text-slate-500 no-print flex items-center justify-center w-6 h-6 cursor-grab">
 <span class="material-icons-round text-lg">drag_indicator</span>
 </div>
@@ -5265,6 +5299,7 @@ Cochez les éléments que vous souhaitez inclure dans l'export. Les éléments p
   <div class="submoment-card border border-slate-200 rounded-lg bg-white">
     <div class="flex items-center justify-between px-3 py-2 bg-white border-b border-slate-100 rounded-t-lg">
       <div class="flex items-center gap-2 flex-1 min-w-0">
+        <span class="submoment-calculated-time"></span>
         <div class="drag-handle-submoment drag-handle text-slate-300 hover:text-slate-500 no-print flex items-center justify-center w-6 h-6 cursor-grab">
           <span class="material-icons-round text-lg">drag_indicator</span>
         </div>
@@ -5326,13 +5361,14 @@ Cochez les éléments que vous souhaitez inclure dans l'export. Les éléments p
 <template id="step-template">
 <div class="step-card bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative group flex flex-col">
 <div class="step-header flex items-center gap-2 p-2 bg-slate-50 border-b border-slate-100 transition-colors">
+<span class="step-calculated-time"></span>
 <div class="drag-handle-step drag-handle flex items-center justify-center text-slate-300 hover:text-slate-500 cursor-grab">
 <span class="material-icons-round text-base">
        drag_indicator
       </span>
 </div>
-<label class="no-print flex items-center justify-center mr-1" title="Sélectionner l’activité (actions groupées)">
-  <input type="checkbox" class="step-batch-select w-4 h-4 accent-indigo-600" aria-label="Sélectionner l’activité"/>
+<label class="no-print flex items-center justify-center mr-1" title="Sélectionner l'activité (actions groupées)">
+  <input type="checkbox" class="step-batch-select w-4 h-4 accent-indigo-600" aria-label="Sélectionner l'activité"/>
 </label>
 <div class="h-5 w-5 rounded-full bg-slate-100 flex items-center justify-center font-semibold text-slate-600 step-index shrink-0 text-[10px]">1</div>
 <span class="material-icons-round text-amber-500 text-[18px] step-coherence-indicator hidden no-print" title="">warning_amber</span>
@@ -5942,7 +5978,147 @@ function getStepDurationSecs(stepCard) {
 }
 try { window.getStepDurationSecs = getStepDurationSecs; } catch(err){ __ldSilentErr(err); }
 
+// ---- Time calculation utilities for schedule display ----
+function parseTimeToSeconds(timeString) {
+  try {
+    if (!timeString || typeof timeString !== 'string') return null;
+    const parts = timeString.trim().split(':');
+    if (parts.length !== 2) return null;
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    if (isNaN(hours) || isNaN(minutes)) return null;
+    return hours * 3600 + minutes * 60;
+  } catch (_) { return null; }
+}
+try { window.parseTimeToSeconds = parseTimeToSeconds; } catch(err){ __ldSilentErr(err); }
 
+function formatTimeFromSeconds(totalSeconds) {
+  try {
+    if (!Number.isFinite(totalSeconds)) return '';
+    // Handle negative values and values beyond 24 hours
+    const normalized = totalSeconds % 86400; // 86400 = seconds in a day
+    const positive = normalized >= 0 ? normalized : normalized + 86400;
+    const hours = Math.floor(positive / 3600);
+    const minutes = Math.floor((positive % 3600) / 60);
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+  } catch (_) { return ''; }
+}
+try { window.formatTimeFromSeconds = formatTimeFromSeconds; } catch(err){ __ldSilentErr(err); }
+
+function displayTimeInElement(element, selector, seconds) {
+  try {
+    if (!element || !selector) return;
+    let badge = element.querySelector(selector);
+    if (!badge) {
+      // Create badge if it doesn't exist
+      badge = document.createElement('span');
+      badge.className = selector.substring(1); // Remove the '.' from selector
+      // Insert at the beginning of the element
+      if (element.firstChild) {
+        element.insertBefore(badge, element.firstChild);
+      } else {
+        element.appendChild(badge);
+      }
+    }
+    const timeStr = formatTimeFromSeconds(seconds);
+    badge.textContent = timeStr;
+    if (timeStr) {
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch (err) { __ldSilentErr(err); }
+}
+try { window.displayTimeInElement = displayTimeInElement; } catch(err){ __ldSilentErr(err); }
+
+function clearAllTimeBadges(moduleElement) {
+  try {
+    if (!moduleElement) return;
+    moduleElement.querySelectorAll(
+      '.moment-calculated-time, .submoment-calculated-time, .step-calculated-time'
+    ).forEach(badge => {
+      badge.textContent = '';
+      badge.style.display = 'none';
+    });
+  } catch (err) { __ldSilentErr(err); }
+}
+try { window.clearAllTimeBadges = clearAllTimeBadges; } catch(err){ __ldSilentErr(err); }
+
+function calculateAndDisplayTimes(moduleElement) {
+  try {
+    if (!moduleElement) return;
+
+    // 1. Get module start time
+    const startInput = moduleElement.querySelector('.module-start-time-input');
+    const startTimeStr = startInput?.value;
+
+    if (!startTimeStr) {
+      // No start time defined: clear all badges
+      clearAllTimeBadges(moduleElement);
+      return;
+    }
+
+    // 2. Convert to seconds
+    let currentSeconds = parseTimeToSeconds(startTimeStr);
+    if (currentSeconds === null) {
+      clearAllTimeBadges(moduleElement);
+      return;
+    }
+
+    // 3. Traverse moments in order
+    const momentsContainer = moduleElement.querySelector('.activity-moments-container');
+    if (!momentsContainer) return;
+
+    const moments = momentsContainer.querySelectorAll(':scope > .moment-group');
+
+    moments.forEach(moment => {
+      // Display moment time
+      const momentHeader = moment.querySelector('.flex.items-center.justify-between');
+      if (momentHeader) {
+        displayTimeInElement(momentHeader, '.moment-calculated-time', currentSeconds);
+      }
+
+      // Traverse submoments
+      const submoments = moment.querySelectorAll('.submoment-card');
+      submoments.forEach(submoment => {
+        const submomentHeader = submoment.querySelector('.flex.items-center.justify-between');
+        if (submomentHeader) {
+          displayTimeInElement(submomentHeader, '.submoment-calculated-time', currentSeconds);
+        }
+
+        // Traverse activities in submoment
+        const steps = submoment.querySelectorAll('.submoment-steps > .step-card');
+        steps.forEach(step => {
+          const stepHeader = step.querySelector('.step-header');
+          if (stepHeader) {
+            displayTimeInElement(stepHeader, '.step-calculated-time', currentSeconds);
+            currentSeconds += getStepDurationSecs(step);
+          }
+        });
+      });
+
+      // Traverse direct activities of moment
+      const directSteps = moment.querySelectorAll('.moment-direct-steps > .activity-steps-container > .step-card');
+      directSteps.forEach(step => {
+        const stepHeader = step.querySelector('.step-header');
+        if (stepHeader) {
+          displayTimeInElement(stepHeader, '.step-calculated-time', currentSeconds);
+          currentSeconds += getStepDurationSecs(step);
+        }
+      });
+    });
+  } catch (err) { __ldSilentErr(err); }
+}
+try { window.calculateAndDisplayTimes = calculateAndDisplayTimes; } catch(err){ __ldSilentErr(err); }
+
+function updateAllCalculatedTimes() {
+  try {
+    document.querySelectorAll('.activity-group').forEach(module => {
+      calculateAndDisplayTimes(module);
+    });
+  } catch (err) { __ldSilentErr(err); }
+}
+try { window.updateAllCalculatedTimes = updateAllCalculatedTimes; } catch(err){ __ldSilentErr(err); }
 
 // ---- Designed step-card query helper (includes steps inside submoments) ----
 // IMPORTANT: Submoment step containers use `.submoment-steps` (not `.activity-steps-container`).
@@ -18928,6 +19104,9 @@ const tooltipText = `<strong>${escapeHtml(planned.title)}</strong>`;
             try { updateAllModuleLearningTargetsSummaries(); } catch (e) { console.error('updateAllModuleLearningTargetsSummaries failed', e); }
 
             updateFocusButtons();
+
+            // Update calculated times for schedule display
+            try { updateAllCalculatedTimes(); } catch (e) { console.error('updateAllCalculatedTimes failed', e); }
         }
         
         const EXPORT_ERROR_MSG = {
