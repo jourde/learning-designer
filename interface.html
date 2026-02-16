@@ -779,6 +779,34 @@ input, select, textarea {
             textarea { border: none; padding: 0; }
             #key-params-panel { max-height: none !important; opacity: 1 !important; display: block !important; }
             .step-body.collapsed, .activity-body.collapsed { max-height: none !important; opacity: 1 !important; display: block !important; }
+
+            /* Styles pour les badges d'horaire en impression */
+            .calculated-time-badge,
+            .moment-calculated-time,
+            .submoment-calculated-time,
+            .step-calculated-time {
+                display: inline-block !important;
+                background: #e2e8f0 !important;
+                border: 1px solid #cbd5e1 !important;
+                color: #475569 !important;
+                padding: 0.125rem 0.5rem;
+                border-radius: 0.25rem;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                font-size: 0.65rem;
+                font-weight: 500;
+                page-break-inside: avoid;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            /* S'assurer que les badges ne sont pas masqués par héritage */
+            .activity-group .calculated-time-badge,
+            .moment-group .moment-calculated-time,
+            .submoment-card .submoment-calculated-time,
+            .step-card .step-calculated-time {
+                opacity: 1 !important;
+                visibility: visible !important;
+            }
         }
     
 
@@ -10085,9 +10113,19 @@ function initSortableSteps(container) {
                 ghostClass: 'sortable-ghost',
                 dragClass: 'sortable-drag',
                 onStart: () => { __pendingDragSnapshot = snapshotProject(); },
-                onEnd: () => {
+                onEnd: (evt) => {
                     if (__pendingDragSnapshot) { pushUndoSnapshot(__pendingDragSnapshot); __pendingDragSnapshot = null; }
                     updateStats();
+                    // Recalcul des horaires après réorganisation
+                    try {
+                        const moduleEl = evt.item.closest('.activity-group');
+                        if (moduleEl) {
+                            const startTimeInput = moduleEl.querySelector('.module-start-time-input');
+                            if (startTimeInput && startTimeInput.value) {
+                                calculateAndDisplayTimes(moduleEl);
+                            }
+                        }
+                    } catch (err) { __ldSilentErr(err); }
                 }
             });
         }
@@ -10110,6 +10148,17 @@ function initSortableSteps(container) {
                     if (fromModule) updateMomentIndexes(fromModule);
                     if (toModule && toModule !== fromModule) updateMomentIndexes(toModule);
                     updateStats();
+                    // Recalcul des horaires pour les modules affectés
+                    try {
+                        [fromModule, toModule].forEach(moduleEl => {
+                            if (moduleEl) {
+                                const startTimeInput = moduleEl.querySelector('.module-start-time-input');
+                                if (startTimeInput && startTimeInput.value) {
+                                    calculateAndDisplayTimes(moduleEl);
+                                }
+                            }
+                        });
+                    } catch (err) { __ldSilentErr(err); }
                 }
             });
         }
@@ -10137,6 +10186,16 @@ function initSortableSubmoments(container) {
                 if (toMoment && toMoment !== fromMoment) syncMomentSubmomentsUI(toMoment);
             } catch(err){ __ldSilentErr(err); }
             updateStats();
+            // Recalcul pour le module parent
+            try {
+                const moduleEl = evt.item.closest('.activity-group');
+                if (moduleEl) {
+                    const startTimeInput = moduleEl.querySelector('.module-start-time-input');
+                    if (startTimeInput && startTimeInput.value) {
+                        calculateAndDisplayTimes(moduleEl);
+                    }
+                }
+            } catch (err) { __ldSilentErr(err); }
         }
     });
 }
@@ -13981,6 +14040,7 @@ function buildExportProjectData() {
                 
                 const moduleData = {
                     titre: actEl.querySelector('.activity-title').value,
+                    moduleStartTime: actEl.querySelector('.module-start-time-input')?.value || '',
                     description: actEl.querySelector('.activity-description').value,
                     notes: (actEl.querySelector('.module-notes')?.value || ''),
                     dureeCible: actEl.querySelector('.activity-target-time').value,
@@ -16277,8 +16337,10 @@ loadProjectFromObject(project);
             initSortableMoments(momentsRoot);
 
             actEl.querySelector('.activity-title').value = data.title || "";
+            const startTimeInput = actEl.querySelector('.module-start-time-input');
+            if (startTimeInput) startTimeInput.value = data.moduleStartTime || '';
             actEl.querySelector('.activity-description').value = data.description || "";
-            
+
             const __modNotesEl = actEl.querySelector('.module-notes');
             if (__modNotesEl) __modNotesEl.value = (data.notes || data.moduleNotes || "");
             actEl.querySelector('.activity-target-time').value = data.targetTime || "";
@@ -19522,6 +19584,7 @@ function buildTabularExportRows(model) {
     const headers = [
         'Module #',
         'Module titre',
+        'Module heure début',
         'Module description',
         'Module notes',
         'Module durée cible',
@@ -19570,6 +19633,7 @@ function buildTabularExportRows(model) {
     (model.modules || []).forEach((mod, mi) => {
         const moduleIdx = mi + 1;
         const modTitle = safe(mod.title);
+        const modStartTime = safe(mod.moduleStartTime);
         const modDesc = safe(mod.description);
         const modNotes = safe(mod.notes);
         const modTarget = safe(mod.target);
@@ -19606,6 +19670,7 @@ function buildTabularExportRows(model) {
                             rows.push([
                                 moduleIdx,
                                 modTitle,
+                                modStartTime,
                                 modDesc,
                                 modNotes,
                                 modTarget,
@@ -19812,7 +19877,9 @@ function exportDOCX() {
     model.modules.forEach((mod, mi) => {
         const moduleIdx = mi + 1;
         const modTitle = safe(mod.title) || `Module ${moduleIdx}`;
-        children.push(new Paragraph({ text: `Module ${moduleIdx} : ${modTitle}`, heading: HeadingLevel.HEADING_2 }));
+        const modStartTime = safe(mod.moduleStartTime);
+        const titleWithTime = modStartTime ? `Module ${moduleIdx} : ${modTitle} (Début : ${modStartTime})` : `Module ${moduleIdx} : ${modTitle}`;
+        children.push(new Paragraph({ text: titleWithTime, heading: HeadingLevel.HEADING_2 }));
         if (safe(mod.target)) {
             children.push(new Paragraph({ children: [new TextRun({ text: 'Durée cible : ', bold: true }), new TextRun(safe(mod.target))] }));
         }
