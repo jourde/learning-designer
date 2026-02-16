@@ -156,13 +156,90 @@
             display: flex;
             flex-direction: column;
             z-index: 1000;
-            transition: transform var(--transition);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .sidebar.collapsed {
+            width: 0;
+            transform: translateX(-100%);
+            border-right: none;
+        }
+
+        .sidebar.collapsed > * {
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
         }
 
         .sidebar-header {
             padding: 20px;
             border-bottom: 1px solid var(--color-border);
             background: var(--color-surface);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .sidebar-header-content {
+            flex: 1;
+        }
+
+        .sidebar-toggle-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            color: var(--color-text-muted);
+            transition: all var(--transition);
+            margin-left: 8px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-toggle-btn:hover {
+            background: var(--color-hover);
+            color: var(--color-text);
+        }
+
+        .sidebar-toggle-btn .material-symbols-outlined {
+            font-size: 20px;
+        }
+
+        /* Sidebar open button (when collapsed) */
+        .sidebar-open-btn {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            z-index: 155;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+            transition: all var(--transition);
+        }
+
+        .sidebar.collapsed ~ .sidebar-open-btn {
+            display: flex;
+        }
+
+        .sidebar-open-btn:hover {
+            background: var(--color-primary-dark);
+            transform: translateX(2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        }
+
+        .sidebar-open-btn .material-symbols-outlined {
+            font-size: 20px;
         }
 
         .sidebar-title {
@@ -1435,6 +1512,11 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             flex-direction: column;
             min-height: 100vh;
             padding-top: 50px;
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar.collapsed ~ .main-content {
+            margin-left: 0;
         }
 
         .content-header {
@@ -1446,6 +1528,17 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             z-index: 99;
         }
 
+        /* Top Right Controls Container */
+        .top-right-controls {
+            position: absolute;
+            top: 60px;
+            right: 24px;
+            z-index: 160;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
         /* Zoom Controls */
         .zoom-controls {
             display: flex;
@@ -1455,10 +1548,105 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             background: var(--color-surface);
             border: 1px solid var(--color-border);
             border-radius: 8px;
-            position: absolute;
-            top: 60px;
-            right: 24px;
-            z-index: 160;
+        }
+
+        /* Timer Top Right */
+        .timer-top-right {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 8px 12px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            min-width: 200px;
+        }
+
+        .timer-top-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .timer-top-right .timer-display {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--color-text);
+            flex: 1;
+        }
+
+        .timer-top-right .timer-display.green .timer-elapsed {
+            color: #10B981;
+        }
+
+        .timer-top-right .timer-display.yellow .timer-elapsed {
+            color: #F59E0B;
+        }
+
+        .timer-top-right .timer-display.red .timer-elapsed {
+            color: #EF4444;
+        }
+
+        .timer-top-right .timer-separator {
+            color: var(--color-text-muted);
+        }
+
+        .timer-top-right .timer-planned {
+            color: var(--color-text-muted);
+        }
+
+        .timer-top-right .timer-controls {
+            display: flex;
+            gap: 4px;
+        }
+
+        .timer-top-right .timer-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background-color var(--transition);
+        }
+
+        .timer-top-right .timer-btn:hover {
+            background: var(--color-border-light);
+        }
+
+        .timer-top-right .timer-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Timer Progress Bar */
+        .timer-progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--color-border-light);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .timer-progress-fill {
+            height: 100%;
+            background: #10B981;
+            border-radius: 2px;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+
+        .timer-progress-fill.yellow {
+            background: #F59E0B;
+        }
+
+        .timer-progress-fill.red {
+            background: #EF4444;
         }
 
         .font-size-control {
@@ -1470,27 +1658,18 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             border-left: 1px solid var(--color-border);
         }
 
-        .font-size-label {
-            font-size: 12px;
+        .font-size-value {
+            font-size: 11px;
             font-weight: 600;
-            color: var(--color-text-muted);
+            color: var(--color-text);
+            min-width: 32px;
+            text-align: center;
             user-select: none;
         }
 
+        /* Hide the old select dropdown */
         .font-size-select {
-            height: 34px;
-            padding: 0 10px;
-            border-radius: 10px;
-            border: 1px solid var(--color-border);
-            background: var(--color-surface);
-            color: var(--color-text-secondary);
-            font-size: 13px;
-            font-weight: 600;
-            outline: none;
-        }
-
-        .font-size-select:focus {
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            display: none;
             border-color: rgba(59, 130, 246, 0.5);
         }
 
@@ -1796,16 +1975,7 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
         }
 
         .toggle-panel-btn {
-            background: none;
-            border: 1px solid var(--color-border);
-            border-radius: 6px;
-            padding: 6px 10px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            font-weight: 500;
+            display: none;
             color: var(--color-text);
             transition: all var(--transition);
         }
@@ -1839,10 +2009,7 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
 
         /* Collapsible panel */
         .details-panel {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background: var(--color-border-light);
+            display: none;
         }
 
         .details-panel.expanded {
@@ -3110,8 +3277,12 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             background: var(--color-surface);
             border-bottom: 1px solid var(--color-border);
             z-index: 150;
-            transition: transform var(--transition);
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform var(--transition);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar.collapsed ~ .main-content .train-line-container {
+            left: 0;
         }
 
         .train-line-wrapper {
@@ -3256,27 +3427,7 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
         }
 
         .station-label {
-            font-size: 10px;
-            font-weight: 500;
-            color: var(--color-text-secondary);
-            text-align: center;
-            max-width: 80px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            transition: color var(--transition);
-            line-height: 12px;
-            max-height: 24px;
             display: none;
-        }
-
-        .train-station:hover .station-label {
-            color: var(--color-text);
-        }
-
-        .station-marker.current + .station-label {
-            color: var(--color-primary);
-            font-weight: 600;
         }
 
         .station-progress {
@@ -3301,6 +3452,72 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             transition: width 0.5s ease;
         }
 
+        /* Segments de moments - zones colorées sur la ligne */
+        .moment-segment {
+            position: absolute;
+            height: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(168, 85, 247, 0.08);
+            border-left: 1px solid rgba(168, 85, 247, 0.2);
+            border-right: 1px solid rgba(168, 85, 247, 0.2);
+            transition: all 0.3s ease;
+            z-index: 0;
+            cursor: pointer;
+        }
+
+        .moment-segment:nth-child(odd) {
+            background: rgba(59, 130, 246, 0.08);
+            border-left-color: rgba(59, 130, 246, 0.2);
+            border-right-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .moment-segment:nth-child(even) {
+            background: rgba(168, 85, 247, 0.08);
+            border-left-color: rgba(168, 85, 247, 0.2);
+            border-right-color: rgba(168, 85, 247, 0.2);
+        }
+
+        .moment-segment.completed {
+            background: rgba(59, 130, 246, 0.15);
+        }
+
+        .moment-segment.current {
+            background: rgba(37, 99, 235, 0.2);
+            height: 10px;
+            box-shadow: 0 0 8px rgba(37, 99, 235, 0.3);
+        }
+
+        .moment-segment:hover {
+            height: 12px;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Tooltip pour segments de moments */
+        .moment-segment::after {
+            content: attr(data-title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            margin-bottom: 8px;
+            z-index: 200;
+        }
+
+        .moment-segment:hover::after {
+            opacity: 1;
+        }
+
         /* Sous-moments - petits points sur la ligne */
         .submoment-dot {
             width: 8px;
@@ -3313,7 +3530,7 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             transform: translate(-50%, -50%);
             cursor: pointer;
             transition: all 0.3s ease;
-            z-index: 1;
+            z-index: 2;
         }
 
         .submoment-dot:hover {
@@ -3619,12 +3836,14 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             pointer-events: none;
         }
 
-        body.presentation-mode .zoom-controls {
+        body.presentation-mode .zoom-controls,
+        body.presentation-mode .timer-top-right {
             opacity: 0;
             transition: opacity var(--transition);
         }
 
-        body.presentation-mode:hover .zoom-controls {
+        body.presentation-mode:hover .zoom-controls,
+        body.presentation-mode:hover .timer-top-right {
             opacity: 1;
         }
 
@@ -3761,8 +3980,13 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <h1 class="sidebar-title">Training Platform</h1>
-                <p class="sidebar-subtitle">Participant deck</p>
+                <div class="sidebar-header-content">
+                    <h1 class="sidebar-title">Training Platform</h1>
+                    <p class="sidebar-subtitle">Participant deck</p>
+                </div>
+                <button class="sidebar-toggle-btn" id="sidebarToggleBtn" onclick="app.toggleSidebar()" title="Hide sidebar" aria-label="Hide navigation sidebar">
+                    <span class="material-symbols-outlined">chevron_left</span>
+                </button>
             </div>
 
             <!-- Search -->
@@ -3875,45 +4099,90 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             </div>
         </aside>
 
+        <!-- Sidebar Open Button (shown when collapsed) -->
+        <button class="sidebar-open-btn" id="sidebarOpenBtn" onclick="app.toggleSidebar()" title="Show sidebar" aria-label="Show navigation sidebar">
+            <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+
         <!-- Main Content -->
         <main class="main-content">
-            <!-- Zoom Controls -->
-            <div class="zoom-controls" id="zoomControls" style="display: none;">
-                <button class="zoom-btn" id="zoomOutBtn" onclick="app.zoomOut()" title="Zoom out" aria-label="Zoom out">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        <line x1="8" y1="11" x2="14" y2="11"></line>
-                    </svg>
-                </button>
-                <span class="zoom-level" id="zoomLevel">100%</span>
-                <button class="zoom-btn" id="zoomInBtn" onclick="app.zoomIn()" title="Zoom in" aria-label="Zoom in">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        <line x1="11" y1="8" x2="11" y2="14"></line>
-                        <line x1="8" y1="11" x2="14" y2="11"></line>
-                    </svg>
-                </button>
-                <button class="zoom-btn" id="zoomResetBtn" onclick="app.zoomReset()" title="Reset zoom" aria-label="Reset zoom to 100%">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                        <path d="M1 4v6h6"></path>
-                        <path d="M23 20v-6h-6"></path>
-                        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
-                    </svg>
-                </button>
-                <div class="font-size-control">
-                    <span class="font-size-label">Text</span>
-                    <select class="font-size-select" id="fontSizeSelect" aria-label="Text size">
-                        <option value="14">Very small (14px)</option>
-                        <option value="16">Small (16px)</option>
-                        <option value="18" selected>Medium (18px)</option>
-                        <option value="20">Large (20px)</option>
-                        <option value="22">Extra large (22px)</option>
-                        <option value="24">XXL (24px)</option>
-                        <option value="26">Huge (26px)</option>
-                        <option value="28">Max (28px)</option>
-                    </select>
+            <!-- Top Right Controls Container -->
+            <div class="top-right-controls">
+                <!-- Zoom Controls -->
+                <div class="zoom-controls" id="zoomControls" style="display: none;">
+                    <button class="zoom-btn" id="zoomOutBtn" onclick="app.zoomOut()" title="Zoom out" aria-label="Zoom out">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                        </svg>
+                    </button>
+                    <span class="zoom-level" id="zoomLevel">100%</span>
+                    <button class="zoom-btn" id="zoomInBtn" onclick="app.zoomIn()" title="Zoom in" aria-label="Zoom in">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            <line x1="11" y1="8" x2="11" y2="14"></line>
+                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                        </svg>
+                    </button>
+                    <button class="zoom-btn" id="zoomResetBtn" onclick="app.zoomReset()" title="Reset zoom" aria-label="Reset zoom to 100%">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M1 4v6h6"></path>
+                            <path d="M23 20v-6h-6"></path>
+                            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                        </svg>
+                    </button>
+                    <div class="font-size-control">
+                        <button class="zoom-btn" id="fontSizeDecreaseBtn" onclick="app.decreaseFontSize()" title="Decrease text size" aria-label="Decrease text size">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M20 12H4"></path>
+                            </svg>
+                        </button>
+                        <span class="font-size-value" id="fontSizeValue">18px</span>
+                        <button class="zoom-btn" id="fontSizeIncreaseBtn" onclick="app.increaseFontSize()" title="Increase text size" aria-label="Increase text size">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M12 4v16m8-8H4"></path>
+                            </svg>
+                        </button>
+                        <select class="font-size-select" id="fontSizeSelect" aria-label="Text size" style="display: none;">
+                            <option value="14">Very small (14px)</option>
+                            <option value="16">Small (16px)</option>
+                            <option value="18" selected>Medium (18px)</option>
+                            <option value="20">Large (20px)</option>
+                            <option value="22">Extra large (22px)</option>
+                            <option value="24">XXL (24px)</option>
+                            <option value="26">Huge (26px)</option>
+                            <option value="28">Max (28px)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Timer Top Right -->
+                <div class="timer-top-right" id="timerTopRight" style="display: none;">
+                    <div class="timer-top-row">
+                        <div class="timer-display green" role="timer" aria-live="off" aria-atomic="true">
+                            <span class="timer-elapsed" id="topTimerElapsed">00:00</span>
+                            <span class="timer-separator">/</span>
+                            <span class="timer-planned" id="topTimerPlanned">00:00</span>
+                        </div>
+                        <div class="timer-controls">
+                            <button class="timer-btn" id="topTimerPlayBtn" onclick="app.toggleActivityTimer()" title="Start/Pause" aria-label="Start or pause activity timer">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                </svg>
+                            </button>
+                            <button class="timer-btn" id="topTimerResetBtn" onclick="app.resetActivityTimer()" title="Reset" aria-label="Reset activity timer">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="23 4 23 10 17 10"></polyline>
+                                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="timer-progress-bar">
+                        <div class="timer-progress-fill" id="topTimerProgressFill" style="width: 0%;"></div>
+                    </div>
                 </div>
             </div>
 
@@ -4339,7 +4608,6 @@ showIgnored: false,
                     }
 
                     this.initialized = true;
-                    console.log('Train line initialized');
                 },
 
                 build() {
@@ -4359,13 +4627,17 @@ showIgnored: false,
                     const totalModules = modules.length;
 
                     modules.forEach((module, moduleIndex) => {
-                        // Créer et positionner la station du module
-                        const station = this.createStation(module, moduleIndex, totalModules);
-                        this.stationsContainer.appendChild(station);
+                        // Créer et positionner les segments de moments (en premier, z-index le plus bas)
+                        const momentSegments = this.createMomentSegments(module, moduleIndex, totalModules);
+                        momentSegments.forEach(segment => this.stationsContainer.appendChild(segment));
 
                         // Créer et positionner les points de sous-moments
                         const submomentDots = this.createSubmomentDots(module, moduleIndex, totalModules);
                         submomentDots.forEach(dot => this.stationsContainer.appendChild(dot));
+
+                        // Créer et positionner la station du module (en dernier, z-index le plus élevé)
+                        const station = this.createStation(module, moduleIndex, totalModules);
+                        this.stationsContainer.appendChild(station);
                     });
 
                     this.update();
@@ -4492,6 +4764,82 @@ showIgnored: false,
                     return dots;
                 },
 
+                createMomentSegments(module, moduleIndex, totalModules) {
+                    const segments = [];
+
+                    if (!module.moments || !Array.isArray(module.moments)) {
+                        return segments;
+                    }
+
+                    // Filtrer les moments non-ignorés
+                    const validMoments = module.moments.filter(m => m.ignored !== true);
+                    if (validMoments.length === 0) {
+                        return segments;
+                    }
+
+                    // Calculer l'espace entre ce module et le suivant
+                    const moduleStartPercent = totalModules > 1
+                        ? (moduleIndex / (totalModules - 1)) * 100
+                        : 0;
+                    const moduleEndPercent = totalModules > 1 && moduleIndex < totalModules - 1
+                        ? ((moduleIndex + 1) / (totalModules - 1)) * 100
+                        : 100;
+                    const moduleSpan = moduleEndPercent - moduleStartPercent;
+
+                    // Créer un segment pour chaque moment
+                    validMoments.forEach((moment, validIndex) => {
+                        const segment = document.createElement('div');
+                        segment.className = 'moment-segment future';
+
+                        // Trouver l'index original du moment dans le tableau complet
+                        const momentIndex = module.moments.indexOf(moment);
+
+                        segment.setAttribute('data-module-index', moduleIndex);
+                        segment.setAttribute('data-moment-index', momentIndex);
+                        segment.setAttribute('data-title', `${moment.title}`);
+                        segment.setAttribute('role', 'button');
+                        segment.setAttribute('tabindex', '0');
+
+                        // Calculer position et largeur du segment
+                        const segmentStartInModule = validIndex / validMoments.length;
+                        const segmentWidth = 1 / validMoments.length;
+
+                        const segmentStartPercent = moduleStartPercent + (segmentStartInModule * moduleSpan);
+                        const segmentEndPercent = moduleStartPercent + ((segmentStartInModule + segmentWidth) * moduleSpan);
+
+                        segment.style.left = `${segmentStartPercent}%`;
+                        segment.style.width = `${segmentEndPercent - segmentStartPercent}%`;
+
+                        // Navigation au clic - aller au premier sous-moment du moment
+                        segment.addEventListener('click', () => {
+                            if (moment.submoments && moment.submoments.length > 0) {
+                                const firstSubmoment = moment.submoments.find(sm => sm.ignored !== true);
+                                if (firstSubmoment) {
+                                    const submomentIndex = moment.submoments.indexOf(firstSubmoment);
+                                    this.navigateToSubmoment(moduleIndex, momentIndex, submomentIndex);
+                                }
+                            }
+                        });
+
+                        segment.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                if (moment.submoments && moment.submoments.length > 0) {
+                                    const firstSubmoment = moment.submoments.find(sm => sm.ignored !== true);
+                                    if (firstSubmoment) {
+                                        const submomentIndex = moment.submoments.indexOf(firstSubmoment);
+                                        this.navigateToSubmoment(moduleIndex, momentIndex, submomentIndex);
+                                    }
+                                }
+                            }
+                        });
+
+                        segments.push(segment);
+                    });
+
+                    return segments;
+                },
+
                 navigateToSubmoment(moduleIndex, momentIndex, submomentIndex) {
                     if (!app.courseData || !app.courseData.modules[moduleIndex]) return;
 
@@ -4596,6 +4944,29 @@ showIgnored: false,
                         }
                     });
 
+                    // Mettre à jour les segments de moments
+                    const segments = this.stationsContainer.querySelectorAll('.moment-segment');
+                    segments.forEach(segment => {
+                        const segmentModuleIndex = parseInt(segment.getAttribute('data-module-index'));
+                        const segmentMomentIndex = parseInt(segment.getAttribute('data-moment-index'));
+
+                        segment.classList.remove('completed', 'current', 'future');
+
+                        if (segmentModuleIndex < moduleIndex) {
+                            // Moment dans un module déjà complété
+                            segment.classList.add('completed');
+                        } else if (segmentModuleIndex === moduleIndex && segmentMomentIndex < momentIndex) {
+                            // Moment dans le module actuel mais précédent
+                            segment.classList.add('completed');
+                        } else if (segmentModuleIndex === moduleIndex && segmentMomentIndex === momentIndex) {
+                            // Moment actuel
+                            segment.classList.add('current');
+                        } else {
+                            // Moment futur
+                            segment.classList.add('future');
+                        }
+                    });
+
                     // Mettre à jour les points de sous-moments
                     const dots = this.stationsContainer.querySelectorAll('.submoment-dot');
                     dots.forEach(dot => {
@@ -4625,50 +4996,6 @@ showIgnored: false,
 
                     this.updateTrackProgress(moduleIndex, moduleProgress, totalModules);
                     this.updateMobile(moduleIndex, moduleProgress, totalModules);
-                },
-
-                getCurrentModuleInfo() {
-                    if (!app.currentActivity || !app.courseData) return null;
-
-                    const modules = app.courseData.modules;
-                    let moduleIndex = -1;
-                    let activitiesInModule = [];
-                    let currentActivityIndex = -1;
-
-                    for (let i = 0; i < modules.length; i++) {
-                        const module = modules[i];
-                        const moduleActivities = this.getAllActivitiesInModule(module);
-
-                        currentActivityIndex = moduleActivities.findIndex(act =>
-                            act.id === app.currentActivity.id
-                        );
-
-                        if (currentActivityIndex !== -1) {
-                            moduleIndex = i;
-                            activitiesInModule = moduleActivities;
-                            break;
-                        }
-                    }
-
-                    if (moduleIndex === -1) {
-                        return null;
-                    }
-
-                    const completedInModule = activitiesInModule.filter(act =>
-                        app.completedActivities.has(act.id)
-                    ).length;
-
-                    const moduleProgress = activitiesInModule.length > 0
-                        ? Math.round((completedInModule / activitiesInModule.length) * 100)
-                        : 0;
-
-                    return {
-                        moduleIndex,
-                        moduleProgress,
-                        totalModules: modules.length,
-                        activitiesInModule: activitiesInModule.length,
-                        completedInModule
-                    };
                 },
 
                 getAllActivitiesInModule(module) {
@@ -4775,6 +5102,7 @@ showIgnored: false,
                 // Seen-state markers removed (no persistent "visited/completed" ticks)
                 this.clearSeenState();
                 this.loadThemePreference();
+                this.loadSidebarState();
                 this.loadFontSizePreference();
                 this.loadZoomPreference();
                 this.loadDetailsPanelState();
@@ -6049,7 +6377,26 @@ loadIgnoredState() {
                 const select = document.getElementById('fontSizeSelect');
                 if (select) select.value = String(finalPx);
 
+                const valueDisplay = document.getElementById('fontSizeValue');
+                if (valueDisplay) valueDisplay.textContent = `${finalPx}px`;
+
                 if (persist) this.safeLocalStorageSet('slideFontSize', String(finalPx));
+            },
+
+            increaseFontSize() {
+                const allowed = [14, 16, 18, 20, 22, 24, 26, 28];
+                const currentIndex = allowed.indexOf(this.slideFontSize);
+                if (currentIndex < allowed.length - 1) {
+                    this.setSlideFontSize(allowed[currentIndex + 1], true);
+                }
+            },
+
+            decreaseFontSize() {
+                const allowed = [14, 16, 18, 20, 22, 24, 26, 28];
+                const currentIndex = allowed.indexOf(this.slideFontSize);
+                if (currentIndex > 0) {
+                    this.setSlideFontSize(allowed[currentIndex - 1], true);
+                }
             },
 
 
@@ -6123,8 +6470,12 @@ loadIgnoredState() {
 
             showZoomControls() {
                 const zoomControls = document.getElementById('zoomControls');
+                const timerTopRight = document.getElementById('timerTopRight');
                 if (zoomControls) {
                     zoomControls.style.display = 'flex';
+                }
+                if (timerTopRight) {
+                    timerTopRight.style.display = 'flex';
                 }
             },
 
@@ -6564,49 +6915,89 @@ loadIgnoredState() {
                 const planned = document.getElementById('activityPlanned');
                 const fill = document.getElementById('activityTimeProgressFill');
 
-                if (elapsed) elapsed.textContent = this.formatTime(this.activityTimer.elapsed);
-                if (planned) planned.textContent = this.formatTime(this.activityTimer.planned);
+                // Update top right timer
+                const topElapsed = document.getElementById('topTimerElapsed');
+                const topPlanned = document.getElementById('topTimerPlanned');
+                const topDisplay = document.querySelector('#timerTopRight .timer-display');
+                const topFill = document.getElementById('topTimerProgressFill');
+
+                const timeElapsed = this.formatTime(this.activityTimer.elapsed);
+                const timePlanned = this.formatTime(this.activityTimer.planned);
+
+                if (elapsed) elapsed.textContent = timeElapsed;
+                if (planned) planned.textContent = timePlanned;
+                if (topElapsed) topElapsed.textContent = timeElapsed;
+                if (topPlanned) topPlanned.textContent = timePlanned;
 
                 const color = this.getTimerColor(this.activityTimer.elapsed, this.activityTimer.planned);
 
                 if (display) {
                     display.className = `timer-display ${color}`;
                 }
+                if (topDisplay) {
+                    topDisplay.className = `timer-display ${color}`;
+                }
+
+                const plannedSec = this.activityTimer.planned || 0;
+                const pct = plannedSec > 0
+                    ? Math.min(100, (this.activityTimer.elapsed / plannedSec) * 100)
+                    : 0;
 
                 if (fill) {
-                    const plannedSec = this.activityTimer.planned || 0;
-                    const pct = plannedSec > 0
-                        ? Math.min(100, (this.activityTimer.elapsed / plannedSec) * 100)
-                        : 0;
                     fill.style.width = `${pct}%`;
                     fill.className = `timer-progress-fill ${color}`;
+                }
+
+                // Update top timer progress bar
+                if (topFill) {
+                    topFill.style.width = `${pct}%`;
+                    topFill.className = `timer-progress-fill ${color}`;
                 }
             },
 
 
             toggleActivityTimer() {
                 this.activityTimer.running = !this.activityTimer.running;
-                
+
                 const playBtn = document.getElementById('activityPlayBtn');
+                const topPlayBtn = document.getElementById('topTimerPlayBtn');
+
+                const pauseIcon = `
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <rect x="6" y="4" width="4" height="16"></rect>
+                        <rect x="14" y="4" width="4" height="16"></rect>
+                    </svg>
+                `;
+                const playIcon = `
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                `;
+
                 if (this.activityTimer.running) {
-                    playBtn.classList.add('playing');
-                    playBtn.innerHTML = `
-                        <svg viewBox="0 0 24 24" fill="currentColor">
-                            <rect x="6" y="4" width="4" height="16"></rect>
-                            <rect x="14" y="4" width="4" height="16"></rect>
-                        </svg>
-                    `;
-                    playBtn.title = 'Pause';
+                    if (playBtn) {
+                        playBtn.classList.add('playing');
+                        playBtn.innerHTML = pauseIcon;
+                        playBtn.title = 'Pause';
+                    }
+                    if (topPlayBtn) {
+                        topPlayBtn.classList.add('playing');
+                        topPlayBtn.innerHTML = pauseIcon;
+                        topPlayBtn.title = 'Pause';
+                    }
                 } else {
-                    playBtn.classList.remove('playing');
-                    playBtn.innerHTML = `
-                        <svg viewBox="0 0 24 24" fill="currentColor">
-                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                        </svg>
-                    `;
-                    playBtn.title = 'Start';
+                    if (playBtn) {
+                        playBtn.classList.remove('playing');
+                        playBtn.innerHTML = playIcon;
+                        playBtn.title = 'Start';
+                    }
+                    if (topPlayBtn) {
+                        topPlayBtn.classList.remove('playing');
+                        topPlayBtn.innerHTML = playIcon;
+                        topPlayBtn.title = 'Start';
+                    }
                 }
-                
+
                 this.saveTimerState();
             },
 
@@ -7857,6 +8248,28 @@ this.activityTimer = {
                     document.documentElement.setAttribute('data-theme', 'dark');
                 }
                 this.updateDarkModeButton(theme);
+            },
+
+            // ===== SIDEBAR TOGGLE =====
+            toggleSidebar() {
+                const sidebar = document.getElementById('sidebar');
+                const isCollapsed = sidebar.classList.contains('collapsed');
+
+                if (isCollapsed) {
+                    sidebar.classList.remove('collapsed');
+                    this.safeLocalStorageSet('sidebarCollapsed', 'false');
+                } else {
+                    sidebar.classList.add('collapsed');
+                    this.safeLocalStorageSet('sidebarCollapsed', 'true');
+                }
+            },
+
+            loadSidebarState() {
+                const saved = this.safeLocalStorageGet('sidebarCollapsed');
+                const sidebar = document.getElementById('sidebar');
+                if (saved === 'true' && sidebar) {
+                    sidebar.classList.add('collapsed');
+                }
             },
 
             // ===== MODAL FOCUS TRAPPING =====
