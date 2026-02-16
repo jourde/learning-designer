@@ -1589,6 +1589,14 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             box-sizing: border-box;
         }
 
+        /* Title slides need special handling for absolute positioning */
+        .slide-title-full {
+            padding: 0 !important;
+            position: relative;
+            min-height: 500px;
+            overflow: hidden;
+        }
+
         /* Ensure zoomed slides don't get cut off */
         .slide[style*="scale"] {
             margin: auto;
@@ -4354,7 +4362,7 @@ loadIgnoredState() {
                     'a', 'img', 'figure', 'figcaption', 'sup', 'sub', 'mark',
                 ]);
                 const ALLOWED_ATTRS = new Set([
-                    'href', 'src', 'alt', 'title', 'class', 'id',
+                    'href', 'src', 'alt', 'title', 'class', 'id', 'style',
                     'target', 'rel', 'loading', 'width', 'height',
                     'colspan', 'rowspan', 'scope',
                 ]);
@@ -4408,12 +4416,34 @@ loadIgnoredState() {
                     ? '<div class="ignored-slide-banner"><span class="material-symbols-outlined">visibility_off</span> Ignored: please skip</div>'
                     : '';
 
-                container.innerHTML = `
-                    <div class="slide ${isIgnored ? 'slide-ignored' : ''}">
-                        ${ignoredBanner}
-                        <div class="slide-content">${this.sanitizeRichHTML(slide.content)}</div>
-                    </div>
-                `;
+                // Check if this is a title slide (module, moment, or submoment)
+                const isTitleSlide = this.currentActivity.isTitleSlide === true;
+
+                console.log('Rendering slide:', {
+                    activityId: this.currentActivity.id,
+                    activityTitle: this.currentActivity.title,
+                    isTitleSlide: isTitleSlide,
+                    titleType: this.currentActivity.titleType
+                });
+
+                if (isTitleSlide) {
+                    console.log('Rendering TITLE slide for:', this.currentActivity.titleType);
+                    // For title slides, render content directly without wrapper to allow absolute positioning
+                    container.innerHTML = `
+                        <div class="slide slide-title-full">
+                            ${this.sanitizeRichHTML(slide.content)}
+                        </div>
+                    `;
+                } else {
+                    // For regular activity slides, use normal wrapper
+                    container.innerHTML = `
+                        <div class="slide ${isIgnored ? 'slide-ignored' : ''}">
+                            ${ignoredBanner}
+                            <div class="slide-content">${this.sanitizeRichHTML(slide.content)}</div>
+                        </div>
+                    `;
+                }
+
                 this.updateSlideCounter();
                 this.updateNavigationButtons();
                 this.updateActivityProgress();
@@ -5248,12 +5278,59 @@ loadIgnoredState() {
             _cachedActivitiesInOrder: null,
 
             getAllActivitiesInOrder() {
-                if (this._cachedActivitiesInOrder) return this._cachedActivitiesInOrder;
+                if (this._cachedActivitiesInOrder) {
+                    console.log('Returning cached activities, count:', this._cachedActivitiesInOrder.length);
+                    return this._cachedActivitiesInOrder;
+                }
 
+                console.log('Building activities list with title slides...');
                 const list = [];
                 if (!this.courseData || !this.courseData.modules) return list;
 
-                this.courseData.modules.forEach(module => {
+                this.courseData.modules.forEach((module, moduleIndex) => {
+                    // Add module title slide - SOFT BLUE BACKGROUND, CENTERED
+                    list.push({
+                        id: `module-title-${module.id}`,
+                        title: module.title,
+                        isTitleSlide: true,
+                        titleType: 'module',
+                        slides: [{
+                            content: `<div style="
+                                position: absolute;
+                                inset: 0;
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                justify-content: center;
+                                background: #E3F2FD;
+                                text-align: center;
+                                padding: 4rem;
+                            ">
+                                <div style="
+                                    display: inline-block;
+                                    font-size: 0.75rem;
+                                    font-weight: 500;
+                                    letter-spacing: 0.15em;
+                                    text-transform: uppercase;
+                                    color: #1976D2;
+                                    margin-bottom: 2rem;
+                                    padding: 0.5rem 1.5rem;
+                                    background: white;
+                                    border-radius: 20px;
+                                    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                                ">Module ${moduleIndex + 1}</div>
+                                <h1 style="
+                                    font-size: 3rem;
+                                    font-weight: 300;
+                                    line-height: 1.3;
+                                    margin: 0;
+                                    color: #1565C0;
+                                    max-width: 800px;
+                                ">${this.sanitizeHTML(module.title)}</h1>
+                            </div>`
+                        }]
+                    });
+
                     // Add module-level activities first (if they exist)
                     if (module.activities && Array.isArray(module.activities)) {
                         module.activities.forEach(activity => {
@@ -5266,14 +5343,101 @@ loadIgnoredState() {
 
                     // Add activities from moments and submoments
                     if (module.moments && Array.isArray(module.moments)) {
-                        module.moments.forEach(moment => {
+                        module.moments.forEach((moment, momentIndex) => {
                             // Skip ignored moments
                             if (moment.ignored === true) return;
 
+                            // Add moment title slide - SOFT GREY BACKGROUND, CENTERED
+                            list.push({
+                                id: `moment-title-${moment.id || moduleIndex + '-' + momentIndex}`,
+                                title: moment.title,
+                                isTitleSlide: true,
+                                titleType: 'moment',
+                                slides: [{
+                                    content: `<div style="
+                                        position: absolute;
+                                        inset: 0;
+                                        display: flex;
+                                        flex-direction: column;
+                                        align-items: center;
+                                        justify-content: center;
+                                        background: #F5F5F5;
+                                        text-align: center;
+                                        padding: 4rem;
+                                    ">
+                                        <div style="
+                                            display: inline-block;
+                                            font-size: 0.7rem;
+                                            font-weight: 500;
+                                            letter-spacing: 0.12em;
+                                            text-transform: uppercase;
+                                            color: #5E35B1;
+                                            margin-bottom: 1.5rem;
+                                            padding: 0.4rem 1.2rem;
+                                            background: white;
+                                            border-radius: 16px;
+                                            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+                                        ">Moment ${moduleIndex + 1}.${momentIndex + 1}</div>
+                                        <h2 style="
+                                            font-size: 2.5rem;
+                                            font-weight: 300;
+                                            line-height: 1.4;
+                                            color: #4527A0;
+                                            margin: 0;
+                                            max-width: 700px;
+                                        ">${this.sanitizeHTML(moment.title)}</h2>
+                                    </div>`
+                                }]
+                            });
+
                             if (moment.submoments && Array.isArray(moment.submoments)) {
-                                moment.submoments.forEach(submoment => {
+                                moment.submoments.forEach((submoment, submomentIndex) => {
                                     // Skip ignored submoments
                                     if (submoment.ignored === true) return;
+
+                                    // Add submoment title slide - WHITE BACKGROUND, CENTERED, MINIMAL BORDER
+                                    list.push({
+                                        id: `submoment-title-${submoment.id || moduleIndex + '-' + momentIndex + '-' + submomentIndex}`,
+                                        title: submoment.title,
+                                        isTitleSlide: true,
+                                        titleType: 'submoment',
+                                        slides: [{
+                                            content: `<div style="
+                                                position: absolute;
+                                                inset: 0;
+                                                display: flex;
+                                                flex-direction: column;
+                                                align-items: center;
+                                                justify-content: center;
+                                                background: white;
+                                                text-align: center;
+                                                padding: 4rem;
+                                            ">
+                                                <div style="
+                                                    display: inline-block;
+                                                    font-size: 0.65rem;
+                                                    font-weight: 500;
+                                                    letter-spacing: 0.1em;
+                                                    text-transform: uppercase;
+                                                    color: #00897B;
+                                                    margin-bottom: 1.25rem;
+                                                    padding: 0.35rem 1rem;
+                                                    background: #E0F2F1;
+                                                    border-radius: 12px;
+                                                ">Sous-moment ${moduleIndex + 1}.${momentIndex + 1}.${submomentIndex + 1}</div>
+                                                <h3 style="
+                                                    font-size: 2rem;
+                                                    font-weight: 300;
+                                                    line-height: 1.5;
+                                                    color: #00695C;
+                                                    margin: 0;
+                                                    max-width: 650px;
+                                                    padding-top: 1rem;
+                                                    border-top: 2px solid #B2DFDB;
+                                                ">${this.sanitizeHTML(submoment.title)}</h3>
+                                            </div>`
+                                        }]
+                                    });
 
                                     if (submoment.activities && Array.isArray(submoment.activities)) {
                                         submoment.activities.forEach(activity => {
@@ -5290,6 +5454,8 @@ loadIgnoredState() {
                 });
 
                 this._cachedActivitiesInOrder = list;
+                console.log('Total activities with title slides:', list.length);
+                console.log('Title slides:', list.filter(a => a.isTitleSlide).length);
                 return list;
             },
 
@@ -6655,6 +6821,14 @@ this.activityTimer = {
                                     <strong>${this.formatMinutes(totalMinutes)}</strong> au total
                                 </span>
                             </div>
+                            <div style="margin-top: 24px;">
+                                <button class="btn btn-primary timeline-start-btn" onclick="app.startTraining()" aria-label="Commencer la formation">
+                                    Commencer la formation
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="timeline-content">
@@ -6768,15 +6942,6 @@ this.activityTimer = {
                 });
 
                 html += `
-                        </div>
-
-                        <div class="timeline-footer">
-                            <button class="btn btn-primary timeline-start-btn" onclick="app.startTraining()" aria-label="Commencer la formation">
-                                Commencer la formation
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                    <polyline points="9 18 15 12 9 6"></polyline>
-                                </svg>
-                            </button>
                         </div>
                     </div>
                 `;
