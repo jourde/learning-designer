@@ -29881,15 +29881,25 @@ if (nextBtn) nextBtn.disabled = !__ctxNeighbourStep(stepEl, 1);
         const durUnitEl = __ctxQ('.duration-unit', s);
         const durVal = __ctxGetText(durEl ? durEl.value : '').trim();
         const durUnitVal = __ctxGetText(durUnitEl ? durUnitEl.value : '').trim();
+        const trainerEl = __ctxQ('.trainer-select', s);
+        const placeEl = __ctxQ('.place-select', s);
+        const timeEl = __ctxQ('.time-select', s);
         const left = [
           modText,
           stepTitle,
           evalVal,
           durVal,
           durUnitVal,
+          __ctxGetText(trainerEl ? trainerEl.value : ''),
+          __ctxGetText(placeEl ? placeEl.value : ''),
+          __ctxGetText(timeEl ? timeEl.value : ''),
           __ctxGetText(__ctxQ('.step-input-objective', s)?.value),
           __ctxGetText(__ctxQ('.step-input-tasks', s)?.value),
           __ctxGetText(__ctxQ('.step-input-trainer-tasks', s)?.value),
+          __ctxGetText(__ctxQ('.step-input-presentation', s)?.value),
+          __ctxGetText(__ctxQ('.step-input-eval-followup', s)?.value),
+          __ctxGetText(__ctxQ('.step-input-notes', s)?.value),
+          __ctxGetText(__ctxQ('.step-input-linksrefs', s)?.value),
           __ctxGetText(__ctxQ('.step-input-logbook', s)?.value),
           __ctxGetText(__ctxQ('.step-input-resources', s)?.value)
         ].join('\n');
