@@ -25140,6 +25140,7 @@ try { if (typeof syncViewStyleSelect === 'function') syncViewStyleSelect(); } ca
 const AUTOSAVE_KEY = 'ld_autosave_project_v1';
 let __autosaveTimer = null;
 let __autosaveSuspended = false;
+let __historySuspended = false;
 
 // Micro-optimisation: classify long text edits to reduce timer churn while typing in large textareas.
 function __isLongTextEditTarget(el) {
@@ -25277,6 +25278,7 @@ function historyCaptureNow() {
 
 function scheduleHistoryCapture() {
     if (__isApplyingHistory) return;
+    if (__historySuspended) return;
     if (__historyDebounce) clearTimeout(__historyDebounce);
     __historyDebounce = setTimeout(() => {
         __historyDebounce = null;
@@ -32691,8 +32693,18 @@ kbd {
     if (!modalPreview) return;
     try {
       const html = renderMarkdown(modalContent.value || '');
-      if (typeof __ldSetSafeHtml === 'function') __ldSetSafeHtml(modalPreview, html);
-      else modalPreview.innerHTML = html;
+      // Suspend autosave/history around the innerHTML write to prevent the DOM
+      // mutation from triggering MutationObserver-based autosave/history captures.
+      const wasSuspended = __autosaveSuspended;
+      __autosaveSuspended = true;
+      __historySuspended = true;
+      try {
+        if (typeof __ldSetSafeHtml === 'function') __ldSetSafeHtml(modalPreview, html);
+        else modalPreview.innerHTML = html;
+      } finally {
+        __autosaveSuspended = wasSuspended;
+        __historySuspended = wasSuspended;
+      }
     } catch (err) {
       try { modalPreview.textContent = String(modalContent.value || ''); } catch(err){}
     }
@@ -32700,7 +32712,7 @@ kbd {
 
   function schedulePreview() {
     if (__mdPreviewTimer) clearTimeout(__mdPreviewTimer);
-    __mdPreviewTimer = setTimeout(updatePreview, 80);
+    __mdPreviewTimer = setTimeout(updatePreview, 300);
   }
 
 
@@ -33116,15 +33128,20 @@ kbd {
     updateCharCount();
     try { updatePreview(); } catch(err) {}
     
+    // Suspend autosave and history capture while the modal is open to prevent
+    // MutationObserver cascade (preview innerHTML updates trigger heavy JSON serialization).
+    __autosaveSuspended = true;
+    __historySuspended = true;
+
     // Show modal
     modal.classList.remove('hidden');
-    
+
     // Focus on textarea
     setTimeout(() => {
       modalContent.focus();
       modalContent.setSelectionRange(modalContent.value.length, modalContent.value.length);
     }, 100);
-    
+
     // Prevent body scroll
     document.body.style.overflow = 'hidden';
   }
@@ -33151,10 +33168,17 @@ kbd {
     
     // Hide modal
     modal.classList.add('hidden');
-    
+
     // Restore body scroll
     document.body.style.overflow = '';
-    
+
+    // Resume autosave and history capture, then schedule one capture so the
+    // final state (saved or discarded) is properly recorded.
+    __autosaveSuspended = false;
+    __historySuspended = false;
+    try { scheduleAutosave(); } catch(err) {}
+    try { scheduleHistoryCapture(); } catch(err) {}
+
     // Clear state
     currentTextarea = null;
     originalValue = '';
