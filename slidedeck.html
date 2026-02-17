@@ -1511,7 +1511,7 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            padding-top: 50px;
+            padding-top: 64px;
             transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -3273,12 +3273,13 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             top: 0;
             left: var(--sidebar-width);
             right: 0;
-            height: 50px;
+            height: 64px;
             background: var(--color-surface);
             border-bottom: 1px solid var(--color-border);
             z-index: 150;
             transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform var(--transition);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            overflow: visible;
         }
 
         .sidebar.collapsed ~ .main-content .train-line-container {
@@ -3293,6 +3294,7 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             position: relative;
             display: flex;
             align-items: center;
+            overflow: visible;
         }
 
         .train-line-mobile {
@@ -3301,7 +3303,7 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
 
         .train-track {
             position: absolute;
-            top: 50%;
+            top: 62%;
             left: 48px;
             right: 48px;
             height: 3px;
@@ -3323,6 +3325,7 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             height: 100%;
             position: relative;
             z-index: 2;
+            overflow: visible;
         }
 
         .train-station {
@@ -3331,7 +3334,7 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             align-items: center;
             cursor: pointer;
             position: absolute; /* Changé pour positionnement manuel */
-            top: 50%;
+            top: 62%;
             transform: translate(-50%, -50%);
             transition: transform var(--transition);
         }
@@ -3339,6 +3342,7 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
         .train-station:hover {
             transform: translate(-50%, -50%) translateY(-2px);
         }
+
 
         .train-station:focus-visible {
             outline: 3px solid var(--color-primary);
@@ -3456,7 +3460,7 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
         .moment-segment {
             position: absolute;
             height: 8px;
-            top: 50%;
+            top: 62%;
             transform: translateY(-50%);
             background: rgba(168, 85, 247, 0.08);
             border-left: 1px solid rgba(168, 85, 247, 0.2);
@@ -3518,6 +3522,52 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             opacity: 1;
         }
 
+        /* Description popover */
+        .desc-popover {
+            position: fixed;
+            z-index: 9000;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            padding: 10px 14px;
+            max-width: 280px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--color-text-secondary);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 150ms ease;
+        }
+        .desc-popover.visible { opacity: 1; }
+
+        /* Info button for descriptions */
+        .desc-info-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border: 1px solid var(--color-border);
+            border-radius: 50%;
+            background: var(--color-surface);
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            flex-shrink: 0;
+            margin-left: 6px;
+            line-height: 1;
+            padding: 0;
+            vertical-align: middle;
+            box-shadow: var(--shadow-sm);
+        }
+        .desc-info-btn:hover {
+            color: var(--color-primary);
+            border-color: var(--color-primary);
+            background: var(--color-primary-light);
+        }
+
         /* Sous-moments - petits points sur la ligne */
         .submoment-dot {
             width: 8px;
@@ -3526,7 +3576,7 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             background: var(--color-surface);
             border: 2px solid var(--color-border-light);
             position: absolute;
-            top: 50%;
+            top: 62%;
             transform: translate(-50%, -50%);
             cursor: pointer;
             transition: all 0.3s ease;
@@ -4685,6 +4735,18 @@ showIgnored: false,
                     stationDiv.appendChild(label);
                     stationDiv.appendChild(progressContainer);
 
+                    if (module.description) {
+                        const infoBtn = document.createElement('button');
+                        infoBtn.className = 'desc-info-btn';
+                        infoBtn.title = 'Show description';
+                        infoBtn.textContent = 'ℹ';
+                        infoBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            app.showDescriptionPopover(module.description, infoBtn);
+                        });
+                        stationDiv.appendChild(infoBtn);
+                    }
+
                     stationDiv.addEventListener('click', () => this.navigateToModule(moduleIndex));
                     stationDiv.addEventListener('keydown', (e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
@@ -4749,6 +4811,23 @@ showIgnored: false,
                         const dotPositionPercent = moduleStartPercent + (dotPositionInModule * moduleSpan);
                         dot.style.left = `${dotPositionPercent}%`;
 
+                        if (item.submoment.description) {
+                            const infoBtn = document.createElement('button');
+                            infoBtn.className = 'desc-info-btn';
+                            infoBtn.title = 'Show description';
+                            infoBtn.textContent = 'ℹ';
+                            infoBtn.style.cssText = 'position:absolute;top:-22px;left:50%;transform:translateX(-50%);display:none;';
+                            dot.style.position = 'absolute';
+                            dot.style.overflow = 'visible';
+                            dot.appendChild(infoBtn);
+                            dot.addEventListener('mouseenter', () => { infoBtn.style.display = 'inline-flex'; });
+                            dot.addEventListener('mouseleave', () => { infoBtn.style.display = 'none'; app.hideDescriptionPopover(); });
+                            infoBtn.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                app.showDescriptionPopover(item.submoment.description, infoBtn);
+                            });
+                        }
+
                         // Navigation au clic
                         dot.addEventListener('click', () => this.navigateToSubmoment(moduleIndex, item.momentIndex, item.submomentIndex));
                         dot.addEventListener('keydown', (e) => {
@@ -4809,6 +4888,22 @@ showIgnored: false,
 
                         segment.style.left = `${segmentStartPercent}%`;
                         segment.style.width = `${segmentEndPercent - segmentStartPercent}%`;
+
+                        if (moment.description) {
+                            const infoBtn = document.createElement('button');
+                            infoBtn.className = 'desc-info-btn';
+                            infoBtn.title = 'Show description';
+                            infoBtn.textContent = 'ℹ';
+                            infoBtn.style.cssText = 'position:absolute;top:-22px;left:50%;transform:translateX(-50%);display:none;';
+                            segment.style.overflow = 'visible';
+                            segment.appendChild(infoBtn);
+                            segment.addEventListener('mouseenter', () => { infoBtn.style.display = 'inline-flex'; });
+                            segment.addEventListener('mouseleave', () => { infoBtn.style.display = 'none'; app.hideDescriptionPopover(); });
+                            infoBtn.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                app.showDescriptionPopover(moment.description, infoBtn);
+                            });
+                        }
 
                         // Navigation au clic - aller au premier sous-moment du moment
                         segment.addEventListener('click', () => {
@@ -5233,6 +5328,29 @@ loadIgnoredState() {
     this.applyIgnoredState(false);
 },
 
+            showDescriptionPopover(text, anchorEl) {
+                if (!text) return;
+                let pop = document.getElementById('descPopover');
+                if (!pop) {
+                    pop = document.createElement('div');
+                    pop.id = 'descPopover';
+                    pop.className = 'desc-popover';
+                    document.body.appendChild(pop);
+                }
+                pop.textContent = text;
+                const rect = anchorEl.getBoundingClientRect();
+                const left = Math.min(rect.left, window.innerWidth - 300);
+                const top = rect.bottom + 6;
+                pop.style.left = `${left}px`;
+                pop.style.top = `${top}px`;
+                pop.classList.add('visible');
+            },
+
+            hideDescriptionPopover() {
+                const pop = document.getElementById('descPopover');
+                if (pop) pop.classList.remove('visible');
+            },
+
             buildNavigation() {
 
                 const navTree = document.getElementById('navTree');
@@ -5268,7 +5386,23 @@ loadIgnoredState() {
 
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'nav-module-header';
-                headerDiv.textContent = `${moduleIndex + 1}. ${module.title}`;
+                headerDiv.style.display = 'flex';
+                headerDiv.style.alignItems = 'center';
+                const titleSpan = document.createElement('span');
+                titleSpan.textContent = `${moduleIndex + 1}. ${module.title}`;
+                titleSpan.style.flex = '1';
+                headerDiv.appendChild(titleSpan);
+                if (module.description) {
+                    const infoBtn = document.createElement('button');
+                    infoBtn.className = 'desc-info-btn';
+                    infoBtn.title = 'Show description';
+                    infoBtn.textContent = 'ℹ';
+                    infoBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.showDescriptionPopover(module.description, infoBtn);
+                    });
+                    headerDiv.appendChild(infoBtn);
+                }
                 moduleDiv.appendChild(headerDiv);
 
                 // Render moments if they exist
@@ -5310,6 +5444,17 @@ loadIgnoredState() {
         </svg>
         <span class="nav-item-title">${moduleIndex + 1}.${momentIndex + 1} ${this.sanitizeHTML(String(moment.title || ''))}</span>
     `;
+    if (moment.description) {
+        const infoBtn = document.createElement('button');
+        infoBtn.className = 'desc-info-btn';
+        infoBtn.title = 'Show description';
+        infoBtn.textContent = 'ℹ';
+        infoBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            app.showDescriptionPopover(moment.description, infoBtn);
+        });
+        headerDiv.appendChild(infoBtn);
+    }
 
     const childrenDiv = document.createElement('div');
     childrenDiv.className = 'nav-children';
@@ -5358,6 +5503,17 @@ loadIgnoredState() {
         </svg>
         <span class="nav-item-title">${moduleIndex + 1}.${momentIndex + 1}.${submomentIndex + 1} ${this.sanitizeHTML(String(submoment.title || ''))}</span>
     `;
+    if (submoment.description) {
+        const infoBtn = document.createElement('button');
+        infoBtn.className = 'desc-info-btn';
+        infoBtn.title = 'Show description';
+        infoBtn.textContent = 'ℹ';
+        infoBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            app.showDescriptionPopover(submoment.description, infoBtn);
+        });
+        headerDiv.appendChild(infoBtn);
+    }
 
     const childrenDiv = document.createElement('div');
     childrenDiv.className = 'nav-children';
@@ -5418,6 +5574,17 @@ loadIgnoredState() {
                     <span class="slide-count">${slideCount} slide${slideCount !== 1 ? 's' : ''}</span>
                 `;
 
+                if (activity.description) {
+                    const infoBtn = document.createElement('button');
+                    infoBtn.className = 'desc-info-btn';
+                    infoBtn.title = 'Show description';
+                    infoBtn.textContent = 'ℹ';
+                    infoBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.showDescriptionPopover(activity.description, infoBtn);
+                    });
+                    activityDiv.appendChild(infoBtn);
+                }
 
                 return activityDiv;
             },
@@ -6253,6 +6420,13 @@ loadIgnoredState() {
                 document.getElementById('mobileOverlay').addEventListener('click', () => {
                     this.closeMobileMenu();
                 });
+
+                // Dismiss description popover on outside click
+                document.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('desc-info-btn')) {
+                        this.hideDescriptionPopover();
+                    }
+                }, true);
 
                 // Keyboard navigation
                 document.addEventListener('keydown', (e) => {
@@ -7381,6 +7555,7 @@ loadIgnoredState() {
                     return {
                         id: srcStep.id || `act-${Math.random().toString(36).substr(2, 9)}`,
                         title: srcStep.title || 'Untitled Activity',
+                        description: srcStep.description || '',
                         plannedMinutes: toMinutes(srcStep.duration || 0, srcStep.unit || srcStep.durationUnit || 'minutes'),
                         ignored: srcStep.ignored || false,
                         slides: slides
@@ -7407,11 +7582,13 @@ loadIgnoredState() {
                             moments.push({
                                 id: srcMoment.id || `mom-${Math.random().toString(36).substr(2, 9)}`,
                                 title: srcMoment.title || 'Untitled Moment',
+                                description: srcMoment.description || '',
                                 ignored: srcMoment.ignored || false,
                                 submoments: (srcMoment.subMoments || srcMoment.submoments || []).map(srcSub => {
                                     return {
                                         id: srcSub.id || `sub-${Math.random().toString(36).substr(2, 9)}`,
                                         title: srcSub.title || 'Untitled Submoment',
+                                        description: srcSub.description || '',
                                         ignored: srcSub.ignored || false,
                                         activities: (srcSub.steps || []).map(srcStep => stepToActivity(srcStep))
                                     };
@@ -7425,6 +7602,7 @@ loadIgnoredState() {
                     const moduleObj = {
                         id: srcModule.id || `mod-${Math.random().toString(36).substr(2, 9)}`,
                         title: srcModule.title || 'Untitled Module',
+                        description: srcModule.description || '',
                         plannedMinutes: toMinutes(srcModule.targetTime || 0, globalTargetUnit)
                     };
 
