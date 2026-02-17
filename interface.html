@@ -32423,8 +32423,18 @@ kbd {
   }
 
   function _renderInline(text) {
-    // Start from escaped text, then apply Markdown inline transforms to generated HTML only
-    let s = _escapeHtml(text);
+    // Pre-pass: convert markdown autolinks <https://...> to anchor tags before HTML splitting
+    let raw = String(text ?? '').replace(/<(https?:\/\/[^\s>]+)>/g, (m, url) => {
+      const u = _escapeAttr(url);
+      return `<a href="${u}" target="_blank" rel="noopener noreferrer">${_escapeHtml(url)}</a>`;
+    });
+
+    // Allow raw HTML tags to pass through; escape only plain text nodes
+    // This lets users write <b>, <span style="...">, etc. directly — they are
+    // sanitized later by __ldSetSafeHtml before being inserted into the DOM.
+    let s = raw.replace(/(<[^>]+>)|([^<]+)/g, (m, tag, plain) => {
+      return tag ? tag : _escapeHtml(plain);
+    });
 
     // Images: ![alt](url)
     s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (m, alt, url) => {
@@ -32457,7 +32467,7 @@ kbd {
       return `<a href="${u}" target="_blank" rel="noopener noreferrer">${label}</a>`;
     });
 
-    // Autolinks: <https://...>
+    // Autolinks: &lt;https://...&gt; (escaped form, kept for backward compatibility)
     s = s.replace(/&lt;(https?:\/\/[^\s&]+?)&gt;/g, (m, url) => {
       const u = _escapeAttr(url);
       return `<a href="${u}" target="_blank" rel="noopener noreferrer">${url}</a>`;
