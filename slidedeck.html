@@ -1326,7 +1326,6 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             background: var(--color-success-light);
         }
 
-
         /* Moment and Submoment completion indicators */
         .nav-item-header.has-progress {
             position: relative;
@@ -1922,6 +1921,31 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             color: var(--color-border);
             user-select: none;
             flex-shrink: 0;
+        }
+
+        /* Activity metadata chips (logistics: duration, group size, place, trainer) */
+        .activity-meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            min-height: 0;
+            margin-bottom: 4px;
+        }
+        .activity-meta-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--color-text-muted);
+            background: var(--color-hover);
+            border-radius: 4px;
+            padding: 2px 7px 2px 5px;
+        }
+        .activity-meta-chip .material-symbols-outlined {
+            font-size: 13px;
+            line-height: 1;
         }
 
         .activity-title {
@@ -4359,6 +4383,7 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             <!-- Content Header -->
             <div class="content-header" id="contentHeader">
                 <div class="activity-context" id="activityContext" aria-label="Location"></div>
+                <div class="activity-meta-row" id="activityMeta" aria-label="Activity logistics"></div>
                 <h2 class="activity-title" id="activityTitle">Welcome</h2>
             </div>
 
@@ -5386,6 +5411,7 @@ showIgnored: false,
                 this.loadNavFoldAllState();
                 this.loadIgnoredState();
                 this.loadStateFromHash();
+                this.loadLastPosition();
                 this.loadTimerState();
                 // Seen-state markers removed (no persistent "visited/completed" ticks)
                 this.clearSeenState();
@@ -5854,6 +5880,28 @@ loadIgnoredState() {
                     html += sep + `<span class="activity-context-chip" title="${escape(context.submoment)}">${escape(context.submoment)}</span>`;
                 }
                 contextEl.innerHTML = html;
+
+                // Metadata chips (logistics)
+                const metaEl = document.getElementById('activityMeta');
+                if (metaEl) {
+                    const a = activity;
+                    const isTitleSlide = a && a.isTitleSlide;
+                    const chips = [];
+                    if (!isTitleSlide && a) {
+                        if (a.plannedMinutes) chips.push({ icon: 'timer',        label: `${a.plannedMinutes} min` });
+                        if (a.groupSize)      chips.push({ icon: 'group',        label: a.groupSize });
+                        if (a.place)          chips.push({ icon: 'location_on',  label: a.place });
+                        if (a.trainer)        chips.push({ icon: 'person',       label: a.trainer });
+                        if (a.evaluation && a.evaluation !== 'Aucune')
+                                              chips.push({ icon: 'check_circle', label: a.evaluation });
+                    }
+                    metaEl.innerHTML = chips.map(c =>
+                        `<span class="activity-meta-chip">` +
+                        `<span class="material-symbols-outlined" aria-hidden="true">${c.icon}</span>` +
+                        `${escape(String(c.label))}` +
+                        `</span>`
+                    ).join('');
+                }
             },
 
             getActivityContext(activityId) {
@@ -6547,6 +6595,10 @@ loadIgnoredState() {
             updateHash() {
                 if (this.currentActivity) {
                     window.location.hash = `${this.currentActivity.id}-slide-${this.currentSlideIndex}`;
+                    this.safeLocalStorageSet('lastPosition', JSON.stringify({
+                        activityId: this.currentActivity.id,
+                        slideIndex: this.currentSlideIndex
+                    }));
                 }
             },
 
@@ -6726,6 +6778,19 @@ loadIgnoredState() {
                     this.detailsPanelExpanded = false; // Will be toggled to true
                     this.toggleDetailsPanel();
                 }
+            },
+
+            loadLastPosition() {
+                if (this.currentActivity) return; // hash already restored position
+                const raw = this.safeLocalStorageGet('lastPosition');
+                if (!raw) return;
+                try {
+                    const { activityId, slideIndex } = JSON.parse(raw);
+                    const activity = this.findActivityById(activityId);
+                    if (activity && activity.slides && slideIndex < activity.slides.length) {
+                        this.loadActivityAtSlide(activity, slideIndex);
+                    }
+                } catch (e) { /* stale/corrupt data — silently ignore */ }
             },
 
             // ===== ZOOM METHODS =====
@@ -7777,7 +7842,11 @@ loadIgnoredState() {
                         description: srcStep.description || '',
                         plannedMinutes: toMinutes(srcStep.duration || 0, srcStep.unit || srcStep.durationUnit || 'minutes'),
                         ignored: srcStep.ignored || false,
-                        slides: slides
+                        slides: slides,
+                        groupSize:  srcStep.groupSize  || '',
+                        place:      srcStep.place      || '',
+                        trainer:    srcStep.trainer    || '',
+                        evaluation: srcStep.evaluation || '',
                     };
                 };
 
