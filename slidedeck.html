@@ -681,6 +681,169 @@
             background: var(--color-hover);
         }
 
+        /* ===== EXPORT MULTI-STEP ===== */
+        .export-step--hidden {
+            display: none;
+        }
+
+        .export-modal-content.export-step2-active {
+            max-width: 560px;
+        }
+
+        .export-modal-footer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .export-select-all-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .export-select-all-btn {
+            background: none;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-primary);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .export-select-all-btn:hover {
+            background: var(--color-primary-light);
+            border-color: var(--color-primary);
+        }
+
+        .export-select-all-btn:focus-visible {
+            outline: 3px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+
+        .export-module-count {
+            font-size: 13px;
+            color: var(--color-text-muted);
+        }
+
+        .export-module-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 260px;
+            overflow-y: auto;
+            padding-right: 4px;
+            margin-bottom: 4px;
+        }
+
+        .export-module-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all var(--transition);
+            background: var(--color-surface);
+            user-select: none;
+            list-style: none;
+        }
+
+        .export-module-item:hover {
+            border-color: var(--color-primary);
+            background: var(--color-primary-light);
+        }
+
+        .export-module-item.is-checked {
+            border-color: var(--color-primary);
+            background: var(--color-primary-light);
+        }
+
+        .export-module-item input[type="checkbox"] {
+            margin-top: 2px;
+            flex-shrink: 0;
+            width: 16px;
+            height: 16px;
+            accent-color: var(--color-primary);
+            cursor: pointer;
+        }
+
+        .export-module-item input[type="checkbox"]:focus-visible {
+            outline: 3px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+
+        .export-module-item-label {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .export-module-item-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text);
+            line-height: 1.4;
+        }
+
+        .export-module-item-meta {
+            font-size: 12px;
+            color: var(--color-text-muted);
+            margin-top: 2px;
+        }
+
+        .export-back-btn {
+            padding: 10px 20px;
+            background: var(--color-surface);
+            color: var(--color-text);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .export-back-btn:hover {
+            background: var(--color-hover);
+        }
+
+        .export-back-btn--hidden {
+            display: none;
+        }
+
+        .export-confirm-btn {
+            padding: 10px 20px;
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            margin-left: 6px;
+        }
+
+        .export-confirm-btn:hover:not(:disabled) {
+            background: var(--color-primary-dark, #1565c0);
+        }
+
+        .export-confirm-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .export-confirm-btn--hidden {
+            display: none;
+        }
+
         /* About Modal */
         .about-modal {
             display: none;
@@ -1220,7 +1383,11 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
         }
 
         .search-results.visible {
-            display: block;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
         }
 
         /* Search Filters */
@@ -1721,16 +1888,47 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        .activity-context {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-bottom: 6px;
+            min-height: 22px;
+        }
+
+        .activity-context-chip {
+            display: inline-flex;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--color-text-muted);
+            background: var(--color-hover);
+            border-radius: 4px;
+            padding: 2px 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 260px;
+        }
+
+        .activity-context-chip.chip-module {
+            color: var(--color-primary);
+            background: var(--color-primary-light);
+        }
+
+        .activity-context-separator {
+            font-size: 10px;
+            color: var(--color-border);
+            user-select: none;
+            flex-shrink: 0;
+        }
+
         .activity-title {
             font-size: 20px;
             font-weight: 600;
             color: var(--color-text);
-            margin-bottom: 4px;
-        }
-
-        .activity-breadcrumb {
-            font-size: 13px;
-            color: var(--color-text-secondary);
+            margin-bottom: 0;
         }
 
         /* Slide Container */
@@ -2424,11 +2622,6 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             /* Train line - Tablet */
             .train-line-wrapper {
                 padding: 0 16px;
-            }
-
-            .train-track {
-                left: 16px;
-                right: 16px;
             }
 
             .station-label {
@@ -3208,39 +3401,6 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
         }
 
-        /* ===== ENHANCEMENT 3: CLICKABLE BREADCRUMBS ===== */
-        .activity-breadcrumb {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-
-        .breadcrumb-segment {
-            color: var(--color-text-secondary);
-            text-decoration: none;
-            cursor: pointer;
-            transition: all var(--transition);
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-
-        .breadcrumb-segment:hover {
-            color: var(--color-primary);
-            background: var(--color-primary-light);
-        }
-
-        .breadcrumb-separator {
-            color: var(--color-text-muted);
-            user-select: none;
-            font-weight: 400;
-        }
-
-        .breadcrumb-segment.active {
-            color: var(--color-text);
-            font-weight: 600;
-        }
-
         /* ===== ENHANCEMENT 4: MODULE SEPARATORS ===== */
         .nav-module-separator {
             height: 1px;
@@ -3304,8 +3464,8 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
         .train-track {
             position: absolute;
             top: 62%;
-            left: 48px;
-            right: 48px;
+            left: 0;
+            right: 0;
             height: 3px;
             background: linear-gradient(
                 to right,
@@ -3351,7 +3511,6 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
         }
 
         .train-station.current .station-marker {
-            animation: pulse 2s ease-in-out infinite;
         }
 
         .station-marker {
@@ -3403,22 +3562,11 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             border-width: 4px;
             width: 36px;
             height: 36px;
-            box-shadow: 0 0 0 4px var(--color-primary-light);
-            animation: pulse 2s ease-in-out infinite;
         }
 
         .station-marker.current .station-number {
             color: white;
             font-weight: 700;
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                box-shadow: 0 0 0 4px var(--color-primary-light);
-            }
-            50% {
-                box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.1);
-            }
         }
 
         .station-marker.future {
@@ -3434,67 +3582,22 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             display: none;
         }
 
-        .station-progress {
-            width: 60px;
-            height: 3px;
-            background: var(--color-border-light);
-            border-radius: 2px;
-            margin-top: 4px;
-            overflow: hidden;
-            opacity: 0;
-            transition: opacity var(--transition);
-        }
-
-        .station-marker.current ~ .station-progress {
-            opacity: 1;
-        }
-
-        .station-progress-bar {
-            height: 100%;
-            background: var(--color-primary);
-            border-radius: 2px;
-            transition: width 0.5s ease;
-        }
-
-        /* Segments de moments - zones colorées sur la ligne */
+        /* Segments de moments - structural markers only (progress shown by track gradient) */
         .moment-segment {
             position: absolute;
             height: 8px;
             top: 62%;
             transform: translateY(-50%);
-            background: rgba(168, 85, 247, 0.08);
-            border-left: 1px solid rgba(168, 85, 247, 0.2);
-            border-right: 1px solid rgba(168, 85, 247, 0.2);
+            background: transparent;
+            border-left: 1px solid var(--color-border);
+            border-right: 1px solid var(--color-border);
             transition: all 0.3s ease;
             z-index: 0;
             cursor: pointer;
         }
 
-        .moment-segment:nth-child(odd) {
-            background: rgba(59, 130, 246, 0.08);
-            border-left-color: rgba(59, 130, 246, 0.2);
-            border-right-color: rgba(59, 130, 246, 0.2);
-        }
-
-        .moment-segment:nth-child(even) {
-            background: rgba(168, 85, 247, 0.08);
-            border-left-color: rgba(168, 85, 247, 0.2);
-            border-right-color: rgba(168, 85, 247, 0.2);
-        }
-
-        .moment-segment.completed {
-            background: rgba(59, 130, 246, 0.15);
-        }
-
-        .moment-segment.current {
-            background: rgba(37, 99, 235, 0.2);
-            height: 10px;
-            box-shadow: 0 0 8px rgba(37, 99, 235, 0.3);
-        }
-
         .moment-segment:hover {
             height: 12px;
-            box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
         }
 
         /* Tooltip pour segments de moments */
@@ -3587,23 +3690,18 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             transform: translate(-50%, -50%) scale(1.3);
         }
 
-        .submoment-dot.completed {
-            background: #93C5FD; /* bleu clair */
-            border-color: #60A5FA;
-        }
-
-        .submoment-dot.current {
-            background: var(--color-primary);
-            border-color: var(--color-primary);
-            border-width: 3px;
-            width: 10px;
-            height: 10px;
-            box-shadow: 0 0 0 2px var(--color-primary-light);
-        }
-
+        /* All dots stay neutral — progress is shown by the track gradient only */
+        .submoment-dot.completed,
+        .submoment-dot.current,
         .submoment-dot.future {
             background: var(--color-surface);
             border-color: var(--color-border-light);
+        }
+
+        .submoment-dot.current {
+            border-width: 3px;
+            width: 10px;
+            height: 10px;
         }
 
         /* Tooltip pour sous-moments */
@@ -4063,11 +4161,11 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
                     <span class="material-symbols-outlined" aria-hidden="true">visibility_off</span>
                     <span>Ignored</span>
                 </button>
-                <button class="nav-icon-text-btn" onclick="app.showTimeline()" aria-label="Afficher la chronologie de la formation" type="button">
+                <button class="nav-icon-text-btn" onclick="app.showTimeline()" aria-label="Show training timeline" type="button">
                     <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
                     <span>Plan</span>
                 </button>
-                <button class="nav-icon-text-btn" onclick="app.openAboutModal()" aria-label="À propos de cette formation" type="button">
+                <button class="nav-icon-text-btn" onclick="app.openAboutModal()" aria-label="About this training" type="button">
                     <span class="material-symbols-outlined" aria-hidden="true">info</span>
                     <span>info</span>
                 </button>
@@ -4260,8 +4358,8 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
 
             <!-- Content Header -->
             <div class="content-header" id="contentHeader">
+                <div class="activity-context" id="activityContext" aria-label="Location"></div>
                 <h2 class="activity-title" id="activityTitle">Welcome</h2>
-                <p class="activity-breadcrumb" id="activityBreadcrumb">Select an activity to begin</p>
             </div>
 
             <!-- Slide Container -->
@@ -4523,75 +4621,99 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             </div>
 
             <div class="export-modal-body">
-                <p class="export-description">
-                    Choose a format to export the imported training content.
-                </p>
 
-                <div class="export-options">
-                    <button type="button" class="export-option" onclick="app.exportAsMarkdown()">
-                        <div class="export-option-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <path d="M8 13h8"></path>
-                                <path d="M8 17h6"></path>
-                            </svg>
-                        </div>
-                        <div class="export-option-content">
-                            <div class="export-option-title">Markdown (.md)</div>
-                            <div class="export-option-desc">Plain text, easy to edit and share.</div>
-                        </div>
-                    </button>
+                <!-- Step 1: Format selection -->
+                <div class="export-step" id="exportStep1">
+                    <p class="export-description">
+                        Choose a format to export the imported training content.
+                    </p>
 
-                    <button type="button" class="export-option" onclick="app.exportAsRTF()">
-                        <div class="export-option-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <path d="M8 13h8"></path>
-                                <path d="M8 17h8"></path>
-                            </svg>
-                        </div>
-                        <div class="export-option-content">
-                            <div class="export-option-title">RTF (.rtf)</div>
-                            <div class="export-option-desc">Word-friendly export for document workflows.</div>
-                        </div>
-                    </button>
+                    <div class="export-options">
+                        <button type="button" class="export-option" onclick="app.beginExport('markdown')">
+                            <div class="export-option-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <path d="M8 13h8"></path>
+                                    <path d="M8 17h6"></path>
+                                </svg>
+                            </div>
+                            <div class="export-option-content">
+                                <div class="export-option-title">Markdown (.md)</div>
+                                <div class="export-option-desc">Plain text, easy to edit and share.</div>
+                            </div>
+                        </button>
 
-                    <button type="button" class="export-option" onclick="app.exportAsJSON()">
-                        <div class="export-option-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                <path d="M20 7h-7"></path>
-                                <path d="M20 12h-7"></path>
-                                <path d="M20 17h-7"></path>
-                                <path d="M4 7h.01"></path>
-                                <path d="M4 12h.01"></path>
-                                <path d="M4 17h.01"></path>
-                            </svg>
-                        </div>
-                        <div class="export-option-content">
-                            <div class="export-option-title">JSON (.json)</div>
-                            <div class="export-option-desc">Structured data for re-importing and archiving.</div>
-                        </div>
-                    </button>
+                        <button type="button" class="export-option" onclick="app.beginExport('rtf')">
+                            <div class="export-option-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <path d="M8 13h8"></path>
+                                    <path d="M8 17h8"></path>
+                                </svg>
+                            </div>
+                            <div class="export-option-content">
+                                <div class="export-option-title">RTF (.rtf)</div>
+                                <div class="export-option-desc">Word-friendly export for document workflows.</div>
+                            </div>
+                        </button>
 
-                    <button type="button" class="export-option" onclick="app.exportAsHTML()">
-                        <div class="export-option-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                <polyline points="16 18 22 12 16 6"></polyline>
-                                <polyline points="8 6 2 12 8 18"></polyline>
-                            </svg>
-                        </div>
-                        <div class="export-option-content">
-                            <div class="export-option-title">HTML (.html)</div>
-                            <div class="export-option-desc">Web page for viewing in browsers.</div>
-                        </div>
-                    </button>
+                        <button type="button" class="export-option" onclick="app.beginExport('json')">
+                            <div class="export-option-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M20 7h-7"></path>
+                                    <path d="M20 12h-7"></path>
+                                    <path d="M20 17h-7"></path>
+                                    <path d="M4 7h.01"></path>
+                                    <path d="M4 12h.01"></path>
+                                    <path d="M4 17h.01"></path>
+                                </svg>
+                            </div>
+                            <div class="export-option-content">
+                                <div class="export-option-title">JSON (.json)</div>
+                                <div class="export-option-desc">Structured data for re-importing and archiving.</div>
+                            </div>
+                        </button>
+
+                        <button type="button" class="export-option" onclick="app.beginExport('html')">
+                            <div class="export-option-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <polyline points="16 18 22 12 16 6"></polyline>
+                                    <polyline points="8 6 2 12 8 18"></polyline>
+                                </svg>
+                            </div>
+                            <div class="export-option-content">
+                                <div class="export-option-title">HTML (.html)</div>
+                                <div class="export-option-desc">Web page for viewing in browsers.</div>
+                            </div>
+                        </button>
+                    </div>
                 </div>
+
+                <!-- Step 2: Module selection -->
+                <div class="export-step export-step--hidden" id="exportStep2"
+                     role="group" aria-labelledby="exportModuleStepLabel">
+                    <p class="export-description" id="exportModuleStepLabel">
+                        Select which modules to include in the export.
+                    </p>
+                    <div class="export-select-all-row">
+                        <button type="button" class="export-select-all-btn" id="exportSelectAllBtn"
+                                onclick="app.toggleSelectAllModules()">Select all</button>
+                        <span class="export-module-count" id="exportModuleCount">0 of 0 selected</span>
+                    </div>
+                    <div class="export-module-list" id="exportModuleList" role="list"></div>
+                </div>
+
             </div>
 
             <div class="export-modal-footer">
+                <button class="export-back-btn export-back-btn--hidden" id="exportBackBtn"
+                        onclick="app.goToExportStep(1)">Back</button>
+                <div style="flex:1"></div>
                 <button class="export-cancel-btn" onclick="app.closeExportModal()">Cancel</button>
+                <button class="export-confirm-btn export-confirm-btn--hidden" id="exportConfirmBtn"
+                        onclick="app.confirmExport()" disabled>Export</button>
             </div>
         </div>
     </div>
@@ -4639,6 +4761,10 @@ showIgnored: false,
 
             // Details panel state
             detailsPanelExpanded: false,
+
+            // Export flow state
+            exportPendingFormat: null,
+            exportSelectedModuleIds: new Set(),
 
             // Train line visualization
             trainLine: {
@@ -4722,18 +4848,8 @@ showIgnored: false,
                     label.textContent = module.title;
                     label.title = module.title;
 
-                    const progressContainer = document.createElement('div');
-                    progressContainer.className = 'station-progress';
-
-                    const progressBar = document.createElement('div');
-                    progressBar.className = 'station-progress-bar';
-                    progressBar.style.width = '0%';
-
-                    progressContainer.appendChild(progressBar);
-
                     stationDiv.appendChild(marker);
                     stationDiv.appendChild(label);
-                    stationDiv.appendChild(progressContainer);
 
                     if (module.description) {
                         const infoBtn = document.createElement('button');
@@ -4978,13 +5094,17 @@ showIgnored: false,
                                             );
 
                                             if (activityIndex !== -1) {
-                                                // Trouvé ! Calculer la progression du module
+                                                // Found — compute progress based on current position,
+                                                // not on completed count, so the bar never jumps ahead.
                                                 const moduleActivities = this.getAllActivitiesInModule(module);
-                                                const completedInModule = moduleActivities.filter(act =>
-                                                    app.completedActivities.has(act.id)
-                                                ).length;
+                                                const currentActivityInModule = moduleActivities.findIndex(
+                                                    act => act.id === app.currentActivity.id
+                                                );
+                                                const totalSlides = (app.currentActivity.slides && app.currentActivity.slides.length) || 1;
+                                                const slidesFraction = app.currentSlideIndex / totalSlides;
+                                                // progress = (activities before current + fractional position within current) / total
                                                 const moduleProgress = moduleActivities.length > 0
-                                                    ? Math.round((completedInModule / moduleActivities.length) * 100)
+                                                    ? ((currentActivityInModule + slidesFraction) / moduleActivities.length) * 100
                                                     : 0;
 
                                                 return {
@@ -5021,21 +5141,17 @@ showIgnored: false,
                     const stations = this.stationsContainer.querySelectorAll('.train-station');
                     stations.forEach((station, index) => {
                         const marker = station.querySelector('.station-marker');
-                        const progressBar = station.querySelector('.station-progress-bar');
 
                         marker.classList.remove('completed', 'current', 'future');
                         station.classList.remove('current');
 
                         if (index < moduleIndex) {
                             marker.classList.add('completed');
-                            progressBar.style.width = '100%';
                         } else if (index === moduleIndex) {
                             marker.classList.add('current');
                             station.classList.add('current');
-                            progressBar.style.width = `${moduleProgress}%`;
                         } else {
                             marker.classList.add('future');
-                            progressBar.style.width = '0%';
                         }
                     });
 
@@ -5120,10 +5236,71 @@ showIgnored: false,
                 updateTrackProgress(moduleIndex, moduleProgress, totalModules) {
                     if (!this.container || totalModules === 0) return;
 
-                    const overallProgress = (moduleIndex + (moduleProgress / 100)) / totalModules;
-                    const progressPercent = overallProgress * 100;
+                    // Derive progress purely from position in the ordered flat activity
+                    // list (getAllActivitiesInOrder). This is the exact same list used
+                    // for prev/next navigation, so it includes title slides and respects
+                    // ignored items — guaranteeing the blue tip tracks the current slide.
 
-                    this.container.style.setProperty('--train-progress', `${progressPercent}%`);
+                    const allActivities = app.getAllActivitiesInOrder();
+                    if (allActivities.length === 0) return;
+
+                    const currentId = app.currentActivity && app.currentActivity.id;
+                    const globalIndex = allActivities.findIndex(a => a.id === currentId);
+                    if (globalIndex === -1) return;
+
+                    // Build module boundaries by scanning the ordered list once (O(N)).
+                    // Each module starts with its "module-title-<id>" activity.
+                    const modules = app.courseData.modules;
+                    const moduleIds = new Set(modules.map(m => m.id));
+                    const moduleBoundaries = []; // [{start, end}] inclusive/exclusive global indices
+                    let currentModuleStart = 0;
+                    let currentModuleIdIndex = -1;
+
+                    allActivities.forEach((a, i) => {
+                        // Detect a new module title slide
+                        if (a.isTitleSlide && a.titleType === 'module') {
+                            if (currentModuleIdIndex >= 0) {
+                                // Close the previous module
+                                moduleBoundaries.push({ start: currentModuleStart, end: i });
+                            }
+                            currentModuleStart = i;
+                            currentModuleIdIndex++;
+                        }
+                    });
+                    // Close the last module
+                    if (currentModuleIdIndex >= 0) {
+                        moduleBoundaries.push({ start: currentModuleStart, end: allActivities.length });
+                    }
+
+                    // Fallback: if no module title slides found, treat whole list as one module
+                    if (moduleBoundaries.length === 0) {
+                        moduleBoundaries.push({ start: 0, end: allActivities.length });
+                    }
+
+                    // Find which module the current activity belongs to
+                    const mIdx = moduleBoundaries.findIndex(b => globalIndex >= b.start && globalIndex < b.end);
+                    const resolvedModuleIndex = mIdx !== -1 ? mIdx : moduleBoundaries.length - 1;
+                    const boundary = moduleBoundaries[resolvedModuleIndex];
+
+                    // Position within this module's slice (0–1), including slide fraction
+                    const posInModule = globalIndex - boundary.start;
+                    const moduleSize = boundary.end - boundary.start;
+                    const totalSlides = (app.currentActivity.slides && app.currentActivity.slides.length) || 1;
+                    const slideFraction = app.currentSlideIndex / totalSlides;
+                    const withinModule = moduleSize > 0 ? (posInModule + slideFraction) / moduleSize : 0;
+
+                    // Map onto station coordinate space.
+                    // Station i is at: i / (totalModules - 1) * 100%
+                    // So the segment for module i spans from i/(N-1) to (i+1)/(N-1).
+                    let progressPercent;
+                    if (totalModules === 1) {
+                        progressPercent = withinModule * 100;
+                    } else {
+                        const stationSpan = 1 / (totalModules - 1);
+                        progressPercent = (resolvedModuleIndex * stationSpan + withinModule * stationSpan) * 100;
+                    }
+
+                    this.container.style.setProperty('--train-progress', `${Math.min(100, Math.max(0, progressPercent))}%`);
                 },
 
                 updateMobile(moduleIndex, moduleProgress, totalModules) {
@@ -5634,27 +5811,49 @@ loadIgnoredState() {
 
             updateActivityHeader() {
                 const activity = this.currentActivity;
-                const breadcrumb = this.getBreadcrumb(activity.id);
-                
+                const context = this.getActivityContext(activity.id);
+
                 document.getElementById('activityTitle').textContent = activity.title;
-                document.getElementById('activityBreadcrumb').textContent = breadcrumb;
+
+                const contextEl = document.getElementById('activityContext');
+                if (!contextEl) return;
+
+                if (!context.module) {
+                    contextEl.innerHTML = '';
+                    return;
+                }
+
+                const escape = (s) => {
+                    const d = document.createElement('div');
+                    d.textContent = s;
+                    return d.innerHTML;
+                };
+
+                const sep = `<span class="activity-context-separator" aria-hidden="true">›</span>`;
+                let html = `<span class="activity-context-chip chip-module" title="${escape(context.module)}">${escape(context.module)}</span>`;
+                if (context.moment) {
+                    html += sep + `<span class="activity-context-chip" title="${escape(context.moment)}">${escape(context.moment)}</span>`;
+                }
+                if (context.submoment) {
+                    html += sep + `<span class="activity-context-chip" title="${escape(context.submoment)}">${escape(context.submoment)}</span>`;
+                }
+                contextEl.innerHTML = html;
             },
 
-            getBreadcrumb(activityId) {
-                // Find the activity in the data structure and build breadcrumb
-                if (!this.courseData || !this.courseData.modules) return '';
+            getActivityContext(activityId) {
+                if (!this.courseData || !this.courseData.modules) return {};
 
                 for (const module of this.courseData.modules) {
-                    // Check module-level activities first (without moments/submoments)
+                    // Module-level activities (no moments/submoments)
                     if (module.activities && Array.isArray(module.activities)) {
                         for (const activity of module.activities) {
                             if (activity.id === activityId) {
-                                return module.title; // Only module title for module-level activities
+                                return { module: module.title };
                             }
                         }
                     }
 
-                    // Check activities within moments and submoments
+                    // Activities within moments → submoments
                     if (module.moments && Array.isArray(module.moments)) {
                         for (const moment of module.moments) {
                             if (moment.submoments && Array.isArray(moment.submoments)) {
@@ -5662,7 +5861,11 @@ loadIgnoredState() {
                                     if (submoment.activities && Array.isArray(submoment.activities)) {
                                         for (const activity of submoment.activities) {
                                             if (activity.id === activityId) {
-                                                return `${moment.title.split(':')[0]} → ${submoment.title.split(':')[0]}`;
+                                                return {
+                                                    module: module.title,
+                                                    moment: moment.title,
+                                                    submoment: submoment.title
+                                                };
                                             }
                                         }
                                     }
@@ -5671,7 +5874,7 @@ loadIgnoredState() {
                         }
                     }
                 }
-                return '';
+                return {};
             },
 
             // ===== SECURITY & SANITIZATION =====
@@ -7573,9 +7776,20 @@ loadIgnoredState() {
                         const hasStepsDirectly = srcMoment.steps && Array.isArray(srcMoment.steps) && srcMoment.steps.length > 0;
 
                         if (hasStepsDirectly && !hasSubmoments) {
-                            // This moment has steps directly - convert to module-level activities
-                            srcMoment.steps.forEach(srcStep => {
-                                moduleActivities.push(stepToActivity(srcStep));
+                            // This moment has steps directly - wrap in a single synthetic submoment
+                            // so the moment appears in the nav tree
+                            moments.push({
+                                id: srcMoment.id || `mom-${Math.random().toString(36).substr(2, 9)}`,
+                                title: srcMoment.title || 'Untitled Moment',
+                                description: srcMoment.description || '',
+                                ignored: srcMoment.ignored || false,
+                                submoments: [{
+                                    id: `sub-${srcMoment.id || Math.random().toString(36).substr(2, 9)}`,
+                                    title: srcMoment.title || 'Untitled Submoment',
+                                    description: srcMoment.description || '',
+                                    ignored: false,
+                                    activities: srcMoment.steps.map(srcStep => stepToActivity(srcStep))
+                                }]
                             });
                         } else if (hasSubmoments) {
                             // This moment has proper hierarchy - keep as moment
@@ -7709,21 +7923,24 @@ loadIgnoredState() {
                     const rows = tableBlock.trim().split('\n').filter(r => r.trim());
                     if (rows.length === 0) return tableBlock;
 
-                    let result = '<table>';
-                    rows.forEach((row, idx) => {
-                        const trimmed = row.trim();
-                        // Skip separator rows (e.g., |---|---|)
-                        if (/^\|[\s\-:]+\|$/.test(trimmed)) return;
+                    // Separator row: every cell between pipes contains only -, :, spaces
+                    const isSeparator = row => /^\|(\s*:?-+:?\s*\|)+$/.test(row.trim());
 
-                        const cells = trimmed.split('|').filter((_, i, arr) => i > 0 && i < arr.length - 1);
-                        const tag = idx === 0 ? 'th' : 'td';
-                        const rowTag = idx === 0 ? 'thead' : (idx === 1 ? 'tbody' : '');
-                        if (rowTag === 'thead') result += '<thead>';
-                        if (rowTag === 'tbody') result += '<tbody>';
-                        result += '<tr>' + cells.map(c => `<${tag}>${c.trim()}</${tag}>`).join('') + '</tr>';
-                        if (rowTag === 'thead') result += '</thead>';
-                    });
-                    if (rows.length > 1) result += '</tbody>';
+                    const dataRows = rows.filter(r => !isSeparator(r));
+                    if (dataRows.length === 0) return tableBlock;
+
+                    const headerRow = dataRows[0];
+                    const bodyRows = dataRows.slice(1);
+
+                    const parseRow = (row, tag) => {
+                        const cells = row.trim().split('|').filter((_, i, arr) => i > 0 && i < arr.length - 1);
+                        return '<tr>' + cells.map(c => `<${tag}>${c.trim()}</${tag}>`).join('') + '</tr>';
+                    };
+
+                    let result = '<table><thead>' + parseRow(headerRow, 'th') + '</thead>';
+                    if (bodyRows.length > 0) {
+                        result += '<tbody>' + bodyRows.map(r => parseRow(r, 'td')).join('') + '</tbody>';
+                    }
                     result += '</table>';
                     return result;
                 });
@@ -7895,7 +8112,10 @@ this.activityTimer = {
                     return;
                 }
 
-                const jsonString = JSON.stringify(this.courseData, null, 2);
+                const exportData = Object.assign({}, this.courseData, {
+                    modules: this.getFilteredModules()
+                });
+                const jsonString = JSON.stringify(exportData, null, 2);
                 const blob = new Blob([jsonString], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 
@@ -8228,24 +8448,24 @@ this.activityTimer = {
                 let html = `
                     <div class="timeline-intro-slide">
                         <div class="timeline-header">
-                            <h1 class="timeline-title">${this.escapeHTML(data.title || 'Formation')}</h1>
-                            <p class="timeline-subtitle">Vue d'ensemble de la chronologie</p>
+                            <h1 class="timeline-title">${this.escapeHTML(data.title || 'Training')}</h1>
+                            <p class="timeline-subtitle">Training overview</p>
                             <div class="timeline-stats">
                                 <span class="timeline-stat-item">
                                     <strong>${totalModules}</strong> module${totalModules > 1 ? 's' : ''}
                                 </span>
                                 <span class="timeline-stat-item">•</span>
                                 <span class="timeline-stat-item">
-                                    <strong>${totalActivities}</strong> activité${totalActivities > 1 ? 's' : ''}
+                                    <strong>${totalActivities}</strong> activit${totalActivities > 1 ? 'ies' : 'y'}
                                 </span>
                                 <span class="timeline-stat-item">•</span>
                                 <span class="timeline-stat-item">
-                                    <strong>${this.formatMinutes(totalMinutes)}</strong> au total
+                                    <strong>${this.formatMinutes(totalMinutes)}</strong> total
                                 </span>
                             </div>
                             <div style="margin-top: 24px;">
-                                <button class="btn btn-primary timeline-start-btn" onclick="app.startTraining()" aria-label="Commencer la formation">
-                                    Commencer la formation
+                                <button class="btn btn-primary timeline-start-btn" onclick="app.startTraining()" aria-label="Start training">
+                                    Start
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                         <polyline points="9 18 15 12 9 6"></polyline>
                                     </svg>
@@ -8344,7 +8564,7 @@ this.activityTimer = {
                                         <div class="timeline-submoment">
                                             <span class="timeline-submoment-title">${subNum} ${this.escapeHTML(submoment.title)}</span>
                                             <div class="timeline-submoment-info">
-                                                <span class="timeline-submoment-activities">${actCount} activité${actCount > 1 ? 's' : ''}</span>
+                                                <span class="timeline-submoment-activities">${actCount} activit${actCount > 1 ? 'ies' : 'y'}</span>
                                                 <span class="timeline-submoment-duration">${this.formatMinutes(subDuration)}</span>
                                             </div>
                                         </div>
@@ -8508,6 +8728,20 @@ this.activityTimer = {
             },
 
             openExportModal() {
+                this.exportPendingFormat = null;
+                this.exportSelectedModuleIds = new Set();
+                const step1 = document.getElementById('exportStep1');
+                const step2 = document.getElementById('exportStep2');
+                const backBtn = document.getElementById('exportBackBtn');
+                const confirmBtn = document.getElementById('exportConfirmBtn');
+                const title = document.getElementById('exportModalTitle');
+                const content = document.querySelector('#exportModal .export-modal-content');
+                if (step1) step1.classList.remove('export-step--hidden');
+                if (step2) step2.classList.add('export-step--hidden');
+                if (backBtn) backBtn.classList.add('export-back-btn--hidden');
+                if (confirmBtn) { confirmBtn.classList.add('export-confirm-btn--hidden'); confirmBtn.disabled = true; }
+                if (content) content.classList.remove('export-step2-active');
+                if (title) title.textContent = 'Export Content';
                 const modal = document.getElementById('exportModal');
                 modal.classList.add('visible');
                 this.trapFocus(modal);
@@ -8517,6 +8751,150 @@ this.activityTimer = {
                 const modal = document.getElementById('exportModal');
                 this.releaseFocus(modal);
                 modal.classList.remove('visible');
+            },
+
+            beginExport(format) {
+                if (!this.courseData) {
+                    alert('No content to export. Please import content first.');
+                    return;
+                }
+                this.exportPendingFormat = format;
+                this.exportSelectedModuleIds = new Set(
+                    this.courseData.modules.map(m => m.id)
+                );
+                this.renderExportModuleList();
+                this.goToExportStep(2);
+            },
+
+            goToExportStep(step) {
+                const step1 = document.getElementById('exportStep1');
+                const step2 = document.getElementById('exportStep2');
+                const backBtn = document.getElementById('exportBackBtn');
+                const confirmBtn = document.getElementById('exportConfirmBtn');
+                const title = document.getElementById('exportModalTitle');
+                const content = document.querySelector('#exportModal .export-modal-content');
+                if (step === 1) {
+                    step1.classList.remove('export-step--hidden');
+                    step2.classList.add('export-step--hidden');
+                    backBtn.classList.add('export-back-btn--hidden');
+                    confirmBtn.classList.add('export-confirm-btn--hidden');
+                    if (content) content.classList.remove('export-step2-active');
+                    title.textContent = 'Export Content';
+                    const firstOption = step1.querySelector('.export-option');
+                    if (firstOption) firstOption.focus();
+                } else {
+                    step1.classList.add('export-step--hidden');
+                    step2.classList.remove('export-step--hidden');
+                    backBtn.classList.remove('export-back-btn--hidden');
+                    confirmBtn.classList.remove('export-confirm-btn--hidden');
+                    if (content) content.classList.add('export-step2-active');
+                    title.textContent = 'Select Modules';
+                    const selectAllBtn = document.getElementById('exportSelectAllBtn');
+                    if (selectAllBtn) selectAllBtn.focus();
+                }
+                this.updateExportConfirmState();
+            },
+
+            renderExportModuleList() {
+                const list = document.getElementById('exportModuleList');
+                if (!list || !this.courseData) return;
+                list.innerHTML = '';
+                this.courseData.modules.forEach((module) => {
+                    const isChecked = this.exportSelectedModuleIds.has(module.id);
+                    const checkboxId = `exportModule_${module.id}`;
+                    const item = document.createElement('div');
+                    item.className = 'export-module-item' + (isChecked ? ' is-checked' : '');
+                    item.setAttribute('role', 'listitem');
+                    item.innerHTML = `
+                        <input type="checkbox"
+                               id="${checkboxId}"
+                               name="exportModule"
+                               value="${module.id}"
+                               ${isChecked ? 'checked' : ''}
+                               aria-label="${this.escapeHTML(module.title)}">
+                        <label class="export-module-item-label" for="${checkboxId}">
+                            <div class="export-module-item-title">${this.escapeHTML(module.title)}</div>
+                            ${module.plannedMinutes
+                                ? `<div class="export-module-item-meta">${module.plannedMinutes} min</div>`
+                                : ''}
+                        </label>`;
+                    const checkbox = item.querySelector('input[type="checkbox"]');
+                    checkbox.addEventListener('change', () => {
+                        if (checkbox.checked) {
+                            this.exportSelectedModuleIds.add(module.id);
+                            item.classList.add('is-checked');
+                        } else {
+                            this.exportSelectedModuleIds.delete(module.id);
+                            item.classList.remove('is-checked');
+                        }
+                        this.updateExportConfirmState();
+                        this.updateSelectAllButtonLabel();
+                    });
+                    item.addEventListener('click', (e) => {
+                        if (e.target === checkbox || e.target.tagName === 'LABEL' || e.target.closest('label')) return;
+                        checkbox.click();
+                    });
+                    list.appendChild(item);
+                });
+                this.updateExportConfirmState();
+                this.updateSelectAllButtonLabel();
+            },
+
+            updateExportConfirmState() {
+                const confirmBtn = document.getElementById('exportConfirmBtn');
+                const countEl = document.getElementById('exportModuleCount');
+                if (!this.courseData) return;
+                const total = this.courseData.modules.length;
+                const selected = this.exportSelectedModuleIds.size;
+                if (countEl) countEl.textContent = `${selected} of ${total} selected`;
+                if (confirmBtn) confirmBtn.disabled = selected === 0;
+            },
+
+            toggleSelectAllModules() {
+                if (!this.courseData) return;
+                const total = this.courseData.modules.length;
+                const allSelected = this.exportSelectedModuleIds.size === total;
+                if (allSelected) {
+                    this.exportSelectedModuleIds.clear();
+                } else {
+                    this.courseData.modules.forEach(m => this.exportSelectedModuleIds.add(m.id));
+                }
+                const list = document.getElementById('exportModuleList');
+                if (list) {
+                    list.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                        const isNowChecked = this.exportSelectedModuleIds.has(cb.value);
+                        cb.checked = isNowChecked;
+                        cb.closest('.export-module-item').classList.toggle('is-checked', isNowChecked);
+                    });
+                }
+                this.updateExportConfirmState();
+                this.updateSelectAllButtonLabel();
+            },
+
+            updateSelectAllButtonLabel() {
+                const btn = document.getElementById('exportSelectAllBtn');
+                if (!btn || !this.courseData) return;
+                const allSelected = this.exportSelectedModuleIds.size === this.courseData.modules.length;
+                btn.textContent = allSelected ? 'Deselect all' : 'Select all';
+            },
+
+            getFilteredModules() {
+                if (!this.courseData) return [];
+                if (!this.exportSelectedModuleIds || this.exportSelectedModuleIds.size === 0) {
+                    return this.courseData.modules;
+                }
+                return this.courseData.modules.filter(m => this.exportSelectedModuleIds.has(m.id));
+            },
+
+            confirmExport() {
+                const format = this.exportPendingFormat;
+                if (!format) return;
+                switch (format) {
+                    case 'markdown': this.exportAsMarkdown(); break;
+                    case 'rtf':      this.exportAsRTF();      break;
+                    case 'json':     this.exportAsJSON();      break;
+                    case 'html':     this.exportAsHTML();      break;
+                }
             },
 
             exportAsMarkdown() {
@@ -8534,7 +8912,7 @@ this.activityTimer = {
                 })}*\n\n`;
                 markdown += `---\n\n`;
 
-                this.courseData.modules.forEach(module => {
+                this.getFilteredModules().forEach(module => {
                     markdown += `## ${module.title}\n\n`;
                     if (module.plannedMinutes) {
                         markdown += `**Planned Duration:** ${module.plannedMinutes} minutes\n\n`;
@@ -8593,7 +8971,7 @@ this.activityTimer = {
                 rtf += `{\\pard\\qc\\fs20\\cf3\\i Generated on ${new Date().toLocaleDateString('en-GB')}\\par}\n`;
                 rtf += `\\par\\par\n`;
 
-                this.courseData.modules.forEach(module => {
+                this.getFilteredModules().forEach(module => {
                     // Module title
                     rtf += `{\\pard\\b\\fs28\\cf1 ${this.escapeRTF(module.title)}\\par}\n`;
                     if (module.plannedMinutes) {
@@ -8601,22 +8979,22 @@ this.activityTimer = {
                     }
                     rtf += `\\par\n`;
 
-                    module.moments.forEach(moment => {
+                    (module.moments || []).forEach(moment => {
                         rtf += `{\\pard\\b\\fs24\\cf2 ${this.escapeRTF(moment.title)}\\par}\n`;
                         rtf += `\\par\n`;
 
-                        moment.submoments.forEach(submoment => {
+                        (moment.submoments || []).forEach(submoment => {
                             rtf += `{\\pard\\b\\fs22\\cf2 ${this.escapeRTF(submoment.title)}\\par}\n`;
                             rtf += `\\par\n`;
 
-                            submoment.activities.forEach(activity => {
+                            (submoment.activities || []).forEach(activity => {
                                 rtf += `{\\pard\\b\\fs20\\cf2 ${this.escapeRTF(activity.title)}\\par}\n`;
                                 if (activity.plannedMinutes) {
                                     rtf += `{\\pard\\fs18\\cf3 Planned Duration: ${activity.plannedMinutes} minutes\\par}\n`;
                                 }
                                 rtf += `\\par\n`;
 
-                                activity.slides.forEach((slide, index) => {
+                                (activity.slides || []).forEach((slide, index) => {
                                     rtf += `{\\pard\\b\\fs20 SLIDE ${index + 1}`;
                                     if (slide.title) {
                                         rtf += `: ${this.escapeRTF(slide.title)}`;
@@ -8650,11 +9028,11 @@ this.activityTimer = {
                 }
 
                 let html = `<!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${this.escapeHTML(this.courseData.title || 'Formation')}</title>
+    <title>${this.escapeHTML(this.courseData.title || 'Training')}</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -8731,8 +9109,8 @@ this.activityTimer = {
 </head>
 <body>
     <div class="container">
-        <h1>${this.escapeHTML(this.courseData.title || 'Formation')}</h1>
-        <div class="meta">Généré le ${new Date().toLocaleDateString('fr-FR', {
+        <h1>${this.escapeHTML(this.courseData.title || 'Training')}</h1>
+        <div class="meta">Generated on ${new Date().toLocaleDateString('en-GB', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
@@ -8740,10 +9118,10 @@ this.activityTimer = {
         })}</div>
 `;
 
-                this.courseData.modules.forEach((module, modIndex) => {
+                this.getFilteredModules().forEach((module, modIndex) => {
                     html += `\n        <h2>Module ${modIndex + 1}. ${this.escapeHTML(module.title)}</h2>\n`;
                     if (module.plannedMinutes) {
-                        html += `        <p class="meta">Durée planifiée : ${module.plannedMinutes} minutes</p>\n`;
+                        html += `        <p class="meta">Planned duration: ${module.plannedMinutes} minutes</p>\n`;
                     }
 
                     if (module.moments && Array.isArray(module.moments)) {
@@ -8754,7 +9132,7 @@ this.activityTimer = {
                             if (moment.submoments && Array.isArray(moment.submoments)) {
                                 moment.submoments.forEach((submoment, subIndex) => {
                                     if (submoment.ignored === true) return;
-                                    html += `\n        <h4>Sous-moment ${modIndex + 1}.${momIndex + 1}.${subIndex + 1} ${this.escapeHTML(submoment.title)}</h4>\n`;
+                                    html += `\n        <h4>Sub-moment ${modIndex + 1}.${momIndex + 1}.${subIndex + 1} ${this.escapeHTML(submoment.title)}</h4>\n`;
 
                                     if (submoment.activities && Array.isArray(submoment.activities)) {
                                         submoment.activities.forEach((activity) => {
