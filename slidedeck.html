@@ -4688,6 +4688,22 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
                                 <div class="export-option-desc">Web page for viewing in browsers.</div>
                             </div>
                         </button>
+
+                        <button type="button" class="export-option" onclick="app.beginExport('pdf')">
+                            <div class="export-option-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <path d="M10 12h4"></path>
+                                    <path d="M10 16h4"></path>
+                                    <path d="M10 8h1"></path>
+                                </svg>
+                            </div>
+                            <div class="export-option-content">
+                                <div class="export-option-title">PDF (.pdf)</div>
+                                <div class="export-option-desc">Print-ready document via browser print dialog.</div>
+                            </div>
+                        </button>
                     </div>
                 </div>
 
@@ -8894,6 +8910,7 @@ this.activityTimer = {
                     case 'rtf':      this.exportAsRTF();      break;
                     case 'json':     this.exportAsJSON();      break;
                     case 'html':     this.exportAsHTML();      break;
+                    case 'pdf':      this.exportAsPDF();      break;
                 }
             },
 
@@ -9171,6 +9188,198 @@ this.activityTimer = {
 </html>`;
 
                 this.downloadFile(html, 'AI_Training_Content.html', 'text/html');
+                this.closeExportModal();
+            },
+
+            exportAsPDF() {
+                if (!this.courseData) {
+                    alert('No content to export. Please import content first.');
+                    return;
+                }
+
+                let html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>${this.escapeHTML(this.courseData.title || 'Training')} — PDF Export</title>
+    <style>
+        @page {
+            margin: 18mm 15mm;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.55;
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+            font-size: 11pt;
+        }
+        h1 {
+            color: #1565C0;
+            border-bottom: 3px solid #E3F2FD;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+            font-size: 22pt;
+        }
+        h2 {
+            color: #4527A0;
+            margin-top: 28px;
+            margin-bottom: 12px;
+            border-left: 4px solid #E8EAF6;
+            padding-left: 14px;
+            font-size: 16pt;
+            page-break-before: always;
+        }
+        h2:first-of-type {
+            page-break-before: avoid;
+        }
+        h3 {
+            color: #00695C;
+            margin-top: 20px;
+            margin-bottom: 8px;
+            font-size: 13pt;
+        }
+        h4 {
+            color: #555;
+            margin-top: 16px;
+            margin-bottom: 6px;
+            font-size: 11.5pt;
+        }
+        .meta {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 24px;
+        }
+        .slide {
+            background: #fafafa;
+            padding: 14px 16px;
+            margin: 10px 0;
+            border-left: 3px solid #2196F3;
+            border-radius: 3px;
+            page-break-inside: avoid;
+        }
+        .slide-title {
+            font-weight: 600;
+            color: #1976D2;
+            margin-bottom: 8px;
+            font-size: 10.5pt;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 8px 0;
+            font-size: 10pt;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 6px 10px;
+            text-align: left;
+        }
+        th {
+            background: #f0f0f0;
+            font-weight: 600;
+        }
+        code {
+            background: #f5f5f5;
+            padding: 1px 4px;
+            border-radius: 2px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 3px;
+            overflow-x: auto;
+            font-size: 9pt;
+        }
+        a {
+            color: #1565C0;
+        }
+        @media print {
+            body { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+    <h1>${this.escapeHTML(this.courseData.title || 'Training')}</h1>
+    <div class="meta">Generated on ${new Date().toLocaleDateString('en-GB', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    })}</div>
+`;
+
+                this.getFilteredModules().forEach((module, modIndex) => {
+                    html += `\n    <h2>Module ${modIndex + 1}. ${this.escapeHTML(module.title)}</h2>\n`;
+                    if (module.plannedMinutes) {
+                        html += `    <p class="meta">Planned duration: ${module.plannedMinutes} minutes</p>\n`;
+                    }
+
+                    if (module.moments && Array.isArray(module.moments)) {
+                        module.moments.forEach((moment, momIndex) => {
+                            if (moment.ignored === true) return;
+                            html += `\n    <h3>Moment ${modIndex + 1}.${momIndex + 1} ${this.escapeHTML(moment.title)}</h3>\n`;
+
+                            if (moment.submoments && Array.isArray(moment.submoments)) {
+                                moment.submoments.forEach((submoment, subIndex) => {
+                                    if (submoment.ignored === true) return;
+                                    html += `\n    <h4>Sub-moment ${modIndex + 1}.${momIndex + 1}.${subIndex + 1} ${this.escapeHTML(submoment.title)}</h4>\n`;
+
+                                    if (submoment.activities && Array.isArray(submoment.activities)) {
+                                        submoment.activities.forEach((activity) => {
+                                            if (activity.ignored === true) return;
+                                            html += `\n    <div style="margin: 14px 0;">\n`;
+                                            html += `        <strong>${this.escapeHTML(activity.title)}</strong>`;
+                                            if (activity.plannedMinutes) {
+                                                html += ` <span class="meta">(${activity.plannedMinutes} min)</span>`;
+                                            }
+                                            html += `\n`;
+
+                                            if (activity.slides && Array.isArray(activity.slides)) {
+                                                activity.slides.forEach((slide, slideIndex) => {
+                                                    html += `        <div class="slide">\n`;
+                                                    if (slide.title) {
+                                                        html += `            <div class="slide-title">Slide ${slideIndex + 1}: ${this.escapeHTML(slide.title)}</div>\n`;
+                                                    } else {
+                                                        html += `            <div class="slide-title">Slide ${slideIndex + 1}</div>\n`;
+                                                    }
+                                                    html += `            <div>${slide.content || ''}</div>\n`;
+                                                    html += `        </div>\n`;
+                                                });
+                                            }
+                                            html += `    </div>\n`;
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+
+                html += `
+</body>
+</html>`;
+
+                // Open in new window and trigger print dialog
+                const printWindow = window.open('', '_blank');
+                if (!printWindow) {
+                    alert('Pop-up blocked. Please allow pop-ups for this site and try again.');
+                    return;
+                }
+                printWindow.document.write(html);
+                printWindow.document.close();
+                printWindow.addEventListener('load', () => {
+                    printWindow.focus();
+                    printWindow.print();
+                });
+
                 this.closeExportModal();
             },
 
