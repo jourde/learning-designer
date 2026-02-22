@@ -7839,7 +7839,7 @@ loadIgnoredState() {
                     return {
                         id: srcStep.id || `act-${Math.random().toString(36).substr(2, 9)}`,
                         title: srcStep.title || 'Untitled Activity',
-                        description: srcStep.description || '',
+                        description: srcStep.description || srcStep.objective || '',
                         plannedMinutes: toMinutes(srcStep.duration || 0, srcStep.unit || srcStep.durationUnit || 'minutes'),
                         ignored: srcStep.ignored || false,
                         slides: slides,
