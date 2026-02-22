@@ -16360,6 +16360,7 @@ loadProjectFromObject(project);
                         if (titleInput) titleInput.value = momentData.title || "";
                         const mDescInput = momentEl.querySelector('.moment-description');
                         if (mDescInput) mDescInput.value = momentData.description || "";
+                        if (mDescInput && mDescInput.value.trim()) { const mDescWrap = momentEl.querySelector('.moment-description-wrap'); if (mDescWrap) mDescWrap.classList.remove('hidden'); const mDescBtn = momentEl.querySelector('[data-action="toggle-moment-description"]'); if (mDescBtn) mDescBtn.setAttribute('aria-expanded', 'true'); }
                                                 const mTgt = momentEl.querySelector('.moment-target-time');
                         if (mTgt) mTgt.value = momentData.targetTime || "";
                         const mUnitSel = momentEl.querySelector('.moment-target-unit');
@@ -16384,6 +16385,9 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
                                 const smTgtUnit = smEl ? smEl.querySelector('.submoment-target-unit') : null;
                                 if (smTgtUnit) smTgtUnit.value = mapUnitToSecs(sm.targetUnit || sm.uniteDureeCible || getDefaultDurationUnitKey());
                                 try { if (sm.ignored || sm.ignore || sm.ldIgnored) __ldSetIgnored(smEl, true, { silent: true }); } catch(err){ __ldSilentErr(err); }
+                                const smNotesEl = smEl ? smEl.querySelector('.submoment-notes') : null;
+                                if (smNotesEl) smNotesEl.value = (sm.description || sm.notes || "");
+                                if (smNotesEl && smNotesEl.value.trim()) { const smNotesWrap = smEl.querySelector('.submoment-notes-wrap'); if (smNotesWrap) smNotesWrap.classList.remove('hidden'); const smNotesBtn = smEl.querySelector('[data-action="toggle-submoment-notes"]'); if (smNotesBtn) smNotesBtn.setAttribute('aria-expanded', 'true'); }
                                 const smSteps = smEl ? smEl.querySelector('.submoment-steps') : null;
                                 initSortableSteps(smSteps);
                                 ((sm.steps || sm.activites || []) || []).forEach(stepData => { addStepToContainerFromData(smSteps, stepData); });
