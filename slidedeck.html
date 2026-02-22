@@ -442,136 +442,6 @@
             word-break: break-word;
         }
 
-        /* GitHub Import Section */
-        .github-import-section {
-            margin-top: 16px;
-            padding-top: 12px;
-            border-top: 1px solid var(--color-border-light);
-        }
-
-        .github-import-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--color-text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-
-        .github-import-input-group {
-            margin-bottom: 8px;
-        }
-
-        .github-import-input {
-            width: 100%;
-            padding: 8px 10px;
-            font-size: 12px;
-            border: 1px solid var(--color-border);
-            border-radius: 6px;
-            background: var(--color-surface);
-            color: var(--color-text);
-            font-family: 'Courier New', monospace;
-            box-sizing: border-box;
-            transition: all var(--transition);
-        }
-
-        .github-import-input:focus {
-            outline: none;
-            border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px var(--color-primary-light);
-        }
-
-        .github-import-input::placeholder {
-            color: var(--color-text-muted);
-        }
-
-        .github-import-buttons {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 8px;
-        }
-
-        .btn-small {
-            padding: 6px 12px;
-            font-size: 12px;
-            flex: 1;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all var(--transition);
-        }
-
-        .btn-small.btn-primary {
-            background: var(--color-primary);
-            color: white;
-        }
-
-        .btn-small.btn-primary:hover:not(:disabled) {
-            background: var(--color-primary-dark);
-        }
-
-        .btn-small.btn-secondary {
-            background: var(--color-surface);
-            color: var(--color-text);
-            border: 1px solid var(--color-border);
-        }
-
-        .btn-small.btn-secondary:hover:not(:disabled) {
-            background: var(--color-hover);
-            border-color: var(--color-primary);
-        }
-
-        .btn-small:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .btn-small:focus-visible {
-            outline: 2px solid var(--color-primary);
-            outline-offset: 2px;
-        }
-
-        .github-import-status {
-            font-size: 11px;
-            color: var(--color-text-muted);
-            line-height: 1.3;
-            min-height: 14px;
-            word-break: break-word;
-        }
-
-        .github-import-status[data-type="success"] {
-            color: var(--color-success);
-        }
-
-        .github-import-status[data-type="error"] {
-            color: #DC2626;
-        }
-
-        .github-import-status[data-type="info"] {
-            color: var(--color-primary);
-        }
-
-        /* Dark mode adjustments */
-        [data-theme="dark"] .github-import-input {
-            background: var(--color-surface);
-            border-color: var(--color-border);
-        }
-
-        [data-theme="dark"] .github-import-input:focus {
-            border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-        }
-
-        [data-theme="dark"] .btn-small.btn-secondary {
-            background: var(--color-surface);
-            border-color: var(--color-border);
-        }
-
-        [data-theme="dark"] .btn-small.btn-secondary:hover:not(:disabled) {
-            background: var(--color-hover);
-        }
-
 .about-btn,
         .shortcuts-btn,
         .export-btn,
@@ -2579,16 +2449,176 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             font-size: 16px;
         }
 
-        .welcome-buttons {
-            display: flex;
-            gap: 16px;
-            justify-content: center;
-            flex-wrap: wrap;
+        .welcome-options-container {
+            max-width: 800px;
+            margin: 40px auto 0;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 32px;
+            align-items: stretch;
         }
 
-        .welcome-buttons .btn {
+        .welcome-option {
+            background: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: 12px;
+            padding: 28px;
+            text-align: center;
+            transition: all var(--transition);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 280px;
+        }
+
+        .welcome-option:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .welcome-option-header {
+            margin-bottom: 16px;
+        }
+
+        .welcome-option-number {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--color-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .welcome-option-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--color-text);
+            margin: 8px 0 0 0;
+            line-height: 1.4;
+        }
+
+        .welcome-option-description {
+            font-size: 14px;
+            color: var(--color-text-muted);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .welcome-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: var(--color-text-muted);
+            font-weight: 500;
+        }
+
+        .welcome-divider::before,
+        .welcome-divider::after {
+            content: '';
             flex: 1;
-            min-width: 200px;
+            height: 1px;
+            background: var(--color-border);
+        }
+
+        .welcome-divider::before {
+            margin-right: 12px;
+        }
+
+        .welcome-divider::after {
+            margin-left: 12px;
+        }
+
+        .welcome-github-section {
+            margin-top: 24px;
+        }
+
+        .welcome-github-input-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .welcome-github-input {
+            flex: 1;
+            padding: 12px 16px;
+            font-size: 14px;
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            background: var(--color-surface);
+            color: var(--color-text);
+            font-family: 'Courier New', monospace;
+            box-sizing: border-box;
+            transition: all var(--transition);
+        }
+
+        .welcome-github-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px var(--color-primary-light);
+        }
+
+        .welcome-github-input::placeholder {
+            color: var(--color-text-muted);
+        }
+
+        .welcome-github-btn {
+            padding: 12px 24px;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Dark mode adjustments */
+        [data-theme="dark"] .welcome-github-input {
+            background: var(--color-surface);
+            border-color: var(--color-border);
+        }
+
+        [data-theme="dark"] .welcome-github-input:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .welcome-options-container {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .welcome-divider {
+                grid-column: 1;
+                flex-direction: column;
+            }
+
+            .welcome-divider::before,
+            .welcome-divider::after {
+                display: none;
+            }
+
+            .welcome-divider span {
+                display: none;
+            }
+
+            .welcome-option {
+                padding: 24px;
+            }
+
+            .welcome-github-input-group {
+                flex-direction: column;
+            }
+
+            .welcome-github-input {
+                width: 100%;
+            }
+
+            .welcome-github-btn {
+                width: 100%;
+                justify-content: center;
+            }
         }
 
         /* ===== TIMELINE INTRO SLIDE ===== */
@@ -3792,52 +3822,6 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             opacity: 1;
         }
 
-        /* Description popover */
-        .desc-popover {
-            position: fixed;
-            z-index: 9000;
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-sm);
-            padding: 10px 14px;
-            max-width: 280px;
-            font-size: 13px;
-            line-height: 1.5;
-            color: var(--color-text-secondary);
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 150ms ease;
-        }
-        .desc-popover.visible { opacity: 1; }
-
-        /* Info button for descriptions */
-        .desc-info-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 26px;
-            height: 26px;
-            border: 1px solid var(--color-border);
-            border-radius: 50%;
-            background: var(--color-surface);
-            color: var(--color-text-secondary);
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            flex-shrink: 0;
-            margin-left: 6px;
-            line-height: 1;
-            padding: 0;
-            vertical-align: middle;
-            box-shadow: var(--shadow-sm);
-        }
-        .desc-info-btn:hover {
-            color: var(--color-primary);
-            border-color: var(--color-primary);
-            background: var(--color-primary-light);
-        }
-
         /* Sous-moments - petits points sur la ligne */
         .submoment-dot {
             width: 8px;
@@ -4402,48 +4386,17 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
                     <button class="footer-icon-btn" onclick="app.openAboutModal()" data-tooltip="About" aria-label="About this application">
                         <span class="material-symbols-outlined" aria-hidden="true">info</span>
                     </button>
-                    <button class="footer-icon-btn import-action" onclick="app.openImportDialog()" data-tooltip="Import" aria-label="Import data from JSON file">
+                    <button class="footer-icon-btn import-action" onclick="app.openImportDialog()" data-tooltip="Import File" aria-label="Import data from JSON file">
                         <span class="material-symbols-outlined" aria-hidden="true">upload_file</span>
+                    </button>
+                    <button class="footer-icon-btn github-action" onclick="app.openGithubImportModal()" data-tooltip="GitHub" aria-label="Load JSON from GitHub">
+                        <span class="material-symbols-outlined" aria-hidden="true">code</span>
                     </button>
                     <button class="footer-icon-btn export-action" onclick="app.openExportModal()" data-tooltip="Export" aria-label="Export data to JSON file">
                         <span class="material-symbols-outlined" aria-hidden="true">download</span>
                     </button>
                 </div>
                 <div class="import-status" id="importStatus" aria-live="polite"></div>
-
-                <!-- GitHub Import Section -->
-                <div class="github-import-section">
-                    <div class="github-import-label">Or from GitHub</div>
-                    <div class="github-import-input-group">
-                        <input
-                            type="text"
-                            id="githubUrlInput"
-                            class="github-import-input"
-                            placeholder="GitHub URL or user/repo/branch/path.json"
-                            aria-label="GitHub repository path or URL for JSON import"
-                        >
-                    </div>
-                    <div class="github-import-buttons">
-                        <button
-                            class="btn btn-small btn-primary"
-                            id="loadGithubBtn"
-                            onclick="app.loadFromGitHub()"
-                            aria-label="Load JSON from GitHub"
-                        >
-                            Load
-                        </button>
-                        <button
-                            class="btn btn-small btn-secondary"
-                            id="refreshGithubBtn"
-                            onclick="app.refreshFromGitHub()"
-                            aria-label="Refresh from last GitHub URL"
-                            disabled
-                        >
-                            Refresh
-                        </button>
-                    </div>
-                    <div class="github-import-status" id="githubImportStatus" aria-live="polite"></div>
-                </div>
 
             </div>
         </aside>
@@ -4568,28 +4521,58 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             <div class="slide-container" id="slideContainer" role="region" aria-label="Slide content" aria-live="polite">
                 <div class="welcome-screen">
                     <h1 class="welcome-title">Training Slide Deck Platform</h1>
-                    <p class="welcome-subtitle">Import your content to begin</p>
+                    <p class="welcome-subtitle">Select your import method</p>
                     <p class="welcome-description">
-                        You can import training material from a local JSON file or load directly from GitHub.
-                        <br><br>
-                        Supports structured training content with modules, activities, and slides.
+                        Load your training content from a local file or directly from a GitHub repository.
+                        Both methods support JSON format with modules, activities, and interactive slides.
                     </p>
-                    <div class="welcome-buttons">
-                        <button class="btn btn-success welcome-cta" onclick="app.openImportDialog()" aria-label="Import JSON file to begin training" style="background: #10B981; border-color: #10B981;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; margin-right: 8px;" aria-hidden="true">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="17 8 12 3 7 8"></polyline>
-                                <line x1="12" y1="3" x2="12" y2="15"></line>
-                            </svg>
-                            Import JSON File
-                        </button>
-                        <button class="btn btn-primary welcome-cta" id="welcomeLoadGithubBtn" onclick="app.openGithubImportModal()" aria-label="Load JSON from GitHub">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; margin-right: 8px;" aria-hidden="true">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 6v6l4 2"></path>
-                            </svg>
-                            Load from GitHub
-                        </button>
+
+                    <!-- Option 1: Local File -->
+                    <div class="welcome-options-container">
+                        <div class="welcome-option">
+                            <div class="welcome-option-header">
+                                <span class="welcome-option-number">Option 1</span>
+                                <h3 class="welcome-option-title">Import from File</h3>
+                            </div>
+                            <p class="welcome-option-description">Upload a JSON file from your computer</p>
+                            <button class="btn btn-success welcome-cta" onclick="app.openImportDialog()" aria-label="Import JSON file to begin training" style="background: #10B981; border-color: #10B981; width: 100%;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; margin-right: 8px;" aria-hidden="true">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                Choose File
+                            </button>
+                        </div>
+
+                        <div class="welcome-divider">
+                            <span>or</span>
+                        </div>
+
+                        <!-- Option 2: GitHub -->
+                        <div class="welcome-option">
+                            <div class="welcome-option-header">
+                                <span class="welcome-option-number">Option 2</span>
+                                <h3 class="welcome-option-title">Load from GitHub</h3>
+                            </div>
+                            <p class="welcome-option-description">Paste a GitHub URL or repository path</p>
+                            <div class="welcome-github-input-group">
+                                <input
+                                    type="text"
+                                    id="welcomeGithubUrlInput"
+                                    class="welcome-github-input"
+                                    placeholder="user/repo/branch/path/file.json"
+                                    aria-label="GitHub URL for JSON import"
+                                >
+                                <button class="btn btn-primary welcome-github-btn" onclick="app.loadFromWelcomeGithub()" aria-label="Load JSON from GitHub">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;" aria-hidden="true">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <path d="M12 6v6l4 2"></path>
+                                    </svg>
+                                    Load
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -5078,18 +5061,6 @@ showIgnored: false,
                     stationDiv.appendChild(marker);
                     stationDiv.appendChild(label);
 
-                    if (module.description) {
-                        const infoBtn = document.createElement('button');
-                        infoBtn.className = 'desc-info-btn';
-                        infoBtn.title = 'Show description';
-                        infoBtn.textContent = 'ℹ';
-                        infoBtn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            app.showDescriptionPopover(module.description, infoBtn);
-                        });
-                        stationDiv.appendChild(infoBtn);
-                    }
-
                     stationDiv.addEventListener('click', () => this.navigateToModule(moduleIndex));
                     stationDiv.addEventListener('keydown', (e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
@@ -5154,23 +5125,6 @@ showIgnored: false,
                         const dotPositionPercent = moduleStartPercent + (dotPositionInModule * moduleSpan);
                         dot.style.left = `${dotPositionPercent}%`;
 
-                        if (item.submoment.description) {
-                            const infoBtn = document.createElement('button');
-                            infoBtn.className = 'desc-info-btn';
-                            infoBtn.title = 'Show description';
-                            infoBtn.textContent = 'ℹ';
-                            infoBtn.style.cssText = 'position:absolute;top:-22px;left:50%;transform:translateX(-50%);display:none;';
-                            dot.style.position = 'absolute';
-                            dot.style.overflow = 'visible';
-                            dot.appendChild(infoBtn);
-                            dot.addEventListener('mouseenter', () => { infoBtn.style.display = 'inline-flex'; });
-                            dot.addEventListener('mouseleave', () => { infoBtn.style.display = 'none'; app.hideDescriptionPopover(); });
-                            infoBtn.addEventListener('click', (e) => {
-                                e.stopPropagation();
-                                app.showDescriptionPopover(item.submoment.description, infoBtn);
-                            });
-                        }
-
                         // Navigation au clic
                         dot.addEventListener('click', () => this.navigateToSubmoment(moduleIndex, item.momentIndex, item.submomentIndex));
                         dot.addEventListener('keydown', (e) => {
@@ -5231,22 +5185,6 @@ showIgnored: false,
 
                         segment.style.left = `${segmentStartPercent}%`;
                         segment.style.width = `${segmentEndPercent - segmentStartPercent}%`;
-
-                        if (moment.description) {
-                            const infoBtn = document.createElement('button');
-                            infoBtn.className = 'desc-info-btn';
-                            infoBtn.title = 'Show description';
-                            infoBtn.textContent = 'ℹ';
-                            infoBtn.style.cssText = 'position:absolute;top:-22px;left:50%;transform:translateX(-50%);display:none;';
-                            segment.style.overflow = 'visible';
-                            segment.appendChild(infoBtn);
-                            segment.addEventListener('mouseenter', () => { infoBtn.style.display = 'inline-flex'; });
-                            segment.addEventListener('mouseleave', () => { infoBtn.style.display = 'none'; app.hideDescriptionPopover(); });
-                            infoBtn.addEventListener('click', (e) => {
-                                e.stopPropagation();
-                                app.showDescriptionPopover(moment.description, infoBtn);
-                            });
-                        }
 
                         // Navigation au clic - aller au premier sous-moment du moment
                         segment.addEventListener('click', () => {
@@ -5733,29 +5671,6 @@ loadIgnoredState() {
     this.applyIgnoredState(false);
 },
 
-            showDescriptionPopover(text, anchorEl) {
-                if (!text) return;
-                let pop = document.getElementById('descPopover');
-                if (!pop) {
-                    pop = document.createElement('div');
-                    pop.id = 'descPopover';
-                    pop.className = 'desc-popover';
-                    document.body.appendChild(pop);
-                }
-                pop.textContent = text;
-                const rect = anchorEl.getBoundingClientRect();
-                const left = Math.min(rect.left, window.innerWidth - 300);
-                const top = rect.bottom + 6;
-                pop.style.left = `${left}px`;
-                pop.style.top = `${top}px`;
-                pop.classList.add('visible');
-            },
-
-            hideDescriptionPopover() {
-                const pop = document.getElementById('descPopover');
-                if (pop) pop.classList.remove('visible');
-            },
-
             buildNavigation() {
 
                 const navTree = document.getElementById('navTree');
@@ -5797,17 +5712,6 @@ loadIgnoredState() {
                 titleSpan.textContent = `${moduleIndex + 1}. ${module.title}`;
                 titleSpan.style.flex = '1';
                 headerDiv.appendChild(titleSpan);
-                if (module.description) {
-                    const infoBtn = document.createElement('button');
-                    infoBtn.className = 'desc-info-btn';
-                    infoBtn.title = 'Show description';
-                    infoBtn.textContent = 'ℹ';
-                    infoBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        this.showDescriptionPopover(module.description, infoBtn);
-                    });
-                    headerDiv.appendChild(infoBtn);
-                }
                 moduleDiv.appendChild(headerDiv);
 
                 // Render moments if they exist
@@ -5849,18 +5753,6 @@ loadIgnoredState() {
         </svg>
         <span class="nav-item-title">${moduleIndex + 1}.${momentIndex + 1} ${this.sanitizeHTML(String(moment.title || ''))}</span>
     `;
-    if (moment.description) {
-        const infoBtn = document.createElement('button');
-        infoBtn.className = 'desc-info-btn';
-        infoBtn.title = 'Show description';
-        infoBtn.textContent = 'ℹ';
-        infoBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            app.showDescriptionPopover(moment.description, infoBtn);
-        });
-        headerDiv.appendChild(infoBtn);
-    }
-
     const childrenDiv = document.createElement('div');
     childrenDiv.className = 'nav-children';
 
@@ -5908,18 +5800,6 @@ loadIgnoredState() {
         </svg>
         <span class="nav-item-title">${moduleIndex + 1}.${momentIndex + 1}.${submomentIndex + 1} ${this.sanitizeHTML(String(submoment.title || ''))}</span>
     `;
-    if (submoment.description) {
-        const infoBtn = document.createElement('button');
-        infoBtn.className = 'desc-info-btn';
-        infoBtn.title = 'Show description';
-        infoBtn.textContent = 'ℹ';
-        infoBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            app.showDescriptionPopover(submoment.description, infoBtn);
-        });
-        headerDiv.appendChild(infoBtn);
-    }
-
     const childrenDiv = document.createElement('div');
     childrenDiv.className = 'nav-children';
 
@@ -5978,18 +5858,6 @@ loadIgnoredState() {
                     <span class="nav-activity-label">${labelText}</span>
                     <span class="slide-count">${slideCount} slide${slideCount !== 1 ? 's' : ''}</span>
                 `;
-
-                if (activity.description) {
-                    const infoBtn = document.createElement('button');
-                    infoBtn.className = 'desc-info-btn';
-                    infoBtn.title = 'Show description';
-                    infoBtn.textContent = 'ℹ';
-                    infoBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        this.showDescriptionPopover(activity.description, infoBtn);
-                    });
-                    activityDiv.appendChild(infoBtn);
-                }
 
                 return activityDiv;
             },
@@ -6877,13 +6745,6 @@ loadIgnoredState() {
                 document.getElementById('mobileOverlay').addEventListener('click', () => {
                     this.closeMobileMenu();
                 });
-
-                // Dismiss description popover on outside click
-                document.addEventListener('click', (e) => {
-                    if (!e.target.classList.contains('desc-info-btn')) {
-                        this.hideDescriptionPopover();
-                    }
-                }, true);
 
                 // Keyboard navigation
                 document.addEventListener('keydown', (e) => {
@@ -7809,6 +7670,87 @@ loadIgnoredState() {
                     }
                 } catch (error) {
                     console.error('Error in openGithubImportModal:', error);
+                }
+            },
+
+            loadFromWelcomeGithub() {
+                try {
+                    const input = document.getElementById('welcomeGithubUrlInput');
+                    if (!input) {
+                        console.error('Welcome GitHub URL input not found');
+                        return;
+                    }
+
+                    const userInput = input.value.trim();
+                    if (!userInput) {
+                        alert('Please enter a GitHub URL or path.');
+                        input.focus();
+                        return;
+                    }
+
+                    // Confirm before replacing existing content
+                    if (this.courseData && this.courseData.modules && this.courseData.modules.length > 0) {
+                        if (!confirm('Importing new content will replace the current training content and reset all progress.\n\nContinue?')) {
+                            return;
+                        }
+                    }
+
+                    let rawUrl;
+
+                    // Check if it's a full raw GitHub URL
+                    if (userInput.startsWith('https://raw.githubusercontent.com/')) {
+                        rawUrl = userInput;
+                    } else if (userInput.startsWith('https://github.com/')) {
+                        // Convert web URL to raw URL
+                        rawUrl = userInput
+                            .replace('github.com', 'raw.githubusercontent.com')
+                            .replace('/blob/', '/');
+                    } else {
+                        // Parse the short URL: username/repo/branch/path/file.json
+                        const parts = userInput.split('/');
+                        if (parts.length < 3) {
+                            alert('Format: username/repo/branch/path/file.json or paste a GitHub URL');
+                            input.focus();
+                            return;
+                        }
+
+                        const username = parts[0];
+                        const repo = parts[1];
+                        const restPath = parts.slice(2).join('/');
+
+                        // Construct raw GitHub URL
+                        rawUrl = `https://raw.githubusercontent.com/${username}/${repo}/${restPath}`;
+                    }
+
+                    console.log('Loading from GitHub (welcome):', rawUrl);
+
+                    // Fetch the JSON
+                    fetch(rawUrl)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                            }
+                            return response.text();
+                        })
+                        .then(text => {
+                            try {
+                                const jsonData = JSON.parse(text);
+                                console.log('GitHub JSON loaded successfully from welcome');
+                                this.importJSON(jsonData);
+                                // Clear input on success
+                                input.value = '';
+                            } catch (error) {
+                                console.error('JSON parse error:', error);
+                                alert('Invalid JSON: ' + error.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('GitHub fetch error:', error);
+                            alert('Failed to load: ' + error.message);
+                        });
+                } catch (error) {
+                    console.error('Error in loadFromWelcomeGithub:', error);
+                    alert('Error: ' + error.message);
                 }
             },
 
