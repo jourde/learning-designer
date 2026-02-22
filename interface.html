@@ -154,7 +154,7 @@ textarea{resize:vertical;}
 .step-tabpanel[data-step-panel="description"] .compact-label {
   flex-shrink: 0;
 }
-.step-tabpanel[data-step-panel="description"] .step-input-objective {
+.step-tabpanel[data-step-panel="description"] .step-input-description {
   flex: 1;
   min-height: 120px;
 }
@@ -5613,9 +5613,9 @@ Cochez les éléments que vous souhaitez inclure dans l'export. Les éléments p
       <div class="step-right-section border border-slate-200 rounded-lg bg-white p-2">
         <div class="compact-label flex items-center gap-1 mb-1">
           <span class="material-icons-round text-[10px] text-slate-400">flag</span>
-          <span data-i18n="label_step_objective">Description de l'activité</span>
+          <span data-i18n="label_step_description">Description de l'activité</span>
         </div>
-        <textarea class="step-input-objective w-full px-2 py-1.5 text-[12px] border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 bg-slate-50 text-slate-700" data-i18n-placeholder="ph_step_objective" placeholder="Décrivez l'activité..." rows="2"></textarea>
+        <textarea class="step-input-description w-full px-2 py-1.5 text-[12px] border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 bg-slate-50 text-slate-700" data-i18n-placeholder="ph_step_description" placeholder="Décrivez l'activité..." rows="2"></textarea>
       </div>
     </div>
 
@@ -9450,8 +9450,8 @@ btn_export_dropdown: "Exporter...",
                 label_time: "Temps",
                 opt_sync: "Synchrone",
                 opt_async: "Asynchrone",
-                label_step_objective: "Description de l'activité",
-                ph_step_objective: "Décrivez l'activité...",
+                label_step_description: "Description de l'activité",
+                ph_step_description: "Décrivez l'activité...",
                 label_step_presentation: "Présentation (diaporama)",
                 ph_step_presentation: "Éléments à afficher dans le diaporama...",
                 label_tasks: "Ce que les apprenants doivent faire",
@@ -12777,7 +12777,7 @@ function updateOutcomeBloom(levelSelect) {
             const selector = [
                 'textarea.activity-description',
                 'textarea.moment-description',
-                'textarea.step-input-objective',
+                'textarea.step-input-description',
                 'textarea.step-input-tasks',
                 'textarea.step-input-trainer-tasks',
                 'textarea.step-input-notes',
@@ -13950,7 +13950,8 @@ obs3.observe(alist, { childList: true, subtree: true });
                                 lieu: stepEl.querySelector('.place-select').value,
                                 temps: stepEl.querySelector('.time-select').value,
                                                                 evaluation: (stepEl.querySelector('.evaluation-select')?.value || 'Aucune'),
-objectifActivite: stepEl.querySelector('.step-input-objective').value,
+description: stepEl.querySelector('.step-input-description').value,
+                                objectifActivite: stepEl.querySelector('.step-input-description').value,
                                 aFaire: stepEl.querySelector('.step-input-tasks').value,
                                 aFaireFormateur: stepEl.querySelector('.step-input-trainer-tasks').value,
                                 presentation: (stepEl.querySelector('.step-input-presentation')?.value || ''),
@@ -14247,7 +14248,7 @@ function __ldStripStepToCanonical(s) {
         place: s.place ?? s.lieu ?? 'situ',
         time: s.time ?? s.temps ?? 'sync',
         evaluation: s.evaluation ?? 'Aucune',
-        objective: s.objective ?? s.objectifActivite ?? s.objectif ?? '',
+        description: s.description ?? s.objective ?? s.objectifActivite ?? s.objectif ?? '',
         tasks: s.tasks ?? s.aFaire ?? '',
         trainerTasks: s.trainerTasks ?? s.aFaireFormateur ?? '',
         presentation: s.presentation ?? '',
@@ -14269,7 +14270,7 @@ function __ldStripStepToCanonical(s) {
         if (!out.groupCount && out.groupCount !== 0) delete out.groupCount;
         if (!out.groupSize && out.groupSize !== 0) delete out.groupSize;
         if (!out.groupDetails) delete out.groupDetails;
-        if (!out.objective) delete out.objective;
+        if (!out.description) delete out.description;
         if (!out.tasks) delete out.tasks;
         if (!out.trainerTasks) delete out.trainerTasks;
         if (!out.presentation) delete out.presentation;
@@ -14958,7 +14959,7 @@ function forceCanonicalImport(payload) {
         place: asStr(s?.place ?? s?.lieu ?? "situ"),
         time: asStr(s?.time ?? s?.temps ?? "sync"),
                 evaluation: asStr(s?.evaluation ?? s?.evaluationType ?? s?.typeEvaluation ?? 'Aucune'),
-objective: asStr(s?.objective ?? s?.objectifActivite ?? ""),
+        description: asStr(s?.description ?? s?.objective ?? s?.objectifActivite ?? ""),
         tasks: asStr(s?.tasks ?? s?.aFaire ?? ""),
         trainerTasks: asStr(s?.trainerTasks ?? s?.aFaireFormateur ?? s?.trainer_actions ?? s?.trainerActions ?? ''),
         presentation: asStr(s?.presentation ?? s?.diaporama ?? s?.presentationDiapo ?? s?.slideNotes ?? ""),
@@ -15350,7 +15351,7 @@ if (m.targetTimeSec == null) {
                                             s.groupCount = _trimText(s.groupCount ?? s.nombreGroupes ?? "", 20);
                                             s.groupSize = _trimText(s.groupSize ?? s.tailleGroupe ?? "", 20);
 
-                                            s.objective = _trimText(s.objective ?? s.objectifActivite ?? "", 5000);
+                                            s.description = _trimText(s.description ?? s.objective ?? s.objectifActivite ?? "", 5000);
                                             s.tasks = _trimText(s.tasks ?? s.aFaire ?? "", 8000);
                                             s.presentation = _trimText(s.presentation ?? "", 500000);
                                             s.notes = _trimText(s.notes ?? "", 8000);
@@ -15423,7 +15424,7 @@ s.unite = s.unit;
                             s.groupSize = _trimText(s.groupSize ?? s.tailleGroupe ?? "", 20);
 
                             // Text fields
-                            s.objective = _trimText(s.objective ?? s.objectifActivite ?? "", 5000);
+                            s.description = _trimText(s.description ?? s.objective ?? s.objectifActivite ?? "", 5000);
                             s.tasks = _trimText(s.tasks ?? s.aFaire ?? "", 8000);
                             s.presentation = _trimText(s.presentation ?? "", 500000);
                             s.notes = _trimText(s.notes ?? "", 8000);
@@ -15731,7 +15732,7 @@ const __chartsSuspendFn = window.__setChartsSuspended;
                 place: s?.place ?? s?.lieu ?? "",
                 time: s?.time ?? s?.temps ?? "",
                 evaluation: s?.evaluation ?? "",
-                objective: s?.objective ?? s?.objectifActivite ?? "",
+                description: s?.description ?? s?.objective ?? s?.objectifActivite ?? "",
                 tasks: s?.tasks ?? s?.aFaire ?? "",
                 trainerTasks: s?.trainerTasks ?? s?.aFaireFormateur ?? "",
                 presentation: s?.presentation ?? "",
@@ -16147,8 +16148,8 @@ function generateRecoveryMarkdown(rawProject) {
             const time = _recAsStr(st.temps || st.time || "");
             if (place || time) md += `   - ${_i18nStr("import_recovery_context", "Contexte")}: ${[place, time].filter(Boolean).join(" • ")}\n`;
 
-            const objective = _recAsStr(st.objectifActivite || st.objective || st.objectif || "");
-            if (objective) md += `   - ${_i18nStr("import_recovery_objective", "Objectif")}: ${objective}\n`;
+            const description = _recAsStr(st.description || st.objectifActivite || st.objective || st.objectif || "");
+            if (description) md += `   - ${_i18nStr("import_recovery_objective", "Objectif")}: ${description}\n`;
 
             const tasks = _recAsStr(st.aFaire || st.tasks || st.instructions || "");
             if (tasks) md += `   - ${_i18nStr("import_recovery_tasks", "À faire")}: ${tasks}\n`;
@@ -16466,7 +16467,7 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
                         stepEl.querySelector('.evaluation-select').value = data.evaluation || "Aucune";
             try { applyStepStatus(stepEl, (data.status ?? data.etat ?? data.state ?? 'in_progress')); } catch(err){ __ldSilentErr(err); }
             try { if (data.ignored || data.ignore || data.isIgnored || data.ldIgnored) __ldSetIgnored(stepEl, true, { silent: true }); } catch(err){ __ldSilentErr(err); }
-stepEl.querySelector('.step-input-objective').value = data.objective || "";
+stepEl.querySelector('.step-input-description').value = data.description ?? data.objective ?? "";
             stepEl.querySelector('.step-input-tasks').value = data.tasks || "";
             stepEl.querySelector('.step-input-trainer-tasks').value = data.trainerTasks || data.aFaireFormateur || data.trainer_actions || data.trainerActions || "";
             stepEl.querySelector('.step-input-presentation').value = data.presentation || "";
@@ -19692,7 +19693,7 @@ function buildTabularExportRows(model) {
                                 smTarget,
                                 activityIdx,
                                 safe(act.title),
-                                safe(act.objective),
+                                safe(act.description || act.objective),
                                 safe(act.tasks),
                                 safe(act.trainerTasks),
                                 safe(act.evaluationLabel || act.evaluationKey || act.evaluation || ''),
@@ -19972,8 +19973,8 @@ function exportDOCX() {
                         children.push(new Paragraph({ text: metaParts.join(' | ') }));
                     }
 
-                    if (safe(act.objective)) {
-                        children.push(new Paragraph({ children: [new TextRun({ text: 'Objectif : ', bold: true }), new TextRun(safe(act.objective))] }));
+                    if (safe(act.description || act.objective)) {
+                        children.push(new Paragraph({ children: [new TextRun({ text: 'Objectif : ', bold: true }), new TextRun(safe(act.description || act.objective))] }));
                     }
                     if (safe(act.aimsTargetsText)) {
                         children.push(new Paragraph({ children: [new TextRun({ text: 'Objectifs ciblés : ', bold: true }), new TextRun(safe(act.aimsTargetsText))] }));
@@ -20114,7 +20115,7 @@ function __deprecated__exportCSV_1() {
                     steps.forEach((stepEl) => {
                         activityIdx += 1;
                         const stepTitle = (stepEl.querySelector('.step-input-title')?.value || '').trim();
-                        const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
+                        const objective = (stepEl.querySelector('.step-input-description')?.value || '').trim();
                         const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
                                                 const trainerTasks = (stepEl.querySelector('.step-input-trainer-tasks')?.value || '').trim();
                         const notes = (stepEl.querySelector('.step-input-notes')?.value || '').trim();
@@ -20557,7 +20558,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             if (bits.length) groupInfo = `${groupModeTxt} (${bits.join(', ')})`;
                         }
                         if (groupDetailsVal) groupInfo = groupInfo ? `${groupInfo} — ${groupDetailsVal}` : groupDetailsVal;
-                        const objective = step.querySelector('.step-input-objective').value || "";
+                        const objective = step.querySelector('.step-input-description').value || "";
                         const tasks = step.querySelector('.step-input-tasks').value || "";
                         const trainerTasks = step.querySelector('.step-input-trainer-tasks')?.value || "";
                         const evalFollowup = step.querySelector('.step-input-eval-followup')?.value || "";
@@ -20761,7 +20762,7 @@ function __deprecated__exportCSV_2() {
                     steps.forEach((stepEl) => {
                         activityIdx += 1;
                         const stepTitle = (stepEl.querySelector('.step-input-title')?.value || '').trim();
-                        const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
+                        const objective = (stepEl.querySelector('.step-input-description')?.value || '').trim();
                         const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
                         const trainerTasks = (stepEl.querySelector('.step-input-trainer-tasks')?.value || '').trim();
                         const evalFollowup = (stepEl.querySelector('.step-input-eval-followup')?.value || '').trim();
@@ -21015,7 +21016,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             if (bits.length) groupInfo = `${groupModeTxt} (${bits.join(', ')})`;
                         }
                         if (groupDetailsVal) groupInfo = groupInfo ? `${groupInfo} — ${groupDetailsVal}` : groupDetailsVal;
-                        const objective = step.querySelector('.step-input-objective').value || "";
+                        const objective = step.querySelector('.step-input-description').value || "";
                         const tasks = step.querySelector('.step-input-tasks').value || "";
                         const trainerTasks = step.querySelector('.step-input-trainer-tasks')?.value || "";
                         const evalFollowup = step.querySelector('.step-input-eval-followup')?.value || "";
@@ -21212,7 +21213,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
 
                     steps.forEach((stepEl, si) => {
                         const title = (stepEl.querySelector('.step-input-title')?.value || '').trim() || `Activité ${si+1}`;
-                        const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
+                        const objective = (stepEl.querySelector('.step-input-description')?.value || '').trim();
                         const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
                         const trainerTasks = (stepEl.querySelector('.step-input-trainer-tasks')?.value || '').trim();
                         const evalFollowup = (stepEl.querySelector('.step-input-eval-followup')?.value || '').trim();
@@ -21330,7 +21331,7 @@ function __deprecated__exportCSV_3() {
                     steps.forEach((stepEl) => {
                         activityIdx += 1;
                         const stepTitle = (stepEl.querySelector('.step-input-title')?.value || '').trim();
-                        const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
+                        const objective = (stepEl.querySelector('.step-input-description')?.value || '').trim();
                         const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
                         const trainerTasks = (stepEl.querySelector('.step-input-trainer-tasks')?.value || '').trim();
                         const evalFollowup = (stepEl.querySelector('.step-input-eval-followup')?.value || '').trim();
@@ -21584,7 +21585,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             if (bits.length) groupInfo = `${groupModeTxt} (${bits.join(', ')})`;
                         }
                         if (groupDetailsVal) groupInfo = groupInfo ? `${groupInfo} — ${groupDetailsVal}` : groupDetailsVal;
-                        const objective = step.querySelector('.step-input-objective').value || "";
+                        const objective = step.querySelector('.step-input-description').value || "";
                         const tasks = step.querySelector('.step-input-tasks').value || "";
                         const trainerTasks = step.querySelector('.step-input-trainer-tasks')?.value || "";
                         const evalFollowup = step.querySelector('.step-input-eval-followup')?.value || "";
@@ -21776,7 +21777,7 @@ function __deprecated__exportCSV_4() {
                     steps.forEach((stepEl) => {
                         activityIdx += 1;
                         const stepTitle = (stepEl.querySelector('.step-input-title')?.value || '').trim();
-                        const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
+                        const objective = (stepEl.querySelector('.step-input-description')?.value || '').trim();
                         const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
                         const trainerTasks = (stepEl.querySelector('.step-input-trainer-tasks')?.value || '').trim();
                         const evalFollowup = (stepEl.querySelector('.step-input-eval-followup')?.value || '').trim();
@@ -22030,7 +22031,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             if (bits.length) groupInfo = `${groupModeTxt} (${bits.join(', ')})`;
                         }
                         if (groupDetailsVal) groupInfo = groupInfo ? `${groupInfo} — ${groupDetailsVal}` : groupDetailsVal;
-                        const objective = step.querySelector('.step-input-objective').value || "";
+                        const objective = step.querySelector('.step-input-description').value || "";
                         const tasks = step.querySelector('.step-input-tasks').value || "";
                         const trainerTasks = step.querySelector('.step-input-trainer-tasks')?.value || "";
                         const evalFollowup = step.querySelector('.step-input-eval-followup')?.value || "";
@@ -22220,7 +22221,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
 
                         stepCards.forEach((stepCard, sIdx) => {
                             const sTitle = stepCard.querySelector('.step-input-title')?.value || `Étape ${sIdx+1}`;
-                            const sObjective = stepCard.querySelector('.step-input-objective')?.value || '';
+                            const sObjective = stepCard.querySelector('.step-input-description')?.value || '';
                             const sTasks = stepCard.querySelector('.step-input-tasks')?.value || '';
                             const sNotes = stepCard.querySelector('.step-input-notes')?.value || '';
                             const sSecs = readDurationSecs(stepCard);
@@ -22432,7 +22433,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             groupInfo = (__modeTxt || __modeVal) + (bits.length ? ' (' + bits.join(', ') + ')' : '');
                         }
                         if (__detailsVal) groupInfo = groupInfo ? (groupInfo + ' — ' + __detailsVal) : __detailsVal;
-                        const objective = step.querySelector('.step-input-objective').value || "";
+                        const objective = step.querySelector('.step-input-description').value || "";
                         const tasks = step.querySelector('.step-input-tasks').value || "";
                         const trainerTasks = step.querySelector('.step-input-trainer-tasks')?.value || "";
                         const evalFollowup = step.querySelector('.step-input-eval-followup')?.value || "";
@@ -22622,7 +22623,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
 
                         stepCards.forEach((stepCard, sIdx) => {
                             const sTitle = stepCard.querySelector('.step-input-title')?.value || `Étape ${sIdx+1}`;
-                            const sObjective = stepCard.querySelector('.step-input-objective')?.value || '';
+                            const sObjective = stepCard.querySelector('.step-input-description')?.value || '';
                             const sTasks = stepCard.querySelector('.step-input-tasks')?.value || '';
                             const sNotes = stepCard.querySelector('.step-input-notes')?.value || '';
                             const sSecs = readDurationSecs(stepCard);
@@ -22754,7 +22755,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
 
                     steps.forEach((stepEl, si) => {
                         const title = (stepEl.querySelector('.step-input-title')?.value || '').trim() || `Activité ${si+1}`;
-                        const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
+                        const objective = (stepEl.querySelector('.step-input-description')?.value || '').trim();
                         const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
                         const trainerTasks = (stepEl.querySelector('.step-input-trainer-tasks')?.value || '').trim();
                         const evalFollowup = (stepEl.querySelector('.step-input-eval-followup')?.value || '').trim();
@@ -22960,7 +22961,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             if (bits.length) groupInfo = `${groupModeTxt} (${bits.join(', ')})`;
                         }
                         if (groupDetailsVal) groupInfo = groupInfo ? `${groupInfo} — ${groupDetailsVal}` : groupDetailsVal;
-                        const objective = step.querySelector('.step-input-objective').value || "";
+                        const objective = step.querySelector('.step-input-description').value || "";
                         const tasks = step.querySelector('.step-input-tasks').value || "";
                         const trainerTasks = step.querySelector('.step-input-trainer-tasks')?.value || "";
                         const evalFollowup = step.querySelector('.step-input-eval-followup')?.value || "";
@@ -23405,7 +23406,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                             if (bits.length) groupInfo = `${groupModeTxt} (${bits.join(', ')})`;
                         }
                         if (groupDetailsVal) groupInfo = groupInfo ? `${groupInfo} — ${groupDetailsVal}` : groupDetailsVal;
-                        const objective = step.querySelector('.step-input-objective').value || "";
+                        const objective = step.querySelector('.step-input-description').value || "";
                         const tasks = step.querySelector('.step-input-tasks').value || "";
                         const trainerTasks = step.querySelector('.step-input-trainer-tasks')?.value || "";
                         const evalFollowup = step.querySelector('.step-input-eval-followup')?.value || "";
@@ -23595,7 +23596,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
 
                         stepCards.forEach((stepCard, sIdx) => {
                             const sTitle = stepCard.querySelector('.step-input-title')?.value || `Étape ${sIdx+1}`;
-                            const sObjective = stepCard.querySelector('.step-input-objective')?.value || '';
+                            const sObjective = stepCard.querySelector('.step-input-description')?.value || '';
                             const sTasks = stepCard.querySelector('.step-input-tasks')?.value || '';
                             const sNotes = stepCard.querySelector('.step-input-notes')?.value || '';
                             const sSecs = readDurationSecs(stepCard);
@@ -23900,7 +23901,7 @@ document.querySelectorAll('#outcomes-list li').forEach(li => {
                         if (groupDetailsVal) groupInfo = groupInfo ? `${groupInfo} — ${groupDetailsVal}` : groupDetailsVal;
 
                         // Step content
-                        const objective = (step.querySelector('.step-input-objective')?.value || '').trim();
+                        const objective = (step.querySelector('.step-input-description')?.value || '').trim();
                         const tasks = (step.querySelector('.step-input-tasks')?.value || '').trim();
                         const trainerTasks = (step.querySelector('.step-input-trainer-tasks')?.value || '').trim();
                         const evalFollowup = (step.querySelector('.step-input-eval-followup')?.value || '').trim();
@@ -24247,7 +24248,7 @@ html += `<h3 style="margin-top: 18px; color: #334155; font-size: 1.05em;">Moment
                     stepCards.forEach((stepEl, sIdx) => {
                         const stepTitle = (stepEl.querySelector('.step-input-title')?.value || '').trim() || `${t.md_step} ${sIdx + 1}`;
                         const __ignored = (typeof __ldIsIgnored==='function') ? !!__ldIsIgnored(stepEl) : false;
-                        const objective = (stepEl.querySelector('.step-input-objective')?.value || '').trim();
+                        const objective = (stepEl.querySelector('.step-input-description')?.value || '').trim();
                         const tasks = (stepEl.querySelector('.step-input-tasks')?.value || '').trim();
                         const trainerTasks = (stepEl.querySelector('.step-input-trainer-tasks')?.value || '').trim();
                         const evalFollowup = (stepEl.querySelector('.step-input-eval-followup')?.value || '').trim();
@@ -24561,7 +24562,7 @@ md += `- **Horodatage d'export :** ${new Date().toISOString()}\n\n`;
                         const placeText = step.querySelector('.place-select').selectedOptions[0].innerText;
                         const timeText = step.querySelector('.time-select').selectedOptions[0].innerText;
 
-                        const objective = step.querySelector('.step-input-objective').value || "Non renseigné";
+                        const objective = step.querySelector('.step-input-description').value || "Non renseigné";
                         const tasks = step.querySelector('.step-input-tasks').value || "Non renseigné";
                         const trainerTasks = step.querySelector('.step-input-trainer-tasks')?.value || "Non renseigné";
                         const evalFollowup = step.querySelector('.step-input-eval-followup')?.value || "Non renseigné";
@@ -24864,7 +24865,7 @@ if (trainingDesc.trim()) {
                             const __activityId = `${__submomentId}-activity-${activityIdx}`;
                             if (__selSet && !__submomentExplicit && !__selSet.has(__activityId)) return;
                             const activityTitle = activity.querySelector('.step-input-title')?.value || `Activité ${activityIdx + 1}`;
-                            const activityDescription = activity.querySelector('.step-input-objective')?.value || '';
+                            const activityDescription = activity.querySelector('.step-input-description')?.value || '';
                             const activityPresentation = activity.querySelector('.step-input-presentation')?.value || '';
 
                             md += `##### Activité ${moduleIdx + 1}.${momentIdx + 1}.${submomentIdx + 1}.${activityIdx + 1} : ${activityTitle}\n\n`;
@@ -24899,7 +24900,7 @@ if (trainingDesc.trim()) {
 
                                 __directCards.forEach((activity, activityIdx) => {
                                     const activityTitle = activity.querySelector('.step-input-title')?.value || `Activité ${activityIdx + 1}`;
-                                    const activityDescription = activity.querySelector('.step-input-objective')?.value || '';
+                                    const activityDescription = activity.querySelector('.step-input-description')?.value || '';
                                     const activityPresentation = activity.querySelector('.step-input-presentation')?.value || '';
 
                                     md += `##### Activité ${moduleIdx + 1}.${momentIdx + 1}.0.${activityIdx + 1} : ${activityTitle}\n\n`;
@@ -24917,7 +24918,7 @@ if (trainingDesc.trim()) {
                             } else {
                                 __directCards.forEach((activity, activityIdx) => {
                                     const activityTitle = activity.querySelector('.step-input-title')?.value || `Activité ${activityIdx + 1}`;
-                                    const activityDescription = activity.querySelector('.step-input-objective')?.value || '';
+                                    const activityDescription = activity.querySelector('.step-input-description')?.value || '';
                                     const activityPresentation = activity.querySelector('.step-input-presentation')?.value || '';
 
                                     md += `#### Activité ${moduleIdx + 1}.${momentIdx + 1}.${activityIdx + 1} : ${activityTitle}\n\n`;
@@ -25152,7 +25153,7 @@ function __isLongTextEditTarget(el) {
     const t = (el.tagName || '').toLowerCase();
     if (t !== 'textarea') return false;
     // Treat these as long-text fields (frequent keystrokes)
-    if (el.classList?.contains('step-input-objective')) return true;
+    if (el.classList?.contains('step-input-description')) return true;
     if (el.classList?.contains('step-input-tasks')) return true;
     if (el.classList?.contains('step-input-notes')) return true;
     if (el.classList?.contains('moment-description')) return true;
@@ -29566,7 +29567,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (m === 'skeleton') {
       // Clear pedagogical content; keep logistics (grouping, time, evaluation, duration)
-      try { const t = clone.querySelector('.step-input-objective'); if (t) t.value = ''; } catch(err){ __ldSilentErr(err); }
+      try { const t = clone.querySelector('.step-input-description'); if (t) t.value = ''; } catch(err){ __ldSilentErr(err); }
       try { const t = clone.querySelector('.step-input-tasks'); if (t) t.value = ''; } catch(err){ __ldSilentErr(err); }
       try { const t = clone.querySelector('.step-input-trainer-tasks'); if (t) t.value = ''; } catch(err){ __ldSilentErr(err); }
       try { const t = clone.querySelector('.step-input-notes'); if (t) t.value = ''; } catch(err){ __ldSilentErr(err); }
@@ -29739,7 +29740,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const durSrc = __ctxQ('.duration-input', stepEl);
     const durUnitSrc = __ctxQ('.duration-unit', stepEl);
     const evalSrc = __ctxQ('.evaluation-select', stepEl);
-    const objSrc = __ctxQ('.step-input-objective', stepEl);
+    const objSrc = __ctxQ('.step-input-description', stepEl);
     const presSrc = __ctxQ('.step-input-presentation', stepEl);
 
     const title = __ctxQ('#ctx-title');
@@ -29899,7 +29900,7 @@ if (nextBtn) nextBtn.disabled = !__ctxNeighbourStep(stepEl, 1);
           __ctxGetText(trainerEl ? trainerEl.value : ''),
           __ctxGetText(placeEl ? placeEl.value : ''),
           __ctxGetText(timeEl ? timeEl.value : ''),
-          __ctxGetText(__ctxQ('.step-input-objective', s)?.value),
+          __ctxGetText(__ctxQ('.step-input-description', s)?.value),
           __ctxGetText(__ctxQ('.step-input-tasks', s)?.value),
           __ctxGetText(__ctxQ('.step-input-trainer-tasks', s)?.value),
           __ctxGetText(__ctxQ('.step-input-presentation', s)?.value),
@@ -30121,7 +30122,7 @@ if (nextBtn) nextBtn.disabled = !__ctxNeighbourStep(stepEl, 1);
     mirrorInput(ctxDur, '.duration-input', 'input');
     mirrorInput(ctxDurUnit, '.duration-unit', 'change');
     mirrorInput(ctxEval, '.evaluation-select', 'change');
-    mirrorInput(ctxObj, '.step-input-objective', 'input');
+    mirrorInput(ctxObj, '.step-input-description', 'input');
     mirrorInput(ctxPres, '.step-input-presentation', 'input');
 
     // Click-to-select step
@@ -32357,7 +32358,7 @@ kbd {
 
   // Selectors for textarea fields to enhance
   const TEXTAREA_SELECTORS = [
-    '.step-input-objective',
+    '.step-input-description',
     '.step-input-presentation',
     '.step-input-tasks',
     '.step-input-trainer-tasks',
@@ -33222,7 +33223,7 @@ kbd {
 
         // Keep the fullscreen button always visible for key side-panel fields
         try {
-          if (textarea && textarea.classList && (textarea.classList.contains('step-input-objective') || textarea.classList.contains('step-input-presentation') || textarea.id === 'ctx-objective' || textarea.id === 'ctx-presentation')) {
+          if (textarea && textarea.classList && (textarea.classList.contains('step-input-description') || textarea.classList.contains('step-input-presentation') || textarea.id === 'ctx-objective' || textarea.id === 'ctx-presentation')) {
             wrapper.classList.add('ld-textarea-wrapper--always');
           }
         } catch(err){ }
