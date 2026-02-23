@@ -14222,6 +14222,7 @@ function __ldBuildKeyParamsCanonical(project) {
     setIfEmpty('toolsMaterialsNotes', p.outilsMaterielNotes || '');
 
     setIfEmpty('description', p.description || '');
+    setIfEmpty('nomExport', p.nomExport || '');
 
     // Outcomes list (canonical shape required by addOutcome: {text, level, sub})
     try {
@@ -15694,6 +15695,7 @@ const __chartsSuspendFn = window.__setChartsSuspended;
                 } catch(err){ __ldSilentErr(err); }
                 try { initAimsAndOutcomesTextListsFromTextareas(); } catch (e) { console.warn('aims/outcomes text lists init skipped', e); }
                 __setVal('param-description', __pick(__kp.description, __pr.description, ""));
+                __setVal('param-file-title', __pick(__kp.nomExport, __pr.nomExport, ""));
 
                 // Restore Outcomes (canonical OR FR)
                 __clearEl('outcomes-list');
