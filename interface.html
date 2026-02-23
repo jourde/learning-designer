@@ -15031,6 +15031,7 @@ function forceCanonicalImport(payload) {
                     title: asStr(a?.title ?? a?.titre ?? ''),
                     description: asStr(a?.description ?? ''),
                     notes: asStr(a?.notes ?? a?.moduleNotes ?? a?.remarques ?? a?.observations ?? ''),
+                    moduleStartTime: asStr(a?.moduleStartTime ?? ''),
                     targetTime: asNumStr(a?.targetTime ?? a?.dureeCible ?? ''),
                     targetUnit: asStr(a?.targetUnit ?? a?.uniteDureeCible ?? '60'),
                     moments,
@@ -15795,6 +15796,7 @@ const __chartsSuspendFn = window.__setChartsSuspended;
                 return {
                     title: a?.title ?? a?.titre ?? "",
                     description: a?.description ?? "",
+                    moduleStartTime: a?.moduleStartTime ?? '',
                     targetTime: a?.targetTime ?? a?.dureeCible ?? "",
                     targetUnit: a?.targetUnit ?? a?.uniteDureeCible ?? "60",
                     objectifsApprentissageModule: Array.isArray(a?.objectifsApprentissageModule) ? a.objectifsApprentissageModule : (Array.isArray(a?.learningAimsModule) ? a.learningAimsModule : []),
