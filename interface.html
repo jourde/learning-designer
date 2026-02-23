@@ -33,7 +33,13 @@ if (typeof __ldSilentErr === 'undefined') { var __ldSilentErr = function(e){ try
     const safe = (s)=>strip(s).replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'').replace(/_+/g,'_') || 'export';
 
     const getTitle = ()=>{
-      const el = document.querySelector('[data-training-title], #training-title, input[name="trainingTitle"], .training-title-input');
+      // First, check for the file title field (if provided, use it)
+      const fileTitle = document.querySelector('#param-file-title');
+      const fileTitleValue = fileTitle && ('value' in fileTitle) ? fileTitle.value.trim() : '';
+      if (fileTitleValue) return fileTitleValue;
+
+      // Fallback to training name
+      const el = document.querySelector('[data-training-title], #training-title, #param-name, input[name="trainingTitle"], .training-title-input');
       const v = el && ('value' in el) ? el.value : (el ? el.textContent : '');
       return v || document.title || 'export';
     };
@@ -3476,6 +3482,15 @@ document.addEventListener('DOMContentLoaded', function() {
       <option data-i18n="opt_license_cc0_10" value="CC0 1.0">CC0 1.0</option>
       <option data-i18n="opt_license_pdm_10" value="Public Domain Mark 1.0">Public Domain Mark 1.0</option>
       </select>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-3 mt-3">
+      <div class="w-full">
+        <label for="param-file-title" class="compact-label block" data-i18n="label_file_title">
+          Titre de fichier (sauvegarde et export)
+        </label>
+        <input class="w-full px-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none" data-i18n-placeholder="ph_file_title" id="param-file-title" placeholder="Laissez vide pour utiliser le nom de la formation..." type="text"/>
       </div>
     </div>
 
@@ -9498,6 +9513,8 @@ btn_export_dropdown: "Exporter...",
                 chart_group_modes: "Modes de groupes",
                 label_course_name: "Nom de la formation",
                 ph_course_name: "Entrez le nom de la formation...",
+                label_file_title: "Titre de fichier (sauvegarde et export)",
+                ph_file_title: "Laissez vide pour utiliser le nom de la formation...",
                 label_version_number: "Version",
                 ph_version_number: "Entrez un numéro de version (ex. 1.0)...",
 label_learning_time: "Temps d'Apprentissage (Cible)",
