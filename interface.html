@@ -14014,6 +14014,7 @@ function buildExportProjectData() {
                 })(),
                 parametres: {
                     nom: (document.getElementById('param-name')?.value),
+                    nomExport: (document.getElementById('param-file-title')?.value || document.getElementById('param-name')?.value),
                     auteurs: (document.getElementById('param-authors')?.value),
                     formateurs: (document.getElementById('param-trainers')?.value),
                     numeroVersion: __ldNormaliseVersionNumber(document.getElementById('param-version-number')?.value || ''),
@@ -16008,6 +16009,11 @@ function _downloadTextFile(filename, text, mime = 'text/plain;charset=utf-8') {
 // Export filename helpers (training title + local date/time)
 // ------------------------------
 function __ldGetTrainingTitleForFilename() {
+    // First check for file title field (if provided, use it)
+    const fileTitle = (document.getElementById('param-file-title')?.value || '').trim();
+    if (fileTitle) return fileTitle;
+
+    // Fallback to training name
     const v = (document.getElementById('param-name')?.value || '').trim();
     return v || 'conception_pedagogique';
 }
@@ -19570,7 +19576,7 @@ function buildExportModel() {
             moments: moments
         };
     });    const meta = {
-        courseName: asStr(project.parametres?.nom),
+        courseName: asStr(project.parametres?.nomExport || project.parametres?.nom),
         versionNumber: asStr(project.parametres?.numeroVersion ?? project.parametres?.versionNumber ?? ''),
         authors: asStr(project.parametres?.auteurs),
         trainers: asStr(project.parametres?.formateurs),
