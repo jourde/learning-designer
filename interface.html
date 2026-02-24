@@ -456,7 +456,6 @@ html.hide-beginner-features .activity-description,
 html.hide-beginner-features .moment-description-wrap,
 html.hide-beginner-features .submoment-notes-wrap,
 html.hide-beginner-features .step-tabs,
-html.hide-beginner-features .step-tabpanel,
 html.hide-beginner-features .step-group-details,
 html.hide-beginner-features .activity-target-wrap,
 html.hide-beginner-features .moment-target-wrap,
@@ -485,8 +484,12 @@ html.hide-beginner-features #visualisations-wrapper,
 html.hide-beginner-features #analysis-tabs-wrap,
 html.hide-beginner-features .step-status-dot,
 html.hide-beginner-features .ld-status-summary,
-html.hide-beginner-features #filter-container,
-html.hide-beginner-features button[data-action="toggle-step"] {
+html.hide-beginner-features #filter-container {
+  display: none !important;
+}
+
+/* Vue simplifiée : masquer les champs de détail avancés (Présentation, Tâches, etc.) */
+html.hide-beginner-features .step-advanced-field {
   display: none !important;
 }
 
@@ -494,10 +497,6 @@ html.hide-beginner-features button[data-action="toggle-step"] {
 /* Icon controls visible in ALL modes */
 .ld-simple-controls {
     display: flex !important; /* Always visible */
-}
-
-html.hide-beginner-features .step-body > div.flex.flex-col.lg\:flex-row {
-    display: none !important; /* Hide original dropdown layout */
 }
 
 .ld-icon-control {
@@ -5614,12 +5613,6 @@ Cochez les éléments que vous souhaitez inclure dans l'export. Les éléments p
   <!-- Onglets : Déroulé / Alignement / Ressources -->
   <div class="step-tabs" role="tablist" aria-label="Panneaux de l'activité">
             <button class="step-tab" type="button" role="tab" aria-selected="true" tabindex="0" data-step-tab="description" data-i18n="tab_description">Description</button>
-    <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="presentation" data-i18n="tab_presentation">Présentation</button>
-    <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="flow" data-i18n="tab_flow">Déroulé</button>
-    <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="evaluation" data-i18n="tab_evaluation">Évaluation / suivi</button>
-    <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="alignment" data-i18n="tab_alignment">Alignement</button>
-    <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="resources" data-i18n="tab_resources">Ressources</button>
-    <button class="step-tab" type="button" role="tab" aria-selected="false" tabindex="-1" data-step-tab="notes" data-i18n="label_notes">Notes</button>
   </div>
 
   <div class="step-tabpanels">
@@ -5632,216 +5625,43 @@ Cochez les éléments que vous souhaitez inclure dans l'export. Les éléments p
         </div>
         <textarea class="step-input-description w-full px-2 py-1.5 text-[12px] border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 bg-slate-50 text-slate-700" data-i18n-placeholder="ph_step_description" placeholder="Décrivez l'activité..." rows="2"></textarea>
       </div>
-    </div>
-
-    <!-- Présentation -->
-    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="presentation" hidden>
-      <div class="step-right-section border border-slate-200 rounded-lg bg-white p-2">
+      <div class="step-right-section step-advanced-field border border-slate-200 rounded-lg bg-white p-2">
         <div class="compact-label flex items-center gap-1 mb-1">
           <span class="material-icons-round text-[10px] text-slate-400">slideshow</span>
           <span data-i18n="label_step_presentation">Présentation (diaporama)</span>
         </div>
-        <textarea class="step-input-presentation w-full px-2 py-1.5 text-[12px] border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 bg-slate-50 text-slate-700" data-i18n-placeholder="ph_step_presentation" placeholder="Éléments à afficher dans le diaporama..." rows="6"></textarea>
+        <textarea class="step-input-presentation w-full px-2 py-1.5 text-[12px] border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 bg-slate-50 text-slate-700" data-i18n-placeholder="ph_step_presentation" placeholder="Éléments à afficher dans le diaporama..." rows="2"></textarea>
+      </div>
+      <div class="step-right-section step-advanced-field border border-slate-200 rounded-lg bg-white p-2">
+        <div class="compact-label flex items-center gap-1 mb-1">
+          <span class="material-icons-round text-[10px] text-slate-400">assignment</span>
+          <span data-i18n="label_tasks">Ce que les apprenants doivent faire</span>
+        </div>
+        <textarea class="step-input-tasks w-full px-2 py-1.5 text-[12px] border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 bg-slate-50 text-slate-700" data-i18n-placeholder="ph_tasks" placeholder="Décrivez les étapes, instructions et tâches..." rows="2"></textarea>
+      </div>
+      <div class="step-right-section step-advanced-field border border-slate-200 rounded-lg bg-white p-2">
+        <div class="compact-label flex items-center gap-1 mb-1">
+          <span class="material-icons-round text-[10px] text-slate-400">person</span>
+          <span data-i18n="label_trainer_tasks">Ce que le ou les formateurs doivent faire</span>
+        </div>
+        <textarea class="step-input-trainer-tasks w-full px-2 py-1.5 text-[12px] border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 bg-slate-50 text-slate-700" data-i18n-placeholder="ph_trainer_tasks" placeholder="Décrivez les actions attendues du formateur..." rows="2"></textarea>
+      </div>
+      <div class="step-right-section step-advanced-field border border-slate-200 rounded-lg bg-white p-2">
+        <div class="compact-label flex items-center gap-1 mb-1">
+          <span class="material-icons-round text-[10px] text-slate-400">fact_check</span>
+          <span data-i18n="label_eval_followup">Évaluation et suivi</span>
+        </div>
+        <textarea class="step-input-eval-followup w-full px-2 py-1.5 text-[12px] border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 bg-slate-50 text-slate-700" data-i18n-placeholder="ph_eval_followup" placeholder="Critères d'évaluation, grilles, modalités de suivi..." rows="2"></textarea>
+      </div>
+      <div class="step-right-section step-advanced-field border border-slate-200 rounded-lg bg-white p-2">
+        <div class="compact-label flex items-center gap-1 mb-1">
+          <span class="material-icons-round text-[10px] text-slate-400">notes</span>
+          <span data-i18n="label_notes">Notes</span>
+        </div>
+        <textarea class="step-input-notes w-full px-2 py-1.5 text-[12px] border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 bg-slate-50 text-slate-700" data-i18n-placeholder="ph_notes" placeholder="Notes formateur, ressources ou liens..." rows="2"></textarea>
       </div>
     </div>
 
-    <!-- Déroulé -->
-    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="flow" hidden>
-<details class="step-right-section border border-slate-200 rounded-lg bg-white" open>
-        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
-          <span class="material-icons-round text-[10px] text-slate-400">assignment</span>
-          <span data-i18n="label_tasks">Ce que les apprenants doivent faire</span>
-          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
-            <span>Afficher</span>
-            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
-          </span>
-        </summary>
-        <div class="px-2 pb-2 pt-1">
-          <textarea class="step-input-tasks w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y leading-relaxed" data-i18n-placeholder="ph_tasks" placeholder="Décrivez les étapes, instructions et tâches..." rows="2"></textarea>
-        </div>
-      </details>
-
-      <details class="step-right-section border border-slate-200 rounded-lg bg-white" open>
-        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
-          <span class="material-icons-round text-[10px] text-slate-400">support_agent</span>
-          <span data-i18n="label_trainer_tasks">Ce que le ou les formateurs doivent faire</span>
-          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
-            <span>Afficher</span>
-            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
-          </span>
-        </summary>
-        <div class="px-2 pb-2 pt-1">
-          <textarea class="step-input-trainer-tasks w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y leading-relaxed bg-slate-50" data-i18n-placeholder="ph_trainer_tasks" placeholder="Décrivez les actions attendues du formateur..." rows="2"></textarea>
-        </div>
-      </details>
-    </div>
-
-    <!-- Évaluation / suivi -->
-    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="evaluation" hidden>
-      <details class="step-right-section border border-slate-200 rounded-lg bg-white" open>
-        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
-          <span class="material-icons-round text-[10px] text-slate-400">assignment_turned_in</span>
-          <span data-i18n="label_eval_followup">Évaluation et suivi</span>
-          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
-            <span>Afficher</span>
-            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
-          </span>
-        </summary>
-        <div class="px-2 pb-2 pt-1">
-          <textarea class="step-input-eval-followup w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y leading-relaxed bg-white" data-i18n-placeholder="ph_eval_followup" placeholder="Critères d'évaluation, grilles, modalités de suivi..." rows="4"></textarea>
-        </div>
-      </details>
-    </div>
-
-    <!-- Alignement -->
-    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="alignment" hidden>
-      <details class="step-right-section border border-slate-200 rounded-lg bg-white">
-        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
-          <span class="material-icons-round text-[10px] text-slate-400">school</span>
-          <span>Compétences ciblées</span>
-          <span class="step-competences-count ml-1 px-1.5 py-0.5 text-[10px] font-semibold bg-indigo-50 text-indigo-600 rounded hidden"></span>
-          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
-            <span>Afficher</span>
-            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
-          </span>
-        </summary>
-        <div class="px-2 pb-2 pt-1">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <div>
-              <div class="text-[10px] text-slate-500 font-bold uppercase mb-1">Compétences du sujet</div>
-              <div class="step-competences-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[140px] overflow-auto text-[11px] space-y-1"></div>
-              <select class="step-competences-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>
-            </div>
-            <div>
-              <div class="text-[10px] text-slate-500 font-bold uppercase mb-1">Compétences transversales</div>
-              <div class="step-competences-transversales-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[140px] overflow-auto text-[11px] space-y-1"></div>
-              <select class="step-competences-transversales-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>
-            </div>
-          </div>
-          <p class="text-[11px] text-slate-400 mt-1">Sélection : cochez les compétences concernées</p>
-          <div class="mt-2 flex items-center justify-between gap-2 no-print">
-            <div class="text-[10px] text-slate-400 italic">Si une compétence/objectif manque, ajoutez-la manuellement.</div>
-            <button class="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-100 transition-colors flex items-center gap-1" data-action="open-aims-from-step" title="Ajouter une compétence dans les paramètres" type="button">
-              <span class="material-icons-round text-[14px]">add</span>
-              Ajouter une compétence
-            </button>
-          </div>
-        </div>
-      </details>
-
-      <details class="step-right-section border border-slate-200 rounded-lg bg-white">
-        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
-          <span class="material-icons-round text-[10px] text-slate-400">flag</span>
-          <span>Objectifs ciblés</span>
-          <span class="step-aims-count ml-1 px-1.5 py-0.5 text-[10px] font-semibold bg-indigo-50 text-indigo-600 rounded hidden"></span>
-          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
-            <span>Afficher</span>
-            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
-          </span>
-        </summary>
-        <div class="px-2 pb-2 pt-1">
-          <div class="step-aims-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[140px] overflow-auto text-[11px] space-y-1"></div>
-          <select class="step-aims-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>
-          <p class="text-[11px] text-slate-400 mt-1">Sélection : cochez les objectifs concernés</p>
-          <div class="mt-2 flex items-center justify-between gap-2 no-print">
-            <div class="text-[10px] text-slate-400 italic">Si un objectif manque, ajoutez-le manuellement.</div>
-            <button class="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-100 transition-colors flex items-center gap-1" data-action="open-aims-from-step" title="Ajouter un objectif dans les paramètres" type="button">
-              <span class="material-icons-round text-[14px]">add</span>
-              Ajouter un objectif
-            </button>
-          </div>
-        </div>
-      </details>
-
-      <details class="step-right-section border border-slate-200 rounded-lg bg-white">
-        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
-          <span class="material-icons-round text-[10px] text-slate-400">assignment_turned_in</span>
-          <span>Résultats d'apprentissage ciblés</span>
-          <span class="step-outcomes-count ml-1 px-1.5 py-0.5 text-[10px] font-semibold bg-indigo-50 text-indigo-600 rounded hidden"></span>
-          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
-            <span>Afficher</span>
-            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
-          </span>
-        </summary>
-        <div class="px-2 pb-2 pt-1">
-          <div class="step-outcomes-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[140px] overflow-auto text-[11px] space-y-1"></div>
-          <select class="step-outcomes-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>
-          <p class="text-[11px] text-slate-400 mt-1">Sélection : cochez les résultats concernés</p>
-          <div class="mt-2 flex items-center justify-between gap-2 no-print">
-            <div class="text-[10px] text-slate-400 italic">Si un résultat manque, ajoutez-le manuellement.</div>
-            <button class="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-100 transition-colors flex items-center gap-1" data-action="open-outcomes-from-step" title="Ajouter un résultat dans les paramètres" type="button">
-              <span class="material-icons-round text-[14px]">add</span>
-              Ajouter un résultat
-            </button>
-          </div>
-        </div>
-      </details>
-    </div>
-
-    <!-- Ressources -->
-    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="resources" hidden>
-      <details class="step-right-section border border-slate-200 rounded-lg bg-white" data-section="tools-materials">
-        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5 bg-slate-50 rounded-lg">
-          <span class="material-icons-round text-[10px] text-slate-400">construction</span>
-          <span>Outils et matériel (activité)</span>
-          <span class="step-tools-materials-count ml-1 px-1.5 py-0.5 text-[10px] font-semibold bg-indigo-50 text-indigo-600 rounded hidden"></span>
-          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
-            <span>Afficher</span>
-            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
-          </span>
-        </summary>
-        <div class="px-2 pb-2 pt-2">
-          <div class="flex items-center justify-between gap-2 mb-1 text-[11px] text-slate-500">
-            <label class="flex items-center gap-2 cursor-pointer select-none">
-              <input type="checkbox" class="tm-show-selected-toggle accent-indigo-600" />
-              <span>Afficher uniquement les sélectionnés</span>
-            </label>
-            <span class="tm-selected-count text-[10px] text-slate-400"></span>
-          </div>
-          <div class="step-tools-materials-checkboxes w-full border border-slate-200 rounded-lg bg-slate-50 p-2 max-h-[160px] overflow-auto text-[11px] space-y-1"></div>
-          <select class="step-tools-materials-select w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none min-h-[74px] hidden" multiple=""></select>
-          <p class="text-[11px] text-slate-400 mt-1">Sélection : cochez les outils et matériels requis pour cette activité (ajoutez une remarque si nécessaire).</p>
-        </div>
-      </details>
-    
-
-      <details class="step-right-section border border-slate-200 rounded-lg bg-white" data-section="links-refs">
-        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5 bg-slate-50 rounded-lg">
-          <span class="material-icons-round text-[10px] text-slate-400">link</span>
-          <span data-i18n="label_step_links_refs">Liens et références</span>
-          <span class="step-links-refs-count ml-1 px-1.5 py-0.5 text-[10px] font-semibold bg-indigo-50 text-indigo-600 rounded hidden"></span>
-          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
-            <span>Afficher</span>
-            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
-          </span>
-        </summary>
-        <div class="px-2 pb-2 pt-2">
-          <textarea class="step-input-linksrefs w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-y bg-slate-50 text-slate-700"
-                    rows="3"
-                    data-i18n-placeholder="ph_step_links_refs"
-                    placeholder="Liens, références, bibliographie, DOI, normes, etc."></textarea>
-          <p class="text-[11px] text-slate-400 mt-1" data-i18n="hint_step_links_refs">Un lien par ligne, ou une référence courte (auteur, année, page...).</p>
-        </div>
-      </details>
-
-</div>
-
-    <!-- Notes -->
-    <div class="step-tabpanel mt-2 space-y-2" data-step-panel="notes" hidden>
-      <details class="step-right-section border border-slate-200 rounded-lg bg-white" open>
-        <summary class="compact-label flex items-center gap-1 cursor-pointer select-none px-2 py-1.5">
-          <span class="material-icons-round text-[10px] text-slate-400">comment</span>
-          <span data-i18n="label_notes">Notes</span>
-          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 font-normal">
-            <span>Afficher</span>
-            <span class="material-icons-round text-[14px] step-right-chevron">expand_more</span>
-          </span>
-        </summary>
-        <div class="px-2 pb-2 pt-1">
-          <textarea class="step-input-notes w-full px-2 py-1.5 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none resize-y bg-slate-50 text-slate-600" data-i18n-placeholder="ph_notes" placeholder="Notes formateur, ressources ou liens..." rows="2"></textarea>
-        </div>
-      </details>
-    </div>
   </div>
 </div>
 
@@ -16497,10 +16317,10 @@ const stepsContainer = momentEl.querySelector('.activity-steps-container');
             try { applyStepStatus(stepEl, (data.status ?? data.etat ?? data.state ?? 'in_progress')); } catch(err){ __ldSilentErr(err); }
             try { if (data.ignored || data.ignore || data.isIgnored || data.ldIgnored) __ldSetIgnored(stepEl, true, { silent: true }); } catch(err){ __ldSilentErr(err); }
 stepEl.querySelector('.step-input-description').value = data.description ?? data.objective ?? "";
-            stepEl.querySelector('.step-input-tasks').value = data.tasks || "";
-            stepEl.querySelector('.step-input-trainer-tasks').value = data.trainerTasks || data.aFaireFormateur || data.trainer_actions || data.trainerActions || "";
-            stepEl.querySelector('.step-input-presentation').value = data.presentation || "";
-            stepEl.querySelector('.step-input-notes').value = data.notes || "";
+            const __sit = stepEl.querySelector('.step-input-tasks'); if (__sit) __sit.value = data.tasks || "";
+            const __sitt = stepEl.querySelector('.step-input-trainer-tasks'); if (__sitt) __sitt.value = data.trainerTasks || data.aFaireFormateur || data.trainer_actions || data.trainerActions || "";
+            const __sip = stepEl.querySelector('.step-input-presentation'); if (__sip) __sip.value = data.presentation || "";
+            const __sin = stepEl.querySelector('.step-input-notes'); if (__sin) __sin.value = data.notes || "";
             try {
               const lrEl = stepEl.querySelector('.step-input-linksrefs');
               if (lrEl) lrEl.value = (data.liensReferences || data.linksReferences || data.links_refs || data.linksRefs || data.links || data.references || data.refs || data.referencess || "");
