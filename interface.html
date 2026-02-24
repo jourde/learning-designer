@@ -493,6 +493,11 @@ html.hide-beginner-features .step-advanced-field {
   display: none !important;
 }
 
+/* Vue simplifiée : masquer la colonne gauche (dropdowns redondants avec les icônes de contrôle) */
+html.hide-beginner-features .step-left-col {
+  display: none !important;
+}
+
 /* Simple Mode: Icon-based controls */
 /* Icon controls visible in ALL modes */
 .ld-simple-controls {
@@ -5494,7 +5499,7 @@ Cochez les éléments que vous souhaitez inclure dans l'export. Les éléments p
 </div>
 <div class="step-body panel-content collapsed p-3 pt-2">
 <div class="flex flex-col lg:flex-row gap-3 mt-1">
-<div class="lg:w-[240px] shrink-0 space-y-2">
+<div class="step-left-col lg:w-[240px] shrink-0 space-y-2">
 <div>
 <label class="compact-label compact-label-lg flex items-center gap-1">
 <span class="material-icons-round text-[10px] text-slate-400">
@@ -10765,7 +10770,7 @@ function toggleBeginnerMode() {
 document.addEventListener('DOMContentLoaded', () => {
     try {
         const saved = localStorage.getItem('ld_beginner_mode');
-        const shouldHide = (saved === '1');
+        const shouldHide = (saved !== '0'); // vue simplifiée par défaut
         setBeginnerModeHidden(shouldHide);
 
         // Always initialize icons regardless of mode
