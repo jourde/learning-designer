@@ -14014,7 +14014,7 @@ function buildExportProjectData() {
                 })(),
                 parametres: {
                     nom: (document.getElementById('param-name')?.value),
-                    nomExport: (document.getElementById('param-file-title')?.value || document.getElementById('param-name')?.value),
+                    nomExport: (document.getElementById('param-file-title')?.value || ''),
                     auteurs: (document.getElementById('param-authors')?.value),
                     formateurs: (document.getElementById('param-trainers')?.value),
                     numeroVersion: __ldNormaliseVersionNumber(document.getElementById('param-version-number')?.value || ''),
@@ -14951,6 +14951,7 @@ function forceCanonicalImport(payload) {
         aims: pr.objectifs ?? "",
         outcomesText: pr.resultatsTexte ?? "",
         description: pr.description ?? "",
+        nomExport: pr.nomExport ?? "",
         outcomes: outFromFR,
         competences: (Array.isArray(pr.competences) ? pr.competences : [])
     };
