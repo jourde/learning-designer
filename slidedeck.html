@@ -4277,42 +4277,36 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             padding: 60px var(--pres-h-margin, 200px);
         }
 
-        /* Lateral-margin floating pill — presentation mode only, top-centre */
-        .pres-margin-pill {
-            position: fixed;
-            top: 18px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: none;
+        /* Margin slider section (inside slide-controls, same pattern as zoom/timer) */
+        .margin-controls {
+            display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 6px 16px;
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.22);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            opacity: 0.5;
-            transition: opacity 0.3s ease;
-            z-index: 201;
-            color: rgba(255,255,255,0.8);
-            font-size: 13px;
+            justify-content: center;
+            gap: 10px;
+            padding: 8px 16px;
+        }
+
+        .margin-controls .margin-label {
+            font-size: 12px;
             font-weight: 500;
+            color: var(--color-text-secondary);
+            white-space: nowrap;
             user-select: none;
         }
 
-        body.presentation-mode .pres-margin-pill {
-            display: flex;
-        }
-
-        .pres-margin-pill:hover {
-            opacity: 1;
-        }
-
         #presMarginSlider {
-            width: 110px;
+            width: 140px;
             cursor: pointer;
-            accent-color: #fff;
+            accent-color: var(--color-primary);
+        }
+
+        .margin-controls .margin-value {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-text);
+            min-width: 38px;
+            text-align: center;
+            user-select: none;
         }
 
 
@@ -4698,6 +4692,19 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
                         </div>
                     </div>
                 </div>
+                <!-- Margin Controls - collapses above nav bar -->
+                <div class="collapsible-section" id="marginSection">
+                    <div class="section-content collapsed" id="marginContent">
+                        <div class="margin-controls" id="marginControls">
+                            <span class="margin-label">Margins</span>
+                            <input type="range" id="presMarginSlider"
+                                   min="40" max="420" step="20" value="200"
+                                   oninput="app.setPresentationMargin(this.value)"
+                                   aria-label="Slide lateral margin">
+                            <span class="margin-value" id="marginValue">200px</span>
+                        </div>
+                    </div>
+                </div>
                 <!-- Navigation Bar - Always Visible -->
                 <div class="nav-bar">
                     <div class="nav-bar-left">
@@ -4722,7 +4729,12 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
                                     aria-label="Toggle timer">
                                 <span class="material-symbols-outlined" aria-hidden="true">timer</span>
                             </button>
-
+                            <button class="section-toggle-btn" id="marginToggleBtn"
+                                    onclick="app.toggleSection('margin')"
+                                    title="Toggle slide margins"
+                                    aria-label="Toggle slide margins">
+                                <span class="material-symbols-outlined" aria-hidden="true">width</span>
+                            </button>
                         </div>
                     </div>
                     <div class="nav-bar-right">
@@ -5110,7 +5122,8 @@ showIgnored: false,
             // Sections collapse state
             sectionsCollapsed: {
                 zoom: true,      // collapsed by default
-                timer: true      // collapsed by default
+                timer: true,     // collapsed by default
+                margin: true     // collapsed by default
             },
 
             // Export flow state
@@ -7150,8 +7163,8 @@ loadIgnoredState() {
 
             loadSectionState() {
                 // Always start collapsed — sections are never restored from localStorage
-                this.sectionsCollapsed = { zoom: true, timer: true };
-                ['zoom', 'timer'].forEach(section => {
+                this.sectionsCollapsed = { zoom: true, timer: true, margin: true };
+                ['zoom', 'timer', 'margin'].forEach(section => {
                     this.updateSectionDisplay(section);
                 });
             },
@@ -7175,6 +7188,8 @@ loadIgnoredState() {
                 if (sc) sc.style.removeProperty('padding');
                 const slider = document.getElementById('presMarginSlider');
                 if (slider) slider.value = value;
+                const label = document.getElementById('marginValue');
+                if (label) label.textContent = value + 'px';
                 try { localStorage.setItem('presentationMargin', value); } catch (e) {}
             },
 
@@ -7184,6 +7199,8 @@ loadIgnoredState() {
                 document.documentElement.style.setProperty('--pres-h-margin', value + 'px');
                 const slider = document.getElementById('presMarginSlider');
                 if (slider) slider.value = value;
+                const label = document.getElementById('marginValue');
+                if (label) label.textContent = value + 'px';
             },
 
             _cachedActivitiesInOrder: null,
@@ -10236,15 +10253,6 @@ this.activityTimer = {
         </svg>
     </button>
 
-
-    <!-- Presentation margin pill (top-centre) -->
-    <div class="pres-margin-pill" id="presMarginPill" aria-label="Adjust slide lateral margins">
-        <span aria-hidden="true">↔</span>
-        <input type="range" id="presMarginSlider"
-               min="40" max="420" step="20" value="200"
-               oninput="app.setPresentationMargin(this.value)"
-               aria-label="Slide lateral margin">
-    </div>
 
     <!-- ENHANCEMENT 8: Laser Pointer Effect -->
     <div class="laser-pointer-effect" id="laserPointer"></div>
