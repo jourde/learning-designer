@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Training Slide Deck Platform</title>
+    <title>Slide Deck Platform</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -390,6 +390,12 @@
         }
 
         /* Highlight specific action buttons */
+        /* Active / on state for toggle-type footer buttons */
+        .footer-icon-btn.active {
+            color: var(--color-primary);
+            background: var(--color-primary-light);
+        }
+
         .footer-icon-btn.export-action {
             color: var(--color-primary);
         }
@@ -2571,7 +2577,7 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
         }
 
         .welcome-options-container {
-            max-width: 800px;
+            max-width: 960px;
             margin: 40px auto 0;
             display: grid;
             grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
@@ -2658,8 +2664,9 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
 
         .welcome-github-input-group {
             display: flex;
-            gap: 12px;
-            align-items: center;
+            flex-direction: column;
+            gap: 10px;
+            align-items: stretch;
         }
 
         .welcome-github-input {
@@ -2690,7 +2697,9 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             white-space: nowrap;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
+            width: 100%;
         }
 
         /* Dark mode adjustments */
@@ -4256,6 +4265,15 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             display: none; /* remove from flow so slide can truly centre vertically */
         }
 
+        /* Train map hidden by user */
+        body.train-line-hidden .train-line-container {
+            display: none !important;
+        }
+
+        body.train-line-hidden .main-content {
+            padding-top: 0;
+        }
+
         body.presentation-mode .train-line-container {
             opacity: 0;
             pointer-events: none;
@@ -4492,11 +4510,8 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
                     <button class="footer-icon-btn" onclick="app.openAboutModal()" data-tooltip="About" aria-label="About this application">
                         <span class="material-symbols-outlined" aria-hidden="true">info</span>
                     </button>
-                    <button class="footer-icon-btn import-action" onclick="app.openImportDialog()" data-tooltip="Import File" aria-label="Import data from JSON file">
-                        <span class="material-symbols-outlined" aria-hidden="true">upload_file</span>
-                    </button>
-                    <button class="footer-icon-btn github-action" onclick="app.openGithubImportModal()" data-tooltip="GitHub" aria-label="Load JSON from GitHub">
-                        <span class="material-symbols-outlined" aria-hidden="true">code</span>
+                    <button class="footer-icon-btn" id="trainLineToggleBtn" onclick="app.toggleTrainLine()" data-tooltip="Train map" aria-label="Toggle train map">
+                        <span class="material-symbols-outlined" aria-hidden="true">route</span>
                     </button>
                     <button class="footer-icon-btn export-action" onclick="app.openExportModal()" data-tooltip="Export" aria-label="Export data to JSON file">
                         <span class="material-symbols-outlined" aria-hidden="true">download</span>
@@ -4550,7 +4565,7 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
             <!-- Slide Container -->
             <div class="slide-container" id="slideContainer" role="region" aria-label="Slide content" aria-live="polite">
                 <div class="welcome-screen">
-                    <h1 class="welcome-title">Training Slide Deck Platform</h1>
+                    <h1 class="welcome-title">Slide Deck Platform</h1>
                     <p class="welcome-subtitle">Select your import method</p>
                     <p class="welcome-description">
                         Load your training content from a local file or directly from a GitHub repository.
@@ -4585,7 +4600,7 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
                                 <span class="welcome-option-number">Option 2</span>
                                 <h3 class="welcome-option-title">Load from GitHub</h3>
                             </div>
-                            <p class="welcome-option-description">Paste a GitHub URL or repository path</p>
+                            <p class="welcome-option-description">Paste the URL of a JSON file hosted on GitHub</p>
                             <div class="welcome-github-input-group">
                                 <input
                                     type="text"
@@ -5700,6 +5715,7 @@ showIgnored: false,
                 this.loadSectionState();
                 this.loadDetailsPanelState();
                 this.initPresentationMargin();
+                this.loadTrainLineVisibility();
                 this.startTimerTicks();
                 this.initSearchHandlers(); // Initialize enhanced search
 
@@ -7176,6 +7192,25 @@ loadIgnoredState() {
                 if (zoomControls) zoomControls.style.removeProperty('display');
                 const timerTopRight = document.getElementById('timerTopRight');
                 if (timerTopRight) timerTopRight.style.removeProperty('display');
+            },
+
+            // ── Train map visibility ─────────────────────────────────────────
+            toggleTrainLine() {
+                const hidden = document.body.classList.toggle('train-line-hidden');
+                const btn = document.getElementById('trainLineToggleBtn');
+                if (btn) btn.classList.toggle('active', !hidden);
+                try { localStorage.setItem('trainLineVisible', !hidden); } catch (e) {}
+            },
+
+            loadTrainLineVisibility() {
+                const saved = localStorage.getItem('trainLineVisible');
+                // Default: hidden (no saved value → treat as false)
+                const visible = saved === 'true';
+                if (!visible) {
+                    document.body.classList.add('train-line-hidden');
+                    const btn = document.getElementById('trainLineToggleBtn');
+                    if (btn) btn.classList.remove('active');
+                }
             },
 
             // ── Presentation lateral margin ───────────────────────────────────
