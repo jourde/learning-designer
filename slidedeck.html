@@ -4569,7 +4569,7 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
                     <p class="welcome-subtitle">Select your import method</p>
                     <p class="welcome-description">
                         Load your training content from a local file or directly from a GitHub repository.
-                        Both methods support JSON format with modules, activities, and interactive slides.
+                        Supports JSON format or Markdown files with slides separated by <code>---</code>.
                     </p>
 
                     <!-- Option 1: Local File -->
@@ -4579,8 +4579,8 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
                                 <span class="welcome-option-number">Option 1</span>
                                 <h3 class="welcome-option-title">Import from File</h3>
                             </div>
-                            <p class="welcome-option-description">Upload a JSON file from your computer</p>
-                            <button class="btn btn-success welcome-cta" onclick="app.openImportDialog()" aria-label="Import JSON file to begin training" style="background: #10B981; border-color: #10B981; width: 100%;">
+                            <p class="welcome-option-description">Upload a JSON or Markdown file from your computer</p>
+                            <button class="btn btn-success welcome-cta" onclick="app.openImportDialog()" aria-label="Import JSON or Markdown file to begin training" style="background: #10B981; border-color: #10B981; width: 100%;">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; margin-right: 8px;" aria-hidden="true">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                     <polyline points="17 8 12 3 7 8"></polyline>
@@ -4600,16 +4600,16 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
                                 <span class="welcome-option-number">Option 2</span>
                                 <h3 class="welcome-option-title">Load from GitHub</h3>
                             </div>
-                            <p class="welcome-option-description">Paste the URL of a JSON file hosted on GitHub</p>
+                            <p class="welcome-option-description">Paste the URL of a JSON or Markdown file hosted on GitHub</p>
                             <div class="welcome-github-input-group">
                                 <input
                                     type="text"
                                     id="welcomeGithubUrlInput"
                                     class="welcome-github-input"
-                                    placeholder="user/repo/branch/path/file.json"
-                                    aria-label="GitHub URL for JSON import"
+                                    placeholder="user/repo/branch/path/file.json or file.md"
+                                    aria-label="GitHub URL for JSON or Markdown file import"
                                 >
-                                <button class="btn btn-primary welcome-github-btn" onclick="app.loadFromWelcomeGithub()" aria-label="Load JSON from GitHub">
+                                <button class="btn btn-primary welcome-github-btn" onclick="app.loadFromWelcomeGithub()" aria-label="Load JSON or Markdown from GitHub">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;" aria-hidden="true">
                                         <circle cx="12" cy="12" r="10"></circle>
                                         <path d="M12 6v6l4 2"></path>
@@ -4845,8 +4845,8 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
         </main>
     </div>
 
-    <!-- Hidden File Input for JSON Import -->
-    <input type="file" id="importFileInput" accept=".json,application/json" style="display: none;" onchange="app.handleFileSelect(event)">
+    <!-- Hidden File Input for JSON/Markdown Import -->
+    <input type="file" id="importFileInput" accept=".json,application/json,.md,text/markdown" style="display: none;" onchange="app.handleFileSelect(event)">
 
     <!-- About Modal -->
     <div class="about-modal" id="aboutModal" role="dialog" aria-modal="true" aria-labelledby="aboutModalTitle" onclick="if(event.target === this) app.closeAboutModal()">
@@ -5849,7 +5849,7 @@ loadIgnoredState() {
                 navTree.innerHTML = '';
 
                 if (!this.courseData || !this.courseData.modules) {
-                    navTree.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--color-text-muted);">No content loaded. Please import a JSON file.</div>';
+                    navTree.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--color-text-muted);">No content loaded. Please import a JSON or Markdown file.</div>';
                     return;
                 }
 
@@ -6385,7 +6385,7 @@ loadIgnoredState() {
 
             startTraining() {
                 if (!this.courseData || !this.courseData.modules || this.courseData.modules.length === 0) {
-                    alert('⚠️ No content loaded.\n\nPlease import a JSON file to begin.');
+                    alert('⚠️ No content loaded.\n\nPlease import a JSON or Markdown file to begin.');
                     return;
                 }
 
@@ -7978,7 +7978,10 @@ loadIgnoredState() {
 
                     console.log('Loading from GitHub (welcome):', rawUrl);
 
-                    // Fetch the JSON
+                    // Detect file type from URL
+                    const isMarkdown = rawUrl.toLowerCase().endsWith('.md');
+
+                    // Fetch the file
                     fetch(rawUrl)
                         .then(response => {
                             if (!response.ok) {
@@ -7988,14 +7991,20 @@ loadIgnoredState() {
                         })
                         .then(text => {
                             try {
-                                const jsonData = JSON.parse(text);
-                                console.log('GitHub JSON loaded successfully from welcome');
-                                this.importJSON(jsonData);
+                                if (isMarkdown) {
+                                    console.log('GitHub Markdown loaded successfully from welcome');
+                                    this.importMarkdown(text);
+                                } else {
+                                    const jsonData = JSON.parse(text);
+                                    console.log('GitHub JSON loaded successfully from welcome');
+                                    this.importJSON(jsonData);
+                                }
                                 // Clear input on success
                                 input.value = '';
                             } catch (error) {
-                                console.error('JSON parse error:', error);
-                                alert('Invalid JSON: ' + error.message);
+                                console.error('Parse error:', error);
+                                const fileType = isMarkdown ? 'Markdown' : 'JSON';
+                                alert(`Invalid ${fileType}: ` + error.message);
                             }
                         })
                         .catch(error => {
@@ -8048,14 +8057,22 @@ loadIgnoredState() {
 
                     reader.onload = (e) => {
                         try {
-                            console.log('File loaded, parsing JSON...');
-                            const jsonData = JSON.parse(e.target.result);
-                            console.log('JSON parsed successfully');
-                            this.importJSON(jsonData);
+                            const fileContent = e.target.result;
+
+                            // Detect file type by extension
+                            if (file.name.endsWith('.md')) {
+                                console.log('File loaded, parsing Markdown...');
+                                this.importMarkdown(fileContent);
+                            } else {
+                                console.log('File loaded, parsing JSON...');
+                                const jsonData = JSON.parse(fileContent);
+                                console.log('JSON parsed successfully');
+                                this.importJSON(jsonData);
+                            }
                             event.target.value = '';
                         } catch (error) {
-                            console.error('JSON parse error:', error);
-                            this.setStatus('Import error: invalid JSON. ' + error.message, 'error');
+                            console.error('Parse error:', error);
+                            this.setStatus('Import error: ' + error.message, 'error');
                             event.target.value = '';
                         }
                     };
@@ -8320,6 +8337,100 @@ loadIgnoredState() {
                     console.log('Import completed successfully');
                 } catch (error) {
                     console.error('Error in importJSON:', error);
+                    this.setStatus('Import error: ' + error.message, 'error');
+                }
+            },
+
+            importMarkdown(content) {
+                try {
+                    console.log('importMarkdown called');
+
+                    if (!content || content.trim().length === 0) {
+                        this.setStatus('Import error: file is empty.', 'error');
+                        return;
+                    }
+
+                    // Split by --- (handles various whitespace scenarios)
+                    // Regex matches --- on its own line with optional whitespace
+                    const mdSlideSeparator = /^---$/m;
+                    const rawSlides = content.split(mdSlideSeparator);
+
+                    // Filter out empty sections
+                    const slideContents = rawSlides
+                        .map(s => (s || '').trim())
+                        .filter(s => s.length > 0);
+
+                    if (slideContents.length === 0) {
+                        this.setStatus('Import error: no slides found in markdown file.', 'error');
+                        return;
+                    }
+
+                    // Convert each slide from markdown to HTML
+                    const slides = slideContents.map((slideContent, idx) => ({
+                        number: idx + 1,
+                        content: this.simpleMarkdownToHtml(slideContent)
+                    }));
+
+                    // Extract title from first line of first slide
+                    const firstSlideLines = slideContents[0].split('\n');
+                    let title = 'Untitled Activity';
+
+                    if (firstSlideLines[0].startsWith('#')) {
+                        // Remove markdown heading syntax
+                        title = firstSlideLines[0].replace(/^#+\s*/, '').trim();
+                    } else if (firstSlideLines[0].trim().length > 0) {
+                        // Use first line as title if it's not a heading
+                        title = firstSlideLines[0].trim();
+                    }
+
+                    // Create course data structure
+                    const generatedData = {
+                        title: title,
+                        description: 'Training content imported from Markdown',
+                        keyParams: {},
+                        modules: [{
+                            id: 'md-module-1',
+                            title: title,
+                            plannedMinutes: Math.max(30, Math.ceil(slides.length * 5)), // Estimate 5 min per slide
+                            moments: [{
+                                id: 'md-moment-1',
+                                title: title,
+                                submoments: [{
+                                    id: 'md-submoment-1',
+                                    title: title,
+                                    activities: [{
+                                        id: 'md-activity-1',
+                                        title: title,
+                                        description: '',
+                                        plannedMinutes: Math.max(30, Math.ceil(slides.length * 5)),
+                                        slides: slides,
+                                        ignored: false,
+                                        groupSize: '',
+                                        place: '',
+                                        trainer: '',
+                                        evaluation: ''
+                                    }]
+                                }]
+                            }]
+                        }]
+                    };
+
+                    console.log('Generated course data from markdown:', generatedData);
+
+                    // Validate the generated structure
+                    const validation = this.validateCourseData(generatedData);
+
+                    if (!validation.valid) {
+                        console.error('Validation failed:', validation.errors);
+                        this.setStatus('Import error: invalid structure. ' + validation.errors.join(' | '), 'error');
+                        return;
+                    }
+
+                    // Import using the standard JSON import path
+                    this.importJSON(generatedData);
+
+                } catch (error) {
+                    console.error('Error in importMarkdown:', error);
                     this.setStatus('Import error: ' + error.message, 'error');
                 }
             },
