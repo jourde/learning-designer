@@ -173,8 +173,7 @@
         }
 
         .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--color-border);
+            padding: 8px 20px;
             background: var(--color-surface);
             display: flex;
             justify-content: space-between;
@@ -186,23 +185,26 @@
         }
 
         .sidebar-toggle-btn {
-            background: none;
-            border: none;
+            background: var(--color-hover);
+            border: 1px solid var(--color-border);
             cursor: pointer;
-            padding: 8px;
+            padding: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 6px;
-            color: var(--color-text-muted);
+            color: var(--color-text);
             transition: all var(--transition);
             margin-left: 8px;
             flex-shrink: 0;
+            font-size: 20px;
+            font-weight: 600;
         }
 
         .sidebar-toggle-btn:hover {
-            background: var(--color-hover);
-            color: var(--color-text);
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
         }
 
         .sidebar-toggle-btn .material-symbols-outlined {
@@ -4392,8 +4394,6 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
                 <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
         </button>
-        <div class="sidebar-title">Training Platform</div>
-        <div style="width: 40px;"></div>
     </div>
 
     <!-- Mobile Overlay -->
@@ -4403,10 +4403,6 @@ body.show-ignored .nav-activity.ignored .nav-activity-label::after {
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-header-content">
-                    <h1 class="sidebar-title">Training Platform</h1>
-                    <p class="sidebar-subtitle">Participant deck</p>
-                </div>
                 <button class="sidebar-toggle-btn" id="sidebarToggleBtn" onclick="app.toggleSidebar()" title="Hide sidebar" aria-label="Hide navigation sidebar">
                     <span class="material-symbols-outlined">chevron_left</span>
                 </button>
