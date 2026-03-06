@@ -4936,8 +4936,8 @@ Cochez les éléments que vous souhaitez inclure dans l'export. Les éléments p
 <span class="text-xs">Markdown (IA)</span>
 </label>
 <label class="flex items-center gap-2 p-2 border border-slate-200 rounded hover:bg-indigo-50 hover:border-indigo-300 cursor-pointer transition-colors">
-<input type="radio" name="export-format" value="presentation-markdown" class="text-indigo-600">
-<span class="text-xs">Markdown Présentation</span>
+<input type="radio" name="export-format" value="slides-markdown" class="text-indigo-600">
+<span class="text-xs">Slides (Markdown)</span>
 </label>
 <label class="flex items-center gap-2 p-2 border border-slate-200 rounded hover:bg-indigo-50 hover:border-indigo-300 cursor-pointer transition-colors">
 <input type="radio" name="export-format" value="csv" class="text-indigo-600">
@@ -24980,7 +24980,70 @@ if (trainingDesc.trim()) {
             URL.revokeObjectURL(url);
         }
 
-        
+        function exportSlidesMarkdown() {
+            const trainingTitle = document.getElementById('param-name')?.value || 'Formation';
+            const __selSet = __ldGetExportSelectionSet();
+
+            let md = `# ${trainingTitle}\n\n`;
+            let hasSlides = false;
+
+            document.querySelectorAll('.activity-group').forEach((module, moduleIdx) => {
+                const __moduleId = `module-${moduleIdx}`;
+                if (__selSet && !__ldSelHasPrefix(__selSet, __moduleId)) return;
+                const __moduleExplicit = __selSet ? __selSet.has(__moduleId) : true;
+
+                module.querySelectorAll('.moment-group').forEach((moment, momentIdx) => {
+                    const __momentId = `${__moduleId}-moment-${momentIdx}`;
+                    const __momentExplicit = __selSet ? (__moduleExplicit || __selSet.has(__momentId)) : true;
+                    if (__selSet && !__momentExplicit && !__ldSelHasPrefix(__selSet, __momentId)) return;
+
+                    moment.querySelectorAll('.submoment-card').forEach((submoment, submomentIdx) => {
+                        const __submomentId = `${__momentId}-submoment-${submomentIdx}`;
+                        const __submomentExplicit = __selSet ? (__momentExplicit || __moduleExplicit || __selSet.has(__submomentId)) : true;
+                        if (__selSet && !__submomentExplicit && !__ldSelHasPrefix(__selSet, __submomentId)) return;
+
+                        submoment.querySelectorAll('.step-card').forEach((activity, activityIdx) => {
+                            const __activityId = `${__submomentId}-activity-${activityIdx}`;
+                            if (__selSet && !__submomentExplicit && !__selSet.has(__activityId)) return;
+                            const activityPresentation = activity.querySelector('.step-input-presentation')?.value || '';
+                            if (!activityPresentation.trim()) return;
+                            const activityTitle = activity.querySelector('.step-input-title')?.value || `Activité ${activityIdx + 1}`;
+                            md += `---\n\n## ${activityTitle}\n\n${activityPresentation}\n\n`;
+                            hasSlides = true;
+                        });
+                    });
+
+                    const directSteps = moment.querySelector('.moment-direct-steps');
+                    if (directSteps) {
+                        let __directCards = Array.from(directSteps.querySelectorAll('.step-card') || []);
+                        if (__selSet && !__momentExplicit) {
+                            __directCards = __directCards.filter((_, __aIdx) => __selSet.has(`${__momentId}-activity-${__aIdx}`));
+                        }
+                        __directCards.forEach((activity, activityIdx) => {
+                            const activityPresentation = activity.querySelector('.step-input-presentation')?.value || '';
+                            if (!activityPresentation.trim()) return;
+                            const activityTitle = activity.querySelector('.step-input-title')?.value || `Activité ${activityIdx + 1}`;
+                            md += `---\n\n## ${activityTitle}\n\n${activityPresentation}\n\n`;
+                            hasSlides = true;
+                        });
+                    }
+                });
+            });
+
+            if (!hasSlides) {
+                md += `> Aucune activité avec contenu de présentation trouvée.\n`;
+            }
+
+            const blob = new Blob([md], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = window.__ldBuildExportFilename('md', 'slides');
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+
 
         
         function isHighContrastEnabled() {
@@ -33624,7 +33687,7 @@ kbd {
   // Create tree node element
   function createTreeNode(node, level = 0) {
     const itemDiv = document.createElement('div');
-    itemDiv.className = 'export-tree-item';
+    itemDiv.className = 'export-tree-item' + (node.children && node.children.length > 0 ? ' collapsed' : '');
     itemDiv.dataset.nodeId = node.id;
     itemDiv.dataset.nodeType = node.type;
 
@@ -33845,6 +33908,8 @@ kbd {
         runExport(exportMarkdown);
       } else if (selectedFormat === 'presentation-markdown') {
         runExport(exportPresentationMarkdown);
+      } else if (selectedFormat === 'slides-markdown') {
+        runExport(exportSlidesMarkdown);
       } else if (selectedFormat === 'pdf') {
         runExport(exportPDFPrintFull);
       } else if (selectedFormat === 'richtext') {
