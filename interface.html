@@ -489,6 +489,14 @@ html.hide-beginner-features #btn-toggle-todos {
   display: none !important;
 }
 
+/* Zone de dépôt direct révélée pendant un drag cross-conteneur */
+.moment-direct-steps.ld-drag-reveal .activity-steps-container {
+  min-height: 40px;
+  border: 2px dashed #c7d2fe;
+  border-radius: 6px;
+  background: #eef2ff;
+}
+
 /* Vue simplifiée : masquer les champs de détail avancés (Présentation, Tâches, etc.) */
 html.hide-beginner-features .step-advanced-field {
   display: none !important;
@@ -10214,8 +10222,24 @@ function initSortableSteps(container) {
                 handle: '.drag-handle-step',
                 ghostClass: 'sortable-ghost',
                 dragClass: 'sortable-drag',
-                onStart: () => { __pendingDragSnapshot = snapshotProject(); },
+                onStart: () => {
+                    __pendingDragSnapshot = snapshotProject();
+                    // Révéler les conteneurs de steps directs masqués pour autoriser le drop cross-conteneur
+                    document.querySelectorAll('.moment-direct-steps.hidden').forEach(el => {
+                        el.classList.remove('hidden');
+                        el.classList.add('ld-drag-reveal');
+                    });
+                },
                 onEnd: (evt) => {
+                    // Supprimer la révélation temporaire
+                    document.querySelectorAll('.moment-direct-steps.ld-drag-reveal').forEach(el => {
+                        el.classList.remove('ld-drag-reveal');
+                    });
+                    // Resynchroniser les moments source et destination
+                    [evt.from, evt.to].forEach(container => {
+                        const momentEl = container?.closest('.moment-group');
+                        if (momentEl) try { syncMomentSubmomentsUI(momentEl); } catch(_) {}
+                    });
                     if (__pendingDragSnapshot) { pushUndoSnapshot(__pendingDragSnapshot); __pendingDragSnapshot = null; }
                     updateStats();
                     // Recalcul des horaires après réorganisation
