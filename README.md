@@ -26,3 +26,7 @@ N.B. : Cette application a été développée avec l'aide de chatbots d'IA gén�
 - [**Dépôt GitHub du projet**](https://github.com/jourde/learning-designer). Vous pouvez créer des adaptations de l'application (merci de m'en tenir informé si possible).
 ### Infographie de la démarche
 ![](https://github.com/jourde/learning-designer/blob/main/images/infographie.png)
+
+# Outils associés
+- [Concepteur de personas](https://jourde.github.io/artefacts/learning-design/persona-guyane.html).
+- [Interface de curseurs de formation](https://jourde.github.io/artefacts/learning-design/curseurs.html).
