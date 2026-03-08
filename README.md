@@ -4,6 +4,8 @@
 ## Applications web
 ### ➜ [Concepteur pédagogique - learning designer](https://jourde.github.io/learning-designer/interface.html)
 🔥 *Point de vigilance : bien que globalement fonctionnel, l'outil reste expérimental et peut présenter des anomalies. Je vous conseille notamment de télécharger la version que vous utilisez (fichier "main.html") afin d'assurer la compatibilité avec vos sauvegardes, en cas de mise à jour du fichier sur ce dépôt.*
+
+N.B. : Une [interface intermédiaire, directement inspirée de l'UCL Learning Designer](https://jourde.github.io/learning-designer/neo-ucl-ld.html) est aussi disponible.
 ### ➜ [Interface de présentation - Slide Deck](https://jourde.github.io/learning-designer/slidedeck.html)
 Charger un fichier JSON produit avec le Learning Designer pour afficher le support de présentation (l'application lit le contenu des champs "présentation" des activités.
 
