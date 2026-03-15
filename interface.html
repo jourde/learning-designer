@@ -2096,9 +2096,6 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
   window.toggleMoreMenu = moreMenuHandlers.toggle;
   window.closeMoreMenu = moreMenuHandlers.close;
 
-  const foldUnfoldMenuHandlers = __ldCreateMenuHandlers('fold-unfold-menu', 'btn-fold-unfold-menu');
-  window.toggleFoldUnfoldMenu = foldUnfoldMenuHandlers.toggle;
-  window.closeFoldUnfoldMenu = foldUnfoldMenuHandlers.close;
 
   const viewStyleMenuHandlers = __ldCreateMenuHandlers('view-style-menu', 'btn-view-style-menu');
   window.toggleViewStyleMenu = viewStyleMenuHandlers.toggle;
@@ -2107,7 +2104,6 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
   // Consolidated click-outside handler for all dropdown menus
   const dropdownMenus = [
     { menuId: 'more-menu', buttonId: 'btn-more' },
-    { menuId: 'fold-unfold-menu', buttonId: 'btn-fold-unfold-menu' },
     { menuId: 'view-style-menu', buttonId: 'btn-view-style-menu' }
   ];
 
@@ -2576,7 +2572,6 @@ body[data-view-level="panorama" ] #activities-root { display: none !important; }
       'save-project': () => call('saveProject'),
       'load-project': () => call('triggerFileLoad'),
       'toggle-more-menu': ({event}) => call('toggleMoreMenu', event),
-      'toggle-fold-unfold-menu': ({event}) => call('toggleFoldUnfoldMenu', event),
       'toggle-view-style-menu': ({event}) => call('toggleViewStyleMenu', event),
       'open-template-export-modal': () => { call('openTemplateExportModal'); call('closeMoreMenu'); },
       'open-template-import-modal': () => { call('openTemplateImportModal'); call('closeMoreMenu'); },
@@ -3353,19 +3348,6 @@ document.addEventListener('DOMContentLoaded', function() {
   <span class="text-xs font-medium">Todos</span>
   <span class="ld-todo-badge"></span>
 </button>
-<div class="w-px h-5 bg-slate-200"></div>
-<div class="relative">
-<button class="text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded transition-colors flex items-center justify-center" id="btn-fold-unfold-menu" data-action="toggle-fold-unfold-menu" title="Options de pliage" aria-label="Options de pliage" type="button">
-<span class="material-icons-round text-xl" id="icon-toggle-all">unfold_less</span>
-<span class="material-icons-round text-sm">arrow_drop_down</span>
-</button>
-<div class="hidden absolute left-0 top-[34px] w-56 bg-white border border-slate-200 rounded-md shadow-lg z-50 p-1" id="fold-unfold-menu">
-<button class="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-700 flex items-center gap-2" data-action="toggle-all-activities" type="button">
-<span class="material-icons-round text-base text-slate-500" id="icon-fold-unfold-menu">unfold_less</span>
-<span class="text-sm">Tout plier/déplier</span>
-</button>
-</div>
-</div>
 <div class="w-px h-5 bg-slate-200">
 </div>
 <div class="relative">
@@ -6667,11 +6649,10 @@ document.addEventListener('DOMContentLoaded', () => {
     viewLevelOptions.forEach(option => {
       option.addEventListener('click', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         const level = option.getAttribute('data-level');
         if (level) {
           applyViewLevel(level);
-          
-          // Close the menu after selection
           const menu = document.getElementById('view-level-menu');
           if (menu) menu.open = false;
         }
@@ -10833,7 +10814,6 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             const icons = document.querySelectorAll('.activity-group .rotate-icon');
             const mainBtnIcon = document.getElementById('icon-toggle-all-main');
             const mainBtnText = document.getElementById('text-toggle-all-main');
-            const headerBtnIcon = document.getElementById('icon-toggle-all');
             
             let anyOpen = false;
             bodies.forEach(b => {
@@ -10876,16 +10856,8 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
               mainBtnIcon.parentElement.setAttribute('aria-label', tooltipText);
             }
 
-            if(headerBtnIcon) headerBtnIcon.innerText = iconText;
-
-            // Update menu icon too
-            const menuIcon = document.getElementById('icon-fold-unfold-menu');
-            if(menuIcon) menuIcon.innerText = iconText;
-
-            // Close the fold/unfold menu
-            if (typeof window.closeFoldUnfoldMenu === 'function') {
-                window.closeFoldUnfoldMenu();
-            }
+            const viewMenu = document.getElementById('view-level-menu');
+            if (viewMenu) viewMenu.open = false;
         }
 
         // Force all modules to be collapsed (used after loading a saved file).
@@ -10894,14 +10866,12 @@ initSortableSteps(moment.querySelector('.activity-steps-container'));
             const icons = document.querySelectorAll('.activity-group .rotate-icon');
             const mainBtnIcon = document.getElementById('icon-toggle-all-main');
             const mainBtnText = document.getElementById('text-toggle-all-main');
-            const headerBtnIcon = document.getElementById('icon-toggle-all');
 
             bodies.forEach(b => b.classList.add('collapsed'));
             icons.forEach(icon => { icon.style.transform = 'rotate(0deg)'; });
 
             // Set UI affordances to "expand all"
             if (mainBtnIcon) mainBtnIcon.innerText = 'unfold_more';
-            if (headerBtnIcon) headerBtnIcon.innerText = 'unfold_more';
             if (mainBtnText) {
                 mainBtnText.innerText = translations[currentLang]['btn_expand_all'];
                 mainBtnText.setAttribute('data-i18n', 'btn_expand_all');
